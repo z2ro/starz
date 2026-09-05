@@ -1,0 +1,9 @@
+- id: scout_hull
+  name: Casco de reconhecimento
+  description: Casco leve para a primeira frota.
+  category: hull
+  mass: 10
+  crew: 3
+  cost: {refined_alloy: 16, components: 8}
+  duration: 30
+  compatible_propulsion: [chemical_drive, nuclear_drive]

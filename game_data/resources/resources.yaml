@@ -1,0 +1,20 @@
+- id: raw_ore
+  name: Ferrita bruta
+  description: Minério extraído da crosta.
+  category: natural
+  stock: true
+- id: volatiles
+  name: Voláteis
+  description: Gases e compostos úteis para processos industriais.
+  category: natural
+  stock: true
+- id: refined_alloy
+  name: Liga refinada
+  description: Material estrutural processado.
+  category: material
+  stock: true
+- id: components
+  name: Componentes
+  description: Peças de precisão para naves e infraestrutura.
+  category: component
+  stock: true

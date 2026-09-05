@@ -1,0 +1,15 @@
+- id: orbital_engineering
+  name: Engenharia orbital
+  description: Libera o estaleiro orbital e a primeira cadeia de construção espacial.
+  category: orbital_engineering
+  duration: 45
+  cost: {components: 12, refined_alloy: 20}
+  unlocks: [orbital_shipyard]
+- id: nuclear_propulsion
+  name: Propulsão nuclear
+  description: Libera um regime de viagem mais rápido e mais quente.
+  category: propulsion
+  duration: 75
+  cost: {components: 20, refined_alloy: 30}
+  requires: [orbital_engineering]
+  unlocks: [nuclear_drive, fusion_fuel]

@@ -1,0 +1,12 @@
+- id: ion_fuel
+  name: Combustível iônico
+  description: Denso o bastante para viagens econômicas de curto alcance.
+  category: fuel
+  energy_density: 1.0
+  storage_factor: 1.0
+- id: fusion_fuel
+  name: Combustível de fusão
+  description: Mais denso e caro, reservado ao motor nuclear.
+  category: fuel
+  energy_density: 2.4
+  storage_factor: 1.4

@@ -1,0 +1,60 @@
+- id: ore_extractor
+  name: Extrator de ferrita
+  description: Extrai matéria-prima da superfície.
+  category: Mining
+  cost: {refined_alloy: 18, components: 4}
+  duration: 20
+  workforce: 4
+  energy_consumption: 2
+  production: {raw_ore: 2.0}
+  capacity: 1
+- id: solar_field
+  name: Campo solar
+  description: Gera capacidade energética em órbita baixa.
+  category: Energy
+  cost: {refined_alloy: 15, components: 3}
+  duration: 18
+  workforce: 2
+  energy_generation: 8
+  capacity: 1
+- id: processor
+  name: Processador de materiais
+  description: Converte ferrita e voláteis em ligas utilizáveis.
+  category: Industrial
+  cost: {refined_alloy: 22, components: 6}
+  duration: 28
+  workforce: 6
+  energy_consumption: 4
+  processing: {raw_ore: 1.5, volatiles: 0.5}
+  production: {refined_alloy: 1.0, components: 0.25}
+  capacity: 2
+- id: research_lab
+  name: Laboratório de pesquisa
+  description: Sustenta pesquisa aplicada sem microgerenciar cientistas.
+  category: Research
+  cost: {refined_alloy: 25, components: 8}
+  duration: 35
+  workforce: 5
+  energy_consumption: 3
+  research_rate: 1
+  capacity: 1
+- id: civil_district
+  name: Distrito civil
+  description: Habitação, serviços e suporte populacional agregados.
+  category: Civil
+  cost: {refined_alloy: 20, components: 4}
+  duration: 25
+  workforce: 3
+  energy_consumption: 2
+  population_capacity: 80
+  capacity: 1
+- id: orbital_shipyard
+  name: Estaleiro orbital
+  description: Estrutura especial para montar naves na órbita do planeta.
+  category: Logistics
+  cost: {refined_alloy: 50, components: 20}
+  duration: 60
+  workforce: 10
+  energy_consumption: 6
+  unlock: orbital_engineering
+  capacity: 3

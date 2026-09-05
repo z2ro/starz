@@ -1,0 +1,19 @@
+- id: chemical_drive
+  name: Propulsor químico
+  description: Robusto, barato e lento.
+  category: chemical
+  compatible_fuels: [ion_fuel]
+  speed_factor: 1.0
+  fuel_efficiency: 1.0
+  thermal_load: 1.0
+  signature: 1.0
+- id: nuclear_drive
+  name: Propulsor nuclear
+  description: Maior velocidade e alcance com calor operacional superior.
+  category: nuclear
+  compatible_fuels: [fusion_fuel]
+  speed_factor: 1.7
+  fuel_efficiency: 1.35
+  thermal_load: 1.8
+  signature: 1.5
+  requires: [nuclear_propulsion]
