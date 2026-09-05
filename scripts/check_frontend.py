@@ -9,5 +9,6 @@ for path in (source, artifact, html, root / "styles.css"):
     assert path.exists(), path
 assert "type State" in source.read_text()
 assert "/static/app.js" in html.read_text()
-assert "fetch('/api/state')" in source.read_text()
+assert "request<State>('/api/state')" in source.read_text()
+assert "location.hash = `#/${target.dataset.goto}`" in source.read_text()
 print("frontend source and browser artifact present")

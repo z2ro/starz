@@ -3,55 +3,105 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const vm = require('node:vm');
 
-function browser() {
-  const elements = new Map();
-  const element = selector => {
-    if (!elements.has(selector)) elements.set(selector, { innerHTML: '', textContent: '', querySelectorAll: () => [] });
-    return elements.get(selector);
-  };
-  const state = {
-    system: { name: 'Home', x: 0, y: 0, star: {}, planet: {} }, stocks: {},
-    capacities: { energy_generation: 8, energy_consumption: 2, industrial_capacity: 2, construction_slots: 1, construction_slots_available: 0, shipyard_slots: 1, shipyard_slots_available: 1, effective_research_rate: .5 }, population: { total: 100 },
-    districts: {}, research: { active: null }, notices: [],
-    ships: [{ id: 'ship', propulsion_id: 'chemical_drive', ready_at: 0 }],
-    fleets: [{ id: 'fleet', name: 'Fleet', status: 'ARRIVED', x: 3, y: 0, destination_x: 3, destination_y: 0, ship_ids: ['ship'], eta: 0, propulsion: 'chemical_drive' }],
-    travel_modes: [{ id: 'CUSTOM', name: 'Custom mode' }],
-  };
+const base = { cost: {}, requires: [] };
+const catalog = {
+  resources: [
+    { ...base, id: 'raw_ore', name: 'Ferrita do catálogo', description: 'Raw', category: 'natural' },
+    { ...base, id: 'refined_alloy', name: 'Liga refinada', description: 'Alloy', category: 'material' },
+    { ...base, id: 'components', name: 'Componentes', description: 'Parts', category: 'component' },
+  ],
+  fuels: [{ ...base, id: 'ion_fuel', name: 'Combustível iônico', description: 'Fuel', category: 'fuel', energy_density: 1, storage_factor: 1 }],
+  districts: [
+    { ...base, id: 'processor', name: 'Processador do catálogo', description: 'Converte recursos.', category: 'Industrial', duration: 28, workforce: 6, energy_generation: 0, energy_consumption: 4, production: { refined_alloy: 1 }, processing: { raw_ore: 1.5 }, research_rate: 0, population_capacity: 0, industrial_capacity: 2, construction_slots: 0, shipyard_slots: 0 },
+    { ...base, id: 'orbital_shipyard', name: 'Estaleiro orbital', description: 'Monta naves.', category: 'Logistics', duration: 60, workforce: 10, energy_generation: 0, energy_consumption: 6, production: {}, processing: {}, research_rate: 0, population_capacity: 0, industrial_capacity: 0, construction_slots: 0, shipyard_slots: 1 },
+  ],
+  technologies: [
+    { ...base, id: 'orbital_engineering', name: 'Engenharia orbital', description: 'Libera órbita.', category: 'orbital', duration: 45, unlocks: ['orbital_shipyard'] },
+    { ...base, id: 'nuclear_propulsion', name: 'Propulsão nuclear', description: 'Motor avançado.', category: 'propulsion', duration: 75, requires: ['orbital_engineering'], unlocks: ['nuclear_drive'] },
+  ],
+  ships: [{ ...base, id: 'scout_hull', name: 'Casco scout', description: 'Nave leve.', category: 'hull', mass: 10, crew: 3, duration: 30, compatible_propulsion: ['chemical_drive'] }],
+  propulsion: [{ ...base, id: 'chemical_drive', name: 'Propulsor químico', description: 'Robusto.', category: 'chemical', compatible_fuels: ['ion_fuel'], speed_factor: 1, fuel_efficiency: 1, thermal_load: 1, signature: 1 }],
+  travel_modes: [
+    { ...base, id: 'ECONOMY', name: 'Economy', description: 'Slow', category: 'travel', travel_time_modifier: 1.5, fuel_modifier: .6, thermal_modifier: .8, signature_modifier: .8 },
+    { ...base, id: 'NORMAL', name: 'Normal', description: 'Normal', category: 'travel', travel_time_modifier: 1, fuel_modifier: 1, thermal_modifier: 1, signature_modifier: 1 },
+    { ...base, id: 'FORCED', name: 'Forced', description: 'Fast', category: 'travel', travel_time_modifier: .6, fuel_modifier: 2, thermal_modifier: 1.8, signature_modifier: 1.8 },
+  ],
+};
+
+const state = {
+  system: { name: 'Asterion 0:0', x: 0, y: 0, star: { stellar_class: 'G', mass: 1, luminosity: 1.1, age: 4, activity: .3 }, planet: { name: 'Gaia', mass: 1, radius: 1, gravity: 1, orbital_distance: 1, temperature: 288, atmosphere: 'nitrogen', radiation: .2, magnetic_field: 1.1, water: 66, geological_activity: .4, mineral_profile: { raw_ore: 1.2 }, usable_surface: 72 } },
+  stocks: { raw_ore: 220, refined_alloy: 140, components: 55, ion_fuel: 80 },
+  capacities: { energy_generation: 24, energy_consumption: 10, energy_coverage: 1, industrial_capacity: 2, construction_slots: 1, construction_slots_available: 1, shipyard_slots: 1, shipyard_slots_available: 1, effective_research_rate: 1, workforce_supply: 97, workforce_demand: 20, workforce_coverage: 1, crew_committed: 3 },
+  population: { total: 100, available: 77, capacity: 180 }, districts: { processor: 1, orbital_shipyard: 1 }, construction: [],
+  research: { active: null, complete_at: null, completed: ['orbital_engineering'], remaining_work: 0 }, notices: ['Estaleiro concluído.'], unlocked_content: ['orbital_shipyard'],
+  ships: [{ id: 'ship', hull_id: 'scout_hull', propulsion_id: 'chemical_drive', fuel_id: 'ion_fuel', crew: 3, mass: 10, ready_at: 0 }],
+  fleets: [{ id: 'fleet', name: 'Fleet 01', status: 'ARRIVED', x: 0, y: 0, destination_x: 0, destination_y: 0, ship_ids: ['ship'], eta: 0, propulsion: 'chemical_drive', mode: 'NORMAL', fuel_cost: 10, departure_at: 0, arrival_at: 0 }],
+  travel_modes: catalog.travel_modes,
+};
+const galaxy = { center: [0, 0], radius: 1, systems: [
+  { id: 'home', name: 'Home', x: 0, y: 0, distance: 0, home: true, star: { stellar_class: 'G', luminosity: 1, activity: .2 }, planet: { name: 'Gaia', gravity: 1, temperature: 288, water: 66, radiation: .2 } },
+  { id: 'east', name: 'Asterion +1:0', x: 1, y: 0, distance: 1, home: false, star: { stellar_class: 'K', luminosity: .8, activity: .3 }, planet: { name: 'Kara', gravity: 1.2, temperature: 260, water: 42, radiation: .3 } },
+] };
+
+async function browser() {
+  const app = { innerHTML: '', textContent: '', onclick: null, onchange: null, setAttribute() {} };
+  const location = { hash: '#/overview' };
   const calls = [];
-  let response = { ok: true, json: async () => state };
-  const context = vm.createContext({ document: { querySelector: element }, fetch: async (url, options) => { calls.push({ url, options }); return response; } });
+  let next;
+  const context = vm.createContext({
+    document: { querySelector: () => app }, location,
+    fetch: async (url, options) => {
+      calls.push({ url, options });
+      if (next) { const response = next; next = undefined; return response; }
+      const value = url === '/api/catalog' ? catalog : url.startsWith('/api/galaxy') ? galaxy : state;
+      return { ok: true, json: async () => value };
+    },
+    Request: class {}, Date, Intl,
+  });
   vm.runInContext(readFileSync('frontend/app.js', 'utf8'), context);
-  return { context, calls, element, state, respond: value => { response = value; } };
+  await vm.runInContext('boot()', context);
+  return { app, context, location, calls, respond: response => { next = response; } };
 }
 
-test('ARRIVED fleet, catalog mode and new destination are sent to both endpoints', async () => {
-  const b = browser();
-  await vm.runInContext('load()', b.context);
-  assert.match(b.element('#app').innerHTML, /Posição 3:0/);
-  assert.match(b.element('#app').innerHTML, /Custom mode/);
-  assert.match(b.element('#app').innerHTML, /Indústria nominal: 2/);
-  assert.match(b.element('#app').innerHTML, /Construções livres: 0\/1/);
-  assert.match(b.element('#app').innerHTML, /Estaleiro livre: 1\/1/);
-  assert.match(b.element('#app').innerHTML, /Taxa efetiva: 0.5/);
-  vm.runInContext('destination = {x: 4, y: 0}', b.context);
-  b.respond({ ok: true, json: async () => ({ CUSTOM: { origin: [3, 0], distance: 1, eta_seconds: 180, fuel_cost: 10, heat: 1, signature: 1 } }) });
-  await vm.runInContext("act('preview')", b.context);
-  const preview = JSON.parse(b.calls.at(-1).options.body);
-  assert.equal(preview.fleet_id, 'fleet');
-  assert.equal(preview.mode, 'CUSTOM');
-  assert.equal(preview.target_x, 4);
-  assert.match(b.element('#route-preview').innerHTML, /origem 3:0/);
-  b.respond({ ok: true, json: async () => b.state });
-  await vm.runInContext("act('travel')", b.context);
-  const sent = b.calls.find(call => call.url === '/api/travel');
-  assert.deepEqual(JSON.parse(sent.options.body), preview);
+test('Overview renders a game shell and catalog-driven planet summary', async () => {
+  const b = await browser();
+  assert.match(b.app.innerHTML, /CENTRO DE COMANDO/);
+  assert.match(b.app.innerHTML, /Ferrita do catálogo/);
+  assert.match(b.app.innerHTML, /planet-sphere/);
+  assert.match(b.app.innerHTML, /Visão geral/);
+  assert.doesNotMatch(b.app.innerHTML, /\{&quot;|\[object Object\]/);
 });
 
-test('API errors are shown without rendering an invalid preview', async () => {
-  const b = browser();
-  await vm.runInContext('load()', b.context);
-  b.respond({ ok: false, json: async () => ({ detail: 'frota em trânsito' }) });
-  await vm.runInContext("act('preview')", b.context);
-  assert.equal(b.element('#action-error').textContent, 'frota em trânsito');
-  assert.doesNotMatch(b.element('#route-preview').innerHTML, /NaN|undefined/);
+test('hash navigation renders Economy, Research, Shipyard and Fleets states', async () => {
+  const b = await browser();
+  for (const [route, text] of [['economy', 'Capacidade nominal'], ['research', 'CONCLUÍDA'], ['shipyard', 'Slots totais'], ['fleets', 'PRONTA']]) {
+    b.location.hash = `#/${route}`;
+    vm.runInContext('render()', b.context);
+    assert.match(b.app.innerHTML, new RegExp(text));
+  }
+  assert.match(b.app.innerHTML, /Fleet 01/);
+});
+
+test('Galaxy selection previews all modes and dispatch payload uses the selected node', async () => {
+  const b = await browser();
+  b.location.hash = '#/galaxy';
+  vm.runInContext("selectedSystem = galaxyData.systems.find(s => s.id === 'east'); selectedSubject = 'fleet:fleet'; render()", b.context);
+  assert.match(b.app.innerHTML, /Asterion \+1:0/);
+  const preview = Object.fromEntries(catalog.travel_modes.map(mode => [mode.id, { origin: [0, 0], destination: [1, 0], distance: 1, eta_seconds: mode.id === 'FORCED' ? 60 : 120, fuel_cost: mode.id === 'ECONOMY' ? 6 : 10, heat: mode.thermal_modifier, signature: mode.signature_modifier }]));
+  b.respond({ ok: true, json: async () => preview });
+  await vm.runInContext("perform('preview')", b.context);
+  const payload = JSON.parse(b.calls.at(-1).options.body);
+  assert.equal(payload.target_x, 1);
+  assert.equal(payload.fleet_id, 'fleet');
+  assert.match(b.app.innerHTML, /Combustível/);
+  assert.match(b.app.innerHTML, /Assinatura/);
+});
+
+test('API errors become readable in-game feedback', async () => {
+  const b = await browser();
+  b.respond({ ok: false, json: async () => ({ detail: 'slots de construção ocupados' }) });
+  await vm.runInContext("perform('build', 'processor')", b.context);
+  assert.match(b.app.innerHTML, /toast error/);
+  assert.match(b.app.innerHTML, /slots de construção ocupados/);
+  assert.doesNotMatch(b.app.innerHTML, /\[object Object\]/);
 });

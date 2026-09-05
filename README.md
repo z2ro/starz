@@ -1,6 +1,6 @@
 # StarZ
 
-StarZ é uma fundação jogável de estratégia espacial persistente: um sistema inicial, economia curta, pesquisa, estaleiro e viagem com regimes de propulsão.
+StarZ é uma fundação jogável de estratégia espacial persistente: um sistema inicial, economia curta, pesquisa, estaleiro e viagem com regimes de propulsão. A interface organiza esse slice como um command center com HUD global, navegação por áreas e mapa estelar interativo.
 
 ## Rodar com Docker Compose
 
@@ -64,10 +64,11 @@ população ociosa não é a oferta de trabalho. Cada receita consome seus input
 e gera todos os outputs. O avanço offline integra a produção entre conclusões de
 construção, pesquisa e chegada; esgotamento de insumos também delimita a produção.
 
-No painel existente: construa o processador, pesquise engenharia orbital, construa
-o estaleiro e monte a nave. Use **Atualizar estado** para acompanhar conclusões.
-Selecione a nave/frota, informe o destino, compare regimes e envie. Depois da chegada,
-a mesma frota aceita nova ordem partindo de sua posição atual.
+Na interface: use **Planet** para construir o processador, **Research** para pesquisar
+engenharia orbital e **Shipyard** para montar a nave. Em **Galaxy**, selecione um
+sistema no mapa, uma nave/frota, compare os três regimes e envie. Depois da chegada,
+a mesma frota aceita nova ordem partindo de sua posição atual. Filas em andamento são
+sincronizadas a cada 15 segundos enquanto a página está visível; não existe tick no servidor.
 
 Arquétipos estelares/planetários e regimes de viagem continuam em YAML. PostgreSQL
 armazena referências por ID, não cópias das definições. IDs persistidos removidos ou
@@ -120,3 +121,4 @@ construção/viagem e recria o Compose sem apagar o volume. Deixa a frota em C p
 `tests/test_api.py` preserva o contrato HTTP sem banco; `tests/test_postgres.py` cobre
 o adaptador real, rollback, constraints, concorrência e progresso offline.
 O JavaScript publicado é gerado por TypeScript; não edite `frontend/app.js` manualmente.
+Veja [frontend.md](docs/frontend.md) para views, atualização e princípios visuais.

@@ -13,7 +13,7 @@ FastAPI (api.py)
       -> effects.py (handler de unlock e requirements)
     -> db/models.py (SQLAlchemy 2 / PostgreSQL)
 alembic (schema) / bootstrap (dados iniciais)
-frontend/ (static TypeScript source + browser artifact)
+frontend/ (SPA TypeScript sem framework + CSS + artefato browser gerado)
 ```
 
 O núcleo não depende de FastAPI nem de banco. A engine recebe `now` explicitamente, usa timestamps para trabalho de longa duração e avança estado de forma lazy quando consultado.
@@ -94,4 +94,13 @@ Coordenadas fora dos limites dão 422. Preview retorna todos os regimes do catá
 com origem/destino/distância; não debita combustível.
 
 `/api/state` inclui naves, todos os campos de cobertura, `travel_modes` e
-`unlocked_content`. O frontend envia a seleção explícita e mostra erros da API.
+`unlocked_content`. `/api/catalog` projeta para a UI as definições YAML de recursos,
+distritos, tecnologias, cascos, propulsões, combustíveis e regimes. `/api/galaxy`
+gera uma vizinhança limitada (raio 1–3) sem materializar sistemas ou criar estado de
+exploração. O frontend envia a seleção explícita e mostra erros da API.
+
+O cliente usa rotas hash e re-renderização simples. Carrega state, catálogo e
+vizinhança em paralelo; depois sincroniza `/api/state` a cada 15 segundos somente
+quando há atividade temporal e a página está visível. Countdowns são visuais: o
+backend continua avançando o universo apenas em requests. Detalhes em
+[frontend.md](frontend.md).

@@ -12,6 +12,12 @@
 - Universo procedural, determinístico e materializado sob demanda.
 - Spawn assimétrico fisicamente, mas avaliado por viabilidade estratégica.
 - UI é um command center dark e legível, desktop-first.
+- HUD global, navegação lateral e views dedicadas organizam o estado sem esconder
+  stocks, flows, capacities, filas e trade-offs de viagem.
+- O planeta é o foco visual e reage de forma agregada aos distritos, estaleiro e
+  frotas existentes; não representa urbanismo detalhado.
+- Galaxy View é visualização determinística da vizinhança e interface de viagem,
+  não exploração, fog of war ou materialização persistente.
 - Indústria nominal, slots de obras e slots de estaleiro são capacidades distintas.
 - Obras e montagem têm prazo fixo após validação inicial; pesquisa progride conforme
   cobertura contínua de energia e workforce, podendo pausar e retomar.

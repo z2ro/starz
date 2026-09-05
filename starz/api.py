@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from math import hypot
 from pathlib import Path
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException, Query
 from sqlalchemy import text
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,6 +14,7 @@ from .data import Catalog, DataValidationError
 from .db.store import Store, database_engine
 from .settings import Settings
 from .effects import unlocked_content
+from .universe import generate_system
 
 ROOT = Path(__file__).resolve().parent.parent
 catalog = Catalog.load(ROOT / "game_data")
@@ -41,6 +43,12 @@ class BuildRequest(BaseModel):
 
 class ResearchRequest(BaseModel):
     id: str
+
+
+class BuildShipRequest(BaseModel):
+    hull_id: str = 'scout_hull'
+    propulsion_id: str = 'chemical_drive'
+    fuel_id: str = 'ion_fuel'
 
 
 class TravelRequest(BaseModel):
@@ -76,6 +84,31 @@ def state():
     return action(state_snapshot)
 
 
+@app.get('/api/catalog')
+def game_catalog():
+    kinds = ('resources', 'districts', 'technologies', 'ships', 'propulsion', 'fuels', 'travel_modes')
+    return {kind: [item.model_dump() for _, item in sorted(catalog.items[kind].items())] for kind in kinds}
+
+
+@app.get('/api/galaxy')
+def galaxy(radius: int = Query(2, ge=1, le=3)):
+    def neighborhood(engine):
+        center = (engine.state.system_x, engine.state.system_y)
+        systems = []
+        for x in range(center[0] - radius, center[0] + radius + 1):
+            for y in range(center[1] - radius, center[1] + radius + 1):
+                system = generate_system(engine.state.seed, x, y, catalog)
+                systems.append({
+                    'id': system.id, 'name': system.name, 'x': x, 'y': y,
+                    'distance': round(hypot(x - center[0], y - center[1]), 2),
+                    'home': (x, y) == center,
+                    'star': {'stellar_class': system.star.stellar_class, 'luminosity': system.star.luminosity, 'activity': system.star.activity},
+                    'planet': {'name': system.planet.name, 'gravity': system.planet.gravity, 'temperature': system.planet.temperature, 'water': system.planet.water, 'radiation': system.planet.radiation},
+                })
+        return {'center': list(center), 'radius': radius, 'systems': systems}
+    return action(neighborhood)
+
+
 def state_snapshot(engine):
     system = engine.system()
     capacities = engine.capacities()
@@ -93,8 +126,8 @@ def research(request: ResearchRequest):
 
 
 @app.post("/api/build-ship")
-def build_ship():
-    return action(lambda engine: engine.build_ship(now=engine.state.last_updated))
+def build_ship(request: BuildShipRequest = Body(default=BuildShipRequest())):
+    return action(lambda engine: engine.build_ship(request.hull_id, request.propulsion_id, request.fuel_id, now=engine.state.last_updated))
 
 
 @app.post("/api/travel")

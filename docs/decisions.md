@@ -109,3 +109,15 @@ bootstrap atual sempre atribua o planeta inicial ao império local.
 `Store` não guarda império em estado mutável. `bootstrap()` retorna o ID do império
 local e `run(empire_id, action)` recebe o owner da request. A API ainda passa um
 `default_empire_id` no startup apenas como placeholder sem autenticação.
+
+## D016 — Command center em TypeScript nativo
+
+O frontend permanece TypeScript nativo: o tamanho atual não justifica React, router
+ou biblioteca visual. Rotas hash preservam a view no refresh; um render central usa
+componentes HTML pequenos e estilos reutilizáveis. CSS/SVG tipográfico representam
+planeta, órbitas e mapa sem WebGL ou assets externos.
+
+O conteúdo comum vem de `/api/catalog`, derivado do YAML. `/api/galaxy` limita o raio
+a 3 e só deriva sistemas da seed; não materializa nem cria descoberta. A UI sincroniza
+o estado a cada 15 segundos apenas quando existem filas/movimentos e usa relógio local
+somente para apresentar countdowns. Regras e validação continuam no backend.
