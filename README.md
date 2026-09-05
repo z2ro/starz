@@ -14,6 +14,8 @@ Abra `http://localhost:8000`. Compose espera o healthcheck do PostgreSQL 17,
 aplica `alembic upgrade head` e inicia a aplicação sem reload. `/health` verifica o banco.
 O estado fica no volume nomeado `starz_postgres_data` e avança lazy por timestamps.
 O bootstrap transacional cria apenas um universo e um império local sem autenticação.
+O schema permite vários PlanetStates por sistema e por império; o slice usa somente o
+homeworld explícito (`Empire.home_planet_id`) como contexto ativo.
 
 ```bash
 docker compose down       # para containers; preserva a partida

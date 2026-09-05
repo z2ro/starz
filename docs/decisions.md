@@ -98,3 +98,14 @@ e completions com timestamp real do boundary. Conversão epoch ↔ UTC só no ma
 Movimento atual fica na própria fleet, sem tabela de histórico ou event sourcing.
 Notices são uma tabela com ordem monotônica por império, consultando os últimos 100;
 created_at registra a observação/persistência, não uma reconstrução histórica de eventos.
+
+## D015 — Cardinalidade relacional e ownership explícito
+
+`planet_state` usa `planet_index` e `UNIQUE(system_id, planet_index)`; não há unicidade
+por sistema ou por império. `Empire.home_planet_id` identifica explicitamente o
+homeworld. O owner do planeta pode ser nulo para preparar corpos não ocupados, embora o
+bootstrap atual sempre atribua o planeta inicial ao império local.
+
+`Store` não guarda império em estado mutável. `bootstrap()` retorna o ID do império
+local e `run(empire_id, action)` recebe o owner da request. A API ainda passa um
+`default_empire_id` no startup apenas como placeholder sem autenticação.

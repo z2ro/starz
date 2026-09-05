@@ -34,7 +34,6 @@ class Store:
         self.catalog = catalog
         self.seed = seed
         self.clock = clock
-        self.empire_id = None
 
     def bootstrap(self, now: float | None = None):
         stamp = utc(self.clock() if now is None else now)
@@ -50,21 +49,22 @@ class Store:
                 empire = m.Empire(universe_id=universe.id, home_system_id=system.id, name='Local Empire', last_updated=stamp, created_at=stamp)
                 session.add(empire)
                 session.flush()
-                planet = m.Planet(system_id=system.id, empire_id=empire.id, population_total=engine.state.population_total, created_at=stamp)
+                planet = m.Planet(system_id=system.id, planet_index=0, empire_id=empire.id, population_total=engine.state.population_total, created_at=stamp)
                 session.add(planet)
                 session.flush()
+                empire.home_planet_id = planet.id
                 persist(session, empire, planet, engine.state)
             else:
                 engine = Engine(self.catalog, load(session, empire))
             validate_state(self.catalog, engine.state)
-            self.empire_id = empire.id
-        return self.empire_id
+            empire_id = empire.id
+        return empire_id
 
-    def run(self, call, now: float | None = None):
+    def run(self, empire_id, call, now: float | None = None):
         with Session(self.database) as session, session.begin():
-            empire = session.scalar(select(m.Empire).where(m.Empire.id == self.empire_id).with_for_update())
+            empire = session.scalar(select(m.Empire).where(m.Empire.id == empire_id).with_for_update())
             if empire is None:
-                raise RuntimeError('bootstrap deve ser executado antes de ações')
+                raise RuntimeError('império inexistente')
             state = load(session, empire)
             validate_state(self.catalog, state)
             engine = Engine(self.catalog, state)
@@ -73,7 +73,9 @@ class Store:
             engine.advance(stamp)
             result = call(engine)
             validate_state(self.catalog, state)
-            planet = session.scalar(select(m.Planet).where(m.Planet.empire_id == empire.id))
+            planet = session.get(m.Planet, empire.home_planet_id)
+            if planet is None or planet.empire_id != empire.id:
+                raise DataValidationError('homeworld persistido inválido')
             persist(session, empire, planet, state)
             return result
 
@@ -81,7 +83,9 @@ class Store:
 def load(session: Session, empire: m.Empire) -> GameState:
     universe = session.get(m.Universe, empire.universe_id)
     system = session.get(m.StarSystem, empire.home_system_id)
-    planet = session.scalar(select(m.Planet).where(m.Planet.empire_id == empire.id))
+    planet = session.get(m.Planet, empire.home_planet_id)
+    if universe is None or system is None or planet is None or planet.empire_id != empire.id or planet.system_id != system.id:
+        raise DataValidationError('homeworld persistido inválido')
     def rows(model):
         return session.scalars(select(model).where(model.empire_id == empire.id)).all()
     research = session.get(m.Research, empire.id)

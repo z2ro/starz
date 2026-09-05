@@ -15,13 +15,14 @@ class ApiTests(unittest.TestCase):
             clock = 1000
             engine = Engine.new(api.catalog, now=clock)
             class MemoryService:
-                def run(self, call):
+                def run(self, empire_id, call):
                     candidate = Engine(api.catalog, copy.deepcopy(engine.state))
                     candidate.advance(clock)
                     result = call(candidate)
                     engine.state = candidate.state
                     return result
             with patch.object(api.app.state, 'store', MemoryService(), create=True):
+                api.app.state.default_empire_id = 'local'
                 async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api.app), base_url='http://test') as client:
                     async def post(endpoint, payload=None):
                         response = await client.post(endpoint, json=payload or {})

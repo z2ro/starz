@@ -33,6 +33,9 @@ class Empire(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     universe_id: Mapped[UUID] = mapped_column(ForeignKey('universe.id'))
     home_system_id: Mapped[UUID] = mapped_column(ForeignKey('star_system.id'))
+    home_planet_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey('planet_state.id', use_alter=True)
+    )
     name: Mapped[str]
     last_updated: Mapped[datetime]
     created_at: Mapped[datetime]
@@ -40,10 +43,15 @@ class Empire(Base):
 
 class Planet(Base):
     __tablename__ = 'planet_state'
-    __table_args__ = (CheckConstraint('population_total >= 0', name='population_nonnegative'),)
+    __table_args__ = (
+        UniqueConstraint('system_id', 'planet_index'),
+        CheckConstraint('planet_index >= 0', name='planet_index_nonnegative'),
+        CheckConstraint('population_total >= 0', name='population_nonnegative'),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    system_id: Mapped[UUID] = mapped_column(ForeignKey('star_system.id'), unique=True)
-    empire_id: Mapped[UUID] = mapped_column(ForeignKey('empire.id'), unique=True)
+    system_id: Mapped[UUID] = mapped_column(ForeignKey('star_system.id'))
+    planet_index: Mapped[int]
+    empire_id: Mapped[UUID | None] = mapped_column(ForeignKey('empire.id'))
     population_total: Mapped[int]
     created_at: Mapped[datetime]
 

@@ -24,7 +24,7 @@ async def lifespan(app):
     database = database_engine(settings.database_url)
     try:
         store = Store(database, catalog, settings.universe_seed)
-        store.bootstrap()
+        app.state.default_empire_id = store.bootstrap()
         app.state.store = store
         yield
     finally:
@@ -54,7 +54,7 @@ class TravelRequest(BaseModel):
 
 def action(call):
     try:
-        return app.state.store.run(call)
+        return app.state.store.run(app.state.default_empire_id, call)
     except DataValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

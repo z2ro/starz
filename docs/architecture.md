@@ -18,8 +18,9 @@ frontend/ (static TypeScript source + browser artifact)
 
 O núcleo não depende de FastAPI nem de banco. A engine recebe `now` explicitamente, usa timestamps para trabalho de longa duração e avança estado de forma lazy quando consultado.
 
-O PostgreSQL é a única fonte de estado no runtime. `Store.run` abre transação,
-trava a linha do império, carrega GameState, avança a engine e persiste o resultado.
+O PostgreSQL é a única fonte de estado no runtime. `Store.run(empire_id, action)` abre
+transação, trava a linha do império, carrega o homeworld explícito como contexto atual,
+avança a engine e persiste o resultado.
 O ORM não entra na engine. Relógio real é fornecido depois de obter o lock; testes
 podem passar `now` explicitamente. Detalhes em [persistence.md](persistence.md).
 
@@ -27,6 +28,8 @@ podem passar `now` explicitamente. Detalhes em [persistence.md](persistence.md).
 
 - A geração de sistemas é determinística e sob demanda.
 - Só o sistema do jogador fica materializado no estado inicial.
+- Um sistema pode ter muitos PlanetStates; um império pode possuir muitos PlanetStates.
+- `Empire.home_planet_id` identifica o contexto planetário atual do slice.
 - Construções, pesquisa e frotas usam `complete_at`/`arrival_at`.
 - A API é uma camada fina; validação de conteúdo e regras ficam na engine.
 
