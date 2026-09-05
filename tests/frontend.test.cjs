@@ -11,7 +11,7 @@ function browser() {
   };
   const state = {
     system: { name: 'Home', x: 0, y: 0, star: {}, planet: {} }, stocks: {},
-    capacities: { energy_generation: 8, energy_consumption: 2 }, population: { total: 100 },
+    capacities: { energy_generation: 8, energy_consumption: 2, industrial_capacity: 2, construction_slots: 1, construction_slots_available: 0, shipyard_slots: 1, shipyard_slots_available: 1, effective_research_rate: .5 }, population: { total: 100 },
     districts: {}, research: { active: null }, notices: [],
     ships: [{ id: 'ship', propulsion_id: 'chemical_drive', ready_at: 0 }],
     fleets: [{ id: 'fleet', name: 'Fleet', status: 'ARRIVED', x: 3, y: 0, destination_x: 3, destination_y: 0, ship_ids: ['ship'], eta: 0, propulsion: 'chemical_drive' }],
@@ -29,6 +29,10 @@ test('ARRIVED fleet, catalog mode and new destination are sent to both endpoints
   await vm.runInContext('load()', b.context);
   assert.match(b.element('#app').innerHTML, /Posição 3:0/);
   assert.match(b.element('#app').innerHTML, /Custom mode/);
+  assert.match(b.element('#app').innerHTML, /Indústria nominal: 2/);
+  assert.match(b.element('#app').innerHTML, /Construções livres: 0\/1/);
+  assert.match(b.element('#app').innerHTML, /Estaleiro livre: 1\/1/);
+  assert.match(b.element('#app').innerHTML, /Taxa efetiva: 0.5/);
   vm.runInContext('destination = {x: 4, y: 0}', b.context);
   b.respond({ ok: true, json: async () => ({ CUSTOM: { origin: [3, 0], distance: 1, eta_seconds: 180, fuel_cost: 10, heat: 1, signature: 1 } }) });
   await vm.runInContext("act('preview')", b.context);

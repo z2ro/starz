@@ -56,3 +56,19 @@ TypeScript 5.9.3 como dependência de desenvolvimento gera o artefato JS antes m
 manualmente. Sem troca de framework, navegação ou estilo. Testes Node usam o artefato
 real para verificar payloads de viagem e mensagens de erro. Um RLock na API protege
 operações locais concorrentes sobre o mesmo JSON; não suporta múltiplos processos.
+
+## D011 — Capacidade sem filas implícitas
+
+O distrito civil inicial representa também a coordenação de obras e fornece 1 slot
+de construção, via YAML. Processador fornece 2 de indústria nominal; estaleiro fornece
+1 slot naval por nível. Indústria é exposta como indicador de capacidade instalada;
+não adicionamos gate ou fórmula de velocidade. O alias industrial foi removido da API.
+
+## D012 — Trabalho científico e compatibilidade JSON
+
+Manter `Technology.duration` como trabalho à taxa nominal 1 evita renomear conteúdo
+desnecessariamente. `remaining_work` é autoritativo, `complete_at` é previsão dinâmica.
+Pesquisa pode ser iniciada com laboratório sem cobertura e permanecer pausada.
+Estado legado converte prazo restante em trabalho usando a taxa nominal no último
+estado salvo; não reconstrói mudanças históricas não registradas. Slots antigos
+excedentes são preservados até terminar e impedem novos inícios enquanto ocupados.

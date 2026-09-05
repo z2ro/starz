@@ -12,6 +12,10 @@
 - Universo procedural, determinístico e materializado sob demanda.
 - Spawn assimétrico fisicamente, mas avaliado por viabilidade estratégica.
 - UI é um command center dark e legível, desktop-first.
+- Indústria nominal, slots de obras e slots de estaleiro são capacidades distintas.
+- Obras e montagem têm prazo fixo após validação inicial; pesquisa progride conforme
+  cobertura contínua de energia e workforce, podendo pausar e retomar.
+- Na foundation, indústria nominal é informativa; não aumenta paralelismo ou velocidade.
 
 ## Pending
 

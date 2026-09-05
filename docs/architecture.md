@@ -35,7 +35,7 @@ aplica todos os eventos daquele instante. Empates são resolvidos por construç�
 Energia: `coverage = 1` para consumo zero; caso contrário `min(1, geração/consumo)`.
 Trabalho: `supply = max(0, total - crew_committed)`; cobertura é `min(1, supply/demand)`
 ou 1 para demanda zero. Disponível/ociosa é `max(0, supply-demand)`.
-`population_demand` permanece como alias de `workforce_demand` por compatibilidade.
+`workforce_demand` é o único nome da demanda; o alias `population_demand` foi removido.
 Tripulação é comprometida na montagem e continua comprometida nas frotas chegadas.
 
 Cada receita possui uma taxa de batches proporcional ao nível e ao menor coverage.
@@ -55,7 +55,27 @@ O estoque de combustível continua global ao jogador neste slice; não represent
 reabastecimento local ou logística interplanetária. Não houve expansão desse sistema.
 O save continua atomicamente substituindo o JSON por arquivo temporário. A API usa
 um lock de processo para serializar leitura/avanço/ação/save entre requisições locais.
-Executar apenas um processo servidor. Nenhuma migração de schema JSON é necessária.
+Executar apenas um processo servidor. Pesquisa legada é convertida no primeiro avanço:
+`remaining_work = max(0, old_complete_at - last_updated) * research_rate` nominal.
+Trabalho restante já salvo é preservado, inclusive quando a pesquisa está pausada.
+
+## Capacidades e pesquisa contínua
+
+`industrial_capacity != construction_slots != shipyard_slots`.
+Indústria nominal soma apenas a propriedade explícita do YAML, hoje no processador.
+É um indicador de capacidade produtiva instalada, sem alterar receitas, prazos ou filas
+nesta etapa. Não há gate industrial adicional.
+Slots de obras vêm do distrito civil; slots de naves vêm do estaleiro. Somam por nível.
+Obras na lista `construction` ocupam slots; naves com `ready_at > last_updated` ocupam
+slots de estaleiro. Conclusão libera vaga; energia/workforce posteriores não mudam prazos.
+
+Pesquisa tem trabalho total inicial igual a `Technology.duration` (unidades de trabalho).
+`effective_research_rate = research_rate * min(energy_coverage, workforce_coverage)`.
+Cada intervalo desconta taxa efetiva × segundos de `remaining_work`. A previsão de
+conclusão entra como boundary; após cada boundary a taxa e o ETA são recalculados.
+`complete_at` é somente previsão (null se pausada), não autoridade sobre progresso.
+Mudanças de tripulação na montagem também atualizam o ETA. Sem cobertura, trabalho
+é preservado. Não há tick global nem progresso por segundo persistido.
 
 ## Contrato HTTP
 

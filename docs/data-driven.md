@@ -18,6 +18,17 @@ Para adicionar conteúdo:
 2. aponte apenas para IDs já existentes ou conteúdo incluído;
 3. rode `python scripts/validate_game_data.py` e os testes.
 
+## Capacidades explícitas dos distritos
+
+`capacity` foi removido e passa a falhar como campo desconhecido.
+`industrial_capacity` é número finito >= 0 (processador: 2).
+`construction_slots` e `shipyard_slots` são inteiros estritos >= 0, padrão zero.
+O distrito civil declara 1 slot de obra; o estaleiro declara 1 slot de montagem.
+A engine soma propriedades por nível sem checagens por ID. `population_capacity`
+continua sendo suporte civil e `research_rate` capacidade científica nominal.
+`Technology.duration` permanece por compatibilidade, representando trabalho de pesquisa
+em segundos equivalentes à taxa 1; a duração real depende da taxa efetiva ao longo do tempo.
+
 ## Arquétipos e modos
 
 `stars/` define classe, peso, massa, idade, atividade e parâmetros de luminosidade.

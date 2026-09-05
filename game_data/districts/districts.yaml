@@ -7,7 +7,6 @@
   workforce: 4
   energy_consumption: 2
   production: {raw_ore: 2.0}
-  capacity: 1
 - id: solar_field
   name: Campo solar
   description: Gera capacidade energética em órbita baixa.
@@ -16,7 +15,6 @@
   duration: 18
   workforce: 2
   energy_generation: 8
-  capacity: 1
 - id: processor
   name: Processador de materiais
   description: Converte ferrita e voláteis em ligas utilizáveis.
@@ -27,7 +25,7 @@
   energy_consumption: 4
   processing: {raw_ore: 1.5, volatiles: 0.5}
   production: {refined_alloy: 1.0, components: 0.25}
-  capacity: 2
+  industrial_capacity: 2
 - id: research_lab
   name: Laboratório de pesquisa
   description: Sustenta pesquisa aplicada sem microgerenciar cientistas.
@@ -37,7 +35,6 @@
   workforce: 5
   energy_consumption: 3
   research_rate: 1
-  capacity: 1
 - id: civil_district
   name: Distrito civil
   description: Habitação, serviços e suporte populacional agregados.
@@ -47,7 +44,7 @@
   workforce: 3
   energy_consumption: 2
   population_capacity: 80
-  capacity: 1
+  construction_slots: 1
 - id: orbital_shipyard
   name: Estaleiro orbital
   description: Estrutura especial para montar naves na órbita do planeta.
@@ -56,4 +53,4 @@
   duration: 60
   workforce: 10
   energy_consumption: 6
-  capacity: 3
+  shipyard_slots: 1

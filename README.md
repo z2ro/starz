@@ -42,6 +42,14 @@ para comparar balanceamento, preservando uma cópia do estado anterior se necess
 
 ## Verificação
 
+`industrial_capacity` é a capacidade industrial nominal do processador; não é uma
+fila nem altera durações. `construction_slots` limita obras simultâneas (1 no distrito
+civil inicial); `shipyard_slots` limita naves em montagem (1 por estaleiro).
+Pesquisa consome `remaining_work` à taxa científica efetiva, afetada por energia e
+workforce. Seu ETA é recalculado; com cobertura zero fica pausada. Obras e montagem
+de naves mantêm duração fixa após a validação inicial.
+JSON antigo com pesquisa ativa é convertido automaticamente no próximo avanço.
+
 ```bash
 python -m unittest discover -s tests -v
 python -m compileall -q starz scripts tests

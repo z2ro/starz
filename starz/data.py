@@ -55,7 +55,9 @@ class District(Content):
     processing: dict[str, Positive] = Field(default_factory=dict)
     research_rate: float = Field(default=0, ge=0)
     population_capacity: int = Field(default=0, ge=0)
-    capacity: int = Field(default=1, ge=1)
+    industrial_capacity: NonNegative = 0
+    construction_slots: int = Field(default=0, ge=0, strict=True)
+    shipyard_slots: int = Field(default=0, ge=0, strict=True)
 
     @model_validator(mode="after")
     def process_has_outputs(self):

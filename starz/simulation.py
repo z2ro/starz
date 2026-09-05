@@ -57,17 +57,32 @@ class Engine:
         if not math.isfinite(now) or now < self.state.last_updated:
             raise DataValidationError('timestamp inválido ou anterior ao estado')
         cursor = self.state.last_updated
+        research = self.state.research
+        if research['active'] and 'remaining_work' not in research:
+            # Legacy fixed ETA: preserve outstanding work at the last saved instant.
+            research['remaining_work'] = max(0, research['complete_at'] - cursor) * self.capacities()['research_rate']
         self._complete_events(cursor)
+        self._research_eta()
         while cursor < now:
             boundaries = [item['complete_at'] for item in self.state.construction]
-            if self.state.research['active']:
+            if self.state.research['active'] and self.state.research['complete_at'] is not None:
                 boundaries.append(self.state.research['complete_at'])
             boundaries.extend(f['arrival_at'] for f in self.state.fleets if f['status'] == 'TRANSIT')
             boundary = min([now, *(stamp for stamp in boundaries if cursor < stamp <= now)])
             self._produce(boundary - cursor)
+            if research['active']:
+                research['remaining_work'] = max(0, research['remaining_work'] - self.capacities()['effective_research_rate'] * (boundary - cursor))
+                if research['complete_at'] is not None and boundary >= research['complete_at']:
+                    research['remaining_work'] = 0
             cursor = boundary
             self.state.last_updated = cursor
             self._complete_events(cursor)
+            self._research_eta()
+
+    def _research_eta(self) -> None:
+        research = self.state.research
+        rate = self.capacities()['effective_research_rate']
+        research['complete_at'] = self.state.last_updated + research['remaining_work'] / rate if research['active'] and rate > 0 else None
 
     def _complete_events(self, now: float) -> None:
         finished = sorted((item for item in self.state.construction if item["complete_at"] <= now), key=lambda item: (item['complete_at'], item['id']))
@@ -76,11 +91,12 @@ class Engine:
             self.state.notices.insert(0, f"Construção concluída: {item['id']}.")
         self.state.construction = [item for item in self.state.construction if item["complete_at"] > now]
         research = self.state.research
-        if research["active"] and research["complete_at"] <= now:
+        if research["active"] and research['remaining_work'] <= 0:
             research["completed"].append(research["active"])
             self.state.notices.insert(0, f"Pesquisa concluída: {research['active']}.")
             research["active"] = None
             research["complete_at"] = None
+            research['remaining_work'] = 0
         for fleet in sorted(self.state.fleets, key=lambda item: item['id']):
             if fleet["status"] == "TRANSIT" and fleet["arrival_at"] <= now:
                 fleet["x"], fleet["y"] = fleet["destination_x"], fleet["destination_y"]
@@ -89,23 +105,34 @@ class Engine:
 
     def capacities(self) -> dict[str, float]:
         generation = consumption = industrial = population_demand = research_rate = 0.0
+        construction_slots = shipyard_slots = 0
         for district_id, level in self.state.districts.items():
             district = self.catalog.get("districts", district_id)
             generation += district.energy_generation * level
             consumption += district.energy_consumption * level
-            industrial += district.capacity * level
+            industrial += district.industrial_capacity * level
+            construction_slots += district.construction_slots * level
+            shipyard_slots += district.shipyard_slots * level
             population_demand += district.workforce * level
             research_rate += district.research_rate * level
         crew = sum(ship["crew"] for ship in self.state.ships)
         supply = max(0, self.state.population_total - crew)
+        energy_coverage = 1.0 if consumption <= 0 else min(1.0, generation / consumption)
+        workforce_coverage = 1.0 if population_demand <= 0 else min(1.0, supply / population_demand)
+        shipyard_occupied = sum(ship.get('ready_at', 0) > self.state.last_updated for ship in self.state.ships)
         return {
             'energy_generation': generation, 'energy_consumption': consumption,
-            'energy_coverage': 1.0 if consumption <= 0 else min(1.0, generation / consumption),
-            'industrial': industrial, 'population_total': self.state.population_total,
+            'energy_coverage': energy_coverage,
+            'industrial_capacity': industrial, 'population_total': self.state.population_total,
+            'construction_slots': construction_slots,
+            'construction_slots_available': max(0, construction_slots - len(self.state.construction)),
+            'shipyard_slots': shipyard_slots,
+            'shipyard_slots_available': max(0, shipyard_slots - shipyard_occupied),
             'crew_committed': crew, 'workforce_supply': supply,
-            'workforce_demand': population_demand, 'population_demand': population_demand,
-            'workforce_coverage': 1.0 if population_demand <= 0 else min(1.0, supply / population_demand),
+            'workforce_demand': population_demand,
+            'workforce_coverage': workforce_coverage,
             'available_population': max(0, supply - population_demand), 'research_rate': research_rate,
+            'effective_research_rate': research_rate * min(energy_coverage, workforce_coverage),
         }
 
     def _produce(self, elapsed: float) -> None:
@@ -124,8 +151,8 @@ class Engine:
             raise DataValidationError("população disponível insuficiente")
         if capacities["energy_generation"] - capacities["energy_consumption"] < district.energy_consumption:
             raise DataValidationError("capacidade energética insuficiente")
-        if capacities["industrial"] < len(self.state.construction) + 1:
-            raise DataValidationError("capacidade industrial ocupada")
+        if capacities['construction_slots_available'] < 1:
+            raise DataValidationError('slots de construção ocupados ou indisponíveis')
         self._pay(district.cost)
         complete_at = self.state.last_updated + district.duration
         self.state.construction.append({"id": district_id, "complete_at": complete_at})
@@ -142,9 +169,9 @@ class Engine:
         if self.capacities()["research_rate"] <= 0:
             raise DataValidationError("nenhuma capacidade de pesquisa")
         self._pay(technology.cost)
-        complete_at = self.state.last_updated + technology.duration / self.capacities()["research_rate"]
-        self.state.research.update(active=technology_id, complete_at=complete_at)
-        return {"id": technology_id, "complete_at": complete_at}
+        self.state.research.update(active=technology_id, remaining_work=technology.duration)
+        self._research_eta()
+        return {'id': technology_id, 'complete_at': self.state.research['complete_at'], 'remaining_work': technology.duration}
 
     def build_ship(self, hull_id: str = "scout_hull", propulsion_id: str = "chemical_drive", fuel_id: str = "ion_fuel", now: float | None = None) -> dict[str, Any]:
         self.advance(now)
@@ -158,11 +185,14 @@ class Engine:
             raise DataValidationError("combustível incompatível com a propulsão")
         if self.capacities()['available_population'] < hull.crew:
             raise DataValidationError('tripulação disponível insuficiente')
+        if self.capacities()['shipyard_slots_available'] < 1:
+            raise DataValidationError('slots de estaleiro ocupados ou indisponíveis')
         if self.state.stocks.get(fuel_id, 0) < 1:
             raise DataValidationError("combustível insuficiente")
         self._pay(hull.cost)
         ship = {"id": str(uuid4()), "hull_id": hull_id, "propulsion_id": propulsion_id, "fuel_id": fuel_id, "crew": hull.crew, "mass": hull.mass, "ready_at": self.state.last_updated + hull.duration}
         self.state.ships.append(ship)
+        self._research_eta()
         return ship
 
     def _travel_subject(self, fleet_id: str | None, ship_id: str | None):

@@ -24,10 +24,14 @@ class ApiTests(unittest.TestCase):
                     response = await client.get('/api/state')
                     self.assertEqual(response.status_code, 200)
                     self.assertEqual(len(response.json()['travel_modes']), 3)
+                    self.assertEqual(response.json()['capacities']['industrial_capacity'], 0)
+                    self.assertEqual(response.json()['capacities']['construction_slots'], 1)
                     no_ship = await client.post('/api/travel-preview', json={'target_x': 1, 'target_y': 0, 'propulsion_id': 'chemical_drive', 'mode': 'NORMAL'})
                     self.assertEqual(no_ship.status_code, 400)
                     clock += 60
                     job = await post('/api/build', {'id': 'processor'})
+                    blocked = await client.post('/api/build', json={'id': 'solar_field'})
+                    self.assertEqual(blocked.status_code, 400)
                     clock = job['complete_at']
                     await client.get('/api/state')
                     job = await post('/api/research', {'id': 'orbital_engineering'})
@@ -37,6 +41,8 @@ class ApiTests(unittest.TestCase):
                     job = await post('/api/build', {'id': 'orbital_shipyard'})
                     clock = job['complete_at']
                     ship = await post('/api/build-ship')
+                    blocked = await client.post('/api/build-ship', json={})
+                    self.assertEqual(blocked.status_code, 400)
                     clock = ship['ready_at']
                     x, y = engine.state.system_x, engine.state.system_y
                     payload = {'target_x': x + 2, 'target_y': y, 'propulsion_id': 'chemical_drive', 'mode': 'NORMAL', 'ship_id': ship['id']}
