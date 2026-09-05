@@ -4,3 +4,5 @@ __pycache__/
 .venv/
 state.json
 dist/
+node_modules/
+state.json.tmp

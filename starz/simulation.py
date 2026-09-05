@@ -10,9 +10,9 @@ from uuid import uuid4
 
 from .data import Catalog, DataValidationError, District, Hull, Propulsion, Technology
 from .universe import StarSystem, find_spawn_system, generate_system
-
-
-MODES = {"ECONOMY": (1.55, 0.65, 0.8), "NORMAL": (1.0, 1.0, 1.0), "FORCED": (0.62, 2.2, 1.8)}
+from .effects import require_available
+from .travel import preview_travel as calculate_travel
+from .economy import produce
 
 
 @dataclass
@@ -45,20 +45,32 @@ class Engine:
 
     @classmethod
     def new(cls, catalog: Catalog, seed: str = "STARZ-ALPHA", now: float | None = None) -> "Engine":
-        system, report = find_spawn_system(seed)
-        state = GameState(seed, system.x, system.y, {"raw_ore": 220, "volatiles": 100, "refined_alloy": 140, "components": 55, "ion_fuel": 80, "fusion_fuel": 0}, districts={"civil_district": 1, "solar_field": 3, "ore_extractor": 1, "research_lab": 1}, last_updated=now or time.time(), notices=[f"Spawn avaliado: {report.score:.2f} / acesso inicial equilibrado."])
+        system, report = find_spawn_system(seed, catalog)
+        state = GameState(seed, system.x, system.y, {"raw_ore": 220, "volatiles": 100, "refined_alloy": 140, "components": 55, "ion_fuel": 80, "fusion_fuel": 0}, districts={"civil_district": 1, "solar_field": 3, "ore_extractor": 1, "research_lab": 1}, last_updated=time.time() if now is None else now, notices=[f"Spawn avaliado: {report.score:.2f} / acesso inicial equilibrado."])
         return cls(catalog, state)
 
     def system(self) -> StarSystem:
-        return generate_system(self.state.seed, self.state.system_x, self.state.system_y)
+        return generate_system(self.state.seed, self.state.system_x, self.state.system_y, self.catalog)
 
     def advance(self, now: float | None = None) -> None:
-        now = now or time.time()
-        elapsed = max(0, now - self.state.last_updated)
-        if elapsed:
-            self._produce(elapsed)
-        self.state.last_updated = now
-        finished = [item for item in self.state.construction if item["complete_at"] <= now]
+        now = time.time() if now is None else now
+        if not math.isfinite(now) or now < self.state.last_updated:
+            raise DataValidationError('timestamp inválido ou anterior ao estado')
+        cursor = self.state.last_updated
+        self._complete_events(cursor)
+        while cursor < now:
+            boundaries = [item['complete_at'] for item in self.state.construction]
+            if self.state.research['active']:
+                boundaries.append(self.state.research['complete_at'])
+            boundaries.extend(f['arrival_at'] for f in self.state.fleets if f['status'] == 'TRANSIT')
+            boundary = min([now, *(stamp for stamp in boundaries if cursor < stamp <= now)])
+            self._produce(boundary - cursor)
+            cursor = boundary
+            self.state.last_updated = cursor
+            self._complete_events(cursor)
+
+    def _complete_events(self, now: float) -> None:
+        finished = sorted((item for item in self.state.construction if item["complete_at"] <= now), key=lambda item: (item['complete_at'], item['id']))
         for item in finished:
             self.state.districts[item["id"]] = self.state.districts.get(item["id"], 0) + 1
             self.state.notices.insert(0, f"Construção concluída: {item['id']}.")
@@ -69,7 +81,7 @@ class Engine:
             self.state.notices.insert(0, f"Pesquisa concluída: {research['active']}.")
             research["active"] = None
             research["complete_at"] = None
-        for fleet in self.state.fleets:
+        for fleet in sorted(self.state.fleets, key=lambda item: item['id']):
             if fleet["status"] == "TRANSIT" and fleet["arrival_at"] <= now:
                 fleet["x"], fleet["y"] = fleet["destination_x"], fleet["destination_y"]
                 fleet["status"] = "ARRIVED"
@@ -85,29 +97,28 @@ class Engine:
             population_demand += district.workforce * level
             research_rate += district.research_rate * level
         crew = sum(ship["crew"] for ship in self.state.ships)
-        return {"energy_generation": generation, "energy_consumption": consumption, "industrial": industrial, "population_demand": population_demand, "available_population": max(0, self.state.population_total - population_demand - crew), "research_rate": research_rate}
+        supply = max(0, self.state.population_total - crew)
+        return {
+            'energy_generation': generation, 'energy_consumption': consumption,
+            'energy_coverage': 1.0 if consumption <= 0 else min(1.0, generation / consumption),
+            'industrial': industrial, 'population_total': self.state.population_total,
+            'crew_committed': crew, 'workforce_supply': supply,
+            'workforce_demand': population_demand, 'population_demand': population_demand,
+            'workforce_coverage': 1.0 if population_demand <= 0 else min(1.0, supply / population_demand),
+            'available_population': max(0, supply - population_demand), 'research_rate': research_rate,
+        }
 
     def _produce(self, elapsed: float) -> None:
-        minutes = elapsed / 60
         capacities = self.capacities()
-        energy_ratio = min(1.0, max(0.0, (capacities["energy_generation"] - capacities["energy_consumption"]) / max(1.0, capacities["energy_generation"])))
-        workforce_ratio = min(1.0, capacities["available_population"] / max(1.0, capacities["population_demand"]))
-        factor = min(energy_ratio, workforce_ratio)
-        for district_id, level in self.state.districts.items():
-            district = self.catalog.get("districts", district_id)
-            for resource_id, amount in district.production.items():
-                if district.processing:
-                    factor = min(factor, *(self.state.stocks.get(source, 0) / max(0.001, rate * minutes) for source, rate in district.processing.items()))
-                produced = amount * level * minutes * max(0, factor)
-                self.state.stocks[resource_id] = self.state.stocks.get(resource_id, 0) + produced
-                for source, rate in district.processing.items():
-                    self.state.stocks[source] = max(0, self.state.stocks.get(source, 0) - rate * level * minutes * max(0, factor))
+        if elapsed <= 0:
+            return
+        factor = min(capacities['energy_coverage'], capacities['workforce_coverage'])
+        produce(self.catalog, self.state.stocks, self.state.districts, elapsed, factor)
 
     def build(self, district_id: str, now: float | None = None) -> dict[str, Any]:
         self.advance(now)
         district: District = self.catalog.get("districts", district_id)  # type: ignore[assignment]
-        if district.unlock and district.unlock not in self.state.research["completed"]:
-            raise DataValidationError(f"requer pesquisa: {district.unlock}")
+        require_available(self.catalog, self.state, district)
         capacities = self.capacities()
         if capacities["available_population"] < district.workforce:
             raise DataValidationError("população disponível insuficiente")
@@ -116,7 +127,7 @@ class Engine:
         if capacities["industrial"] < len(self.state.construction) + 1:
             raise DataValidationError("capacidade industrial ocupada")
         self._pay(district.cost)
-        complete_at = (now or time.time()) + district.duration
+        complete_at = self.state.last_updated + district.duration
         self.state.construction.append({"id": district_id, "complete_at": complete_at})
         return {"id": district_id, "complete_at": complete_at}
 
@@ -127,12 +138,11 @@ class Engine:
             raise DataValidationError("já existe pesquisa em andamento")
         if technology_id in self.state.research["completed"]:
             raise DataValidationError("pesquisa já concluída")
-        if any(req not in self.state.research["completed"] for req in technology.requires):
-            raise DataValidationError("requirements de pesquisa não atendidos")
+        require_available(self.catalog, self.state, technology)
         if self.capacities()["research_rate"] <= 0:
             raise DataValidationError("nenhuma capacidade de pesquisa")
         self._pay(technology.cost)
-        complete_at = (now or time.time()) + technology.duration / self.capacities()["research_rate"]
+        complete_at = self.state.last_updated + technology.duration / self.capacities()["research_rate"]
         self.state.research.update(active=technology_id, complete_at=complete_at)
         return {"id": technology_id, "complete_at": complete_at}
 
@@ -140,52 +150,64 @@ class Engine:
         self.advance(now)
         hull: Hull = self.catalog.get("ships", hull_id)  # type: ignore[assignment]
         propulsion: Propulsion = self.catalog.get("propulsion", propulsion_id)  # type: ignore[assignment]
-        if self.state.districts.get("orbital_shipyard", 0) < 1:
-            raise DataValidationError("estaleiro orbital necessário")
+        for item in (hull, propulsion, self.catalog.get('fuels', fuel_id)):
+            require_available(self.catalog, self.state, item)
         if propulsion_id not in hull.compatible_propulsion:
             raise DataValidationError("propulsão incompatível com o casco")
         if fuel_id not in propulsion.compatible_fuels:
             raise DataValidationError("combustível incompatível com a propulsão")
-        if propulsion.requires and any(req not in self.state.research["completed"] for req in propulsion.requires):
-            raise DataValidationError("tecnologia de propulsão não pesquisada")
+        if self.capacities()['available_population'] < hull.crew:
+            raise DataValidationError('tripulação disponível insuficiente')
         if self.state.stocks.get(fuel_id, 0) < 1:
             raise DataValidationError("combustível insuficiente")
         self._pay(hull.cost)
-        ship = {"id": str(uuid4()), "hull_id": hull_id, "propulsion_id": propulsion_id, "fuel_id": fuel_id, "crew": hull.crew, "mass": hull.mass, "ready_at": (now or time.time()) + hull.duration}
+        ship = {"id": str(uuid4()), "hull_id": hull_id, "propulsion_id": propulsion_id, "fuel_id": fuel_id, "crew": hull.crew, "mass": hull.mass, "ready_at": self.state.last_updated + hull.duration}
         self.state.ships.append(ship)
         return ship
 
-    def preview_travel(self, target_x: int, target_y: int, propulsion_id: str, mode: str, ship: dict[str, Any] | None = None) -> dict[str, Any]:
-        if mode not in MODES:
-            raise DataValidationError(f"regime inválido: {mode}")
-        propulsion: Propulsion = self.catalog.get("propulsion", propulsion_id)  # type: ignore[assignment]
-        ship = ship or (self.state.ships[0] if self.state.ships else None)
+    def _travel_subject(self, fleet_id: str | None, ship_id: str | None):
+        if fleet_id and ship_id:
+            raise DataValidationError('selecione fleet_id ou ship_id')
+        fleets = sorted(self.state.fleets, key=lambda f: f['id'])
+        fleet = next((f for f in fleets if f['id'] == fleet_id), None) if fleet_id else None
+        if fleet_id and fleet is None:
+            raise DataValidationError('frota inexistente')
+        if not fleet_id and not ship_id:
+            fleet = next((f for f in fleets if f['status'] == 'ARRIVED'), None)
+        attached = {sid for f in fleets for sid in f['ship_ids']}
+        if fleet:
+            if fleet['status'] != 'ARRIVED':
+                raise DataValidationError('frota em trânsito')
+            if len(fleet['ship_ids']) != 1:
+                raise DataValidationError('slice suporta uma nave por frota')
+            ship = next((s for s in self.state.ships if s['id'] == fleet['ship_ids'][0]), None)
+            origin = (fleet['x'], fleet['y'])
+        else:
+            ship = next((s for s in self.state.ships if s['id'] not in attached and (s['id'] == ship_id if ship_id else s['ready_at'] <= self.state.last_updated)), None)
+            origin = (self.state.system_x, self.state.system_y)
         if ship is None:
-            raise DataValidationError("nenhuma nave disponível")
-        distance = max(1.0, math.hypot(target_x - self.state.system_x, target_y - self.state.system_y))
-        time_factor, fuel_factor, heat_factor = MODES[mode]
-        fuel: Any = self.catalog.get("fuels", ship["fuel_id"])
-        fuel_cost = max(1.0, math.ceil(ship["mass"] * distance * fuel_factor / propulsion.fuel_efficiency / fuel.energy_density))
-        seconds = distance * 180 * time_factor / propulsion.speed_factor
-        return {"distance": round(distance, 2), "eta_seconds": round(seconds), "fuel_cost": fuel_cost, "heat": round(propulsion.thermal_load * heat_factor, 2), "signature": round(propulsion.signature * heat_factor, 2), "mode": mode}
+            raise DataValidationError('nenhuma nave livre disponível')
+        if ship['ready_at'] > self.state.last_updated:
+            raise DataValidationError('nave ainda em montagem')
+        return fleet, ship, origin
 
-    def send_fleet(self, target_x: int, target_y: int, propulsion_id: str, mode: str, now: float | None = None) -> dict[str, Any]:
+    def preview_travel(self, target_x: int, target_y: int, propulsion_id: str, mode: str, *, fleet_id: str | None = None, ship_id: str | None = None) -> dict[str, Any]:
+        fleet, ship, origin = self._travel_subject(fleet_id, ship_id)
+        require_available(self.catalog, self.state, self.catalog.get('travel_modes', mode))
+        return {**calculate_travel(self.catalog, origin, (target_x, target_y), ship, propulsion_id, mode), 'fleet_id': fleet['id'] if fleet else None, 'ship_id': ship['id']}
+
+    def send_fleet(self, target_x: int, target_y: int, propulsion_id: str, mode: str, now: float | None = None, *, fleet_id: str | None = None, ship_id: str | None = None) -> dict[str, Any]:
         self.advance(now)
-        ship = next((candidate for candidate in self.state.ships if not any(candidate["id"] in fleet["ship_ids"] for fleet in self.state.fleets)), None)
-        if ship is None:
-            raise DataValidationError("nenhuma nave livre")
-        if ship["ready_at"] > (now or time.time()):
-            raise DataValidationError("nave ainda em montagem")
-        if ship["propulsion_id"] != propulsion_id:
-            raise DataValidationError("propulsão solicitada não está instalada")
-        preview = self.preview_travel(target_x, target_y, propulsion_id, mode, ship)
-        if self.state.stocks.get(ship["fuel_id"], 0) < preview["fuel_cost"]:
-            raise DataValidationError("combustível insuficiente para a viagem")
-        self.state.stocks[ship["fuel_id"]] -= preview["fuel_cost"]
-        departure = now or time.time()
-        fleet = {"id": str(uuid4()), "name": f"Fleet {len(self.state.fleets) + 1:02d}", "ship_ids": [ship["id"]], "x": self.state.system_x, "y": self.state.system_y, "destination_x": target_x, "destination_y": target_y, "status": "TRANSIT", "departure_at": departure, "arrival_at": departure + preview["eta_seconds"], "propulsion": propulsion_id, "mode": mode, "fuel_cost": preview["fuel_cost"]}
-        self.state.fleets.append(fleet)
-        return {**fleet, "preview": preview}
+        fleet, ship, origin = self._travel_subject(fleet_id, ship_id)
+        preview = self.preview_travel(target_x, target_y, propulsion_id, mode, fleet_id=fleet['id'] if fleet else None, ship_id=None if fleet else ship['id'])
+        if self.state.stocks.get(ship['fuel_id'], 0) < preview['fuel_cost']:
+            raise DataValidationError('combustível insuficiente para a viagem')
+        self.state.stocks[ship['fuel_id']] -= preview['fuel_cost']
+        if fleet is None:
+            fleet = {'id': str(uuid4()), 'name': f'Fleet {len(self.state.fleets) + 1:02d}', 'ship_ids': [ship['id']], 'x': origin[0], 'y': origin[1]}
+            self.state.fleets.append(fleet)
+        fleet.update(destination_x=target_x, destination_y=target_y, status='TRANSIT', departure_at=self.state.last_updated, arrival_at=self.state.last_updated + preview['eta_seconds'], propulsion=propulsion_id, mode=mode, fuel_cost=preview['fuel_cost'])
+        return {**fleet, 'preview': preview}
 
     def _pay(self, costs: dict[str, float]) -> None:
         missing = [f"{key} ({amount:g})" for key, amount in costs.items() if self.state.stocks.get(key, 0) < amount]

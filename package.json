@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "test": "node --test tests/frontend.test.cjs"
+  },
+  "devDependencies": { "typescript": "5.9.3" }
+}

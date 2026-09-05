@@ -63,9 +63,10 @@ class CatalogContractTests(unittest.TestCase):
 
 class SimulationTests(unittest.TestCase):
     def test_universe_and_spawn_are_deterministic(self):
-        self.assertEqual(generate_system("seed", 4, -2), generate_system("seed", 4, -2))
-        self.assertNotEqual(generate_system("seed", 4, -2), generate_system("seed", 4, -1))
-        self.assertTrue(evaluate_viability(generate_system("seed", 4, -2)).score >= 0)
+        catalog = Catalog.load(ROOT / 'game_data')
+        self.assertEqual(generate_system("seed", 4, -2, catalog), generate_system("seed", 4, -2, catalog))
+        self.assertNotEqual(generate_system("seed", 4, -2, catalog), generate_system("seed", 4, -1, catalog))
+        self.assertTrue(evaluate_viability(generate_system("seed", 4, -2, catalog)).score >= 0)
 
     def test_economy_construction_research_ship_and_travel(self):
         catalog = Catalog.load(ROOT / "game_data")

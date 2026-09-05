@@ -1,0 +1,21 @@
+- id: rocky_world
+  name: Mundo rochoso
+  description: Perfil físico inicial do slice.
+  category: planet
+  weight: 1
+  star_archetypes: [f_class, g_class, k_class, m_class]
+  mass_range: [0.6, 2.9]
+  radius_range: [0.75, 1.35]
+  gravity_range: [0.65, 1.65]
+  orbital_distance_range: [0.75, 2.15]
+  temperature_base: 185
+  temperature_scale: 90
+  atmosphere_profiles: [thin nitrogen, temperate nitrogen, dense methane]
+  radiation_range: [0.5, 1.2]
+  magnetic_field_range: [0.3, 1.7]
+  water_range: [20, 90]
+  geological_activity_range: [0, 1]
+  mineral_profile:
+    raw_ore: [0.8, 1.5]
+    volatiles: [0.6, 1.4]
+  usable_surface_range: [45, 95]

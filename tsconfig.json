@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "none",
+    "lib": ["ES2021", "DOM"],
+    "strict": true,
+    "noEmitOnError": true,
+    "outFile": "frontend/app.js"
+  },
+  "files": ["frontend/src/main.ts"]
+}

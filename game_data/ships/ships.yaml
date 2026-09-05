@@ -7,3 +7,4 @@
   cost: {refined_alloy: 16, components: 8}
   duration: 30
   compatible_propulsion: [chemical_drive, nuclear_drive]
+  requires: [orbital_shipyard]

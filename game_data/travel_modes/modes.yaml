@@ -1,0 +1,24 @@
+- id: ECONOMY
+  name: Economy
+  description: Menor consumo, maior duração.
+  category: travel
+  travel_time_modifier: 1.55
+  fuel_modifier: 0.65
+  thermal_modifier: 0.8
+  signature_modifier: 0.8
+- id: NORMAL
+  name: Normal
+  description: Operação nominal.
+  category: travel
+  travel_time_modifier: 1.0
+  fuel_modifier: 1.0
+  thermal_modifier: 1.0
+  signature_modifier: 1.0
+- id: FORCED
+  name: Forced
+  description: Menor duração, maior consumo e assinatura.
+  category: travel
+  travel_time_modifier: 0.62
+  fuel_modifier: 2.2
+  thermal_modifier: 1.8
+  signature_modifier: 1.8

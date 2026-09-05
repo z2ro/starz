@@ -1,0 +1,44 @@
+- id: k_class
+  name: K-class
+  description: Arquétipo estelar do slice.
+  category: star
+  stellar_class: K
+  weight: 1
+  mass_range: [0.65, 1.85]
+  luminosity_offset: 0.45
+  luminosity_scale_range: [0.6, 1.1]
+  activity_range: [0.15, 0.85]
+  age_range: [1, 10]
+- id: g_class
+  name: G-class
+  description: Arquétipo estelar do slice.
+  category: star
+  stellar_class: G
+  weight: 1
+  mass_range: [0.65, 1.85]
+  luminosity_offset: 0.45
+  luminosity_scale_range: [0.6, 1.1]
+  activity_range: [0.15, 0.85]
+  age_range: [1, 10]
+- id: f_class
+  name: F-class
+  description: Arquétipo estelar do slice.
+  category: star
+  stellar_class: F
+  weight: 1
+  mass_range: [0.65, 1.85]
+  luminosity_offset: 0.45
+  luminosity_scale_range: [0.6, 1.1]
+  activity_range: [0.15, 0.85]
+  age_range: [1, 10]
+- id: m_class
+  name: M-class
+  description: Arquétipo estelar do slice.
+  category: star
+  stellar_class: M
+  weight: 1
+  mass_range: [0.65, 1.85]
+  luminosity_offset: 0.45
+  luminosity_scale_range: [0.6, 1.1]
+  activity_range: [0.15, 0.85]
+  age_range: [1, 10]
