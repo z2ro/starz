@@ -1,21 +1,27 @@
 import asyncio
-import tempfile
+import copy
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 import httpx
 
 from starz import api
-from starz.simulation import Engine, load_or_create
+from starz.simulation import Engine
 
 
 class ApiTests(unittest.TestCase):
-    def test_http_smoke_two_trips_and_persistence(self):
+    def test_http_action_contract_without_database(self):
         async def smoke():
             clock = 1000
             engine = Engine.new(api.catalog, now=clock)
-            with tempfile.TemporaryDirectory() as directory, patch.object(api, 'engine', engine), patch.object(api, 'ROOT', Path(directory)), patch('starz.simulation.time.time', side_effect=lambda: clock):
+            class MemoryService:
+                def run(self, call):
+                    candidate = Engine(api.catalog, copy.deepcopy(engine.state))
+                    candidate.advance(clock)
+                    result = call(candidate)
+                    engine.state = candidate.state
+                    return result
+            with patch.object(api.app.state, 'store', MemoryService(), create=True):
                 async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api.app), base_url='http://test') as client:
                     async def post(endpoint, payload=None):
                         response = await client.post(endpoint, json=payload or {})
@@ -68,8 +74,6 @@ class ApiTests(unittest.TestCase):
                     self.assertEqual(response.json()['fleets'][0]['eta'], 0)
                     self.assertEqual(engine.state.stocks['ion_fuel'], fuel_before - 30)
                     self.assertTrue(all(value >= 0 for value in engine.state.stocks.values()))
-                    restored = load_or_create(api.catalog, Path(directory) / 'state.json')
-                    self.assertEqual(restored.state.to_dict(), engine.state.to_dict())
                     invalid = await client.post('/api/travel', json={**payload, 'target_x': 200})
                     self.assertEqual(invalid.status_code, 422)
         asyncio.run(smoke())

@@ -16,6 +16,7 @@
 - Obras e montagem têm prazo fixo após validação inicial; pesquisa progride conforme
   cobertura contínua de energia e workforce, podendo pausar e retomar.
 - Na foundation, indústria nominal é informativa; não aumenta paralelismo ou velocidade.
+- PostgreSQL persiste estado; YAML continua definindo conteúdo, sem tabelas espelhadas.
 
 ## Pending
 
@@ -24,4 +25,4 @@
 - Colonização avançada, diplomacia e logística entre planetas.
 - Fenômenos dinâmicos, debris e efeitos ambientais de guerra.
 - Política de clusters de spawn para escala multi-jogador.
-- Modelo definitivo de banco, autenticação e jobs de produção.
+- Autenticação, ownership multiusuário e operação em produção.

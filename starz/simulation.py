@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-import json
 import math
-from pathlib import Path
 import time
 from typing import Any
 from uuid import uuid4
@@ -58,9 +56,6 @@ class Engine:
             raise DataValidationError('timestamp inválido ou anterior ao estado')
         cursor = self.state.last_updated
         research = self.state.research
-        if research['active'] and 'remaining_work' not in research:
-            # Legacy fixed ETA: preserve outstanding work at the last saved instant.
-            research['remaining_work'] = max(0, research['complete_at'] - cursor) * self.capacities()['research_rate']
         self._complete_events(cursor)
         self._research_eta()
         while cursor < now:
@@ -92,6 +87,7 @@ class Engine:
         self.state.construction = [item for item in self.state.construction if item["complete_at"] > now]
         research = self.state.research
         if research["active"] and research['remaining_work'] <= 0:
+            research.setdefault('completed_at', {})[research['active']] = now
             research["completed"].append(research["active"])
             self.state.notices.insert(0, f"Pesquisa concluída: {research['active']}.")
             research["active"] = None
@@ -155,7 +151,7 @@ class Engine:
             raise DataValidationError('slots de construção ocupados ou indisponíveis')
         self._pay(district.cost)
         complete_at = self.state.last_updated + district.duration
-        self.state.construction.append({"id": district_id, "complete_at": complete_at})
+        self.state.construction.append({"id": district_id, "complete_at": complete_at, "job_id": str(uuid4()), "started_at": self.state.last_updated})
         return {"id": district_id, "complete_at": complete_at}
 
     def research(self, technology_id: str, now: float | None = None) -> dict[str, Any]:
@@ -245,17 +241,3 @@ class Engine:
             raise DataValidationError("recursos insuficientes: " + ", ".join(missing))
         for key, amount in costs.items():
             self.state.stocks[key] -= amount
-
-
-def load_or_create(catalog: Catalog, path: str | Path, seed: str = "STARZ-ALPHA") -> Engine:
-    path = Path(path)
-    if path.exists():
-        return Engine(catalog, GameState.from_dict(json.loads(path.read_text())))
-    return Engine.new(catalog, seed)
-
-
-def save(engine: Engine, path: str | Path) -> None:
-    path = Path(path)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(engine.state.to_dict(), indent=2))
-    temporary.replace(path)

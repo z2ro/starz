@@ -49,7 +49,7 @@ calor/assinatura não negativos. Ranges são pares ordenados, percentuais ficam 
 Somente `Technology` declara `unlocks`. A conclusão entra em `research.completed`;
 `EFFECT_HANDLERS['unlock_content']` resolve os IDs declarados a partir dessa lista.
 O resultado é derivado, não um segundo estoque persistido de permissões. Assim,
-reler um JSON ou repetir `advance` não reaplica bônus ou duplica estado.
+recarregar o estado do banco ou repetir `advance` não reaplica bônus ou duplica estado.
 
 Conteúdo mencionado em qualquer unlock fica bloqueado até uma das tecnologias que
 o libera estar concluída. `requires` é uma conjunção: tecnologias precisam estar
@@ -67,3 +67,16 @@ O antigo campo genérico `effects` foi removido: nenhuma game data o usava, e
 `modify_production` não tinha handler. Declará-lo agora falha explicitamente.
 O registry contém apenas o efeito realmente executado: `unlock_content` com os
 dados tipados de `Technology`. Não há scripts, DSL ou expressões executáveis em YAML.
+
+## PostgreSQL não replica definições
+
+Stocks, distritos, jobs, pesquisas, naves e frotas armazenam content IDs por string.
+Não existem tabelas de definição de recursos, tecnologias ou arquétipos. Bootstrap
+e cada leitura transacional validam referências persistidas contra o Catalog.
+Remover/renomear um ID em uso exige uma migração explícita futura, nunca fallback.
+
+Naves guardam IDs + snapshots de massa e tripulação. Parâmetros de motor/combustível
+e regimes continuam vivos no catálogo para novas ordens. Prazos de jobs e movimento
+já contratado são persistidos e não recalculados por alteração de balanceamento.
+O universo procedural continua dependente da seed e do catálogo; mudar arquétipos
+pode alterar propriedades regeneradas de sistemas já materializados.

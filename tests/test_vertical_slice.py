@@ -5,7 +5,8 @@ from pathlib import Path
 import yaml
 
 from starz.data import Catalog, DataValidationError
-from starz.simulation import Engine, load_or_create, save
+from starz.simulation import Engine
+from tests.json_fixture import load_or_create, save
 from starz.universe import evaluate_viability, generate_system
 
 

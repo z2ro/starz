@@ -6,7 +6,8 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from starz.data import Catalog, DataValidationError, District
-from starz.simulation import Engine, load_or_create, save
+from starz.simulation import Engine
+from tests.json_fixture import load_or_create, save
 
 
 class CapacityTests(unittest.TestCase):
@@ -105,10 +106,10 @@ class CapacityTests(unittest.TestCase):
         e.advance(70)
         self.assertIn('orbital_engineering', e.state.research['completed'])
 
-    def test_legacy_research_conversion(self):
+    def test_saved_research_remaining_work(self):
         e = self.e
         e.state.last_updated = 10
-        e.state.research.update(active='orbital_engineering', complete_at=45)
+        e.state.research.update(active='orbital_engineering', complete_at=45, remaining_work=35)
         e.advance(20)
         self.assertEqual(e.state.research['remaining_work'], 25)
 

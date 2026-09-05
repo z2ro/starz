@@ -4,19 +4,24 @@ StarZ usa um monólito modular:
 
 ```text
 FastAPI (api.py)
-  -> simulation.py (state, timestamps, rules)
+  -> db/store.py (transação e mapper ORM ↔ GameState)
+    -> simulation.py (state, timestamps, rules)
       -> universe.py (seed + coordinates)
       -> data.py (YAML + Pydantic)
       -> economy.py (cobertura, receitas e esgotamento de insumos)
       -> travel.py (origem explícita, distância, ETA e consumo)
       -> effects.py (handler de unlock e requirements)
-  -> state.json (MVP persistence)
+    -> db/models.py (SQLAlchemy 2 / PostgreSQL)
+alembic (schema) / bootstrap (dados iniciais)
 frontend/ (static TypeScript source + browser artifact)
 ```
 
 O núcleo não depende de FastAPI nem de banco. A engine recebe `now` explicitamente, usa timestamps para trabalho de longa duração e avança estado de forma lazy quando consultado.
 
-O JSON é um adaptador deliberadamente pequeno para o slice local. A fronteira de persistência permite trocar isso por banco relacional e migrations sem mover as regras de simulação.
+O PostgreSQL é a única fonte de estado no runtime. `Store.run` abre transação,
+trava a linha do império, carrega GameState, avança a engine e persiste o resultado.
+O ORM não entra na engine. Relógio real é fornecido depois de obter o lock; testes
+podem passar `now` explicitamente. Detalhes em [persistence.md](persistence.md).
 
 ## Limites
 
@@ -53,11 +58,10 @@ TRANSIT e o destino após ARRIVED; não há interpolação visual contínua nest
 
 O estoque de combustível continua global ao jogador neste slice; não representa
 reabastecimento local ou logística interplanetária. Não houve expansão desse sistema.
-O save continua atomicamente substituindo o JSON por arquivo temporário. A API usa
-um lock de processo para serializar leitura/avanço/ação/save entre requisições locais.
-Executar apenas um processo servidor. Pesquisa legada é convertida no primeiro avanço:
-`remaining_work = max(0, old_complete_at - last_updated) * research_rate` nominal.
-Trabalho restante já salvo é preservado, inclusive quando a pesquisa está pausada.
+READ COMMITTED + SELECT FOR UPDATE na linha do império serializa ações mesmo entre
+processos. Erro de domínio ou de constraint causa rollback de toda a transação,
+incluindo avanço lazy. Não há RLock local nem escrita de state.json.
+Trabalho restante salvo é preservado, inclusive quando a pesquisa está pausada.
 
 ## Capacidades e pesquisa contínua
 

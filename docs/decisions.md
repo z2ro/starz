@@ -6,6 +6,8 @@ Escolhidos para manter a engine determinística, tipada e testável com poucas d
 
 ## D002 — JSON local no vertical slice
 
+Histórico: substituído por D013. JSON não é mais usado no runtime.
+
 O requisito é provar persistência offline, não infraestrutura de produção. `state.json` torna o fluxo local reproduzível; banco relacional entra quando houver múltiplos jogadores, concorrência e autenticação.
 
 ## D003 — CSS planetário antes de WebGL
@@ -38,7 +40,7 @@ uma fleet ARRIVED por ID e, depois, nave pronta unattached. Destino igual à ori
 ## D008 — Unlock derivado de pesquisa
 
 Manter `Technology.unlocks` e executar seu handler ao resolver disponibilidade evita
-duplicar permissões no JSON. Remover `effects` e `modify_production` sem implementação
+duplicar permissões no estado persistido. Remover `effects` e `modify_production` sem implementação
 fecha o contrato sem inventar um framework de efeitos. Requirements aceitam apenas
 tecnologias concluídas e distritos construídos.
 
@@ -51,6 +53,8 @@ versão anterior: a nova seleção e precisão alteram propriedades geradas. JSO
 o schema e pode ser carregado; novos testes de balanceamento devem usar partida nova.
 
 ## D010 — Compilação frontend e serialização local
+
+Histórico: o RLock/JSON abaixo foi substituído por transações PostgreSQL em D013.
 
 TypeScript 5.9.3 como dependência de desenvolvimento gera o artefato JS antes mantido
 manualmente. Sem troca de framework, navegação ou estilo. Testes Node usam o artefato
@@ -66,9 +70,31 @@ não adicionamos gate ou fórmula de velocidade. O alias industrial foi removido
 
 ## D012 — Trabalho científico e compatibilidade JSON
 
+Histórico: a compatibilidade JSON abaixo saiu do runtime em D013; trabalho científico permanece.
+
 Manter `Technology.duration` como trabalho à taxa nominal 1 evita renomear conteúdo
 desnecessariamente. `remaining_work` é autoritativo, `complete_at` é previsão dinâmica.
 Pesquisa pode ser iniciada com laboratório sem cobertura e permanecer pausada.
 Estado legado converte prazo restante em trabalho usando a taxa nominal no último
 estado salvo; não reconstrói mudanças históricas não registradas. Slots antigos
 excedentes são preservados até terminar e impedem novos inícios enquanto ocupados.
+
+## D013 — PostgreSQL e ownership local
+
+SQLAlchemy 2 síncrono + psycopg 3 + Alembic. PostgreSQL 17, Python 3.12 e Node 22 no
+Compose. Dependências Python resolvidas em requirements.lock; frontend usa npm ci.
+Um império placeholder, um planeta mutável e um sistema materializado. O DB inicia
+partida nova; não implementamos importador JSON para o estado descartável de dev.
+
+Transação READ COMMITTED e lock da linha do império precedem leitura/avanço/ação/save.
+Bootstrap usa upsert e lock na linha do universo antes de criar o império, sem seed nova
+em reinícios. Alembic cria apenas schema. Gameplay inicial fica no bootstrap.
+
+## D014 — Snapshots mínimos e timestamps
+
+Naves mantêm massa e crew históricos; demais parâmetros são consultados por IDs no
+catálogo. Jobs guardam UUID/started_at/complete_at; pesquisas guardam trabalho restante
+e completions com timestamp real do boundary. Conversão epoch ↔ UTC só no mapper.
+Movimento atual fica na própria fleet, sem tabela de histórico ou event sourcing.
+Notices são uma tabela com ordem monotônica por império, consultando os últimos 100;
+created_at registra a observação/persistência, não uma reconstrução histórica de eventos.

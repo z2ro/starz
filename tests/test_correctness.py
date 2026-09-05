@@ -7,7 +7,8 @@ from unittest.mock import patch
 import yaml
 
 from starz.data import Catalog, DataValidationError
-from starz.simulation import Engine, GameState, load_or_create, save
+from starz.simulation import Engine, GameState
+from tests.json_fixture import load_or_create, save
 from starz.effects import require_available, unlocked_content
 from starz.universe import generate_system
 
@@ -115,7 +116,7 @@ class OfflineAndFleetTests(unittest.TestCase):
     def test_simultaneous_boundaries_and_partition_are_deterministic(self):
         e = self.engine
         e.state.construction = [{'id': 'solar_field', 'complete_at': 60}, {'id': 'ore_extractor', 'complete_at': 60}]
-        e.state.research.update(active='orbital_engineering', complete_at=60)
+        e.state.research.update(active='orbital_engineering', complete_at=60, remaining_work=60)
         e.state.fleets = [{'id': 'fleet', 'name': 'F', 'status': 'TRANSIT', 'arrival_at': 60, 'x': 0, 'y': 0, 'destination_x': 1, 'destination_y': 0, 'ship_ids': []}]
         split = Engine(self.catalog, copy.deepcopy(e.state))
         split.state.construction.reverse()
