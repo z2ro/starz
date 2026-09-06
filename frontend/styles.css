@@ -73,6 +73,10 @@ small { display: block; color: var(--muted); font-size: 11px; }
 .panel + .panel { margin-top: 16px; }
 .panel p:last-child { margin-bottom: 0; }
 .overview-grid, .planet-layout { display: grid; grid-template-columns: minmax(430px, 1.25fr) minmax(320px, .75fr); gap: 18px; }
+.planet-3d-stage { position: relative; min-height: 390px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: #070b12; }
+.planet-3d-stage canvas { display: block; width: 100%; height: 100%; min-height: 390px; outline: none; }
+.planet-3d-stage .planet-stage { min-height: 390px; height: 100%; border: 0; border-radius: 0; }
+.planet-3d-fallback { background: transparent; }
 .command-summary .panel:first-child { min-height: 216px; }
 .two-columns, .three-columns, .tech-grid, .ship-builder, .fleet-list { display: grid; gap: 16px; margin-top: 16px; }
 .two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }

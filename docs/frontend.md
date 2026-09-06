@@ -20,10 +20,20 @@ a view no refresh:
 - `#/fleets`: posição, composição, missão e ETA;
 - `#/galaxy`: conhecimento da vizinhança, recentralização, previews e despacho.
 
-O planeta usa CSS e estado real: distritos geram marcadores por categoria, o estaleiro
-gera estrutura orbital e frotas presentes geram marcador. A representação é agregada,
-não uma simulação urbana. Cores são semânticas e discretas; foco de teclado e redução
-de movimento respeitam preferências do sistema.
+O Planet View usa um `PlanetRenderer` Three.js como camada de apresentação. A cena
+recebe um `PlanetVisualState` pronto do `main.ts`; não chama API e não decide regras do
+jogo. A superfície é uma CanvasTexture equiretangular determinística, baseada em
+`system + coordinates + planet_index`; água altera a proporção oceânica e temperatura
+altera a paleta. Atmosfera, iluminação estelar, districts agregados, estaleiro orbital
+e fleets `ARRIVED` são representados por primitives. Não há terrain simulation, física
+orbital ou autoridade de gameplay no renderer.
+
+O lifecycle é explícito: entrar em Planet cria o renderer, trocar o planeta recria a
+cena, e qualquer outra rota chama `dispose()`. Isso cancela o frame loop, desconecta o
+`ResizeObserver`, libera controls, geometrias, materiais, texturas e renderer. Se
+WebGL falhar, o stage mantém a representação CSS anterior e os dados HTML continuam
+disponíveis. `OrbitControls` permite rotação/zoom sem pan; a rotação automática é
+reduzida com `prefers-reduced-motion`.
 
 ## Dados e autoridade
 
@@ -59,5 +69,6 @@ polling por frame, scheduler nem tick server-side.
 
 ## Build
 
-`frontend/src/main.ts` é a fonte. `npm run build` gera `frontend/app.js`; não edite o
-artefato manualmente. `npm test` executa testes DOM leves sem dependência de navegador.
+`frontend/src/main.ts` é a fonte. `npm run build` executa typecheck e gera o bundle
+local de Three.js em `frontend/app.js`; não edite o artefato manualmente. `npm test`
+executa testes DOM leves e testes puros do visual sem dependência de navegador/WebGL.

@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2021",
-    "module": "none",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "lib": ["ES2021", "DOM"],
     "strict": true,
-    "noEmitOnError": true,
-    "outFile": "frontend/app.js"
+    "noEmitOnError": true
   },
   "files": ["frontend/src/main.ts"]
 }

@@ -1,3 +1,6 @@
+import { PlanetRenderer } from './planet3d/PlanetRenderer';
+import type { PlanetVisualState } from './planet3d/types';
+
 type Content = { id: string; name: string; description: string; category: string; cost: Record<string, number>; requires: string[] };
 type District = Content & { duration: number; workforce: number; energy_generation: number; energy_consumption: number; production: Record<string, number>; processing: Record<string, number>; research_rate: number; population_capacity: number; industrial_capacity: number; construction_slots: number; shipyard_slots: number };
 type Technology = Content & { duration: number; unlocks: string[] };
@@ -47,6 +50,7 @@ let previews: Record<string, TravelPreview> | undefined;
 let selectedPlanetIndex: number | undefined;
 let busy = false;
 let feedback: { kind: 'success' | 'error'; message: string } | undefined;
+let planetRenderer: PlanetRenderer | undefined;
 
 const esc = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 const fmt = (value: number | undefined, digits = 0) => Number(value ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: digits });
@@ -127,7 +131,7 @@ function planetView(): string {
   const orbit = orbitalDistricts.length
     ? `${orbitalDistricts.map(item => `<div class="metric-line"><span>${esc(item.name)}</span><b>Nível ${current.districts[item.id]}</b></div>`).join('')}<div class="metric-line"><span>Slots disponíveis</span><b>${current.capacities.shipyard_slots_available}/${current.capacities.shipyard_slots}</b></div>`
     : empty('Órbita não industrializada', 'Conclua a pesquisa necessária para liberar infraestrutura orbital.');
-  return `${planetSelector()}<header class="page-header"><div><div class="eyebrow">PLANETARY COMMAND</div><h1>${esc(p.name)}</h1><p>Ambiente físico, desenvolvimento e presença orbital.</p></div>${badge(`${Object.keys(current.districts).length} TIPOS DE DISTRITO`, 'blue')}</header><div class="planet-layout">${planetVisual(true)}${panel('Perfil físico', `<div class="facts-grid">${physical.map(([name, value]) => stat(name, String(value))).join('')}</div>`, 'PHYSICAL')}</div>${panel('Desenvolvimento planetário', `<div class="entity-table"><div class="table-head"><span>Infraestrutura</span><span>Nível</span><span>Impacto</span><span>Custo / duração</span><span></span></div>${content.districts.map(district => districtRow(district)).join('')}</div>`, 'DEVELOPMENT')}<div class="two-columns">${panel('Órbita', orbit)}${panel('Perfil mineral', Object.entries(p.mineral_profile).map(([id, value]) => `<div class="metric-line"><span>${esc(label(id))}</span><b>${fmt(value, 2)}×</b></div>`).join(''))}</div>`;
+  return `${planetSelector()}<header class="page-header"><div><div class="eyebrow">PLANETARY COMMAND</div><h1>${esc(p.name)}</h1><p>Ambiente físico, desenvolvimento e presença orbital.</p></div>${badge(`${Object.keys(current.districts).length} TIPOS DE DISTRITO`, 'blue')}</header><div class="planet-layout"><div id="planet-3d-stage" class="planet-3d-stage" aria-label="Visualização 3D de ${esc(p.name)}">${planetVisual(true)}</div>${panel('Perfil físico', `<div class="facts-grid">${physical.map(([name, value]) => stat(name, String(value))).join('')}</div>`, 'PHYSICAL')}</div>${panel('Desenvolvimento planetário', `<div class="entity-table"><div class="table-head"><span>Infraestrutura</span><span>Nível</span><span>Impacto</span><span>Custo / duração</span><span></span></div>${content.districts.map(district => districtRow(district)).join('')}</div>`, 'DEVELOPMENT')}<div class="two-columns">${panel('Órbita', orbit)}${panel('Perfil mineral', Object.entries(p.mineral_profile).map(([id, value]) => `<div class="metric-line"><span>${esc(label(id))}</span><b>${fmt(value, 2)}×</b></div>`).join(''))}</div>`;
 }
 
 function economyView(): string {
@@ -179,13 +183,42 @@ function galaxyView(): string {
 }
 
 function viewContent(view: View): string { const body = ({ overview, planet: planetView, economy: economyView, research: researchView, shipyard: shipyardView, fleets: fleetsView, galaxy: galaxyView } as Record<View, () => string>)[view](); return view === 'overview' ? planetSelector() + body : body; }
+function planetVisualState(): PlanetVisualState {
+  return {
+    seed: `${current.system.name}:${current.system.x}:${current.system.y}:${current.active_planet?.planet_index ?? 0}`,
+    systemX: current.system.x,
+    systemY: current.system.y,
+    planetIndex: current.active_planet?.planet_index ?? 0,
+    planet: current.system.planet,
+    star: { stellar_class: current.system.star.stellar_class, luminosity: current.system.star.luminosity },
+    districts: content.districts.filter(item => (current.districts[item.id] ?? 0) > 0).map(item => ({ id: item.id, category: item.category, level: current.districts[item.id] ?? 0 })),
+    capacities: { shipyard_slots: current.capacities.shipyard_slots },
+    fleets: current.fleets.map(fleet => ({ status: fleet.status, x: fleet.x, y: fleet.y })),
+  };
+}
+function disposePlanetRenderer(): void { planetRenderer?.dispose(); planetRenderer = undefined; }
+function syncPlanetRenderer(view: View): void {
+  if (view !== 'planet') { disposePlanetRenderer(); return; }
+  const stage = document.querySelector<HTMLElement>('#planet-3d-stage');
+  if (!stage || stage === app) return;
+  try {
+    planetRenderer = new PlanetRenderer(stage);
+    planetRenderer.update(planetVisualState());
+  } catch (error) {
+    disposePlanetRenderer();
+    stage.innerHTML = planetVisual(true);
+    stage.classList.add('planet-3d-fallback');
+    feedback = { kind: 'error', message: error instanceof Error ? 'WebGL indisponível; visualização alternativa ativada.' : 'Visualização 3D indisponível.' };
+  }
+}
 function topHud(): string {
   const active = temporalActivityCount();
   return `<header class="top-hud"><a class="brand" href="#/overview" aria-label="StarZ início"><span>STAR</span><b>Z</b><small>COMMAND</small></a><div class="hud-resources">${strategicResources().map(item => `<div><span>${esc(item.name)}</span><strong>${fmt(current.stocks[item.id], 1)}</strong></div>`).join('')}</div><div class="hud-status"><div title="Geração / demanda de energia"><span>ENERGIA</span><b class="${current.capacities.energy_coverage < 1 ? 'warning-text' : ''}">${fmt(current.capacities.energy_generation)} / ${fmt(current.capacities.energy_consumption)}</b></div><div><span>POPULAÇÃO</span><b>${fmt(current.population.total)} <small>/ ${fmt(current.population.available)} livre</small></b></div><div title="Pesquisa atual"><span>PESQUISA</span><b>${current.research.active ? esc(label(current.research.active)) : 'Inativa'}</b></div><div><span>OPERAÇÕES</span><b>${active}</b></div><button class="icon-button" data-action="refresh" aria-label="Sincronizar estado">↻</button></div></header>`;
 }
 function render(): void {
-  const activeView = route(); app.setAttribute('aria-busy', String(busy));
+  const activeView = route(); disposePlanetRenderer(); app.setAttribute('aria-busy', String(busy));
   app.innerHTML = `${topHud()}<div class="app-shell"><nav class="sidebar" aria-label="Navegação principal"><div class="nav-label">IMPÉRIO</div>${views.map(view => `<a href="#/${view.id}" class="${view.id === activeView ? 'active' : ''}" aria-current="${view.id === activeView ? 'page' : 'false'}"><span>${view.icon}</span>${esc(view.label)}</a>`).join('')}<div class="sidebar-footer"><span>HOME SYSTEM</span><b>${current.system.x}:${current.system.y}</b><small>${esc(current.system.name)}</small></div></nav><main class="main-content">${viewContent(activeView)}</main>${contextPanel()}</div>${feedback ? `<div class="toast ${feedback.kind}" role="status"><i>${feedback.kind === 'success' ? '✓' : '!'}</i><span>${esc(feedback.message)}</span><button data-dismiss aria-label="Fechar">×</button></div>` : ''}${busy ? '<div class="loading-line"></div>' : ''}`;
+  syncPlanetRenderer(activeView);
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> { const response = await fetch(url, init); const result = await response.json(); if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Não foi possível concluir a operação.'); return result as T; }

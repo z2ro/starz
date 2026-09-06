@@ -16,6 +16,12 @@ alembic (schema) / bootstrap (dados iniciais)
 frontend/ (SPA TypeScript sem framework + CSS + artefato browser gerado)
 ```
 
+O Planet View adiciona `frontend/src/planet3d/PlanetRenderer.ts` como camada visual
+isolada. Ele recebe dados já calculados pela API, usa Three.js apenas para renderizar
+e nunca altera GameState. `planetVisual.ts` concentra configurações determinísticas,
+paletas, posições e decisões visuais puras. O bundle é gerado localmente por esbuild;
+não há CDN nem assets 3D externos.
+
 O núcleo não depende de FastAPI nem de banco. A engine recebe `now` explicitamente, usa timestamps para trabalho de longa duração e avança estado de forma lazy quando consultado.
 
 O PostgreSQL é a única fonte de estado no runtime. `Store.run(empire_id, action,

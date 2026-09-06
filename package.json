@@ -2,8 +2,15 @@
   "private": true,
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc",
-    "test": "node --test tests/frontend.test.cjs"
+    "build": "npm run typecheck && esbuild frontend/src/main.ts --bundle --format=esm --minify-syntax --minify-whitespace --outfile=frontend/app.js && node -e 'const fs=require(\"fs\"),p=\"frontend/app.js\";fs.writeFileSync(p,fs.readFileSync(p,\"utf8\").replace(/[ \t]+$/gm,\"\").replace(/ +\t/g,\"\t\"))'",
+    "test": "node tests/frontend.test.cjs && node tests/planet_visual.test.cjs"
   },
-  "devDependencies": { "typescript": "5.9.3" }
+  "devDependencies": {
+    "@types/three": "^0.185.4",
+    "esbuild": "^0.28.2",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
+  }
 }

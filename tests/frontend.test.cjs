@@ -133,6 +133,8 @@ test('planet selector and colonization order use explicit targets', async () => 
   b.location.hash = '#/planet';
   vm.runInContext('render()', b.context);
   assert.match(b.app.innerHTML, /PLANETA ATIVO/);
+  assert.match(b.app.innerHTML, /planet-3d-stage/);
+  assert.match(b.app.innerHTML, /planet-sphere/);
   b.location.hash = '#/galaxy';
   vm.runInContext("selectedSystem = {...galaxyData.systems[0], home: false, planets: [{planet_index: 1, name: 'Aurelia II', gravity: 1, temperature: 290, water: 40, radiation: .2, viability: 'VIABLE', ownership: 'UNCLAIMED', colonization: {eligible: true, reason: null, population: 20, cost: {components: 10}}}]}; selectedPlanetIndex = 1; selectedSubject = 'fleet:fleet'; render()", b.context);
   assert.match(b.app.innerHTML, /Aurelia II/);
