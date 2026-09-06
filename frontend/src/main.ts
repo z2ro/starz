@@ -30,6 +30,7 @@ type Galaxy = { center: number[]; home: number[]; radius: number; systems: Galax
 type TravelPreview = { origin: number[]; destination: number[]; distance: number; eta_seconds: number; fuel_cost: number; heat: number; signature: number };
 type View = 'overview' | 'planet' | 'economy' | 'research' | 'shipyard' | 'fleets' | 'galaxy';
 type PlanetTab = 'overview' | 'districts' | 'orbit' | 'data';
+type PlanetVisualMode = 'image' | '3d';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const views: Array<{ id: View; label: string; icon: string }> = [
@@ -63,6 +64,7 @@ const duration = (seconds: number) => seconds < 60 ? `${Math.max(0, Math.ceil(se
 const remaining = (stamp: number | null) => stamp === null ? 'Pausada' : duration(stamp - Date.now() / 1000);
 const percent = (value: number) => Math.max(0, Math.min(100, value));
 const route = (): View => { const candidate = (typeof location === 'undefined' ? '' : location.hash.replace('#/', '')) as View; return views.some(view => view.id === candidate) ? candidate : 'overview'; };
+const planetVisualMode = (): PlanetVisualMode => typeof location === 'undefined' || !/(^|[?&])planet_visual=3d(&|$)/.test(location.search ?? '') ? 'image' : '3d';
 const cost = (items: Record<string, number>) => Object.keys(items).length ? Object.entries(items).map(([id, amount]) => `<span>${esc(label(id))} <b>${fmt(amount, 1)}</b></span>`).join('') : '<span>Sem custo</span>';
 const badge = (text: string, tone = 'neutral') => `<span class="badge ${tone}">${esc(text)}</span>`;
 const progress = (value: number, text: string) => `<div class="progress" aria-label="${esc(text)}"><i style="width:${percent(value)}%"></i></div><small>${esc(text)}</small>`;
@@ -160,7 +162,8 @@ function planetView(): string {
   const p = current.system.planet;
   const arrived = current.fleets.filter(fleet => fleet.status === 'ARRIVED' && fleet.x === current.system.x && fleet.y === current.system.y).length;
   const selector = planetSelector();
-  return `<div class="planet-command-view">${selector}<div class="planet-command-layout"><section class="planet-hero"><div id="planet-3d-stage" class="planet-3d-stage" aria-label="Visualização 3D de ${esc(p.name)}"><div class="planet-fallback-visual">${planetVisual(true)}</div><div class="planet-hero-header"><div class="eyebrow">PLANETARY COMMAND · ${esc(current.system.name)}</div><h1>${esc(p.name)}</h1><p>${current.system.x}:${current.system.y} · planeta ${(current.active_planet?.planet_index ?? 0) + 1}</p></div><div class="planet-hero-meta"><span>${esc(current.system.star.stellar_class)}-CLASS SYSTEM</span><span>${fmt(p.temperature)} K · ${fmt(p.gravity, 2)} g</span></div><div class="planet-overlays"><section class="planet-overlay construction-overlay"><div class="overlay-heading"><span>CONSTRUCTION QUEUE</span><b>${current.construction.length}</b></div>${planetOverlayQueue()}</section><section class="planet-overlay research-overlay"><div class="overlay-heading"><span>CURRENT RESEARCH</span><b>${current.research.active ? 'ACTIVE' : 'IDLE'}</b></div>${planetOverlayResearch()}<div class="overlay-fleet-row"><span>FLEETS IN SYSTEM</span><b>${arrived}</b><button class="overlay-link" data-goto="fleets">Ver frotas →</button></div></section></div></div>${planetRightPanel(planetTab)}</div><section class="planet-development"><div class="development-heading"><div><div class="eyebrow">PLANETARY INFRASTRUCTURE</div><h2>Desenvolvimento do planeta</h2></div><span>${Object.values(current.districts).reduce((sum, level) => sum + level, 0)} níveis ativos</span></div><div class="entity-table"><div class="table-head"><span>Infraestrutura</span><span>Nível</span><span>Impacto</span><span>Custo / duração</span><span></span></div>${content.districts.map(district => districtRow(district)).join('')}</div></section></div>`;
+  const mode = planetVisualMode();
+  return `<div class="planet-command-view">${selector}<div class="planet-command-layout"><section class="planet-hero"><div id="planet-3d-stage" class="planet-3d-stage" data-visual-mode="${mode}" aria-label="Visualização de ${esc(p.name)}"><div class="planet-artwork" role="img" aria-label="Arte espacial do planeta ${esc(p.name)}"></div><div class="planet-fallback-visual">${planetVisual(true)}</div><div class="planet-hero-header"><div><div class="eyebrow">✦ &nbsp; PLANET VIEW · ${esc(current.system.name)}</div><h1>${esc(p.name)}</h1><p>${current.system.x}:${current.system.y} · planeta ${(current.active_planet?.planet_index ?? 0) + 1}</p></div><span class="planet-online"><i></i> ONLINE</span></div><div class="planet-hero-meta"><span>${esc(current.system.star.stellar_class)}-CLASS SYSTEM</span><span>${fmt(p.temperature)} K · ${fmt(p.gravity, 2)} g</span></div><div class="planet-overlays"><section class="planet-overlay construction-overlay"><div class="overlay-heading"><span>CONSTRUCTION QUEUE</span><b>${current.construction.length} / ${current.capacities.construction_slots}</b></div>${planetOverlayQueue()}</section><section class="planet-overlay research-overlay"><div class="overlay-heading"><span>CURRENT RESEARCH</span><b>${current.research.active ? 'ACTIVE' : 'IDLE'}</b></div>${planetOverlayResearch()}<div class="overlay-fleet-row"><span>FLEETS IN SYSTEM</span><b>${arrived}</b><button class="overlay-link" data-goto="fleets">Ver frotas →</button></div></section></div></div>${planetRightPanel(planetTab)}</div><section class="planet-development"><div class="development-heading"><div><div class="eyebrow">PLANETARY INFRASTRUCTURE</div><h2>Desenvolvimento do planeta</h2></div><span>${Object.values(current.districts).reduce((sum, level) => sum + level, 0)} níveis ativos</span></div><div class="entity-table"><div class="table-head"><span>Infraestrutura</span><span>Nível</span><span>Impacto</span><span>Custo / duração</span><span></span></div>${content.districts.map(district => districtRow(district)).join('')}</div></section></div>`;
 }
 
 function economyView(): string {
@@ -227,7 +230,7 @@ function planetVisualState(): PlanetVisualState {
 }
 function disposePlanetRenderer(): void { planetRenderer?.dispose(); planetRenderer = undefined; }
 function syncPlanetRenderer(view: View): void {
-  if (view !== 'planet') { disposePlanetRenderer(); return; }
+  if (view !== 'planet' || planetVisualMode() !== '3d') { disposePlanetRenderer(); return; }
   const stage = document.querySelector<HTMLElement>('#planet-3d-stage');
   if (!stage || stage === app) return;
   try {

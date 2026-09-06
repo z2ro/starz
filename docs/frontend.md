@@ -23,6 +23,11 @@ a view no refresh:
 O Planet View é um command center de três regiões: hero espacial central, overlays de
 operação sobre o canvas e inspector contextual à direita. A infraestrutura planetária
 continua abaixo do hero; o planeta e a estrela são os elementos visuais dominantes.
+O modo visual principal usa o artwork local `frontend/assets/planet-command-hero.png`
+como hero image-first; o estado do planeta, overlays e ações continuam sendo renderizados
+a partir da API. O renderer Three.js permanece disponível para evolução visual futura e
+pode ser ativado com `?planet_visual=3d`, sem alterar a autoridade ou os contratos de
+gameplay.
 O `PlanetRenderer` Three.js é somente a camada de apresentação. A cena recebe um
 `PlanetVisualState` pronto do `main.ts`; não chama API e não decide regras do jogo. A
 superfície é uma CanvasTexture equiretangular determinística, baseada em
