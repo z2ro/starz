@@ -27,6 +27,7 @@ class GameState:
     fleets: list[dict[str, Any]] = field(default_factory=list)
     last_updated: float = 0
     notices: list[str] = field(default_factory=list)
+    system_knowledge: dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -44,7 +45,8 @@ class Engine:
     @classmethod
     def new(cls, catalog: Catalog, seed: str = "STARZ-ALPHA", now: float | None = None) -> "Engine":
         system, report = find_spawn_system(seed, catalog)
-        state = GameState(seed, system.x, system.y, {"raw_ore": 220, "volatiles": 100, "refined_alloy": 140, "components": 55, "ion_fuel": 80, "fusion_fuel": 0}, districts={"civil_district": 1, "solar_field": 3, "ore_extractor": 1, "research_lab": 1}, last_updated=time.time() if now is None else now, notices=[f"Spawn avaliado: {report.score:.2f} / acesso inicial equilibrado."])
+        started_at = time.time() if now is None else now
+        state = GameState(seed, system.x, system.y, {"raw_ore": 220, "volatiles": 100, "refined_alloy": 140, "components": 55, "ion_fuel": 80, "fusion_fuel": 0}, districts={"civil_district": 1, "solar_field": 3, "ore_extractor": 1, "research_lab": 1}, last_updated=started_at, notices=[f"Spawn avaliado: {report.score:.2f} / acesso inicial equilibrado."], system_knowledge={f'{system.x}:{system.y}': started_at})
         return cls(catalog, state)
 
     def system(self) -> StarSystem:
@@ -98,6 +100,19 @@ class Engine:
                 fleet["x"], fleet["y"] = fleet["destination_x"], fleet["destination_y"]
                 fleet["status"] = "ARRIVED"
                 self.state.notices.insert(0, f"{fleet['name']} chegou ao sistema de destino.")
+                if fleet.get('mission', 'MOVE') == 'SURVEY':
+                    self._survey(fleet['x'], fleet['y'], fleet['arrival_at'])
+
+    def _survey(self, x: int, y: int, surveyed_at: float) -> bool:
+        key = f'{x}:{y}'
+        if key in self.state.system_knowledge:
+            return False
+        self.state.system_knowledge[key] = surveyed_at
+        self.state.notices.insert(0, f'Sistema {x}:{y} mapeado.')
+        return True
+
+    def knowledge_level(self, x: int, y: int) -> str:
+        return 'SURVEYED' if f'{x}:{y}' in self.state.system_knowledge else 'UNKNOWN'
 
     def capacities(self) -> dict[str, float]:
         generation = consumption = industrial = population_demand = research_rate = 0.0
@@ -222,8 +237,10 @@ class Engine:
         require_available(self.catalog, self.state, self.catalog.get('travel_modes', mode))
         return {**calculate_travel(self.catalog, origin, (target_x, target_y), ship, propulsion_id, mode), 'fleet_id': fleet['id'] if fleet else None, 'ship_id': ship['id']}
 
-    def send_fleet(self, target_x: int, target_y: int, propulsion_id: str, mode: str, now: float | None = None, *, fleet_id: str | None = None, ship_id: str | None = None) -> dict[str, Any]:
+    def send_fleet(self, target_x: int, target_y: int, propulsion_id: str, mode: str, now: float | None = None, *, fleet_id: str | None = None, ship_id: str | None = None, mission: str = 'MOVE') -> dict[str, Any]:
         self.advance(now)
+        if mission not in {'MOVE', 'SURVEY'}:
+            raise DataValidationError('missão de frota inválida')
         fleet, ship, origin = self._travel_subject(fleet_id, ship_id)
         preview = self.preview_travel(target_x, target_y, propulsion_id, mode, fleet_id=fleet['id'] if fleet else None, ship_id=None if fleet else ship['id'])
         if self.state.stocks.get(ship['fuel_id'], 0) < preview['fuel_cost']:
@@ -232,7 +249,7 @@ class Engine:
         if fleet is None:
             fleet = {'id': str(uuid4()), 'name': f'Fleet {len(self.state.fleets) + 1:02d}', 'ship_ids': [ship['id']], 'x': origin[0], 'y': origin[1]}
             self.state.fleets.append(fleet)
-        fleet.update(destination_x=target_x, destination_y=target_y, status='TRANSIT', departure_at=self.state.last_updated, arrival_at=self.state.last_updated + preview['eta_seconds'], propulsion=propulsion_id, mode=mode, fuel_cost=preview['fuel_cost'])
+        fleet.update(destination_x=target_x, destination_y=target_y, status='TRANSIT', departure_at=self.state.last_updated, arrival_at=self.state.last_updated + preview['eta_seconds'], propulsion=propulsion_id, mode=mode, fuel_cost=preview['fuel_cost'], mission=mission)
         return {**fleet, 'preview': preview}
 
     def _pay(self, costs: dict[str, float]) -> None:

@@ -171,6 +171,7 @@ select { width: 100%; min-height: 39px; margin-top: 6px; padding: 0 34px 0 11px;
 .ship-list { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 10px; }
 .entity-simple { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 5px; background: #0c141e; }
 .entity-simple > div { flex: 1; }.ship-glyph { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--accent); }
+.ship-role { margin: -7px 0 12px; color: var(--accent-strong); font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
 
 .fleet-list { grid-template-columns: repeat(2, minmax(330px, 1fr)); }
 .fleet-emblem { display: grid; width: 48px; height: 48px; place-items: center; border: 1px solid #365366; border-radius: 50%; color: var(--accent-strong); background: #12222e; font-size: 20px; }
@@ -181,6 +182,9 @@ select { width: 100%; min-height: 39px; margin-top: 6px; padding: 0 34px 0 11px;
 .fleet-card > .action { width: 100%; margin-top: 18px; }
 
 .galaxy-layout { display: grid; grid-template-columns: minmax(420px, 1.25fr) minmax(320px, .75fr); min-height: 620px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: #080d15; }
+.map-centers { display: flex; flex-wrap: wrap; gap: 7px; margin: -10px 0 14px; }
+.map-center { min-height: 30px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); background: #0d1622; cursor: pointer; font-size: 10px; }
+.map-center:hover, .map-center.active { border-color: #3c6174; color: var(--text); background: #152635; }
 .star-map { position: relative; display: grid; grid-template: repeat(var(--map-size), 1fr) / repeat(var(--map-size), 1fr); min-height: 620px; padding: 45px; overflow: hidden; background: radial-gradient(circle at center, #14253a 0, #0a111c 40%, #070b12 77%); }
 .star-map::before { position: absolute; inset: 0; opacity: .55; background-image: radial-gradient(circle, #a9bdd2 0 1px, transparent 1.2px), radial-gradient(circle, #60758d 0 1px, transparent 1.2px); background-size: 137px 113px, 211px 173px; content: ""; }
 .map-grid { position: absolute; inset: 45px; z-index: 0; opacity: .15; background-image: linear-gradient(#66809a 1px, transparent 1px), linear-gradient(90deg, #66809a 1px, transparent 1px); background-size: calc(100% / var(--map-size)) calc(100% / var(--map-size)); pointer-events: none; }
@@ -189,6 +193,12 @@ select { width: 100%; min-height: 39px; margin-top: 6px; padding: 0 34px 0 11px;
 .system-node span { padding: 3px 5px; border-radius: 3px; font: 9px ui-monospace, monospace; }
 .system-node:hover i, .system-node.selected i { transform: scale(1.6); box-shadow: 0 0 16px 5px #8ecce477; }
 .system-node.selected span { color: white; background: #1d3445; }.system-node.home i { width: 15px; height: 15px; background: #8ecce4; box-shadow: 0 0 18px 6px #6badc477; }.system-node.class-m i { background: #d98676; }.system-node.class-f i { background: #dbe7ff; }.system-node.class-k i { background: #edb873; }
+.system-node.unknown i { width: 7px; height: 7px; border: 1px solid #657486; background: #17212d; box-shadow: none; }
+.system-node.unknown span { color: #69788a; }
+.knowledge-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.unknown-detail { display: grid; min-height: 210px; margin: 20px 0; padding: 30px; place-content: center; border: 1px dashed #334153; color: var(--muted); text-align: center; background: #0a111b; }
+.unknown-detail i { display: grid; width: 48px; height: 48px; margin: 0 auto 13px; place-items: center; border: 1px solid #49596b; border-radius: 50%; color: #8392a4; font: normal 22px ui-monospace, monospace; }
+.unknown-detail b { color: var(--text); }.unknown-detail p { max-width: 260px; margin: 7px 0 0; font-size: 12px; }
 .system-detail { padding: 28px; border-left: 1px solid var(--line); background: linear-gradient(160deg, #101a27, #0a111a); }
 .system-detail h2 { margin: 0; font-size: 25px; }.coordinates { font: 11px ui-monospace, monospace; }
 .selected-star { display: flex; align-items: center; gap: 12px; margin: 24px 0; padding: 14px; border-block: 1px solid var(--line); color: var(--muted); }

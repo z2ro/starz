@@ -32,6 +32,7 @@ e o escopo de [transações SQLAlchemy](https://docs.sqlalchemy.org/en/20/core/c
 | ship | UUID, owner, IDs de conteúdo, massa/crew snapshot, ready_at/criação |
 | fleet | UUID, owner, origem/posição, destino, estado e movimento atual |
 | fleet_ship | associação, ship_id único; FKs compostas garantem mesmo owner |
+| system_knowledge | coordenada mapeada, nível SURVEYED e instante por império |
 | notice | UUID, owner, sequência única, mensagem e criação |
 
 `star_system` e `planet_state` são 1:N; `empire` e `planet_state` também são 1:N.
@@ -43,6 +44,12 @@ permitido no schema para futuros corpos não ocupados, mas não é criado pelo s
 Nenhum GameState/definição YAML é armazenado como JSONB. Population está no planeta;
 stocks continuam globais ao império. Só o sistema inicial exige materialização atual.
 Visitar B ou C não precisa duplicar a física procedural no banco.
+
+Conhecimento usa chave primária `(empire_id, system_x, system_y)`. Ausência significa
+`UNKNOWN`; uma linha significa `SURVEYED`. Não há snapshot físico nessa tabela: estrela
+e planeta continuam derivados deterministicamente da seed e do catálogo. A migration
+marca o homeworld de impérios existentes como mapeado e preenche missões antigas com
+`MOVE`.
 
 ## Bootstrap e migrations
 

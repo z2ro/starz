@@ -118,6 +118,17 @@ componentes HTML pequenos e estilos reutilizáveis. CSS/SVG tipográfico represe
 planeta, órbitas e mapa sem WebGL ou assets externos.
 
 O conteúdo comum vem de `/api/catalog`, derivado do YAML. `/api/galaxy` limita o raio
-a 3 e só deriva sistemas da seed; não materializa nem cria descoberta. A UI sincroniza
+a 3 e só deriva sistemas da seed; abrir o mapa não materializa nem cria descoberta. A UI sincroniza
 o estado a cada 15 segundos apenas quando existem filas/movimentos e usa relógio local
 somente para apresentar countdowns. Regras e validação continuam no backend.
+
+## D017 — Conhecimento binário e survey na chegada
+
+Ausência de registro significa `UNKNOWN`; a única linha persistida é `SURVEYED`, única
+por império e coordenada. Detalhes físicos nunca são copiados: continuam derivados por
+seed + coordenadas + catálogo. O homeworld é backfilled como conhecido.
+
+`MOVE` e `SURVEY` são missões da mesma entidade Fleet. `SURVEY` registra conhecimento
+no boundary de chegada e emite notice apenas na primeira vez; não há duração de scan,
+sensor, XP ou nível intermediário. O ID `scout_hull` foi preservado para bancos
+existentes, enquanto YAML o apresenta como Horizon, `corvette`/`exploration`.

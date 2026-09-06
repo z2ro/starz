@@ -12,7 +12,7 @@ a view no refresh:
 - `#/research`: requisitos, status, trabalho restante, ETA e unlocks;
 - `#/shipyard`: slots, escolha de casco/motor/combustível e montagens;
 - `#/fleets`: posição, composição, missão e ETA;
-- `#/galaxy`: vizinhança, destino visual, previews e despacho.
+- `#/galaxy`: conhecimento da vizinhança, recentralização, previews e despacho.
 
 O planeta usa CSS e estado real: distritos geram marcadores por categoria, o estaleiro
 gera estrutura orbital e frotas presentes geram marcador. A representação é agregada,
@@ -24,7 +24,14 @@ de movimento respeitam preferências do sistema.
 `/api/catalog` expõe uma projeção read-only do catálogo YAML. Nomes, custos,
 requirements, capacidades e compatibilidades não são duplicados no TypeScript.
 `/api/galaxy?radius=2` gera somente a vizinhança visual, limitada pelo backend a raio
-1–3. Selecionar um node não cria descoberta nem materializa o sistema.
+1–3. Nodes `UNKNOWN` não recebem estrela ou planeta; `SURVEYED` recebe detalhes
+procedurais. O mapa pode ser centralizado no homeworld ou em frota `ARRIVED` e não
+aceita coordenada arbitrária. Selecionar um node não cria descoberta nem materializa.
+
+Ao escolher um sistema desconhecido, o despacho é apresentado como **Explorar
+sistema** e envia `mission=SURVEY`. Sistemas conhecidos usam `MOVE`. A chegada e a
+mudança de knowledge continuam sob autoridade do backend. Horizon é exibida como
+“Corveta · Exploração” a partir dos metadados YAML.
 
 O frontend nunca autoriza ações. Build, research, ship build e travel são validados
 pela engine. Erros de domínio viram toasts legíveis; loading e empty states explicam o

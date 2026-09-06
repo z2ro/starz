@@ -66,9 +66,14 @@ construção, pesquisa e chegada; esgotamento de insumos também delimita a prod
 
 Na interface: use **Planet** para construir o processador, **Research** para pesquisar
 engenharia orbital e **Shipyard** para montar a nave. Em **Galaxy**, selecione um
-sistema no mapa, uma nave/frota, compare os três regimes e envie. Depois da chegada,
-a mesma frota aceita nova ordem partindo de sua posição atual. Filas em andamento são
+sistema desconhecido, uma nave/frota, compare os três regimes e envie uma missão de
+levantamento. Ao chegar, o sistema passa de `UNKNOWN` para `SURVEYED` e revela seus
+dados físicos. A mesma frota aceita nova ordem partindo de sua posição atual. Filas são
 sincronizadas a cada 15 segundos enquanto a página está visível; não existe tick no servidor.
+
+Conhecimento é persistente e específico por império. O homeworld começa mapeado;
+abrir ou recentralizar Galaxy não materializa sistemas nem revela detalhes. A Horizon,
+primeira corveta de exploração, mantém o ID técnico estável `scout_hull`.
 
 Arquétipos estelares/planetários e regimes de viagem continuam em YAML. PostgreSQL
 armazena referências por ID, não cópias das definições. IDs persistidos removidos ou

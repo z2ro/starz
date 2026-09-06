@@ -3,6 +3,7 @@ from __future__ import annotations
 from math import hypot
 from pathlib import Path
 from contextlib import asynccontextmanager
+from typing import Literal
 
 from fastapi import Body, FastAPI, HTTPException, Query
 from sqlalchemy import text
@@ -58,6 +59,7 @@ class TravelRequest(BaseModel):
     mode: str
     fleet_id: str | None = None
     ship_id: str | None = None
+    mission: Literal['MOVE', 'SURVEY'] = 'MOVE'
 
 
 def action(call):
@@ -90,23 +92,36 @@ def game_catalog():
     return {kind: [item.model_dump() for _, item in sorted(catalog.items[kind].items())] for kind in kinds}
 
 
-@app.get('/api/galaxy')
-def galaxy(radius: int = Query(2, ge=1, le=3)):
-    def neighborhood(engine):
-        center = (engine.state.system_x, engine.state.system_y)
-        systems = []
-        for x in range(center[0] - radius, center[0] + radius + 1):
-            for y in range(center[1] - radius, center[1] + radius + 1):
-                system = generate_system(engine.state.seed, x, y, catalog)
-                systems.append({
-                    'id': system.id, 'name': system.name, 'x': x, 'y': y,
-                    'distance': round(hypot(x - center[0], y - center[1]), 2),
-                    'home': (x, y) == center,
+def galaxy_snapshot(engine, center: tuple[int, int], radius: int):
+    home = (engine.state.system_x, engine.state.system_y)
+    valid_centers = {home, *((fleet['x'], fleet['y']) for fleet in engine.state.fleets if fleet['status'] == 'ARRIVED')}
+    if center not in valid_centers:
+        raise DataValidationError('centro do mapa deve ser o homeworld ou uma frota em sistema')
+    systems = []
+    for x in range(center[0] - radius, center[0] + radius + 1):
+        for y in range(center[1] - radius, center[1] + radius + 1):
+            level = engine.knowledge_level(x, y)
+            item = {'id': f'{x}:{y}', 'x': x, 'y': y, 'distance': round(hypot(x - center[0], y - center[1]), 2), 'home': (x, y) == home, 'knowledge_level': level}
+            if level == 'SURVEYED':
+                system = generate_system(engine.state.seed, x, y, engine.catalog)
+                item.update({
+                    'id': system.id, 'name': system.name,
                     'star': {'stellar_class': system.star.stellar_class, 'luminosity': system.star.luminosity, 'activity': system.star.activity},
                     'planet': {'name': system.planet.name, 'gravity': system.planet.gravity, 'temperature': system.planet.temperature, 'water': system.planet.water, 'radiation': system.planet.radiation},
                 })
-        return {'center': list(center), 'radius': radius, 'systems': systems}
-    return action(neighborhood)
+            systems.append(item)
+    return {'center': list(center), 'home': list(home), 'radius': radius, 'systems': systems}
+
+
+@app.get('/api/galaxy')
+def galaxy(
+    radius: int = Query(2, ge=1, le=3),
+    center_x: int | None = Query(None, ge=-100, le=100),
+    center_y: int | None = Query(None, ge=-100, le=100),
+):
+    if (center_x is None) != (center_y is None):
+        raise HTTPException(status_code=422, detail='center_x e center_y devem ser informados juntos')
+    return action(lambda engine: galaxy_snapshot(engine, (engine.state.system_x, engine.state.system_y) if center_x is None else (center_x, center_y), radius))
 
 
 def state_snapshot(engine):
@@ -132,7 +147,7 @@ def build_ship(request: BuildShipRequest = Body(default=BuildShipRequest())):
 
 @app.post("/api/travel")
 def travel(request: TravelRequest):
-    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id))
+    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id, mission=request.mission))
 
 
 @app.post("/api/travel-preview")

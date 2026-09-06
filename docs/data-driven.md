@@ -12,6 +12,10 @@ O loader também verifica:
 
 Fórmulas continuam em Python (`calculate`/métodos da engine); YAML fornece parâmetros. Um novo distrito, casco ou propulsor que use campos existentes é adicionado como YAML, sem `if` pelo ID.
 
+Cascos declaram `classification` e `role` como metadados estáveis de apresentação.
+A Horizon mantém o ID `scout_hull`, mas é exibida como `corvette` / `exploration`;
+esses campos pertencem ao catálogo e não são duplicados nas linhas de nave.
+
 Para adicionar conteúdo:
 
 1. crie um item no diretório da categoria;

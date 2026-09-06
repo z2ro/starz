@@ -14,6 +14,10 @@ ROOT = Path(__file__).parents[1]
 
 
 class CatalogContractTests(unittest.TestCase):
+    def test_horizon_has_explicit_classification_and_role(self):
+        hull = Catalog.load(ROOT / 'game_data').get('ships', 'scout_hull')
+        self.assertEqual((hull.name, hull.classification, hull.role), ('Horizon', 'corvette', 'exploration'))
+
     def write_catalog(self, files: dict[str, list[dict]]) -> Path:
         root = Path(tempfile.mkdtemp())
         for relative, entries in files.items():

@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from starz.data import Catalog, DataValidationError
+from starz.api import galaxy_snapshot
 from starz.db import models as m
 from starz.db.store import Store, load, persist, utc
 from starz.simulation import Engine
@@ -68,6 +69,8 @@ class PostgresTests(unittest.TestCase):
         with Session(self.db) as session:
             for model in (m.Universe, m.Empire, m.Planet, m.StarSystem):
                 self.assertEqual(session.scalar(select(func.count()).select_from(model)), 1)
+            knowledge = session.get(m.SystemKnowledge, (self.empire_id, before['system_x'], before['system_y']))
+            self.assertEqual(knowledge.knowledge_level, 'SURVEYED')
 
     def test_planet_cardinality_and_explicit_homeworld(self):
         with Session(self.db) as session, session.begin():
@@ -125,11 +128,48 @@ class PostgresTests(unittest.TestCase):
             second_id = second.id
         self.store.run(self.empire_id, lambda e: e.state.stocks.update(raw_ore=1), now=1000)
         self.store.run(second_id, lambda e: e.state.stocks.update(raw_ore=2), now=1000)
+        self.store.run(self.empire_id, lambda e: e._survey(state.system_x + 1, state.system_y, 1000), now=1000)
         with Session(self.db) as session:
             first = load(session, session.get(m.Empire, self.empire_id))
             second = load(session, session.get(m.Empire, second_id))
             self.assertEqual(first.stocks['raw_ore'], 1)
             self.assertEqual(second.stocks['raw_ore'], 2)
+            self.assertEqual(first.system_knowledge.get(f'{state.system_x + 1}:{state.system_y}'), 1000)
+            self.assertNotIn(f'{state.system_x + 1}:{state.system_y}', second.system_knowledge)
+
+    def test_survey_knowledge_persists_and_is_unique(self):
+        self.store.run(self.empire_id, lambda e: e.state.districts.update(orbital_shipyard=1), now=1000)
+        ship = self.store.run(self.empire_id, lambda e: e.build_ship(now=e.state.last_updated), now=1000)
+        state = self.snapshot()
+        mission = self.store.run(
+            self.empire_id,
+            lambda e: e.send_fleet(state['system_x'] + 1, state['system_y'], 'chemical_drive', 'NORMAL', now=e.state.last_updated, mission='SURVEY'),
+            now=ship['ready_at'],
+        )
+        self.store.run(self.empire_id, lambda e: None, now=mission['arrival_at'])
+        self.restart()
+        surveyed = self.snapshot()
+        key = f"{state['system_x'] + 1}:{state['system_y']}"
+        self.assertEqual(surveyed['system_knowledge'][key], mission['arrival_at'])
+        with self.assertRaises(IntegrityError), Session(self.db) as session, session.begin():
+            session.add(m.SystemKnowledge(empire_id=self.empire_id, system_x=state['system_x'] + 1, system_y=state['system_y'], knowledge_level='SURVEYED', surveyed_at=utc(mission['arrival_at'])))
+            session.flush()
+
+    def test_galaxy_read_does_not_materialize_unknown_systems(self):
+        state = self.snapshot()
+        systems = self.store.run(
+            self.empire_id,
+            lambda e: galaxy_snapshot(e, (state['system_x'], state['system_y']), 3),
+            now=1000,
+        )['systems']
+        home = next(item for item in systems if item['home'])
+        unknown = next(item for item in systems if item['knowledge_level'] == 'UNKNOWN')
+        self.assertIn('planet', home)
+        self.assertNotIn('planet', unknown)
+        self.assertNotIn('star', unknown)
+        with Session(self.db) as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.StarSystem)), 1)
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.SystemKnowledge)), 1)
 
     def test_full_flow_reload_offline_and_two_trips(self):
         job = self.store.run(self.empire_id, lambda e: e.build('processor', now=e.state.last_updated), now=1000)
@@ -258,6 +298,19 @@ class PostgresTests(unittest.TestCase):
             command.upgrade(self.config, 'head')
         self.empire_id = self.store.bootstrap(now=1000)
         self.assertEqual(self.snapshot()['population_total'], 100)
+
+    def test_exploration_migration_downgrade_upgrade_and_backfill(self):
+        fleet_id = uuid4()
+        with Session(self.db) as session, session.begin():
+            session.add(m.Fleet(id=fleet_id, empire_id=self.empire_id, name='Legacy Fleet', x=0, y=0, destination_x=0, destination_y=0, status='ARRIVED', mission='MOVE', departure_at=utc(1000), arrival_at=utc(1000), propulsion_id='chemical_drive', mode='NORMAL', fuel_cost=0))
+        with self.db.begin() as connection:
+            self.config.attributes['connection'] = connection
+            command.downgrade(self.config, '2c4f8a1b9e77')
+            command.upgrade(self.config, 'head')
+        with Session(self.db) as session:
+            knowledge = session.scalar(select(m.SystemKnowledge).where(m.SystemKnowledge.empire_id == self.empire_id))
+            self.assertEqual(knowledge.knowledge_level, 'SURVEYED')
+            self.assertEqual(session.get(m.Fleet, fleet_id).mission, 'MOVE')
 
     def test_database_unique_ownership(self):
         self.store.run(self.empire_id, lambda e: e.state.districts.update(orbital_shipyard=1), now=1000)

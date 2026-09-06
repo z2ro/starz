@@ -126,6 +126,7 @@ class Fleet(Base):
     __table_args__ = (
         UniqueConstraint('id', 'empire_id'),
         CheckConstraint("status IN ('ARRIVED', 'TRANSIT')", name='fleet_status'),
+        CheckConstraint("mission IN ('MOVE', 'SURVEY')", name='fleet_mission'),
         CheckConstraint('arrival_at >= departure_at', name='fleet_time_order'),
         CheckConstraint("fuel_cost >= 0 AND fuel_cost < 'Infinity'::float8", name='fleet_fuel_nonnegative'),
     )
@@ -137,6 +138,7 @@ class Fleet(Base):
     destination_x: Mapped[int]
     destination_y: Mapped[int]
     status: Mapped[str]
+    mission: Mapped[str] = mapped_column(default='MOVE', server_default='MOVE')
     departure_at: Mapped[datetime]
     arrival_at: Mapped[datetime] = mapped_column(index=True)
     propulsion_id: Mapped[str]
@@ -164,3 +166,15 @@ class Notice(Base):
     sequence: Mapped[int]
     message: Mapped[str]
     created_at: Mapped[datetime]
+
+
+class SystemKnowledge(Base):
+    __tablename__ = 'system_knowledge'
+    __table_args__ = (
+        CheckConstraint("knowledge_level = 'SURVEYED'", name='system_knowledge_level'),
+    )
+    empire_id: Mapped[UUID] = mapped_column(ForeignKey('empire.id'), primary_key=True)
+    system_x: Mapped[int] = mapped_column(primary_key=True)
+    system_y: Mapped[int] = mapped_column(primary_key=True)
+    knowledge_level: Mapped[str] = mapped_column(default='SURVEYED', server_default='SURVEYED')
+    surveyed_at: Mapped[datetime]

@@ -19,7 +19,7 @@ const catalog = {
     { ...base, id: 'orbital_engineering', name: 'Engenharia orbital', description: 'Libera órbita.', category: 'orbital', duration: 45, unlocks: ['orbital_shipyard'] },
     { ...base, id: 'nuclear_propulsion', name: 'Propulsão nuclear', description: 'Motor avançado.', category: 'propulsion', duration: 75, requires: ['orbital_engineering'], unlocks: ['nuclear_drive'] },
   ],
-  ships: [{ ...base, id: 'scout_hull', name: 'Casco scout', description: 'Nave leve.', category: 'hull', mass: 10, crew: 3, duration: 30, compatible_propulsion: ['chemical_drive'] }],
+  ships: [{ ...base, id: 'scout_hull', name: 'Horizon', description: 'Corveta leve.', category: 'hull', classification: 'corvette', role: 'exploration', mass: 10, crew: 3, duration: 30, compatible_propulsion: ['chemical_drive'] }],
   propulsion: [{ ...base, id: 'chemical_drive', name: 'Propulsor químico', description: 'Robusto.', category: 'chemical', compatible_fuels: ['ion_fuel'], speed_factor: 1, fuel_efficiency: 1, thermal_load: 1, signature: 1 }],
   travel_modes: [
     { ...base, id: 'ECONOMY', name: 'Economy', description: 'Slow', category: 'travel', travel_time_modifier: 1.5, fuel_modifier: .6, thermal_modifier: .8, signature_modifier: .8 },
@@ -35,12 +35,12 @@ const state = {
   population: { total: 100, available: 77, capacity: 180 }, districts: { processor: 1, orbital_shipyard: 1 }, construction: [],
   research: { active: null, complete_at: null, completed: ['orbital_engineering'], remaining_work: 0 }, notices: ['Estaleiro concluído.'], unlocked_content: ['orbital_shipyard'],
   ships: [{ id: 'ship', hull_id: 'scout_hull', propulsion_id: 'chemical_drive', fuel_id: 'ion_fuel', crew: 3, mass: 10, ready_at: 0 }],
-  fleets: [{ id: 'fleet', name: 'Fleet 01', status: 'ARRIVED', x: 0, y: 0, destination_x: 0, destination_y: 0, ship_ids: ['ship'], eta: 0, propulsion: 'chemical_drive', mode: 'NORMAL', fuel_cost: 10, departure_at: 0, arrival_at: 0 }],
+  fleets: [{ id: 'fleet', name: 'Fleet 01', status: 'ARRIVED', mission: 'MOVE', x: 0, y: 0, destination_x: 0, destination_y: 0, ship_ids: ['ship'], eta: 0, propulsion: 'chemical_drive', mode: 'NORMAL', fuel_cost: 10, departure_at: 0, arrival_at: 0 }],
   travel_modes: catalog.travel_modes,
 };
-const galaxy = { center: [0, 0], radius: 1, systems: [
-  { id: 'home', name: 'Home', x: 0, y: 0, distance: 0, home: true, star: { stellar_class: 'G', luminosity: 1, activity: .2 }, planet: { name: 'Gaia', gravity: 1, temperature: 288, water: 66, radiation: .2 } },
-  { id: 'east', name: 'Asterion +1:0', x: 1, y: 0, distance: 1, home: false, star: { stellar_class: 'K', luminosity: .8, activity: .3 }, planet: { name: 'Kara', gravity: 1.2, temperature: 260, water: 42, radiation: .3 } },
+const galaxy = { center: [0, 0], home: [0, 0], radius: 1, systems: [
+  { id: 'home', name: 'Home', x: 0, y: 0, distance: 0, home: true, knowledge_level: 'SURVEYED', star: { stellar_class: 'G', luminosity: 1, activity: .2 }, planet: { name: 'Gaia', gravity: 1, temperature: 288, water: 66, radiation: .2 } },
+  { id: '1:0', x: 1, y: 0, distance: 1, home: false, knowledge_level: 'UNKNOWN' },
 ] };
 
 async function browser() {
@@ -80,21 +80,41 @@ test('hash navigation renders Economy, Research, Shipyard and Fleets states', as
     assert.match(b.app.innerHTML, new RegExp(text));
   }
   assert.match(b.app.innerHTML, /Fleet 01/);
+  b.location.hash = '#/shipyard';
+  vm.runInContext('render()', b.context);
+  assert.match(b.app.innerHTML, /Horizon/);
+  assert.match(b.app.innerHTML, /Corveta · Exploração/);
 });
 
-test('Galaxy selection previews all modes and dispatch payload uses the selected node', async () => {
+test('Galaxy separates UNKNOWN from SURVEYED details', async () => {
   const b = await browser();
   b.location.hash = '#/galaxy';
-  vm.runInContext("selectedSystem = galaxyData.systems.find(s => s.id === 'east'); selectedSubject = 'fleet:fleet'; render()", b.context);
-  assert.match(b.app.innerHTML, /Asterion \+1:0/);
+  vm.runInContext('render()', b.context);
+  assert.match(b.app.innerHTML, /SURVEYED/);
+  assert.match(b.app.innerHTML, /Gaia/);
+  vm.runInContext("selectedSystem = galaxyData.systems.find(s => s.id === '1:0'); render()", b.context);
+  assert.match(b.app.innerHTML, /UNKNOWN/);
+  assert.match(b.app.innerHTML, /Sistema não mapeado/);
+  assert.doesNotMatch(b.app.innerHTML, /Kara/);
+});
+
+test('Galaxy selection sends SURVEY and supports operational recentering', async () => {
+  const b = await browser();
+  b.location.hash = '#/galaxy';
+  vm.runInContext("selectedSystem = galaxyData.systems.find(s => s.id === '1:0'); selectedSubject = 'fleet:fleet'; render()", b.context);
+  assert.match(b.app.innerHTML, /Sistema 1:0/);
   const preview = Object.fromEntries(catalog.travel_modes.map(mode => [mode.id, { origin: [0, 0], destination: [1, 0], distance: 1, eta_seconds: mode.id === 'FORCED' ? 60 : 120, fuel_cost: mode.id === 'ECONOMY' ? 6 : 10, heat: mode.thermal_modifier, signature: mode.signature_modifier }]));
   b.respond({ ok: true, json: async () => preview });
   await vm.runInContext("perform('preview')", b.context);
   const payload = JSON.parse(b.calls.at(-1).options.body);
   assert.equal(payload.target_x, 1);
   assert.equal(payload.fleet_id, 'fleet');
+  assert.equal(payload.mission, 'SURVEY');
   assert.match(b.app.innerHTML, /Combustível/);
   assert.match(b.app.innerHTML, /Assinatura/);
+  assert.match(b.app.innerHTML, /Explorar sistema/);
+  await vm.runInContext('recenter(0, 0)', b.context);
+  assert.match(b.calls.at(-1).url, /center_x=0&center_y=0/);
 });
 
 test('API errors become readable in-game feedback', async () => {

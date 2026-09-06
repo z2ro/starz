@@ -67,6 +67,8 @@ class District(Content):
 
 
 class Hull(Content):
+    classification: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
+    role: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     mass: float = Field(gt=0)
     crew: int = Field(ge=0)
     duration: float = Field(gt=0)

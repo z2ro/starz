@@ -94,6 +94,7 @@ def load(session: Session, empire: m.Empire) -> GameState:
     associations = rows(m.FleetShip)
     ships = sorted(rows(m.Ship), key=lambda row: (row.created_at, row.id))
     fleets = sorted(rows(m.Fleet), key=lambda row: row.id)
+    knowledge = rows(m.SystemKnowledge)
     notices = session.scalars(select(m.Notice).where(m.Notice.empire_id == empire.id).order_by(m.Notice.sequence.desc()).limit(100)).all()
     return GameState(
         seed=universe.seed, system_x=system.x, system_y=system.y,
@@ -103,8 +104,9 @@ def load(session: Session, empire: m.Empire) -> GameState:
         construction=[{'id': row.district_id, 'job_id': str(row.id), 'started_at': epoch(row.started_at), 'complete_at': epoch(row.complete_at)} for row in jobs],
         research={'active': research.active_technology_id, 'remaining_work': research.remaining_work, 'complete_at': epoch(research.complete_at), 'completed': [row.technology_id for row in completed], 'completed_at': {row.technology_id: epoch(row.completed_at) for row in completed}},
         ships=[{'id': str(row.id), 'hull_id': row.hull_id, 'propulsion_id': row.propulsion_id, 'fuel_id': row.fuel_id, 'crew': row.crew, 'mass': row.mass, 'ready_at': epoch(row.ready_at)} for row in ships],
-        fleets=[{'id': str(row.id), 'name': row.name, 'ship_ids': sorted(str(link.ship_id) for link in associations if link.fleet_id == row.id), 'x': row.x, 'y': row.y, 'destination_x': row.destination_x, 'destination_y': row.destination_y, 'status': row.status, 'departure_at': epoch(row.departure_at), 'arrival_at': epoch(row.arrival_at), 'propulsion': row.propulsion_id, 'mode': row.mode, 'fuel_cost': row.fuel_cost} for row in fleets],
+        fleets=[{'id': str(row.id), 'name': row.name, 'ship_ids': sorted(str(link.ship_id) for link in associations if link.fleet_id == row.id), 'x': row.x, 'y': row.y, 'destination_x': row.destination_x, 'destination_y': row.destination_y, 'status': row.status, 'mission': row.mission, 'departure_at': epoch(row.departure_at), 'arrival_at': epoch(row.arrival_at), 'propulsion': row.propulsion_id, 'mode': row.mode, 'fuel_cost': row.fuel_cost} for row in fleets],
         notices=[row.message for row in notices],
+        system_knowledge={f'{row.system_x}:{row.system_y}': epoch(row.surveyed_at) for row in knowledge},
     )
 
 
@@ -133,7 +135,7 @@ def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameSta
             session.add(m.Ship(id=UUID(ship['id']), empire_id=empire.id, hull_id=ship['hull_id'], propulsion_id=ship['propulsion_id'], fuel_id=ship['fuel_id'], crew=ship['crew'], mass=ship['mass'], ready_at=utc(ship['ready_at']), created_at=stamp))
     session.flush()
     for fleet in state.fleets:
-        session.merge(m.Fleet(id=UUID(fleet['id']), empire_id=empire.id, name=fleet['name'], x=fleet['x'], y=fleet['y'], destination_x=fleet['destination_x'], destination_y=fleet['destination_y'], status=fleet['status'], departure_at=utc(fleet['departure_at']), arrival_at=utc(fleet['arrival_at']), propulsion_id=fleet['propulsion'], mode=fleet['mode'], fuel_cost=fleet['fuel_cost']))
+        session.merge(m.Fleet(id=UUID(fleet['id']), empire_id=empire.id, name=fleet['name'], x=fleet['x'], y=fleet['y'], destination_x=fleet['destination_x'], destination_y=fleet['destination_y'], status=fleet['status'], mission=fleet.get('mission', 'MOVE'), departure_at=utc(fleet['departure_at']), arrival_at=utc(fleet['arrival_at']), propulsion_id=fleet['propulsion'], mode=fleet['mode'], fuel_cost=fleet['fuel_cost']))
         session.flush()
         for ship_id in fleet['ship_ids']:
             session.merge(m.FleetShip(fleet_id=UUID(fleet['id']), ship_id=UUID(ship_id), empire_id=empire.id))
@@ -143,6 +145,9 @@ def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameSta
     for message in reversed(state.notices[:added]):
         session.add(m.Notice(empire_id=empire.id, message=message, sequence=sequence, created_at=stamp))
         sequence += 1
+    for key, surveyed_at in state.system_knowledge.items():
+        x, y = (int(value) for value in key.split(':', 1))
+        session.merge(m.SystemKnowledge(empire_id=empire.id, system_x=x, system_y=y, knowledge_level='SURVEYED', surveyed_at=utc(surveyed_at)))
 
 
 def validate_state(catalog: Catalog, state: GameState):
@@ -165,7 +170,16 @@ def validate_state(catalog: Catalog, state: GameState):
     for fleet in state.fleets:
         catalog.get('propulsion', fleet['propulsion'])
         catalog.get('travel_modes', fleet['mode'])
+        if fleet.get('mission', 'MOVE') not in {'MOVE', 'SURVEY'}:
+            raise DataValidationError('missão de frota persistida inválida')
         for ship_id in fleet['ship_ids']:
             if ship_id not in ships or ship_id in attached:
                 raise DataValidationError('ownership de nave persistida inválido')
             attached.add(ship_id)
+    for key in state.system_knowledge:
+        try:
+            x, y = (int(value) for value in key.split(':', 1))
+        except (TypeError, ValueError) as exc:
+            raise DataValidationError('coordenada de conhecimento inválida') from exc
+        if key != f'{x}:{y}':
+            raise DataValidationError('coordenada de conhecimento inválida')

@@ -150,6 +150,44 @@ class OfflineAndFleetTests(unittest.TestCase):
         e.advance(30)
         return ship
 
+    def test_home_is_surveyed_and_unknown_system_is_not_known(self):
+        e = self.engine
+        self.assertEqual(e.knowledge_level(e.state.system_x, e.state.system_y), 'SURVEYED')
+        self.assertEqual(e.knowledge_level(e.state.system_x + 1, e.state.system_y), 'UNKNOWN')
+        self.assertEqual(len(e.state.system_knowledge), 1)
+
+    def test_survey_arrival_is_idempotent_and_move_does_not_discover(self):
+        e = self.engine
+        self.ready_ship()
+        x, y = e.state.system_x, e.state.system_y
+        move = e.send_fleet(x + 1, y, 'chemical_drive', 'NORMAL', now=30, mission='MOVE')
+        e.advance(move['arrival_at'])
+        self.assertEqual(e.knowledge_level(x + 1, y), 'UNKNOWN')
+        survey = e.send_fleet(x + 2, y, 'chemical_drive', 'NORMAL', now=move['arrival_at'], fleet_id=move['id'], mission='SURVEY')
+        e.advance(survey['arrival_at'])
+        self.assertEqual(e.knowledge_level(x + 2, y), 'SURVEYED')
+        discovery = f'Sistema {x + 2}:{y} mapeado.'
+        self.assertEqual(e.state.notices.count(discovery), 1)
+        back = e.send_fleet(x + 1, y, 'chemical_drive', 'NORMAL', now=survey['arrival_at'], fleet_id=move['id'], mission='MOVE')
+        e.advance(back['arrival_at'])
+        repeated = e.send_fleet(x + 2, y, 'chemical_drive', 'NORMAL', now=back['arrival_at'], fleet_id=move['id'], mission='SURVEY')
+        e.advance(repeated['arrival_at'])
+        self.assertEqual(e.state.notices.count(discovery), 1)
+        self.assertEqual(len(e.state.system_knowledge), 2)
+
+    def test_offline_survey_is_independent_of_polling(self):
+        e = self.engine
+        self.ready_ship()
+        x, y = e.state.system_x, e.state.system_y
+        mission = e.send_fleet(x + 1, y, 'chemical_drive', 'NORMAL', now=30, mission='SURVEY')
+        split = Engine(self.catalog, copy.deepcopy(e.state))
+        e.advance(mission['arrival_at'] + 300)
+        split.advance(mission['arrival_at'] - 1)
+        split.advance(mission['arrival_at'])
+        split.advance(mission['arrival_at'] + 300)
+        self.assertEqual(e.state.to_dict(), split.state.to_dict())
+        self.assertEqual(e.knowledge_level(x + 1, y), 'SURVEYED')
+
     def test_round_trip_fleet_can_receive_second_order_from_B(self):
         e = self.engine
         self.ready_ship()
@@ -199,6 +237,9 @@ class OfflineAndFleetTests(unittest.TestCase):
                 with self.assertRaises(DataValidationError):
                     e.send_fleet(**payload, now=30)
                 self.assertEqual(e.state.to_dict(), before)
+        with self.assertRaises(DataValidationError):
+            e.send_fleet(20, 0, 'chemical_drive', 'NORMAL', now=30, mission='SCAN')
+        self.assertEqual(e.state.to_dict(), before)
 
     def test_legacy_state_loads_without_schema_reset(self):
         state = self.engine.state.to_dict()
@@ -244,6 +285,8 @@ class DataDrivenTests(unittest.TestCase):
             ('travel_modes', 'NORMAL', {'signature_modifier': -1}),
             ('propulsion', 'chemical_drive', {'compatible_fuels': ['missing']}),
             ('ships', 'scout_hull', {'compatible_propulsion': ['missing']}),
+            ('ships', 'scout_hull', {'classification': 'Invalid value'}),
+            ('ships', 'scout_hull', {'role': ''}),
             ('technologies', 'orbital_engineering', {'requires': ['nuclear_propulsion']}),
             ('technologies', 'orbital_engineering', {'unlocks': ['orbital_engineering']}),
             ('technologies', 'orbital_engineering', {'unlocks': ['missing']}),

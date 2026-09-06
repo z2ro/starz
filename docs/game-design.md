@@ -16,8 +16,11 @@
   stocks, flows, capacities, filas e trade-offs de viagem.
 - O planeta é o foco visual e reage de forma agregada aos distritos, estaleiro e
   frotas existentes; não representa urbanismo detalhado.
-- Galaxy View é visualização determinística da vizinhança e interface de viagem,
-  não exploração, fog of war ou materialização persistente.
+- Existência física procedural é separada do conhecimento persistente de cada império.
+- Galaxy distingue somente `UNKNOWN` e `SURVEYED`; o homeworld começa mapeado.
+- `SURVEY` revela o sistema na chegada; `MOVE` não concede conhecimento.
+- Galaxy nunca materializa sistemas apenas por visualização.
+- Horizon é a primeira corveta de exploração; classificação e papel vêm do YAML.
 - Indústria nominal, slots de obras e slots de estaleiro são capacidades distintas.
 - Obras e montagem têm prazo fixo após validação inicial; pesquisa progride conforme
   cobertura contínua de energia e workforce, podendo pausar e retomar.
@@ -32,3 +35,5 @@
 - Fenômenos dinâmicos, debris e efeitos ambientais de guerra.
 - Política de clusters de spawn para escala multi-jogador.
 - Autenticação, ownership multiusuário e operação em produção.
+- Sensores, níveis intermediários de conhecimento e levantamento orbital detalhado.
+- Naves e módulos especializados em exploração.

@@ -59,6 +59,11 @@ O slice mantém uma nave por frota. `x/y` representam a posição de partida dur
 TRANSIT e o destino após ARRIVED; não há interpolação visual contínua nesta tarefa.
 `travel.py` recebe origem e destino explicitamente, nunca consulta o home system.
 
+Frotas persistem missão `MOVE` ou `SURVEY`. A chegada `SURVEY` usa o mesmo boundary
+temporal para registrar a coordenada em `GameState.system_knowledge`; inserção
+idempotente em `(empire_id, system_x, system_y)` evita descoberta e notice duplicadas.
+`MOVE` altera somente posição. Não há etapa adicional de scanning.
+
 O estoque de combustível continua global ao jogador neste slice; não representa
 reabastecimento local ou logística interplanetária. Não houve expansão desse sistema.
 READ COMMITTED + SELECT FOR UPDATE na linha do império serializa ações mesmo entre
@@ -93,11 +98,13 @@ IDs inválidos, frota em trânsito, motor incompatível e destino igual à orige
 Coordenadas fora dos limites dão 422. Preview retorna todos os regimes do catálogo,
 com origem/destino/distância; não debita combustível.
 
-`/api/state` inclui naves, todos os campos de cobertura, `travel_modes` e
+`/api/state` inclui naves, missão de frota, todos os campos de cobertura, `travel_modes` e
 `unlocked_content`. `/api/catalog` projeta para a UI as definições YAML de recursos,
 distritos, tecnologias, cascos, propulsões, combustíveis e regimes. `/api/galaxy`
-gera uma vizinhança limitada (raio 1–3) sem materializar sistemas ou criar estado de
-exploração. O frontend envia a seleção explícita e mostra erros da API.
+gera uma vizinhança limitada (raio 1–3) sem materializar sistemas. Sistemas `UNKNOWN`
+expõem somente navegação; `SURVEYED` deriva os detalhes da seed. O centro só pode ser
+o homeworld ou a posição de uma frota `ARRIVED`. O frontend envia missão e seleção
+explícitas e mostra erros da API.
 
 O cliente usa rotas hash e re-renderização simples. Carrega state, catálogo e
 vizinhança em paralelo; depois sincroniza `/api/state` a cada 15 segundos somente
