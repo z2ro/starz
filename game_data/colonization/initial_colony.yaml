@@ -5,6 +5,7 @@ category: colonization
 population: 20
 cost: {refined_alloy: 24, components: 10, volatiles: 16}
 initial_districts: {civil_district: 1, solar_field: 1}
+initial_stocks: {raw_ore: 0, volatiles: 8, refined_alloy: 24, components: 8, ion_fuel: 0, fusion_fuel: 0}
 viable_gravity_range: [0.65, 1.55]
 viable_temperature_range: [220, 360]
 survivable_gravity_range: [0.45, 2.0]

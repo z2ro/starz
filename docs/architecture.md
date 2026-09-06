@@ -66,8 +66,10 @@ temporal para registrar a coordenada em `GameState.system_knowledge`; inserção
 idempotente em `(empire_id, system_x, system_y)` evita descoberta e notice duplicadas.
 `MOVE` altera somente posição. Não há etapa adicional de scanning.
 
-O estoque de combustível continua global ao jogador neste slice; não representa
-reabastecimento local ou logística interplanetária. Não houve expansão desse sistema.
+Stocks e combustível são persistidos por `planet_id` em `planet_stock`. O planeta ativo
+usa `GameState.stocks`; `stocks_by_planet` mantém os demais estoques necessários para
+persistência e origem física de viagens. Não existe transferência implícita entre
+mundos. Pesquisa permanece global ao império e naves/frotas permanecem imperiais.
 READ COMMITTED + SELECT FOR UPDATE na linha do império serializa ações mesmo entre
 processos. Erro de domínio ou de constraint causa rollback de toda a transação,
 incluindo avanço lazy. Não há RLock local nem escrita de state.json.

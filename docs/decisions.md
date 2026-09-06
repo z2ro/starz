@@ -140,10 +140,12 @@ Sistemas possuem 2–3 planetas determinísticos endereçados por coordenadas e
 define custo, população, infraestrutura inicial e thresholds. A engine classifica
 `VIABLE`, `HOSTILE` ou `UNINHABITABLE`; apenas o primeiro é colonizável agora.
 
-População colonial e recursos globais são debitados no despacho, sem cancelamento ou
+População colonial e recursos locais são debitados no despacho, sem cancelamento ou
 reembolso. Uma fleet `COLONIZE` em trânsito reserva o alvo. O Store usa advisory lock
 por alvo entre impérios e a constraint planetária evita ownership duplo. O domínio
 emite a colônia no boundary; PostgreSQL materializa apenas então. Economia local ficou
-limitada a população, distritos, energia e obras; stocks e pesquisa seguem globais.
+inclui população, distritos, energia, obras e stocks. Pesquisa segue global; naves e
+frotas seguem imperiais. Uma nave registra seu planeta de origem e uma viagem remota
+sem planeta próprio no sistema não recebe combustível implícito.
 Transferência colonial dentro do mesmo sistema usa distância abstrata 0,25 para manter
 custo e duração sem introduzir mecânica orbital detalhada.

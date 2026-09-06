@@ -133,6 +133,7 @@ class TravelMode(Content):
 class Colonization(Content):
     population: int = Field(gt=0, strict=True)
     initial_districts: dict[str, int] = Field(min_length=1)
+    initial_stocks: dict[str, NonNegative] = Field(default_factory=dict)
     viable_gravity_range: tuple[Positive, Positive]
     viable_temperature_range: tuple[Positive, Positive]
     survivable_gravity_range: tuple[Positive, Positive]
@@ -251,6 +252,9 @@ class Catalog:
             for ref in item.initial_districts:
                 if ref not in self.items['districts']:
                     errors.append(f'{item.id}: distrito inicial desconhecido: {ref}')
+            for ref in item.initial_stocks:
+                if ref not in resources | set(self.items['fuels']):
+                    errors.append(f'{item.id}: estoque inicial desconhecido: {ref}')
         for star_id in self.items['stars']:
             if not any(star_id in planet.star_archetypes for planet in self.items['planets'].values()):
                 errors.append(f"{star_id}: nenhum arquétipo planetário compatível")

@@ -48,12 +48,14 @@ class ResearchRequest(BaseModel):
 
 
 class BuildShipRequest(BaseModel):
+    planet_id: str | None = None
     hull_id: str = 'scout_hull'
     propulsion_id: str = 'chemical_drive'
     fuel_id: str = 'ion_fuel'
 
 
 class TravelRequest(BaseModel):
+    planet_id: str | None = None
     target_x: int = Field(ge=-100, le=100)
     target_y: int = Field(ge=-100, le=100)
     propulsion_id: str
@@ -163,7 +165,7 @@ def planet_list(engine):
     result = []
     for item in engine.state.planets:
         physical = generate_system(engine.state.seed, item['x'], item['y'], engine.catalog).planets[item['planet_index']]
-        result.append({**item, 'name': physical.name})
+        result.append({**item, 'name': physical.name, 'stocks': {key: round(value, 2) for key, value in engine.state.stocks_by_planet.get(item['id'], {}).items()}})
     return result
 
 
@@ -179,13 +181,13 @@ def research(request: ResearchRequest):
 
 @app.post("/api/build-ship")
 def build_ship(request: BuildShipRequest = Body(default=BuildShipRequest())):
-    return action(lambda engine: engine.build_ship(request.hull_id, request.propulsion_id, request.fuel_id, now=engine.state.last_updated))
+    return action(lambda engine: engine.build_ship(request.hull_id, request.propulsion_id, request.fuel_id, now=engine.state.last_updated), planet_id=request.planet_id)
 
 
 @app.post("/api/travel")
 def travel(request: TravelRequest):
     target = (request.target_x, request.target_y, request.target_planet_index) if request.mission == 'COLONIZE' and request.target_planet_index is not None else None
-    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id, mission=request.mission, target_planet_index=request.target_planet_index), colony_target=target)
+    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id, mission=request.mission, target_planet_index=request.target_planet_index), planet_id=request.planet_id, colony_target=target)
 
 
 @app.post("/api/travel-preview")
@@ -193,4 +195,4 @@ def travel_preview(request: TravelRequest):
     def preview(engine):
         catalog.get('travel_modes', request.mode)
         return {mode: engine.preview_travel(request.target_x, request.target_y, request.propulsion_id, mode, fleet_id=request.fleet_id, ship_id=request.ship_id, intra_system=request.mission == 'COLONIZE') for mode in sorted(catalog.items['travel_modes'])}
-    return action(preview)
+    return action(preview, planet_id=request.planet_id)

@@ -210,7 +210,7 @@ async function load(showBusy = false, planetId = current?.active_planet?.id) { i
 } current = await request(planetId ? `/api/state?planet_id=${encodeURIComponent(planetId)}` : '/api/state'); if (route() === 'galaxy' && galaxyData)
     await refreshGalaxy(); busy = false; render(); }
 function travelBody() { const [kind, id] = selectedSubject.split(':'); if (!id)
-    throw new Error('Selecione uma frota ou nave disponível.'); const propulsion = kind === 'fleet' ? current.fleets.find(item => item.id === id)?.propulsion : current.ships.find(item => item.id === id)?.propulsion_id; const mission = selectedSystem.knowledge_level === 'UNKNOWN' ? 'SURVEY' : selectedPlanetIndex === undefined ? 'MOVE' : 'COLONIZE'; return { target_x: selectedSystem.x, target_y: selectedSystem.y, target_planet_index: mission === 'COLONIZE' ? selectedPlanetIndex : undefined, propulsion_id: propulsion, mode: selectedMode, mission, [kind === 'fleet' ? 'fleet_id' : 'ship_id']: id }; }
+    throw new Error('Selecione uma frota ou nave disponível.'); const propulsion = kind === 'fleet' ? current.fleets.find(item => item.id === id)?.propulsion : current.ships.find(item => item.id === id)?.propulsion_id; const mission = selectedSystem.knowledge_level === 'UNKNOWN' ? 'SURVEY' : selectedPlanetIndex === undefined ? 'MOVE' : 'COLONIZE'; return { planet_id: current.active_planet?.id, target_x: selectedSystem.x, target_y: selectedSystem.y, target_planet_index: mission === 'COLONIZE' ? selectedPlanetIndex : undefined, propulsion_id: propulsion, mode: selectedMode, mission, [kind === 'fleet' ? 'fleet_id' : 'ship_id']: id }; }
 async function perform(action, id) {
     busy = true;
     feedback = undefined;
@@ -229,7 +229,7 @@ async function perform(action, id) {
         if (action === 'research')
             body = { id };
         if (action === 'build-ship')
-            body = { hull_id: selectedHull, propulsion_id: selectedPropulsion, fuel_id: selectedFuel };
+            body = { planet_id: current.active_planet?.id, hull_id: selectedHull, propulsion_id: selectedPropulsion, fuel_id: selectedFuel };
         if (action === 'preview' || action === 'travel') {
             endpoint = action === 'preview' ? 'travel-preview' : 'travel';
             body = travelBody();

@@ -120,6 +120,37 @@ class PostgresTests(unittest.TestCase):
             empire = session.get(m.Empire, self.empire_id)
             self.assertEqual(session.get(m.Planet, empire.home_planet_id).planet_index, 0)
 
+    def test_planet_stocks_are_local_and_production_isolated(self):
+        with Session(self.db) as session, session.begin():
+            empire = session.get(m.Empire, self.empire_id)
+            home = session.get(m.Planet, empire.home_planet_id)
+            second = m.Planet(system_id=home.system_id, planet_index=1, empire_id=empire.id, population_total=20, created_at=utc(1000), last_updated=utc(1000))
+            session.add(second)
+            session.flush()
+            session.add_all([
+                m.PlanetStock(planet_id=second.id, resource_id='raw_ore', amount=0),
+                m.PlanetStock(planet_id=second.id, resource_id='refined_alloy', amount=0),
+                m.PlanetStock(planet_id=second.id, resource_id='components', amount=0),
+                m.PlanetStock(planet_id=second.id, resource_id='ion_fuel', amount=0),
+                m.District(planet_id=second.id, district_id='civil_district', level=1),
+                m.District(planet_id=second.id, district_id='solar_field', level=3),
+                m.District(planet_id=second.id, district_id='ore_extractor', level=1),
+            ])
+            second_id = second.id
+        before = self.snapshot()['stocks']['raw_ore']
+        self.store.run(self.empire_id, lambda e: None, now=1060)
+        self.store.run(self.empire_id, lambda e: None, now=1060, planet_id=second_id)
+        with Session(self.db) as session:
+            empire = session.get(m.Empire, self.empire_id)
+            home = load(session, empire)
+            colony = load(session, empire, planet_id=second_id, catalog=self.catalog)
+            self.assertGreater(home.stocks['raw_ore'], before)
+            self.assertGreater(colony.stocks['raw_ore'], 0)
+            self.assertEqual(colony.stocks['refined_alloy'], 0)
+            self.assertEqual(colony.stocks['ion_fuel'], 0)
+        with self.assertRaisesRegex(DataValidationError, 'locais'):
+            self.store.run(self.empire_id, lambda e: e.build('processor', now=e.state.last_updated), now=1060, planet_id=second_id)
+
     def test_store_explicit_ownership_supports_two_empires(self):
         with Session(self.db) as session, session.begin():
             first = session.get(m.Empire, self.empire_id)
@@ -314,6 +345,21 @@ class PostgresTests(unittest.TestCase):
             command.upgrade(self.config, 'head')
         self.empire_id = self.store.bootstrap(now=1000)
         self.assertEqual(self.snapshot()['population_total'], 100)
+
+    def test_local_stock_migration_backfills_homeworld(self):
+        with self.db.begin() as connection:
+            self.config.attributes['connection'] = connection
+            command.downgrade(self.config, '4a6d1c9e8b20')
+        with self.db.begin() as connection:
+            connection.execute(text("UPDATE empire_stock SET amount = 321 WHERE empire_id = :empire AND resource_id = 'raw_ore'"), {'empire': self.empire_id})
+        with self.db.begin() as connection:
+            self.config.attributes['connection'] = connection
+            command.upgrade(self.config, 'head')
+        with Session(self.db) as session:
+            empire = session.get(m.Empire, self.empire_id)
+            home_stock = session.scalar(select(m.PlanetStock).where(m.PlanetStock.planet_id == empire.home_planet_id, m.PlanetStock.resource_id == 'raw_ore'))
+            self.assertEqual(home_stock.amount, 321)
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.PlanetStock).where(m.PlanetStock.resource_id == 'raw_ore')), 1)
 
     def test_exploration_migration_downgrade_upgrade_and_backfill(self):
         fleet_id = uuid4()

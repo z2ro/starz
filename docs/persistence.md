@@ -24,7 +24,7 @@ e o escopo de [transações SQLAlchemy](https://docs.sqlalchemy.org/en/20/core/c
 | star_system | UUID, universo, coordenadas únicas; só sistema inicial |
 | empire | UUID, universo, sistema inicial, home_planet_id, nome placeholder, last_updated |
 | planet_state | UUID, owner opcional, sistema, planet_index e população mutável |
-| empire_stock | PK empire/resource_id, amount finito não negativo |
+| planet_stock | PK planet/resource_id, amount finito não negativo |
 | planet_district | PK planet/district_id, nível não negativo |
 | construction_job | UUID, planeta, content ID, início e conclusão |
 | research_state | PK empire, active ID, remaining_work, ETA, atualização |
@@ -41,8 +41,10 @@ O homeworld é escolhido por `empire.home_planet_id`; a persistência verifica q
 pertence ao próprio império e ao seu sistema inicial. Um PlanetState sem owner é
 permitido no schema para futuros corpos não ocupados, mas não é criado pelo slice.
 
-Nenhum GameState/definição YAML é armazenado como JSONB. Population está no planeta;
-stocks continuam globais ao império. Só o sistema inicial exige materialização atual.
+Nenhum GameState/definição YAML é armazenado como JSONB. Population e stocks estão no
+planeta; pesquisa continua global ao império. A migration de economia move o antigo
+`empire_stock` integralmente para o homeworld, sem copiar valores para colônias.
+O downgrade soma os stocks planetários por império de forma determinística.
 Visitar B ou C não duplica a física procedural. Um sistema remoto e seu PlanetState
 só são materializados quando uma missão colonial chega.
 
@@ -87,9 +89,15 @@ Persistimos o movimento atual, não histórico de missões; notices não são ev
 O mapper cobre as operações atuais: não há remoção/transferência de naves ou distritos.
 Qualquer operação futura desse tipo deve acrescentar seu mapeamento e testes.
 
-Stocks, fuel e research permanecem por império. Population, districts e construction
-jobs são por planeta. A UI seleciona um planeta pertencente ao império; ownership é
+Fuel é um stock planetário como qualquer outro. Population, districts e construction
+jobs também são por planeta; research permanece global. A UI seleciona um planeta pertencente ao império; ownership é
 validado antes de carregar ou persistir. Uma fleet colonial em trânsito funciona como
 reserva persistente, protegida por advisory lock por coordenada durante a ordem/chegada.
 Cada PlanetState possui `last_updated`: trocar de mundo não descarta produção nem uma
 obra pendente. Eventos globais continuam usando `Empire.last_updated` e o homeworld.
+
+Produção e processamento usam somente o `stocks` do planeta ativo. Uma viagem usa
+combustível local do planeta próprio no sistema de origem; uma frota remota sem esse
+planeta é rejeitada até existir uma mecânica explícita de abastecimento/transporte.
+Ships persistem `origin_planet_id` e coordenadas de criação para que crew e a primeira
+posição física não sejam inferidas do homeworld.

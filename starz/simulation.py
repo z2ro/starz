@@ -19,6 +19,9 @@ class GameState:
     system_x: int
     system_y: int
     stocks: dict[str, float]
+    # The active planet uses ``stocks``; this map keeps the other owned
+    # planets available for physical fuel sourcing and persistence.
+    stocks_by_planet: dict[str, dict[str, float]] = field(default_factory=dict)
     population_total: int = 100
     districts: dict[str, int] = field(default_factory=dict)
     construction: list[dict[str, Any]] = field(default_factory=list)
@@ -37,8 +40,7 @@ class GameState:
     occupied_planets: list[str] = field(default_factory=list)
     colonization_claims: dict[str, str] = field(default_factory=dict)
     new_colonies: list[dict[str, Any]] = field(default_factory=list)
-    research_rate_override: float | None = None
-    crew_committed_override: int | None = None
+    research_rate_global: float | None = None
     planet_last_updated: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -195,6 +197,7 @@ class Engine:
             'id': str(uuid5(NAMESPACE_URL, f"starz-colony:{fleet['id']}:{x}:{y}:{index}")), 'x': x, 'y': y, 'planet_index': index,
             'population_total': fleet['colonization_population'],
             'districts': dict(self.colonization_rules.initial_districts),
+            'initial_stocks': dict(self.colonization_rules.initial_stocks),
             'created_at': fleet['arrival_at'], 'home': False,
         }
         self.state.new_colonies.append(colony)
@@ -215,11 +218,19 @@ class Engine:
             shipyard_slots += district.shipyard_slots * level
             population_demand += district.workforce * level
             research_rate += district.research_rate * level
-        crew = self.state.crew_committed_override if self.state.crew_committed_override is not None else sum(ship["crew"] for ship in self.state.ships)
+        active_planet = self.state.planet_id
+        crew = sum(
+            ship["crew"] for ship in self.state.ships
+            if ship.get("origin_planet_id") in (None, active_planet)
+        )
         supply = max(0, self.state.population_total - crew)
         energy_coverage = 1.0 if consumption <= 0 else min(1.0, generation / consumption)
         workforce_coverage = 1.0 if population_demand <= 0 else min(1.0, supply / population_demand)
-        shipyard_occupied = sum(ship.get('ready_at', 0) > self.state.last_updated for ship in self.state.ships)
+        shipyard_occupied = sum(
+            ship.get('ready_at', 0) > self.state.last_updated
+            and ship.get('origin_planet_id') in (None, active_planet)
+            for ship in self.state.ships
+        )
         return {
             'energy_generation': generation, 'energy_consumption': consumption,
             'energy_coverage': energy_coverage,
@@ -232,7 +243,7 @@ class Engine:
             'workforce_demand': population_demand,
             'workforce_coverage': workforce_coverage,
             'available_population': max(0, supply - population_demand), 'research_rate': research_rate,
-            'effective_research_rate': self.state.research_rate_override if self.state.research_rate_override is not None else research_rate * min(energy_coverage, workforce_coverage),
+            'effective_research_rate': self.state.research_rate_global if self.state.research_rate_global is not None else research_rate * min(energy_coverage, workforce_coverage),
         }
 
     def _produce(self, elapsed: float) -> None:
@@ -290,7 +301,13 @@ class Engine:
         if self.state.stocks.get(fuel_id, 0) < 1:
             raise DataValidationError("combustível insuficiente")
         self._pay(hull.cost)
-        ship = {"id": str(uuid4()), "hull_id": hull_id, "propulsion_id": propulsion_id, "fuel_id": fuel_id, "crew": hull.crew, "mass": hull.mass, "ready_at": self.state.last_updated + hull.duration}
+        ship = {
+            "id": str(uuid4()), "hull_id": hull_id, "propulsion_id": propulsion_id,
+            "fuel_id": fuel_id, "crew": hull.crew, "mass": hull.mass,
+            "ready_at": self.state.last_updated + hull.duration,
+            "origin_planet_id": self.state.planet_id,
+            "system_x": self.state.system_x, "system_y": self.state.system_y,
+        }
         self.state.ships.append(ship)
         self._research_eta()
         return ship
@@ -314,7 +331,10 @@ class Engine:
             origin = (fleet['x'], fleet['y'])
         else:
             ship = next((s for s in self.state.ships if s['id'] not in attached and (s['id'] == ship_id if ship_id else s['ready_at'] <= self.state.last_updated)), None)
-            origin = (self.state.home_system_x if self.state.home_system_x is not None else self.state.system_x, self.state.home_system_y if self.state.home_system_y is not None else self.state.system_y)
+            origin = (
+                ship.get('system_x') if ship and ship.get('origin_planet_id') and ship.get('system_x') is not None else self.state.system_x,
+                ship.get('system_y') if ship and ship.get('origin_planet_id') and ship.get('system_y') is not None else self.state.system_y,
+            )
         if ship is None:
             raise DataValidationError('nenhuma nave livre disponível')
         if ship['ready_at'] > self.state.last_updated:
@@ -334,29 +354,59 @@ class Engine:
         if mission == 'COLONIZE':
             if fleet is None or target_planet_index is None:
                 raise DataValidationError('colonização exige uma frota e planeta alvo')
+            source_id = fleet.get('origin_planet_id') or self.state.planet_id
+            if self.state.stocks_by_planet and str(source_id) != str(self.state.planet_id):
+                raise DataValidationError('selecione o planeta de origem da missão')
             status = self.colonization_status(target_x, target_y, target_planet_index)
             if not status['eligible']:
                 raise DataValidationError(status['reason'])
         elif target_planet_index is not None:
             raise DataValidationError('planeta alvo só é válido para colonização')
         preview = self.preview_travel(target_x, target_y, propulsion_id, mode, fleet_id=fleet['id'] if fleet else None, ship_id=None if fleet else ship['id'], intra_system=mission == 'COLONIZE')
-        if self.state.stocks.get(ship['fuel_id'], 0) < preview['fuel_cost']:
-            raise DataValidationError('combustível insuficiente para a viagem')
+        fuel_stocks = self._travel_stocks(fleet, ship, origin)
+        reserve_mode = bool(self.state.stocks_by_planet)
+        if fuel_stocks is None:
+            if fleet is None or fleet.get('fuel_reserve', 0) < preview['fuel_cost']:
+                raise DataValidationError('combustível local insuficiente para a viagem')
+            fleet['fuel_reserve'] -= preview['fuel_cost']
+        else:
+            required = preview['fuel_cost'] * 2 if reserve_mode and fleet is None else preview['fuel_cost']
+            if fuel_stocks.get(ship['fuel_id'], 0) < required:
+                raise DataValidationError('combustível local insuficiente para a viagem')
+            fuel_stocks[ship['fuel_id']] -= required
         if mission == 'COLONIZE':
-            self._pay(self.colonization_rules.cost)
+            source_id = fleet.get('origin_planet_id') or self.state.planet_id
+            source_stocks = self.state.stocks_by_planet.get(str(source_id), self.state.stocks) if self.state.stocks_by_planet else self.state.stocks
+            self._pay_from(source_stocks, self.colonization_rules.cost)
             self.state.population_total -= self.colonization_rules.population
-        self.state.stocks[ship['fuel_id']] -= preview['fuel_cost']
         if fleet is None:
-            fleet = {'id': str(uuid4()), 'name': f'Fleet {len(self.state.fleets) + 1:02d}', 'ship_ids': [ship['id']], 'x': origin[0], 'y': origin[1]}
+            fleet = {'id': str(uuid4()), 'name': f'Fleet {len(self.state.fleets) + 1:02d}', 'ship_ids': [ship['id']], 'x': origin[0], 'y': origin[1], 'origin_planet_id': ship.get('origin_planet_id') or self.state.planet_id, 'fuel_reserve': preview['fuel_cost'] if reserve_mode else 0}
             self.state.fleets.append(fleet)
-        fleet.update(destination_x=target_x, destination_y=target_y, status='TRANSIT', departure_at=self.state.last_updated, arrival_at=self.state.last_updated + preview['eta_seconds'], propulsion=propulsion_id, mode=mode, fuel_cost=preview['fuel_cost'], mission=mission, target_planet_index=target_planet_index, colonization_population=self.colonization_rules.population if mission == 'COLONIZE' else None)
+        fleet.update(destination_x=target_x, destination_y=target_y, status='TRANSIT', departure_at=self.state.last_updated, arrival_at=self.state.last_updated + preview['eta_seconds'], propulsion=propulsion_id, mode=mode, fuel_cost=preview['fuel_cost'], mission=mission, target_planet_index=target_planet_index, colonization_population=self.colonization_rules.population if mission == 'COLONIZE' else None, colonization_origin_planet_id=self.state.planet_id if mission == 'COLONIZE' else None)
         if mission == 'COLONIZE':
             self.state.colonization_claims[self.planet_key(target_x, target_y, target_planet_index)] = fleet['id']
         return {**fleet, 'preview': preview}
 
+    def _travel_stocks(self, fleet: dict[str, Any] | None, ship: dict[str, Any], origin: tuple[int, int]) -> dict[str, float] | None:
+        planet_id = ship.get('origin_planet_id') if fleet is None else next(
+            (planet['id'] for planet in self.state.planets if planet['x'] == origin[0] and planet['y'] == origin[1]), None
+        )
+        if not self.state.stocks_by_planet:
+            return self.state.stocks
+        if planet_id is None:
+            return None
+        stocks = self.state.stocks_by_planet.get(str(planet_id))
+        if stocks is None:
+            return None
+        return stocks
+
     def _pay(self, costs: dict[str, float]) -> None:
-        missing = [f"{key} ({amount:g})" for key, amount in costs.items() if self.state.stocks.get(key, 0) < amount]
+        self._pay_from(self.state.stocks, costs)
+
+    @staticmethod
+    def _pay_from(stocks: dict[str, float], costs: dict[str, float]) -> None:
+        missing = [f"{key} ({amount:g})" for key, amount in costs.items() if stocks.get(key, 0) < amount]
         if missing:
-            raise DataValidationError("recursos insuficientes: " + ", ".join(missing))
+            raise DataValidationError("recursos locais insuficientes: " + ", ".join(missing))
         for key, amount in costs.items():
-            self.state.stocks[key] -= amount
+            stocks[key] -= amount

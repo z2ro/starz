@@ -135,35 +135,52 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
     associations, ships, fleets = rows(m.FleetShip), sorted(rows(m.Ship), key=lambda row: (row.created_at, row.id)), sorted(rows(m.Fleet), key=lambda row: row.id)
     notices = session.scalars(select(m.Notice).where(m.Notice.empire_id == empire.id).order_by(m.Notice.sequence.desc()).limit(100)).all()
     claims = session.execute(select(m.Fleet.id, m.Fleet.destination_x, m.Fleet.destination_y, m.Fleet.target_planet_index).join(m.Empire).where(m.Empire.universe_id == empire.universe_id, m.Fleet.status == 'TRANSIT', m.Fleet.mission == 'COLONIZE')).all()
+    stock_rows = session.execute(
+        select(m.PlanetStock).join(m.Planet).where(m.Planet.empire_id == empire.id)
+    ).scalars().all()
+    stocks_by_planet: dict[str, dict[str, float]] = {str(planet.id): {} for planet, _ in owned}
+    for row in stock_rows:
+        stocks_by_planet.setdefault(str(row.planet_id), {})[row.resource_id] = row.amount
+    active_stocks = stocks_by_planet.setdefault(str(active.id), {})
     state = GameState(
         seed=universe.seed, system_x=active_system.x, system_y=active_system.y, population_total=active.population_total, last_updated=epoch(empire.last_updated),
-        stocks={row.resource_id: row.amount for row in rows(m.Stock)},
+        stocks=active_stocks,
+        stocks_by_planet=stocks_by_planet,
         districts={row.district_id: row.level for row in session.scalars(select(m.District).where(m.District.planet_id == active.id))},
         construction=[{'id': row.district_id, 'job_id': str(row.id), 'started_at': epoch(row.started_at), 'complete_at': epoch(row.complete_at)} for row in jobs],
         research={'active': research.active_technology_id, 'remaining_work': research.remaining_work, 'complete_at': epoch(research.complete_at), 'completed': [row.technology_id for row in completed], 'completed_at': {row.technology_id: epoch(row.completed_at) for row in completed}},
-        ships=[{'id': str(row.id), 'hull_id': row.hull_id, 'propulsion_id': row.propulsion_id, 'fuel_id': row.fuel_id, 'crew': row.crew, 'mass': row.mass, 'ready_at': epoch(row.ready_at)} for row in ships],
-        fleets=[{'id': str(row.id), 'name': row.name, 'ship_ids': sorted(str(link.ship_id) for link in associations if link.fleet_id == row.id), 'x': row.x, 'y': row.y, 'destination_x': row.destination_x, 'destination_y': row.destination_y, 'status': row.status, 'mission': row.mission, 'target_planet_index': row.target_planet_index, 'colonization_population': row.colonization_population, 'departure_at': epoch(row.departure_at), 'arrival_at': epoch(row.arrival_at), 'propulsion': row.propulsion_id, 'mode': row.mode, 'fuel_cost': row.fuel_cost} for row in fleets],
+        ships=[{'id': str(row.id), 'hull_id': row.hull_id, 'propulsion_id': row.propulsion_id, 'fuel_id': row.fuel_id, 'crew': row.crew, 'mass': row.mass, 'ready_at': epoch(row.ready_at), 'origin_planet_id': str(row.origin_planet_id) if row.origin_planet_id else None, 'system_x': row.system_x, 'system_y': row.system_y} for row in ships],
+        fleets=[{'id': str(row.id), 'name': row.name, 'ship_ids': sorted(str(link.ship_id) for link in associations if link.fleet_id == row.id), 'x': row.x, 'y': row.y, 'destination_x': row.destination_x, 'destination_y': row.destination_y, 'status': row.status, 'mission': row.mission, 'target_planet_index': row.target_planet_index, 'colonization_population': row.colonization_population, 'colonization_origin_planet_id': str(row.colonization_origin_planet_id) if row.colonization_origin_planet_id else None, 'origin_planet_id': next((str(ship.origin_planet_id) for ship in ships if ship.id in {link.ship_id for link in associations if link.fleet_id == row.id} and ship.origin_planet_id), None), 'fuel_reserve': row.fuel_reserve, 'departure_at': epoch(row.departure_at), 'arrival_at': epoch(row.arrival_at), 'propulsion': row.propulsion_id, 'mode': row.mode, 'fuel_cost': row.fuel_cost} for row in fleets],
         notices=[row.message for row in notices],
         system_knowledge={f'{row.system_x}:{row.system_y}': epoch(row.surveyed_at) for row in rows(m.SystemKnowledge)},
         planet_id=str(active.id), planet_index=active.planet_index, home_planet_id=str(home.id), home_system_x=home_system.x, home_system_y=home_system.y,
         planets=[_planet_summary(planet, system, planet.id == home.id) for planet, system in owned],
         occupied_planets=[f'{system.x}:{system.y}:{planet.planet_index}' for planet, system in occupied],
         colonization_claims={f'{x}:{y}:{index}': str(fleet_id) for fleet_id, x, y, index in claims},
-        crew_committed_override=0 if active.id != home.id else None,
         planet_last_updated=epoch(active.last_updated),
     )
-    if active.id != home.id and catalog is not None:
-        home_districts = {row.district_id: row.level for row in session.scalars(select(m.District).where(m.District.planet_id == home.id))}
-        home_state = GameState(seed=universe.seed, system_x=home_system.x, system_y=home_system.y, stocks=state.stocks, population_total=home.population_total, districts=home_districts, ships=state.ships, last_updated=state.last_updated)
-        state.research_rate_override = Engine(catalog, home_state).capacities()['effective_research_rate']
+    if catalog is not None:
+        research_rate = 0.0
+        for planet, system in owned:
+            districts = {row.district_id: row.level for row in session.scalars(select(m.District).where(m.District.planet_id == planet.id))}
+            context = GameState(
+                seed=universe.seed, system_x=system.x, system_y=system.y,
+                stocks=stocks_by_planet[str(planet.id)], population_total=planet.population_total,
+                districts=districts, ships=state.ships, planet_id=str(planet.id),
+                last_updated=epoch(planet.last_updated),
+            )
+            research_rate += Engine(catalog, context).capacities()['effective_research_rate']
+        state.research_rate_global = research_rate
     return state
 
 
 def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameState):
     stamp = utc(state.last_updated)
     empire.last_updated, planet.population_total, planet.last_updated = stamp, state.population_total, stamp
-    for resource_id, amount in state.stocks.items():
-        session.merge(m.Stock(empire_id=empire.id, resource_id=resource_id, amount=amount))
+    state.stocks_by_planet[str(planet.id)] = state.stocks
+    for planet_id, stocks in state.stocks_by_planet.items():
+        for resource_id, amount in stocks.items():
+            session.merge(m.PlanetStock(planet_id=UUID(str(planet_id)), resource_id=resource_id, amount=amount))
     for district_id, level in state.districts.items():
         session.merge(m.District(planet_id=planet.id, district_id=district_id, level=level))
     existing_jobs = {str(row.id): row for row in session.scalars(select(m.Construction).where(m.Construction.planet_id == planet.id))}
@@ -183,6 +200,8 @@ def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameSta
         session.flush()
         for district_id, level in colony['districts'].items():
             session.add(m.District(planet_id=colony_row.id, district_id=district_id, level=level))
+        for resource_id, amount in colony.get('initial_stocks', {}).items():
+            session.add(m.PlanetStock(planet_id=colony_row.id, resource_id=resource_id, amount=amount))
     research = state.research
     session.merge(m.Research(empire_id=empire.id, active_technology_id=research['active'], remaining_work=research.get('remaining_work', 0), complete_at=utc(research['complete_at']), updated_at=stamp))
     for technology_id in research['completed']:
@@ -190,10 +209,10 @@ def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameSta
             session.add(m.CompletedTechnology(empire_id=empire.id, technology_id=technology_id, completed_at=utc(research['completed_at'][technology_id])))
     for ship in state.ships:
         if session.get(m.Ship, UUID(ship['id'])) is None:
-            session.add(m.Ship(id=UUID(ship['id']), empire_id=empire.id, hull_id=ship['hull_id'], propulsion_id=ship['propulsion_id'], fuel_id=ship['fuel_id'], crew=ship['crew'], mass=ship['mass'], ready_at=utc(ship['ready_at']), created_at=stamp))
+            session.add(m.Ship(id=UUID(ship['id']), empire_id=empire.id, hull_id=ship['hull_id'], propulsion_id=ship['propulsion_id'], fuel_id=ship['fuel_id'], crew=ship['crew'], mass=ship['mass'], ready_at=utc(ship['ready_at']), created_at=stamp, origin_planet_id=UUID(ship['origin_planet_id']) if ship.get('origin_planet_id') else None, system_x=ship.get('system_x'), system_y=ship.get('system_y')))
     session.flush()
     for fleet in state.fleets:
-        session.merge(m.Fleet(id=UUID(fleet['id']), empire_id=empire.id, name=fleet['name'], x=fleet['x'], y=fleet['y'], destination_x=fleet['destination_x'], destination_y=fleet['destination_y'], status=fleet['status'], mission=fleet.get('mission', 'MOVE'), target_planet_index=fleet.get('target_planet_index'), colonization_population=fleet.get('colonization_population'), departure_at=utc(fleet['departure_at']), arrival_at=utc(fleet['arrival_at']), propulsion_id=fleet['propulsion'], mode=fleet['mode'], fuel_cost=fleet['fuel_cost']))
+        session.merge(m.Fleet(id=UUID(fleet['id']), empire_id=empire.id, name=fleet['name'], x=fleet['x'], y=fleet['y'], destination_x=fleet['destination_x'], destination_y=fleet['destination_y'], status=fleet['status'], mission=fleet.get('mission', 'MOVE'), target_planet_index=fleet.get('target_planet_index'), colonization_population=fleet.get('colonization_population'), colonization_origin_planet_id=UUID(fleet['colonization_origin_planet_id']) if fleet.get('colonization_origin_planet_id') else None, fuel_reserve=fleet.get('fuel_reserve', 0), departure_at=utc(fleet['departure_at']), arrival_at=utc(fleet['arrival_at']), propulsion_id=fleet['propulsion'], mode=fleet['mode'], fuel_cost=fleet['fuel_cost']))
         session.flush()
         for ship_id in fleet['ship_ids']:
             session.merge(m.FleetShip(fleet_id=UUID(fleet['id']), ship_id=UUID(ship_id), empire_id=empire.id))
@@ -209,7 +228,7 @@ def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameSta
 
 
 def validate_state(catalog: Catalog, state: GameState):
-    for resource_id in state.stocks:
+    for resource_id in {key for stocks in [state.stocks, *state.stocks_by_planet.values()] for key in stocks}:
         catalog.get('fuels' if resource_id in catalog.items['fuels'] else 'resources', resource_id)
     for district_id in state.districts:
         catalog.get('districts', district_id)

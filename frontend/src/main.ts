@@ -16,7 +16,7 @@ type State = {
   construction: Array<{ id: string; started_at: number; complete_at: number }>;
   research: { active: string | null; complete_at: number | null; completed: string[]; remaining_work: number };
   active_planet?: { id: string | null; planet_index: number; home: boolean };
-  planets?: Array<{ id: string; name: string; x: number; y: number; planet_index: number; population_total: number; home: boolean }>;
+  planets?: Array<{ id: string; name: string; x: number; y: number; planet_index: number; population_total: number; home: boolean; stocks?: Record<string, number> }>;
   fleets: Array<{ id: string; name: string; status: 'ARRIVED' | 'TRANSIT'; mission: 'MOVE' | 'SURVEY' | 'COLONIZE'; target_planet_index?: number | null; x: number; y: number; destination_x: number; destination_y: number; ship_ids: string[]; eta: number; propulsion: string; mode: string; fuel_cost: number; departure_at: number; arrival_at: number }>;
   ships: Array<{ id: string; hull_id: string; propulsion_id: string; fuel_id: string; crew: number; mass: number; ready_at: number }>;
   travel_modes: TravelMode[]; notices: string[]; unlocked_content: string[];
@@ -203,7 +203,7 @@ async function recenter(x: number, y: number): Promise<void> {
   catch (error) { busy = false; feedback = { kind: 'error', message: error instanceof Error ? error.message : 'Falha ao centralizar mapa.' }; render(); }
 }
 async function load(showBusy = false, planetId = current?.active_planet?.id): Promise<void> { if (showBusy) { busy = true; if (current) render(); } current = await request<State>(planetId ? `/api/state?planet_id=${encodeURIComponent(planetId)}` : '/api/state'); if (route() === 'galaxy' && galaxyData) await refreshGalaxy(); busy = false; render(); }
-function travelBody(): Record<string, unknown> { const [kind, id] = selectedSubject.split(':'); if (!id) throw new Error('Selecione uma frota ou nave disponível.'); const propulsion = kind === 'fleet' ? current.fleets.find(item => item.id === id)?.propulsion : current.ships.find(item => item.id === id)?.propulsion_id; const mission = selectedSystem.knowledge_level === 'UNKNOWN' ? 'SURVEY' : selectedPlanetIndex === undefined ? 'MOVE' : 'COLONIZE'; return { target_x: selectedSystem.x, target_y: selectedSystem.y, target_planet_index: mission === 'COLONIZE' ? selectedPlanetIndex : undefined, propulsion_id: propulsion, mode: selectedMode, mission, [kind === 'fleet' ? 'fleet_id' : 'ship_id']: id }; }
+function travelBody(): Record<string, unknown> { const [kind, id] = selectedSubject.split(':'); if (!id) throw new Error('Selecione uma frota ou nave disponível.'); const propulsion = kind === 'fleet' ? current.fleets.find(item => item.id === id)?.propulsion : current.ships.find(item => item.id === id)?.propulsion_id; const mission = selectedSystem.knowledge_level === 'UNKNOWN' ? 'SURVEY' : selectedPlanetIndex === undefined ? 'MOVE' : 'COLONIZE'; return { planet_id: current.active_planet?.id, target_x: selectedSystem.x, target_y: selectedSystem.y, target_planet_index: mission === 'COLONIZE' ? selectedPlanetIndex : undefined, propulsion_id: propulsion, mode: selectedMode, mission, [kind === 'fleet' ? 'fleet_id' : 'ship_id']: id }; }
 async function perform(action: string, id?: string): Promise<void> {
   busy = true; feedback = undefined; render();
   try {
@@ -211,7 +211,7 @@ async function perform(action: string, id?: string): Promise<void> {
     if (action === 'refresh') { await load(); feedback = { kind: 'success', message: 'Estado sincronizado.' }; render(); return; }
     if (action === 'build') body = { id, planet_id: current.active_planet?.id };
     if (action === 'research') body = { id };
-    if (action === 'build-ship') body = { hull_id: selectedHull, propulsion_id: selectedPropulsion, fuel_id: selectedFuel };
+    if (action === 'build-ship') body = { planet_id: current.active_planet?.id, hull_id: selectedHull, propulsion_id: selectedPropulsion, fuel_id: selectedFuel };
     if (action === 'preview' || action === 'travel') { endpoint = action === 'preview' ? 'travel-preview' : 'travel'; body = travelBody(); }
     const result = await request<Record<string, TravelPreview> | Record<string, unknown>>(`/api/${endpoint}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     if (action === 'preview') { previews = result as Record<string, TravelPreview>; feedback = { kind: 'success', message: 'Rota calculada. Compare tempo, combustível, calor e assinatura.' }; busy = false; render(); return; }

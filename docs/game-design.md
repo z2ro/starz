@@ -23,8 +23,9 @@
 - Horizon é a primeira corveta de exploração; classificação e papel vêm do YAML.
 - Sistemas levantados revelam múltiplos planetas procedurais; somente planetas `VIABLE`
   podem receber a missão `COLONIZE` neste slice.
-- O pacote colonial compromete população e recursos no despacho; a nova colônia nasce
-  com distrito civil e campo solar, definidos em YAML.
+- O pacote colonial compromete população e recursos locais no despacho; a nova colônia
+  nasce com população, distrito civil, campo solar e `initial_stocks`, definidos em YAML,
+  sem copiar o estoque do planeta de origem.
 - Indústria nominal, slots de obras e slots de estaleiro são capacidades distintas.
 - Obras e montagem têm prazo fixo após validação inicial; pesquisa progride conforme
   cobertura contínua de energia e workforce, podendo pausar e retomar.
@@ -35,7 +36,8 @@
 
 - Lore de origem da civilização.
 - Combate orbital e de superfície.
-- Migração populacional, terraformação, colonização avançada, diplomacia e logística.
+- Estoques são físicos por planeta; transporte, reabastecimento remoto, migração
+  populacional, terraformação, colonização avançada, diplomacia e logística.
 - Fenômenos dinâmicos, debris e efeitos ambientais de guerra.
 - Política de clusters de spawn para escala multi-jogador.
 - Autenticação, ownership multiusuário e operação em produção.

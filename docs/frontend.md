@@ -1,7 +1,8 @@
 # Frontend
 
 Overview e Planet exibem um seletor dos mundos do império. A troca recarrega o
-contexto planetário autorizado; stocks e pesquisa continuam globais. Em Galaxy,
+contexto planetário autorizado; stocks são locais ao planeta selecionado e pesquisa
+continua global. Em Galaxy,
 sistemas `SURVEYED` listam seus planetas, viabilidade e ownership. Selecionar um alvo
 viável, uma fleet `ARRIVED` e um regime produz a ordem `COLONIZE` explícita.
 
@@ -13,7 +14,7 @@ a view no refresh:
 
 - `#/overview`: resumo operacional, planeta e prioridades;
 - `#/planet`: propriedades físicas, distritos, construção e órbita;
-- `#/economy`: stocks, flows e capacities separados;
+- `#/economy`: stocks locais, flows e capacities separados;
 - `#/research`: requisitos, status, trabalho restante, ETA e unlocks;
 - `#/shipyard`: slots, escolha de casco/motor/combustível e montagens;
 - `#/fleets`: posição, composição, missão e ETA;
@@ -32,6 +33,11 @@ requirements, capacidades e compatibilidades não são duplicados no TypeScript.
 1–3. Nodes `UNKNOWN` não recebem estrela ou planeta; `SURVEYED` recebe detalhes
 procedurais. O mapa pode ser centralizado no homeworld ou em frota `ARRIVED` e não
 aceita coordenada arbitrária. Selecionar um node não cria descoberta nem materializa.
+
+`/api/state?planet_id=...` retorna os stocks, população, distritos, energia e filas do
+planeta ativo. Construções e montagem de nave enviam esse `planet_id`; a UI não soma
+stocks imperiais para autorizar ações. Naves novas preservam sua origem planetária e
+viagens remotas exigem combustível local no sistema da frota.
 
 Ao escolher um sistema desconhecido, o despacho é apresentado como **Explorar
 sistema** e envia `mission=SURVEY`. Sistemas conhecidos usam `MOVE`. A chegada e a

@@ -130,6 +130,10 @@ o adaptador real, rollback, constraints, concorrência e progresso offline.
 O JavaScript publicado é gerado por TypeScript; não edite `frontend/app.js` manualmente.
 Veja [frontend.md](docs/frontend.md) para views, atualização e princípios visuais.
 
-Nesta etapa população, distritos, energia e construções são planetários. Stocks,
-combustível, naves e pesquisa continuam globais; não existem transporte, migração,
-terraformação, Colony Ship dedicado ou reembolso/cancelamento colonial.
+Nesta etapa população, distritos, energia, construções e stocks são planetários.
+Recursos existem fisicamente no mundo onde foram produzidos: não há transferência
+implícita entre planetas. Shipyards debitam o estoque local e naves novas nascem no
+sistema do planeta de construção. Pesquisa continua global; naves e frotas continuam
+entidades imperiais. Viagens remotas sem planeta próprio no sistema não recebem
+combustível mágico. Ainda não existem transporte, migração, terraformação, Colony Ship
+dedicado ou reembolso/cancelamento colonial.

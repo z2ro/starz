@@ -57,10 +57,10 @@ class Planet(Base):
     last_updated: Mapped[datetime]
 
 
-class Stock(Base):
-    __tablename__ = 'empire_stock'
+class PlanetStock(Base):
+    __tablename__ = 'planet_stock'
     __table_args__ = (CheckConstraint("amount >= 0 AND amount < 'Infinity'::float8", name='stock_finite_nonnegative'),)
-    empire_id: Mapped[UUID] = mapped_column(ForeignKey('empire.id'), primary_key=True)
+    planet_id: Mapped[UUID] = mapped_column(ForeignKey('planet_state.id'), primary_key=True)
     resource_id: Mapped[str] = mapped_column(primary_key=True)
     amount: Mapped[float]
 
@@ -120,6 +120,9 @@ class Ship(Base):
     mass: Mapped[float]
     ready_at: Mapped[datetime]
     created_at: Mapped[datetime]
+    origin_planet_id: Mapped[UUID | None] = mapped_column(ForeignKey('planet_state.id'))
+    system_x: Mapped[int | None]
+    system_y: Mapped[int | None]
 
 
 class Fleet(Base):
@@ -143,6 +146,8 @@ class Fleet(Base):
     mission: Mapped[str] = mapped_column(default='MOVE', server_default='MOVE')
     target_planet_index: Mapped[int | None]
     colonization_population: Mapped[int | None]
+    colonization_origin_planet_id: Mapped[UUID | None] = mapped_column(ForeignKey('planet_state.id'))
+    fuel_reserve: Mapped[float] = mapped_column(default=0)
     departure_at: Mapped[datetime]
     arrival_at: Mapped[datetime] = mapped_column(index=True)
     propulsion_id: Mapped[str]
