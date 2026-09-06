@@ -150,3 +150,29 @@ test('planet selector and colonization order use explicit targets', async () => 
   const sent = b.calls.findLast(call => call.url === '/api/travel');
   assert.equal(JSON.parse(sent.options.body).mission, 'COLONIZE');
 });
+
+test('Planet View is a command-center composition with real state overlays', async () => {
+  const b = await browser();
+  b.location.hash = '#/planet';
+  vm.runInContext('render()', b.context);
+  assert.match(b.app.innerHTML, /planet-command-view/);
+  assert.match(b.app.innerHTML, /planet-inspector/);
+  assert.match(b.app.innerHTML, /CONSTRUCTION QUEUE/);
+  assert.match(b.app.innerHTML, /CURRENT RESEARCH/);
+  assert.match(b.app.innerHTML, /FLEETS IN SYSTEM/);
+  assert.match(b.app.innerHTML, /Gravidade/);
+  assert.match(b.app.innerHTML, /Indústria/);
+  assert.match(b.app.innerHTML, /PRODUÇÃO DE RECURSOS/);
+  assert.match(b.app.innerHTML, /Ferrita do catálogo/);
+  assert.match(b.app.innerHTML, /planet-3d-stage/);
+});
+
+test('Planet renderer keeps update/dispose lifecycle and clears transient station state', () => {
+  const main = readFileSync('frontend/src/main.ts', 'utf8');
+  const renderer = readFileSync('frontend/src/planet3d/PlanetRenderer.ts', 'utf8');
+  assert.match(main, /if \(!planetRenderer\) planetRenderer = new PlanetRenderer/);
+  assert.match(main, /planetRenderer\.update\(planetVisualState\(\)\)/);
+  assert.match(main, /disposePlanetRenderer\(\)/);
+  assert.match(renderer, /this\.planetGroup = undefined;/);
+  assert.match(renderer, /this\.stationOrbit = undefined;/);
+});

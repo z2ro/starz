@@ -116,6 +116,7 @@ export class PlanetRenderer {
   private readonly scene: THREE.Scene;
   private readonly camera: THREE.PerspectiveCamera;
   private readonly renderer: THREE.WebGLRenderer;
+  private readonly canvasHost: HTMLDivElement;
   private readonly controls: OrbitControls;
   private readonly content = new THREE.Group();
   private readonly reducedMotion: boolean;
@@ -131,21 +132,25 @@ export class PlanetRenderer {
     this.reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color('#070b12');
-    this.camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
-    this.camera.position.set(0, 0.15, 3.15);
+    this.camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
+    this.camera.position.set(0.28, 0.08, 3.35);
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.domElement.className = 'planet-3d-canvas';
     this.renderer.domElement.setAttribute('role', 'img');
     this.renderer.domElement.setAttribute('aria-label', 'Visualização 3D do planeta');
-    this.container.replaceChildren(this.renderer.domElement);
+    this.container.querySelector('.planet-fallback-visual')?.remove();
+    this.canvasHost = document.createElement('div');
+    this.canvasHost.className = 'planet-3d-canvas-host';
+    this.canvasHost.append(this.renderer.domElement);
+    this.container.append(this.canvasHost);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enablePan = false;
     this.controls.enableDamping = true;
-    this.controls.minDistance = 1.65;
-    this.controls.maxDistance = 5;
-    this.controls.target.set(0, 0, 0);
+    this.controls.minDistance = 1.8;
+    this.controls.maxDistance = 5.4;
+    this.controls.target.set(-0.12, -0.08, 0);
     this.scene.add(this.content);
     this.resizeListener = () => this.resize();
     if (typeof ResizeObserver !== 'undefined') {
@@ -161,6 +166,8 @@ export class PlanetRenderer {
   update(input: PlanetVisualState): void {
     if (this.disposed) return;
     clearGroup(this.content);
+    this.planetGroup = undefined;
+    this.stationOrbit = undefined;
     const planetGroup = new THREE.Group();
     this.planetGroup = planetGroup;
     const config = planetVisualConfig(input.planet);
@@ -178,6 +185,7 @@ export class PlanetRenderer {
       new THREE.SphereGeometry(1.08, 48, 32),
       new THREE.MeshBasicMaterial({ color: config.atmosphereColor, transparent: true, opacity: config.atmosphereOpacity, side: THREE.BackSide, depthWrite: false }),
     ));
+    planetGroup.scale.setScalar(1.24);
     input.districts.forEach((district, index) => {
       const placement = districtPlacement(input.seed, district.id, index, district.level);
       const position = latLonToVector3(placement.latitude, placement.longitude, 1.03);
@@ -194,7 +202,9 @@ export class PlanetRenderer {
     });
     this.content.add(planetGroup);
     this.addLights(star);
+    this.addStarVisual(star);
     this.addStarfield(input.seed);
+    this.addCityLights(input);
     if (hasShipyard(input.capacities.shipyard_slots)) this.addShipyard();
     input.fleets.filter(fleet => fleetIsInSystem(fleet, input.systemX, input.systemY)).forEach((_, index) => this.addFleetMarker(index));
   }
@@ -208,7 +218,7 @@ export class PlanetRenderer {
     this.controls.dispose();
     clearGroup(this.content);
     this.renderer.dispose();
-    this.renderer.domElement.remove();
+    this.canvasHost.remove();
     this.planetGroup = undefined;
     this.stationOrbit = undefined;
   }
@@ -240,6 +250,36 @@ export class PlanetRenderer {
     this.content.add(key);
   }
 
+  private addStarVisual(star: { color: string; intensity: number }): void {
+    const starGroup = new THREE.Group();
+    starGroup.position.set(3.2, 1.15, -2.4);
+    const radius = 0.18 + Math.min(0.18, star.intensity * 0.035);
+    starGroup.add(new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 14), new THREE.MeshBasicMaterial({ color: star.color })));
+    const halo = new THREE.Mesh(
+      new THREE.SphereGeometry(radius * 2.8, 16, 12),
+      new THREE.MeshBasicMaterial({ color: star.color, transparent: true, opacity: 0.08, side: THREE.BackSide, depthWrite: false }),
+    );
+    starGroup.add(halo);
+    this.content.add(starGroup);
+  }
+
+  private addCityLights(input: PlanetVisualState): void {
+    const active = input.districts.filter(district => ['Civil', 'Industrial', 'Research'].includes(district.category));
+    if (!active.length) return;
+    const positions: number[] = [];
+    active.forEach((district, districtIndex) => {
+      const count = Math.min(8, 2 + district.level * 2);
+      for (let index = 0; index < count; index += 1) {
+        const placement = districtPlacement(input.seed, `night-${district.id}`, districtIndex + index, district.level);
+        const position = latLonToVector3(placement.latitude, placement.longitude, 1.255);
+        positions.push(position.x, position.y, position.z);
+      }
+    });
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    this.content.add(new THREE.Points(geometry, new THREE.PointsMaterial({ color: '#dfc87e', size: 0.018, sizeAttenuation: true, transparent: true, opacity: 0.72 })));
+  }
+
   private addStarfield(seed: string): void {
     const positions = starfieldPositions(seed);
     const geometry = new THREE.BufferGeometry();
@@ -255,12 +295,19 @@ export class PlanetRenderer {
     const station = new THREE.Group();
     station.position.set(1.55, 0, 0);
     const metal = new THREE.MeshStandardMaterial({ color: '#7190a2', metalness: 0.72, roughness: 0.42 });
+    const darkMetal = new THREE.MeshStandardMaterial({ color: '#263c4c', metalness: 0.6, roughness: 0.5 });
     const glow = new THREE.MeshBasicMaterial({ color: '#6db7ca' });
-    station.add(new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 8, 24), metal));
-    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.36, 8), glow);
+    station.add(new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.024, 8, 28), metal));
+    station.add(new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.014, 6, 20), darkMetal));
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 8), glow);
     core.rotation.z = Math.PI / 2;
     station.add(core);
-    station.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.018, 0.08), metal));
+    station.add(new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.018, 0.08), metal));
+    [-0.24, 0.24].forEach(x => {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, 0.06), darkMetal);
+      arm.position.x = x;
+      station.add(arm);
+    });
     this.stationOrbit.add(station);
     this.content.add(this.stationOrbit);
   }
@@ -271,7 +318,17 @@ export class PlanetRenderer {
     const marker = new THREE.Group();
     marker.position.set(1.32, 0.18 + index * 0.06, 0);
     marker.rotation.z = -0.45;
-    marker.add(new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.18, 5), new THREE.MeshStandardMaterial({ color: '#9ed9e6', emissive: '#2e7e99', emissiveIntensity: 0.4 })));
+    const hull = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.2, 5), new THREE.MeshStandardMaterial({ color: '#9ed9e6', emissive: '#2e7e99', emissiveIntensity: 0.4 }));
+    marker.add(hull);
+    [-1, 1].forEach(side => {
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.018, 0.045), new THREE.MeshStandardMaterial({ color: '#638899' }));
+      wing.position.z = side * 0.07;
+      wing.rotation.y = side * 0.25;
+      marker.add(wing);
+    });
+    const engine = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), new THREE.MeshBasicMaterial({ color: '#8bd3df' }));
+    engine.position.y = -0.1;
+    marker.add(engine);
     orbit.add(marker);
     this.content.add(orbit);
   }

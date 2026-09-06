@@ -29,6 +29,7 @@ type GalaxySystem = { id: string; name?: string; x: number; y: number; distance:
 type Galaxy = { center: number[]; home: number[]; radius: number; systems: GalaxySystem[] };
 type TravelPreview = { origin: number[]; destination: number[]; distance: number; eta_seconds: number; fuel_cost: number; heat: number; signature: number };
 type View = 'overview' | 'planet' | 'economy' | 'research' | 'shipyard' | 'fleets' | 'galaxy';
+type PlanetTab = 'overview' | 'districts' | 'orbit' | 'data';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const views: Array<{ id: View; label: string; icon: string }> = [
@@ -51,6 +52,7 @@ let selectedPlanetIndex: number | undefined;
 let busy = false;
 let feedback: { kind: 'success' | 'error'; message: string } | undefined;
 let planetRenderer: PlanetRenderer | undefined;
+let planetTab: PlanetTab = 'overview';
 
 const esc = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 const fmt = (value: number | undefined, digits = 0) => Number(value ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: digits });
@@ -124,14 +126,41 @@ function districtRow(district: District): string {
   return `<div class="entity-row ${available ? '' : 'locked'}"><div><b>${esc(district.name)}</b><small>${esc(district.description)}</small>${badge(district.category)}</div><strong>${level}</strong><span>${esc(districtImpact(district))}<small>${district.workforce} workforce</small></span><div class="cost"><span>${duration(district.duration)}</span>${cost(district.cost)}</div><button class="action compact" data-action="build" data-id="${esc(district.id)}" ${available ? '' : 'disabled'}>${available ? 'Construir' : 'Bloqueado'}</button></div>`;
 }
 
+function nominalRate(resourceId: string): number {
+  return content.districts.reduce((total, district) => total + (current.districts[district.id] ?? 0) * (district.production[resourceId] ?? 0), 0);
+}
+
+function planetOverlayQueue(): string {
+  const job = current.construction[0];
+  if (!job) return `<div class="overlay-empty">Nenhuma obra em andamento.<button class="overlay-link" data-goto="planet">Gerenciar infraestrutura →</button></div>`;
+  const district = content.districts.find(item => item.id === job.id);
+  const completion = Math.max(0, Math.min(100, 100 * (Date.now() / 1000 - job.started_at) / (job.complete_at - job.started_at)));
+  return `<div class="overlay-primary"><span>${esc(district?.name ?? job.id)}</span><b>Nível ${(current.districts[job.id] ?? 0) + 1}</b></div>${progress(completion, `${remaining(job.complete_at)} · ${fmt(completion)}%`)}`;
+}
+
+function planetOverlayResearch(): string {
+  if (!current.research.active) return `<div class="overlay-empty">Diretoria científica em espera.<button class="overlay-link" data-goto="research">Abrir pesquisa →</button></div>`;
+  const technology = content.technologies.find(item => item.id === current.research.active);
+  const completion = technology ? 100 * (1 - current.research.remaining_work / technology.duration) : 0;
+  return `<div class="overlay-primary"><span>${esc(technology?.name ?? current.research.active)}</span><b>${current.research.complete_at ? remaining(current.research.complete_at) : 'PAUSADA'}</b></div>${progress(completion, `${fmt(completion)}% concluída`)}`;
+}
+
+function planetRightPanel(tab: PlanetTab): string {
+  const p = current.system.planet;
+  const physical = [['Gravidade', `${fmt(p.gravity, 2)} g`], ['Temperatura', `${fmt(p.temperature)} K`], ['Água', `${fmt(p.water, 1)}%`], ['Atmosfera', p.atmosphere], ['Radiação', fmt(p.radiation, 2)], ['Campo magnético', fmt(p.magnetic_field, 2)], ['Superfície útil', `${fmt(p.usable_surface, 1)}%`], ['Atividade geológica', fmt(p.geological_activity, 2)]];
+  const development = [['População', `${fmt(current.population.total)} / ${fmt(current.population.capacity)}`], ['Workforce', `${fmt(current.capacities.workforce_coverage * 100)}%`], ['Energia', `${fmt(current.capacities.energy_generation)} / ${fmt(current.capacities.energy_consumption)}`], ['Indústria', fmt(current.capacities.industrial_capacity)], ['Construção', `${fmt(current.capacities.construction_slots_available)} / ${fmt(current.capacities.construction_slots)}`], ['Estaleiro', `${fmt(current.capacities.shipyard_slots_available)} / ${fmt(current.capacities.shipyard_slots)}`]];
+  const resources = strategicResources().map(item => `<div class="resource-line"><span>${esc(item.name)}</span><b>${fmt(current.stocks[item.id], 1)}</b><small>${nominalRate(item.id) > 0 ? `+${fmt(nominalRate(item.id) * 60, 1)}/h` : '—'}</small></div>`).join('');
+  const districts = content.districts.filter(item => (current.districts[item.id] ?? 0) > 0).map(item => `<div class="inspector-row"><span>${esc(item.name)}</span><b>Nível ${current.districts[item.id]}</b><small>${esc(districtImpact(item))}</small></div>`).join('') || '<span class="muted">Nenhuma infraestrutura registrada.</span>';
+  const orbit = `${current.capacities.shipyard_slots > 0 ? `<div class="orbit-state"><span class="orbit-glyph">◎</span><div><b>Estaleiro orbital</b><small>${current.capacities.shipyard_slots_available}/${current.capacities.shipyard_slots} slots livres</small></div></div>` : '<span class="muted">Nenhuma estrutura orbital ativa.</span>'}${current.fleets.filter(fleet => fleet.status === 'ARRIVED' && fleet.x === current.system.x && fleet.y === current.system.y).map(fleet => `<div class="orbit-state"><span class="orbit-glyph">△</span><div><b>${esc(fleet.name)}</b><small>Frota estacionada · ${fleet.ship_ids.length} nave(s)</small></div></div>`).join('')}`;
+  const body = tab === 'districts' ? `<div class="inspector-list">${districts}</div>` : tab === 'orbit' ? `<div class="inspector-list">${orbit}</div>` : tab === 'data' ? `<div class="inspector-facts">${physical.map(([name, value]) => `<div><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join('')}</div>` : `<div class="inspector-section"><div class="inspector-label">CARACTERÍSTICAS FÍSICAS</div><div class="inspector-facts compact-facts">${physical.slice(0, 6).map(([name, value]) => `<div><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join('')}</div></div><div class="inspector-section"><div class="inspector-label">DESENVOLVIMENTO</div><div class="development-list">${development.map(([name, value], index) => `<div><span>${esc(name)}</span><b>${esc(value)}</b>${index < 2 ? `<i><em style="width:${percent(index === 0 ? current.population.capacity ? current.population.total / current.population.capacity * 100 : 0 : current.capacities.workforce_coverage * 100)}%"></em></i>` : ''}</div>`).join('')}</div></div><div class="inspector-section"><div class="inspector-label">PRODUÇÃO DE RECURSOS · ESTOQUE LOCAL</div><div class="resource-list compact-resource-list">${resources}</div></div>`;
+  return `<aside class="planet-inspector" aria-label="Informações do planeta"><div class="inspector-tabs" role="tablist">${(['overview', 'districts', 'orbit', 'data'] as PlanetTab[]).map(item => `<button class="${item === tab ? 'active' : ''}" data-planet-tab="${item}" role="tab" aria-selected="${item === tab}">${({ overview: 'Visão geral', districts: 'Distritos', orbit: 'Órbita', data: 'Dados' } as Record<PlanetTab, string>)[item]}</button>`).join('')}</div><div class="inspector-identity"><div class="planet-band"><span>${esc(current.system.star.stellar_class)}-CLASS STAR · ${fmt(current.system.star.luminosity, 1)}× LUMINOSITY</span></div><div class="eyebrow">PLANETARY PROFILE</div><h2>${esc(p.name)}</h2><p>${esc(current.system.name)} · ${current.system.x}:${current.system.y} · planeta ${(current.active_planet?.planet_index ?? 0) + 1}</p></div>${body}</aside>`;
+}
+
 function planetView(): string {
   const p = current.system.planet;
-  const orbitalDistricts = content.districts.filter(item => item.shipyard_slots > 0 && (current.districts[item.id] ?? 0) > 0);
-  const physical = [['Classe estelar', `${current.system.star.stellar_class}-class`], ['Gravidade', `${fmt(p.gravity, 2)} g`], ['Temperatura', `${fmt(p.temperature)} K`], ['Água', `${fmt(p.water, 1)}%`], ['Radiação', fmt(p.radiation, 2)], ['Campo magnético', fmt(p.magnetic_field, 2)], ['Atmosfera', p.atmosphere], ['Superfície útil', `${fmt(p.usable_surface, 1)}%`], ['Atividade geológica', fmt(p.geological_activity, 2)], ['Distância orbital', `${fmt(p.orbital_distance, 2)} AU`]];
-  const orbit = orbitalDistricts.length
-    ? `${orbitalDistricts.map(item => `<div class="metric-line"><span>${esc(item.name)}</span><b>Nível ${current.districts[item.id]}</b></div>`).join('')}<div class="metric-line"><span>Slots disponíveis</span><b>${current.capacities.shipyard_slots_available}/${current.capacities.shipyard_slots}</b></div>`
-    : empty('Órbita não industrializada', 'Conclua a pesquisa necessária para liberar infraestrutura orbital.');
-  return `${planetSelector()}<header class="page-header"><div><div class="eyebrow">PLANETARY COMMAND</div><h1>${esc(p.name)}</h1><p>Ambiente físico, desenvolvimento e presença orbital.</p></div>${badge(`${Object.keys(current.districts).length} TIPOS DE DISTRITO`, 'blue')}</header><div class="planet-layout"><div id="planet-3d-stage" class="planet-3d-stage" aria-label="Visualização 3D de ${esc(p.name)}">${planetVisual(true)}</div>${panel('Perfil físico', `<div class="facts-grid">${physical.map(([name, value]) => stat(name, String(value))).join('')}</div>`, 'PHYSICAL')}</div>${panel('Desenvolvimento planetário', `<div class="entity-table"><div class="table-head"><span>Infraestrutura</span><span>Nível</span><span>Impacto</span><span>Custo / duração</span><span></span></div>${content.districts.map(district => districtRow(district)).join('')}</div>`, 'DEVELOPMENT')}<div class="two-columns">${panel('Órbita', orbit)}${panel('Perfil mineral', Object.entries(p.mineral_profile).map(([id, value]) => `<div class="metric-line"><span>${esc(label(id))}</span><b>${fmt(value, 2)}×</b></div>`).join(''))}</div>`;
+  const arrived = current.fleets.filter(fleet => fleet.status === 'ARRIVED' && fleet.x === current.system.x && fleet.y === current.system.y).length;
+  const selector = planetSelector();
+  return `<div class="planet-command-view">${selector}<div class="planet-command-layout"><section class="planet-hero"><div id="planet-3d-stage" class="planet-3d-stage" aria-label="Visualização 3D de ${esc(p.name)}"><div class="planet-fallback-visual">${planetVisual(true)}</div><div class="planet-hero-header"><div class="eyebrow">PLANETARY COMMAND · ${esc(current.system.name)}</div><h1>${esc(p.name)}</h1><p>${current.system.x}:${current.system.y} · planeta ${(current.active_planet?.planet_index ?? 0) + 1}</p></div><div class="planet-hero-meta"><span>${esc(current.system.star.stellar_class)}-CLASS SYSTEM</span><span>${fmt(p.temperature)} K · ${fmt(p.gravity, 2)} g</span></div><div class="planet-overlays"><section class="planet-overlay construction-overlay"><div class="overlay-heading"><span>CONSTRUCTION QUEUE</span><b>${current.construction.length}</b></div>${planetOverlayQueue()}</section><section class="planet-overlay research-overlay"><div class="overlay-heading"><span>CURRENT RESEARCH</span><b>${current.research.active ? 'ACTIVE' : 'IDLE'}</b></div>${planetOverlayResearch()}<div class="overlay-fleet-row"><span>FLEETS IN SYSTEM</span><b>${arrived}</b><button class="overlay-link" data-goto="fleets">Ver frotas →</button></div></section></div></div>${planetRightPanel(planetTab)}</div><section class="planet-development"><div class="development-heading"><div><div class="eyebrow">PLANETARY INFRASTRUCTURE</div><h2>Desenvolvimento do planeta</h2></div><span>${Object.values(current.districts).reduce((sum, level) => sum + level, 0)} níveis ativos</span></div><div class="entity-table"><div class="table-head"><span>Infraestrutura</span><span>Nível</span><span>Impacto</span><span>Custo / duração</span><span></span></div>${content.districts.map(district => districtRow(district)).join('')}</div></section></div>`;
 }
 
 function economyView(): string {
@@ -202,22 +231,49 @@ function syncPlanetRenderer(view: View): void {
   const stage = document.querySelector<HTMLElement>('#planet-3d-stage');
   if (!stage || stage === app) return;
   try {
-    planetRenderer = new PlanetRenderer(stage);
+    if (!planetRenderer) planetRenderer = new PlanetRenderer(stage);
     planetRenderer.update(planetVisualState());
   } catch (error) {
     disposePlanetRenderer();
-    stage.innerHTML = planetVisual(true);
+    stage.querySelector('.planet-fallback-visual')?.remove();
+    stage.insertAdjacentHTML('afterbegin', `<div class="planet-fallback-visual">${planetVisual(true)}</div>`);
     stage.classList.add('planet-3d-fallback');
     feedback = { kind: 'error', message: error instanceof Error ? 'WebGL indisponível; visualização alternativa ativada.' : 'Visualização 3D indisponível.' };
   }
 }
 function topHud(): string {
   const active = temporalActivityCount();
-  return `<header class="top-hud"><a class="brand" href="#/overview" aria-label="StarZ início"><span>STAR</span><b>Z</b><small>COMMAND</small></a><div class="hud-resources">${strategicResources().map(item => `<div><span>${esc(item.name)}</span><strong>${fmt(current.stocks[item.id], 1)}</strong></div>`).join('')}</div><div class="hud-status"><div title="Geração / demanda de energia"><span>ENERGIA</span><b class="${current.capacities.energy_coverage < 1 ? 'warning-text' : ''}">${fmt(current.capacities.energy_generation)} / ${fmt(current.capacities.energy_consumption)}</b></div><div><span>POPULAÇÃO</span><b>${fmt(current.population.total)} <small>/ ${fmt(current.population.available)} livre</small></b></div><div title="Pesquisa atual"><span>PESQUISA</span><b>${current.research.active ? esc(label(current.research.active)) : 'Inativa'}</b></div><div><span>OPERAÇÕES</span><b>${active}</b></div><button class="icon-button" data-action="refresh" aria-label="Sincronizar estado">↻</button></div></header>`;
+  return `<header class="top-hud"><a class="brand" href="#/overview" aria-label="StarZ início"><span>STAR</span><b>Z</b><small>COMMAND</small></a><div class="hud-resources">${strategicResources().map(item => `<div><span>${esc(item.name)}</span><strong>${fmt(current.stocks[item.id], 1)}</strong><small>${nominalRate(item.id) > 0 ? `+${fmt(nominalRate(item.id) * 60, 1)}/h` : 'estoque local'}</small></div>`).join('')}</div><div class="hud-status"><div title="Geração / demanda de energia"><span>ENERGIA</span><b class="${current.capacities.energy_coverage < 1 ? 'warning-text' : ''}">${fmt(current.capacities.energy_generation)} / ${fmt(current.capacities.energy_consumption)}</b></div><div><span>POPULAÇÃO</span><b>${fmt(current.population.total)} <small>/ ${fmt(current.population.available)} livre</small></b></div><div title="Pesquisa atual"><span>PESQUISA</span><b>${current.research.active ? esc(label(current.research.active)) : 'Inativa'}</b></div><div><span>OPERAÇÕES</span><b>${active}</b></div><button class="icon-button" data-action="refresh" aria-label="Sincronizar estado">↻</button></div></header>`;
 }
 function render(): void {
-  const activeView = route(); disposePlanetRenderer(); app.setAttribute('aria-busy', String(busy));
-  app.innerHTML = `${topHud()}<div class="app-shell"><nav class="sidebar" aria-label="Navegação principal"><div class="nav-label">IMPÉRIO</div>${views.map(view => `<a href="#/${view.id}" class="${view.id === activeView ? 'active' : ''}" aria-current="${view.id === activeView ? 'page' : 'false'}"><span>${view.icon}</span>${esc(view.label)}</a>`).join('')}<div class="sidebar-footer"><span>HOME SYSTEM</span><b>${current.system.x}:${current.system.y}</b><small>${esc(current.system.name)}</small></div></nav><main class="main-content">${viewContent(activeView)}</main>${contextPanel()}</div>${feedback ? `<div class="toast ${feedback.kind}" role="status"><i>${feedback.kind === 'success' ? '✓' : '!'}</i><span>${esc(feedback.message)}</span><button data-dismiss aria-label="Fechar">×</button></div>` : ''}${busy ? '<div class="loading-line"></div>' : ''}`;
+  const activeView = route();
+  app.setAttribute('aria-busy', String(busy));
+  const existingStage = typeof app.querySelector === 'function' ? app.querySelector<HTMLElement>('#planet-3d-stage') : null;
+  const existingMain = typeof app.querySelector === 'function' ? app.querySelector<HTMLElement>('.main-content') : null;
+  const preservePlanet = activeView === 'planet' && !!planetRenderer && !!existingStage && !!existingMain;
+  if (preservePlanet) {
+    const canvasHost = existingStage.querySelector<HTMLElement>('.planet-3d-canvas-host');
+    const marker = document.createComment('planet-renderer');
+    existingStage.replaceWith(marker);
+    existingMain.innerHTML = viewContent(activeView);
+    const replacement = existingMain.querySelector<HTMLElement>('#planet-3d-stage');
+    if (replacement) {
+      replacement.querySelector('.planet-fallback-visual')?.remove();
+      existingStage.innerHTML = replacement.innerHTML;
+      if (canvasHost) existingStage.append(canvasHost);
+      replacement.replaceWith(existingStage);
+    }
+    marker.remove();
+    app.querySelector<HTMLElement>('.top-hud')?.replaceWith(document.createRange().createContextualFragment(topHud()).firstElementChild!);
+    app.querySelector<HTMLElement>('.context-panel')?.replaceWith(document.createRange().createContextualFragment(contextPanel()).firstElementChild!);
+    app.querySelector('.toast')?.remove(); app.querySelector('.loading-line')?.remove();
+    if (feedback) app.insertAdjacentHTML('beforeend', `<div class="toast ${feedback.kind}" role="status"><i>${feedback.kind === 'success' ? '✓' : '!'}</i><span>${esc(feedback.message)}</span><button data-dismiss aria-label="Fechar">×</button></div>`);
+    if (busy) app.insertAdjacentHTML('beforeend', '<div class="loading-line"></div>');
+    syncPlanetRenderer(activeView);
+    return;
+  }
+  disposePlanetRenderer();
+  app.innerHTML = `${topHud()}<div class="app-shell ${activeView === 'planet' ? 'planet-shell' : ''}"><nav class="sidebar" aria-label="Navegação principal"><div class="nav-label">IMPÉRIO</div>${views.map(view => `<a href="#/${view.id}" class="${view.id === activeView ? 'active' : ''}" aria-current="${view.id === activeView ? 'page' : 'false'}"><span>${view.icon}</span>${esc(view.label)}</a>`).join('')}<div class="sidebar-footer"><span>HOME SYSTEM</span><b>${current.system.x}:${current.system.y}</b><small>${esc(current.system.name)}</small><em>Build an empire. Change the universe.</em></div></nav><main class="main-content ${activeView === 'planet' ? 'main-content-planet' : ''}">${viewContent(activeView)}</main>${activeView === 'planet' ? '' : contextPanel()}</div>${feedback ? `<div class="toast ${feedback.kind}" role="status"><i>${feedback.kind === 'success' ? '✓' : '!'}</i><span>${esc(feedback.message)}</span><button data-dismiss aria-label="Fechar">×</button></div>` : ''}${busy ? '<div class="loading-line"></div>' : ''}`;
   syncPlanetRenderer(activeView);
 }
 
@@ -257,6 +313,7 @@ app.onclick = event => {
   const target = (event.target as HTMLElement).closest<HTMLElement>('button, a'); if (!target) return;
   if (target.dataset.dismiss !== undefined) { feedback = undefined; render(); return; }
   if (target.dataset.goto) { if (target.dataset.selectFleet) selectedSubject = `fleet:${target.dataset.selectFleet}`; location.hash = `#/${target.dataset.goto}`; return; }
+  if (target.dataset.planetTab) { planetTab = target.dataset.planetTab as PlanetTab; render(); return; }
   if (target.dataset.center) { const [x, y] = target.dataset.center.split(':').map(Number); void recenter(x, y); return; }
   if (target.dataset.system) { selectedSystem = galaxyData.systems.find(system => system.id === target.dataset.system)!; selectedPlanetIndex = undefined; previews = undefined; render(); return; }
   if (target.dataset.planetIndex !== undefined) { selectedPlanetIndex = Number(target.dataset.planetIndex); previews = undefined; render(); return; }

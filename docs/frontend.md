@@ -20,20 +20,30 @@ a view no refresh:
 - `#/fleets`: posição, composição, missão e ETA;
 - `#/galaxy`: conhecimento da vizinhança, recentralização, previews e despacho.
 
-O Planet View usa um `PlanetRenderer` Three.js como camada de apresentação. A cena
-recebe um `PlanetVisualState` pronto do `main.ts`; não chama API e não decide regras do
-jogo. A superfície é uma CanvasTexture equiretangular determinística, baseada em
+O Planet View é um command center de três regiões: hero espacial central, overlays de
+operação sobre o canvas e inspector contextual à direita. A infraestrutura planetária
+continua abaixo do hero; o planeta e a estrela são os elementos visuais dominantes.
+O `PlanetRenderer` Three.js é somente a camada de apresentação. A cena recebe um
+`PlanetVisualState` pronto do `main.ts`; não chama API e não decide regras do jogo. A
+superfície é uma CanvasTexture equiretangular determinística, baseada em
 `system + coordinates + planet_index`; água altera a proporção oceânica e temperatura
-altera a paleta. Atmosfera, iluminação estelar, districts agregados, estaleiro orbital
-e fleets `ARRIVED` são representados por primitives. Não há terrain simulation, física
-orbital ou autoridade de gameplay no renderer.
+altera a paleta. Atmosfera, iluminação estelar, districts agregados, luzes noturnas
+sutis, estaleiro orbital e fleets `ARRIVED` são representados por primitives. Não há
+terrain simulation, física orbital ou autoridade de gameplay no renderer.
 
-O lifecycle é explícito: entrar em Planet cria o renderer, trocar o planeta recria a
-cena, e qualquer outra rota chama `dispose()`. Isso cancela o frame loop, desconecta o
+O lifecycle é persistente enquanto a rota Planet permanece aberta: entrar cria o
+renderer, polling/troca de estado chama `update()`, troca de planeta reconstrói apenas
+o conteúdo visual, e qualquer outra rota chama `dispose()`. O canvas fica em um host
+próprio para que a atualização da interface HTML não crie um novo WebGLRenderer. Isso
+também evita canvas duplicado. `dispose()` cancela o frame loop, desconecta o
 `ResizeObserver`, libera controls, geometrias, materiais, texturas e renderer. Se
 WebGL falhar, o stage mantém a representação CSS anterior e os dados HTML continuam
 disponíveis. `OrbitControls` permite rotação/zoom sem pan; a rotação automática é
 reduzida com `prefers-reduced-motion`.
+
+Os overlays mostram construção, pesquisa e frotas estacionadas com dados reais. O
+inspector possui as abas Visão geral, Distritos, Órbita e Dados; cada aba expõe estado
+existente e não cria regras paralelas.
 
 ## Dados e autoridade
 
