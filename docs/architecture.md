@@ -19,11 +19,13 @@ frontend/ (SPA TypeScript sem framework + CSS + artefato browser gerado)
 O Planet View adiciona `frontend/src/planet3d/PlanetRenderer.ts` como camada visual
 isolada. Ele recebe dados já calculados pela API, usa Three.js apenas para renderizar
 e nunca altera GameState. `planetVisual.ts` concentra configurações determinísticas,
-paletas, posições e decisões visuais puras. O hero 3D fica no centro do command center;
+paletas, posições, value noise/FBM e decisões visuais puras. O hero 3D fica no centro do command center;
 overlays HTML mostram filas e o inspector HTML mostra dados físicos, desenvolvimento,
 órbita e produção. O renderer mantém um canvas host enquanto a rota Planet está aberta,
 atualiza a cena sem criar outro WebGLRenderer e faz `dispose()` ao sair. O bundle é
-gerado localmente por esbuild; não há CDN nem assets 3D externos.
+gerado localmente por esbuild; não há CDN nem assets 3D externos. Textura de superfície,
+bump, atmosfera Fresnel, night lights, estação, naves e órbitas continuam sendo apenas
+apresentação; não existe física orbital, terrain simulation ou gameplay no WebGL.
 
 O núcleo não depende de FastAPI nem de banco. A engine recebe `now` explicitamente, usa timestamps para trabalho de longa duração e avança estado de forma lazy quando consultado.
 

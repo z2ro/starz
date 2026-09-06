@@ -28,8 +28,12 @@ O `PlanetRenderer` Three.js é somente a camada de apresentação. A cena recebe
 superfície é uma CanvasTexture equiretangular determinística, baseada em
 `system + coordinates + planet_index`; água altera a proporção oceânica e temperatura
 altera a paleta. Atmosfera, iluminação estelar, districts agregados, luzes noturnas
-sutis, estaleiro orbital e fleets `ARRIVED` são representados por primitives. Não há
-terrain simulation, física orbital ou autoridade de gameplay no renderer.
+sutis, estaleiro orbital e fleets `ARRIVED` são representados por primitives. A
+superfície usa FBM/value noise determinístico em CanvasTexture 1024×512; a textura de
+relevo é apenas um bump map leve. A atmosfera usa um shader Fresnel simples, as luzes
+noturnas usam um shader de pontos limitado ao hemisfério escuro e o fundo usa três
+camadas de estrelas mais uma nebulosa discreta. Não há terrain simulation, física
+orbital ou autoridade de gameplay no renderer.
 
 O lifecycle é persistente enquanto a rota Planet permanece aberta: entrar cria o
 renderer, polling/troca de estado chama `update()`, troca de planeta reconstrói apenas

@@ -13,6 +13,15 @@ export type PlanetVisualConfig = {
 export type StarVisualConfig = {
   color: string;
   intensity: number;
+  radius: number;
+  haloOpacity: number;
+};
+
+export type StarfieldLayer = {
+  positions: Vector3Like[];
+  size: number;
+  opacity: number;
+  color: string;
 };
 
 export type DistrictPlacement = {
@@ -38,6 +47,35 @@ export function seededRandom(seed: string, purpose: string, index = 0): number {
 
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
+const smooth = (value: number) => value * value * (3 - 2 * value);
+
+export function valueNoise2D(seed: string, x: number, y: number, purpose = 'noise'): number {
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const tx = smooth(x - x0);
+  const ty = smooth(y - y0);
+  const sample = (ix: number, iy: number) => seededRandom(seed, `${purpose}:${ix}:${iy}`);
+  const a = sample(x0, y0);
+  const b = sample(x0 + 1, y0);
+  const c = sample(x0, y0 + 1);
+  const d = sample(x0 + 1, y0 + 1);
+  return a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty;
+}
+
+export function fbmNoise2D(seed: string, x: number, y: number, octaves = 4, purpose = 'fbm'): number {
+  let value = 0;
+  let amplitude = 0.5;
+  let frequency = 1;
+  let weight = 0;
+  for (let octave = 0; octave < octaves; octave += 1) {
+    value += valueNoise2D(seed, x * frequency, y * frequency, `${purpose}:${octave}`) * amplitude;
+    weight += amplitude;
+    amplitude *= 0.5;
+    frequency *= 2;
+  }
+  return value / weight;
+}
+
 export function planetVisualConfig(planet: { temperature: number; atmosphere: string; water: number; geological_activity: number }): PlanetVisualConfig {
   const water = clamp(planet.water / 100, 0, 1);
   const temperature = planet.temperature;
@@ -61,9 +99,12 @@ export function starVisualConfig(star: { stellar_class: string; luminosity: numb
   const colors: Record<string, string> = {
     O: '#b9d4ff', B: '#c8dcff', A: '#e4ebff', F: '#fff4d5', G: '#ffe0a6', K: '#ffb66f', M: '#e47b69',
   };
+  const luminosity = Math.max(0.1, star.luminosity);
   return {
     color: colors[star.stellar_class.toUpperCase()] ?? '#ffe0a6',
-    intensity: clamp(0.65 + Math.log10(Math.max(0.1, star.luminosity)) * 0.55, 0.35, 1.8),
+    intensity: clamp(0.78 + Math.log10(luminosity) * 0.62, 0.42, 2.1),
+    radius: clamp(0.78 + Math.log10(luminosity) * 0.1, 0.68, 1.08),
+    haloOpacity: clamp(0.08 + Math.log10(luminosity) * 0.025, 0.055, 0.13),
   };
 }
 
@@ -86,14 +127,22 @@ export function districtPlacement(seed: string, districtId: string, index: numbe
   };
 }
 
-export function starfieldPositions(seed: string, count = 180): Vector3Like[] {
+export function starfieldPositions(seed: string, count = 180, layer = 0): Vector3Like[] {
   return Array.from({ length: count }, (_, index) => {
-    const theta = seededRandom(seed, 'star-theta', index) * Math.PI * 2;
-    const z = seededRandom(seed, 'star-z', index) * 2 - 1;
-    const radius = 28 + seededRandom(seed, 'star-radius', index) * 18;
+    const theta = seededRandom(seed, `star-theta-${layer}`, index) * Math.PI * 2;
+    const z = seededRandom(seed, `star-z-${layer}`, index) * 2 - 1;
+    const radius = 28 + seededRandom(seed, `star-radius-${layer}`, index) * 18;
     const planar = Math.sqrt(1 - z * z);
     return { x: radius * planar * Math.cos(theta), y: radius * z, z: radius * planar * Math.sin(theta) };
   });
+}
+
+export function starfieldLayers(seed: string): StarfieldLayer[] {
+  return [
+    { positions: starfieldPositions(seed, 150, 0), size: 0.025, opacity: 0.42, color: '#7890a8' },
+    { positions: starfieldPositions(seed, 80, 1), size: 0.045, opacity: 0.62, color: '#b5c7dc' },
+    { positions: starfieldPositions(seed, 18, 2), size: 0.075, opacity: 0.9, color: '#e2d8bc' },
+  ];
 }
 
 export function fleetIsInSystem(fleet: { status: string; x: number; y: number }, systemX: number, systemY: number): boolean {

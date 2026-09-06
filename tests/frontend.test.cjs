@@ -175,4 +175,8 @@ test('Planet renderer keeps update/dispose lifecycle and clears transient statio
   assert.match(main, /disposePlanetRenderer\(\)/);
   assert.match(renderer, /this\.planetGroup = undefined;/);
   assert.match(renderer, /this\.stationOrbit = undefined;/);
+  assert.match(renderer, /ACESFilmicToneMapping/);
+  assert.match(renderer, /1024, 512/);
+  assert.match(renderer, /station\.scale\.setScalar\(1\.58\)/);
+  assert.match(renderer, /bumpMap/);
 });
