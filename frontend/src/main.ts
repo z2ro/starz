@@ -222,7 +222,7 @@ function planetVisualState(): PlanetVisualState {
     star: { stellar_class: current.system.star.stellar_class, luminosity: current.system.star.luminosity },
     districts: content.districts.filter(item => (current.districts[item.id] ?? 0) > 0).map(item => ({ id: item.id, category: item.category, level: current.districts[item.id] ?? 0 })),
     capacities: { shipyard_slots: current.capacities.shipyard_slots },
-    fleets: current.fleets.map(fleet => ({ status: fleet.status, x: fleet.x, y: fleet.y })),
+    fleets: current.fleets.map(fleet => ({ status: fleet.status, x: fleet.x, y: fleet.y, hullId: current.ships.find(ship => fleet.ship_ids.includes(ship.id))?.hull_id })),
   };
 }
 function disposePlanetRenderer(): void { planetRenderer?.dispose(); planetRenderer = undefined; }

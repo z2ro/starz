@@ -265,7 +265,7 @@ export class PlanetRenderer {
     this.addStarfield(input.seed);
     this.addOrbitLines(input.seed);
     if (hasShipyard(input.capacities.shipyard_slots)) this.addShipyard(revision);
-    input.fleets.filter(fleet => fleetIsInSystem(fleet, input.systemX, input.systemY)).forEach((_, index) => this.addFleetMarker(index, revision));
+    input.fleets.filter(fleet => fleetIsInSystem(fleet, input.systemX, input.systemY)).forEach((fleet, index) => this.addFleetMarker(index, revision, fleet.hullId));
   }
 
   dispose(): void {
@@ -457,7 +457,7 @@ export class PlanetRenderer {
     });
   }
 
-  private addFleetMarker(index: number, revision: number): void {
+  private addFleetMarker(index: number, revision: number, hullId?: string): void {
     const orbit = new THREE.Group();
     orbit.rotation.y = index * 1.7;
     const marker = new THREE.Group();
@@ -479,7 +479,9 @@ export class PlanetRenderer {
     marker.add(engine);
     orbit.add(marker);
     this.content.add(orbit);
-    void visualAssetRegistry.loadClone('scout_hull').then(asset => {
+    const assetId = hullId === 'scout_hull' ? 'scout_hull' : undefined;
+    if (!assetId) return;
+    void visualAssetRegistry.loadClone(assetId).then(asset => {
       if (!asset || this.disposed || revision !== this.visualRevision) return;
       asset.position.copy(marker.position);
       asset.rotation.copy(marker.rotation);

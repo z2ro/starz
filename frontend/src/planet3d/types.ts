@@ -20,5 +20,5 @@ export type PlanetVisualState = {
   star: PlanetVisualStar;
   districts: Array<{ id: string; category: string; level: number }>;
   capacities: { shipyard_slots: number };
-  fleets: Array<{ status: string; x: number; y: number }>;
+  fleets: Array<{ status: string; x: number; y: number; hullId?: string }>;
 };

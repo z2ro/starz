@@ -18,6 +18,8 @@ test('asset manifest resolves local station and Horizon paths', () => {
   const registry = new registryModule.exports.AssetRegistry({ loadAsync: async () => ({ scene: new THREE.Group() }) });
   assert.equal(registry.definition('orbital_shipyard').path, '/static/assets/models/orbital_shipyard.glb');
   assert.equal(registry.definition('scout_hull').path, '/static/assets/models/horizon.glb');
+  assert.ok(registry.definition('orbital_shipyard').scale > 0 && registry.definition('orbital_shipyard').scale < 1);
+  assert.ok(registry.definition('scout_hull').scale > 0 && registry.definition('scout_hull').scale < 1);
   assert.equal(registry.definition('missing'), undefined);
 });
 

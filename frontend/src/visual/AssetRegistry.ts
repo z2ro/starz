@@ -9,8 +9,8 @@ export type VisualAssetDefinition = {
 };
 
 export const VISUAL_ASSETS: Record<string, VisualAssetDefinition> = {
-  orbital_shipyard: { id: 'orbital_shipyard', type: 'station', path: '/static/assets/models/orbital_shipyard.glb', scale: 1 },
-  scout_hull: { id: 'scout_hull', type: 'ship', path: '/static/assets/models/horizon.glb', scale: 1 },
+  orbital_shipyard: { id: 'orbital_shipyard', type: 'station', path: '/static/assets/models/orbital_shipyard.glb', scale: 0.18 },
+  scout_hull: { id: 'scout_hull', type: 'ship', path: '/static/assets/models/horizon.glb', scale: 0.45 },
 };
 
 type AssetLoader = Pick<GLTFLoader, 'loadAsync'>;

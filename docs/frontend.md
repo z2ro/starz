@@ -35,8 +35,8 @@ noturnas usam um shader de pontos limitado ao hemisfério escuro e o fundo usa t
 camadas de estrelas mais uma nebulosa discreta. Não há terrain simulation, física
 orbital ou autoridade de gameplay no renderer.
 
-O pipeline visual também possui `frontend/src/visual/AssetRegistry.ts`: modelos locais
-opcionais (`orbital_shipyard.glb` e `horizon.glb`) são carregados pelo
+O pipeline visual também possui `frontend/src/visual/AssetRegistry.ts`: os modelos locais
+(`orbital_shipyard.glb` e `horizon.glb`) são carregados pelo
 `GLTFLoader`, cacheados como cenas-fonte e clonados por instância. A ausência ou falha
 de um arquivo mantém o fallback procedural; a limpeza da cena não libera recursos
 compartilhados do cache. Os caminhos esperados e a política de licenciamento estão em
@@ -45,7 +45,13 @@ O parser de cores da textura escreve bytes sRGB diretamente, enquanto o renderer
 `SRGBColorSpace` e ACES tone mapping. Superfície, bump, costa, atmosfera e night lights
 usam a mesma amostragem determinística; posição da estrela é a fonte única da luz,
 atmosfera e composição. A estação/naves continuam fallback procedural até que modelos
-originais ou compatíveis sejam adicionados.
+originais ou compatíveis sejam adicionados. Os modelos atuais são gerados pelos scripts
+determinísticos em `tools/blender/`, com materiais Principled embutidos; a convenção de
+autoria é Blender Z-up e `+Z` como forward. A validação `tests/asset_files.test.cjs`
+confirma cabeçalho GLB, meshes, bounds finitas e carregamento real pelo GLTFLoader.
+O registry aplica apenas uma escala visual relativa pequena para encaixar as dimensões
+de authoring no hero; o renderer só usa o GLB Horizon quando a fleet expõe
+`scout_hull`, mantendo fallback genérico para cascos desconhecidos.
 
 O lifecycle é persistente enquanto a rota Planet permanece aberta: entrar cria o
 renderer, polling/troca de estado chama `update()`, troca de planeta reconstrói apenas

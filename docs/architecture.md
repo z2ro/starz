@@ -18,10 +18,13 @@ frontend/ (SPA TypeScript sem framework + CSS + artefato browser gerado)
 
 Na apresentação 3D, `PlanetRenderer` permanece um adaptador pequeno sobre Three.js.
 `planetVisual.ts` fornece amostragem de superfície e decisões visuais puras; o
-`AssetRegistry` resolve somente assets locais opcionais. GLB/glTF não é fonte de estado
-nem de regras: se o arquivo não existir, estação e nave usam o fallback procedural.
+`AssetRegistry` resolve somente assets locais. GLB/glTF não é fonte de estado nem de
+regras: se o arquivo não existir, estação e nave usam o fallback procedural.
 Instâncias de cena podem ser descartadas sem destruir a cena-fonte cacheada. Não há
 download externo, física orbital, terrain simulation ou gameplay no renderer.
+Os assets atuais são produzidos pelos scripts headless de `tools/blender/`, com
+materiais Principled embutidos, origem central e convenção de autoria Blender Z-up/
+`+Z` forward; `tests/asset_files.test.cjs` valida os GLBs reais pelo GLTFLoader.
 
 O Planet View adiciona `frontend/src/planet3d/PlanetRenderer.ts` como camada visual
 isolada. Ele recebe dados já calculados pela API, usa Three.js apenas para renderizar
