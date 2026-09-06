@@ -10,12 +10,14 @@ new Function('module', 'exports', compiled)(visual, visual.exports);
 const planet = { temperature: 288, atmosphere: 'temperate nitrogen', water: 66, geological_activity: 0.4 };
 
 test('planet visual configuration and district placement are deterministic', () => {
+  assert.deepEqual(visual.exports.parseSrgbHex('#527e68'), [82, 126, 104]);
   assert.deepEqual(visual.exports.planetVisualConfig(planet), visual.exports.planetVisualConfig(planet));
   assert.equal(visual.exports.valueNoise2D('seed', 1.25, 2.75), visual.exports.valueNoise2D('seed', 1.25, 2.75));
   assert.equal(visual.exports.fbmNoise2D('seed', 1.25, 2.75), visual.exports.fbmNoise2D('seed', 1.25, 2.75));
   assert.deepEqual(visual.exports.districtPlacement('Asterion:1:2:0', 'ore_extractor', 0, 1), visual.exports.districtPlacement('Asterion:1:2:0', 'ore_extractor', 0, 1));
   assert.deepEqual(visual.exports.starfieldPositions('Asterion:1:2:0', 8), visual.exports.starfieldPositions('Asterion:1:2:0', 8));
   assert.deepEqual(visual.exports.starfieldLayers('Asterion:1:2:0'), visual.exports.starfieldLayers('Asterion:1:2:0'));
+  assert.deepEqual(visual.exports.planetSurfaceSample('Asterion:1:2:0', .25, .5, planet), visual.exports.planetSurfaceSample('Asterion:1:2:0', .25, .5, planet));
 });
 
 test('different physical planets produce different visual configuration', () => {
@@ -24,6 +26,7 @@ test('different physical planets produce different visual configuration', () => 
   assert.notDeepEqual(cold, hot);
   assert.notDeepEqual(visual.exports.starfieldPositions('Asterion:1:2:0', 8), visual.exports.starfieldPositions('Asterion:1:2:1', 8));
   assert.notEqual(visual.exports.fbmNoise2D('seed-a', 1.25, 2.75), visual.exports.fbmNoise2D('seed-b', 1.25, 2.75));
+  assert.notDeepEqual(visual.exports.planetSurfaceSample('seed-a', .25, .5, planet), visual.exports.planetSurfaceSample('seed-b', .25, .5, planet));
   assert.ok(visual.exports.starVisualConfig({ stellar_class: 'G', luminosity: 1 }).radius >= .68);
   assert.ok(visual.exports.starVisualConfig({ stellar_class: 'G', luminosity: 1 }).radius > .5);
 });

@@ -35,6 +35,18 @@ noturnas usam um shader de pontos limitado ao hemisfério escuro e o fundo usa t
 camadas de estrelas mais uma nebulosa discreta. Não há terrain simulation, física
 orbital ou autoridade de gameplay no renderer.
 
+O pipeline visual também possui `frontend/src/visual/AssetRegistry.ts`: modelos locais
+opcionais (`orbital_shipyard.glb` e `horizon.glb`) são carregados pelo
+`GLTFLoader`, cacheados como cenas-fonte e clonados por instância. A ausência ou falha
+de um arquivo mantém o fallback procedural; a limpeza da cena não libera recursos
+compartilhados do cache. Os caminhos esperados e a política de licenciamento estão em
+`frontend/assets/models/README.md`. Nenhum asset externo é baixado automaticamente.
+O parser de cores da textura escreve bytes sRGB diretamente, enquanto o renderer usa
+`SRGBColorSpace` e ACES tone mapping. Superfície, bump, costa, atmosfera e night lights
+usam a mesma amostragem determinística; posição da estrela é a fonte única da luz,
+atmosfera e composição. A estação/naves continuam fallback procedural até que modelos
+originais ou compatíveis sejam adicionados.
+
 O lifecycle é persistente enquanto a rota Planet permanece aberta: entrar cria o
 renderer, polling/troca de estado chama `update()`, troca de planeta reconstrói apenas
 o conteúdo visual, e qualquer outra rota chama `dispose()`. O canvas fica em um host

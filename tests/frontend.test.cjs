@@ -177,6 +177,11 @@ test('Planet renderer keeps update/dispose lifecycle and clears transient statio
   assert.match(renderer, /this\.stationOrbit = undefined;/);
   assert.match(renderer, /ACESFilmicToneMapping/);
   assert.match(renderer, /1024, 512/);
-  assert.match(renderer, /station\.scale\.setScalar\(1\.58\)/);
+  assert.match(renderer, /station\.scale\.setScalar\(1\.74\)/);
   assert.match(renderer, /bumpMap/);
+  assert.match(renderer, /visualAssetRegistry.loadClone\('orbital_shipyard'\)/);
+  assert.match(renderer, /visualAssetRegistry.loadClone\('scout_hull'\)/);
+  assert.match(renderer, /this.visualRevision/);
+  assert.match(renderer, /SphereGeometry\(1\.024/);
+  assert.match(renderer, /SphereGeometry\(1\.01/);
 });

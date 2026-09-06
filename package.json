@@ -3,7 +3,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck && esbuild frontend/src/main.ts --bundle --format=esm --minify-syntax --minify-whitespace --outfile=frontend/app.js && node -e 'const fs=require(\"fs\"),p=\"frontend/app.js\";fs.writeFileSync(p,fs.readFileSync(p,\"utf8\").replace(/[ \t]+$/gm,\"\").replace(/ +\t/g,\"\t\"))'",
-    "test": "node tests/frontend.test.cjs && node tests/planet_visual.test.cjs"
+    "test": "node tests/frontend.test.cjs && node tests/planet_visual.test.cjs && node tests/asset_registry.test.cjs"
   },
   "devDependencies": {
     "@types/three": "^0.185.4",

@@ -7,15 +7,21 @@ import {
   fleetIsInSystem,
   hasShipyard,
   latLonToVector3,
+  parseSrgbHex,
   planetVisualConfig,
+  planetSurfaceSample,
   seededRandom,
   starfieldLayers,
   starVisualConfig,
 } from './planetVisual';
 import type { PlanetVisualState } from './types';
+import { visualAssetRegistry } from '../visual/AssetRegistry';
+
+const STAR_POSITION = new THREE.Vector3(3.55, 1.38, -2.65);
 
 function disposeObject(object: THREE.Object3D): void {
   object.traverse(child => {
+    if (child.userData.assetInstance) return;
     const mesh = child as THREE.Mesh;
     mesh.geometry?.dispose();
     const materials = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
@@ -52,9 +58,16 @@ function canvasTexture(draw: (context: CanvasRenderingContext2D, width: number, 
   return texture;
 }
 
-function rgb(hex: string): [number, number, number] {
-  const color = new THREE.Color(hex);
-  return [Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255)];
+function radialTexture(): THREE.CanvasTexture {
+  return canvasTexture((context, width, height) => {
+    const gradient = context.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width / 2);
+    gradient.addColorStop(0, 'rgba(255,255,255,.8)');
+    gradient.addColorStop(.22, 'rgba(255,240,190,.42)');
+    gradient.addColorStop(.62, 'rgba(255,188,102,.12)');
+    gradient.addColorStop(1, 'rgba(255,150,80,0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, width, height);
+  }, 128, 128);
 }
 
 function blend(from: [number, number, number], to: [number, number, number], amount: number): [number, number, number] {
@@ -67,41 +80,33 @@ function blend(from: [number, number, number], to: [number, number, number], amo
 
 function surfaceTexture(input: PlanetVisualState): THREE.CanvasTexture {
   const config = planetVisualConfig(input.planet);
-  const ocean = rgb(config.oceanColor);
+  const ocean = parseSrgbHex(config.oceanColor);
   const oceanDeep = blend(ocean, [5, 20, 40], 0.55);
-  const land = rgb(config.landColor);
-  const landAccent = rgb(config.landAccent);
-  const ice = rgb(config.iceColor);
-  const water = Math.max(0, Math.min(1, input.planet.water / 100));
-  const cold = Math.max(0, Math.min(1, (270 - input.planet.temperature) / 90));
+  const land = parseSrgbHex(config.landColor);
+  const landAccent = parseSrgbHex(config.landAccent);
+  const ice = parseSrgbHex(config.iceColor);
   const hot = Math.max(0, Math.min(1, (input.planet.temperature - 300) / 150));
   const geology = Math.max(0, Math.min(1, input.planet.geological_activity));
   return canvasTexture((context, width, height) => {
     const pixels = context.createImageData(width, height);
-    const threshold = 0.43 + water * 0.27;
     for (let y = 0; y < height; y += 1) {
-      const latitude = Math.abs(y / (height - 1) * 2 - 1);
       for (let x = 0; x < width; x += 1) {
         const u = x / width;
         const v = y / height;
-        const warp = (fbmNoise2D(input.seed, u * 2.5, v * 2.2, 3, 'warp') - 0.5) * 0.42;
-        const continental = fbmNoise2D(input.seed, u * 2.1 + warp, v * 1.65 + warp, 4, 'continent');
-        const detail = fbmNoise2D(input.seed, u * 7.5, v * 5.4, 3, 'terrain');
-        const terrain = continental * 0.76 + detail * 0.24;
-        const polarIce = cold > 0.05 && (latitude > 0.68 || detail > 0.79);
-        const isLand = terrain > threshold;
+        const sample = planetSurfaceSample(input.seed, u, v, input.planet);
+        const detail = sample.elevation;
         let color: [number, number, number];
-        if (!isLand) {
-          color = blend(oceanDeep, ocean, 0.35 + detail * 0.55);
-          if (polarIce) color = blend(color, ice, 0.4 + cold * 0.35);
-        } else if (polarIce) {
-          color = blend(land, ice, 0.72 + cold * 0.2);
+        if (sample.ocean) {
+          color = blend(oceanDeep, ocean, 0.3 + sample.moisture * 0.42);
+        } else if (sample.ice) {
+          color = blend(land, ice, 0.72 + (1 - sample.temperature) * 0.2);
         } else {
           const relief = Math.max(0, Math.min(1, (detail - 0.34) * 1.25));
           color = blend(land, landAccent, relief * (0.55 + geology * 0.38));
           if (hot > 0.2) color = blend(color, [166, 111, 70], hot * 0.28);
           if (geology > 0.65 && detail > 0.69) color = blend(color, [105, 54, 46], (geology - 0.6) * 0.45);
         }
+        if (sample.coast) color = blend(color, [190, 169, 117], 0.36);
         const index = (y * width + x) * 4;
         pixels.data[index] = color[0];
         pixels.data[index + 1] = color[1];
@@ -118,7 +123,8 @@ function bumpTexture(input: PlanetVisualState): THREE.CanvasTexture {
     const pixels = context.createImageData(width, height);
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
-        const value = Math.round(fbmNoise2D(input.seed, x / width * 8, y / height * 5, 3, 'bump') * 255);
+        const sample = planetSurfaceSample(input.seed, x / width, y / height, input.planet);
+        const value = Math.round(sample.elevation * 255);
         const index = (y * width + x) * 4;
         pixels.data[index] = value;
         pixels.data[index + 1] = value;
@@ -150,11 +156,11 @@ function cloudTexture(input: PlanetVisualState): THREE.CanvasTexture {
   }, 512, 256);
 }
 
-function atmosphereMaterial(color: string, opacity: number): THREE.ShaderMaterial {
+function atmosphereMaterial(color: string, opacity: number, starDirection: THREE.Vector3): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
-    uniforms: { glowColor: { value: new THREE.Color(color) }, glowOpacity: { value: opacity } },
-    vertexShader: 'varying vec3 viewNormal; varying vec3 viewDirection; void main() { vec4 viewPosition = modelViewMatrix * vec4(position, 1.0); viewNormal = normalize(normalMatrix * normal); viewDirection = normalize(-viewPosition.xyz); gl_Position = projectionMatrix * viewPosition; }',
-    fragmentShader: 'uniform vec3 glowColor; uniform float glowOpacity; varying vec3 viewNormal; varying vec3 viewDirection; void main() { float rim = pow(1.0 - max(dot(viewNormal, viewDirection), 0.0), 2.6); gl_FragColor = vec4(glowColor, rim * glowOpacity); }',
+    uniforms: { glowColor: { value: new THREE.Color(color) }, glowOpacity: { value: opacity }, lightDirection: { value: starDirection.clone().normalize() } },
+    vertexShader: 'varying vec3 viewNormal; varying vec3 viewDirection; varying vec3 worldNormal; void main() { vec4 viewPosition = modelViewMatrix * vec4(position, 1.0); viewNormal = normalize(normalMatrix * normal); worldNormal = normalize(mat3(modelMatrix) * normal); viewDirection = normalize(-viewPosition.xyz); gl_Position = projectionMatrix * viewPosition; }',
+    fragmentShader: 'uniform vec3 glowColor; uniform float glowOpacity; uniform vec3 lightDirection; varying vec3 viewNormal; varying vec3 viewDirection; varying vec3 worldNormal; void main() { float rim = pow(1.0 - max(dot(viewNormal, viewDirection), 0.0), 2.9); float sun = 0.45 + 0.55 * max(dot(worldNormal, normalize(lightDirection)), 0.0); gl_FragColor = vec4(glowColor, rim * glowOpacity * sun); }',
     transparent: true,
     depthWrite: false,
     side: THREE.BackSide,
@@ -162,9 +168,9 @@ function atmosphereMaterial(color: string, opacity: number): THREE.ShaderMateria
   });
 }
 
-function cityLightMaterial(): THREE.ShaderMaterial {
+function cityLightMaterial(starDirection: THREE.Vector3): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
-    uniforms: { lightDirection: { value: new THREE.Vector3(4, 2, 4).normalize() } },
+    uniforms: { lightDirection: { value: starDirection.clone().normalize() } },
     vertexShader: 'attribute vec3 markerNormal; uniform vec3 lightDirection; varying float night; void main() { night = smoothstep(0.02, 0.58, -dot(normalize(markerNormal), lightDirection)); vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_PointSize = 2.8 * (12.0 / max(1.0, -mvPosition.z)); gl_Position = projectionMatrix * mvPosition; }',
     fragmentShader: 'varying float night; void main() { float disc = 1.0 - smoothstep(0.12, 0.5, length(gl_PointCoord - 0.5)); if (disc <= 0.0) discard; gl_FragColor = vec4(1.0, 0.68, 0.28, disc * night * 0.62); }',
     transparent: true,
@@ -189,6 +195,8 @@ export class PlanetRenderer {
   private stationOrbit?: THREE.Group;
   private frame: number | undefined;
   private disposed = false;
+  private visualRevision = 0;
+  private starMaterial?: THREE.ShaderMaterial;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -230,36 +238,40 @@ export class PlanetRenderer {
 
   update(input: PlanetVisualState): void {
     if (this.disposed) return;
+    const revision = ++this.visualRevision;
     clearGroup(this.content);
     this.planetGroup = undefined;
     this.cloudLayer = undefined;
     this.stationOrbit = undefined;
+    this.starMaterial = undefined;
     const planetGroup = new THREE.Group();
     this.planetGroup = planetGroup;
     const config = planetVisualConfig(input.planet);
     const star = starVisualConfig(input.star);
     const surface = new THREE.MeshStandardMaterial({ map: surfaceTexture(input), bumpMap: bumpTexture(input), bumpScale: 0.024, roughness: 0.8, metalness: 0 });
     planetGroup.add(new THREE.Mesh(new THREE.SphereGeometry(1, 72, 56), surface));
-    const cloud = new THREE.Mesh(new THREE.SphereGeometry(1.018, 56, 40), new THREE.MeshBasicMaterial({ map: cloudTexture(input), transparent: true, opacity: 0.85, depthWrite: false }));
+    const cloud = new THREE.Mesh(new THREE.SphereGeometry(1.01, 56, 40), new THREE.MeshStandardMaterial({ map: cloudTexture(input), color: '#e0edf0', transparent: true, opacity: 0.82, depthWrite: false, roughness: 1, metalness: 0 }));
     this.cloudLayer = cloud;
     planetGroup.add(cloud);
-    planetGroup.add(new THREE.Mesh(new THREE.SphereGeometry(1.085, 56, 40), atmosphereMaterial(config.atmosphereColor, config.atmosphereOpacity * 1.45)));
-    planetGroup.scale.setScalar(1.34);
+    const starDirection = STAR_POSITION.clone().normalize();
+    planetGroup.add(new THREE.Mesh(new THREE.SphereGeometry(1.024, 56, 40), atmosphereMaterial(config.atmosphereColor, config.atmosphereOpacity * 1.2, starDirection)));
+    planetGroup.scale.setScalar(1.06);
     input.districts.forEach((district, index) => this.addDistrict(planetGroup, input, district, index));
-    this.addCityLights(planetGroup, input);
+    this.addCityLights(planetGroup, input, starDirection);
     this.content.add(planetGroup);
     this.addLights(star);
     this.addNebula(input.seed);
     this.addStarVisual(star);
     this.addStarfield(input.seed);
     this.addOrbitLines(input.seed);
-    if (hasShipyard(input.capacities.shipyard_slots)) this.addShipyard();
-    input.fleets.filter(fleet => fleetIsInSystem(fleet, input.systemX, input.systemY)).forEach((_, index) => this.addFleetMarker(index));
+    if (hasShipyard(input.capacities.shipyard_slots)) this.addShipyard(revision);
+    input.fleets.filter(fleet => fleetIsInSystem(fleet, input.systemX, input.systemY)).forEach((_, index) => this.addFleetMarker(index, revision));
   }
 
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.visualRevision += 1;
     if (this.frame !== undefined) cancelAnimationFrame(this.frame);
     this.resizeObserver?.disconnect();
     if (typeof window !== 'undefined') window.removeEventListener('resize', this.resizeListener);
@@ -280,6 +292,7 @@ export class PlanetRenderer {
       if (this.cloudLayer) this.cloudLayer.rotation.y += 0.00062;
       if (this.stationOrbit) this.stationOrbit.rotation.y += 0.0009;
     }
+    if (this.starMaterial) this.starMaterial.uniforms.time.value += 0.002;
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   };
@@ -296,7 +309,7 @@ export class PlanetRenderer {
   private addLights(star: { color: string; intensity: number }): void {
     this.content.add(new THREE.HemisphereLight('#7899b8', '#02040a', 0.1));
     const key = new THREE.DirectionalLight(star.color, Math.min(2.4, star.intensity * 1.35));
-    key.position.set(4, 2.2, 4);
+    key.position.copy(STAR_POSITION);
     this.content.add(key);
   }
 
@@ -322,9 +335,18 @@ export class PlanetRenderer {
 
   private addStarVisual(star: { color: string; intensity: number; radius: number; haloOpacity: number }): void {
     const starGroup = new THREE.Group();
-    starGroup.position.set(3.55, 1.38, -2.65);
-    starGroup.add(new THREE.Mesh(new THREE.SphereGeometry(star.radius, 32, 24), new THREE.MeshBasicMaterial({ color: star.color })));
-    [1.34, 1.85].forEach((scale, index) => starGroup.add(new THREE.Mesh(new THREE.SphereGeometry(star.radius * scale, 24, 18), new THREE.MeshBasicMaterial({ color: star.color, transparent: true, opacity: star.haloOpacity / (index + 1), side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending }))));
+    starGroup.position.copy(STAR_POSITION);
+    const material = new THREE.ShaderMaterial({
+      uniforms: { starColor: { value: new THREE.Color(star.color) }, intensity: { value: star.intensity }, time: { value: 0 } },
+      vertexShader: 'varying vec3 localPosition; void main() { localPosition = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform vec3 starColor; uniform float intensity; uniform float time; varying vec3 localPosition; float hash(vec3 p) { p = fract(p * 0.3183099 + .1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); } float noise(vec3 p) { vec3 i = floor(p); vec3 f = fract(p); f = f * f * (3.0 - 2.0 * f); float n = mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y), mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z); return n; } float fbm(vec3 p) { float value = 0.0; float amplitude = .5; for (int octave = 0; octave < 3; octave++) { value += noise(p) * amplitude; p *= 2.0; amplitude *= .5; } return value; } void main() { float edge = pow(max(0.0, 1.0 - length(localPosition.xy) * .72), .22); float grain = fbm(localPosition * 7.0 + time * .02); float granulation = mix(.78, 1.08, grain); vec3 color = starColor * intensity * granulation; gl_FragColor = vec4(color * edge, 1.0); }',
+      toneMapped: false,
+    });
+    this.starMaterial = material;
+    starGroup.add(new THREE.Mesh(new THREE.SphereGeometry(star.radius, 40, 28), material));
+    const corona = new THREE.Sprite(new THREE.SpriteMaterial({ map: radialTexture(), color: star.color, transparent: true, opacity: star.haloOpacity * 2.2, depthWrite: false, blending: THREE.AdditiveBlending }));
+    corona.scale.setScalar(star.radius * 3.2);
+    starGroup.add(corona);
     this.content.add(starGroup);
   }
 
@@ -366,7 +388,7 @@ export class PlanetRenderer {
     planetGroup.add(marker);
   }
 
-  private addCityLights(planetGroup: THREE.Group, input: PlanetVisualState): void {
+  private addCityLights(planetGroup: THREE.Group, input: PlanetVisualState, starDirection: THREE.Vector3): void {
     const active = input.districts.filter(district => ['Civil', 'Industrial', 'Research'].includes(district.category));
     if (!active.length) return;
     const positions: number[] = [];
@@ -384,16 +406,17 @@ export class PlanetRenderer {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('markerNormal', new THREE.Float32BufferAttribute(normals, 3));
-    planetGroup.add(new THREE.Points(geometry, cityLightMaterial()));
+    planetGroup.add(new THREE.Points(geometry, cityLightMaterial(starDirection)));
   }
 
-  private addShipyard(): void {
+  private addShipyard(revision: number): void {
     this.stationOrbit = new THREE.Group();
     this.stationOrbit.rotation.z = -0.28;
     this.stationOrbit.position.set(0, 0.1, 0.58);
     const station = new THREE.Group();
     station.position.set(1.24, 0.22, 0.34);
-    station.scale.setScalar(1.58);
+    station.name = 'procedural-fallback';
+    station.scale.setScalar(1.74);
     const metal = new THREE.MeshStandardMaterial({ color: '#7f99a7', metalness: 0.68, roughness: 0.38 });
     const darkMetal = new THREE.MeshStandardMaterial({ color: '#243b4a', metalness: 0.62, roughness: 0.46 });
     const glow = new THREE.MeshBasicMaterial({ color: '#71c2d0' });
@@ -423,9 +446,18 @@ export class PlanetRenderer {
     station.add(antenna);
     this.stationOrbit.add(station);
     this.content.add(this.stationOrbit);
+    void visualAssetRegistry.loadClone('orbital_shipyard').then(asset => {
+      if (!asset || this.disposed || revision !== this.visualRevision || !this.stationOrbit) return;
+      asset.position.copy(station.position);
+      asset.rotation.copy(station.rotation);
+      asset.scale.multiply(station.scale);
+      this.stationOrbit.remove(station);
+      disposeObject(station);
+      this.stationOrbit.add(asset);
+    });
   }
 
-  private addFleetMarker(index: number): void {
+  private addFleetMarker(index: number, revision: number): void {
     const orbit = new THREE.Group();
     orbit.rotation.y = index * 1.7;
     const marker = new THREE.Group();
@@ -447,6 +479,15 @@ export class PlanetRenderer {
     marker.add(engine);
     orbit.add(marker);
     this.content.add(orbit);
+    void visualAssetRegistry.loadClone('scout_hull').then(asset => {
+      if (!asset || this.disposed || revision !== this.visualRevision) return;
+      asset.position.copy(marker.position);
+      asset.rotation.copy(marker.rotation);
+      asset.scale.multiply(marker.scale);
+      orbit.remove(marker);
+      disposeObject(marker);
+      orbit.add(asset);
+    });
   }
 
   private districtColor(category: string): string {

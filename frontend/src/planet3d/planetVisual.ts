@@ -24,6 +24,16 @@ export type StarfieldLayer = {
   color: string;
 };
 
+export type PlanetSurfaceSample = {
+  continental: number;
+  elevation: number;
+  moisture: number;
+  temperature: number;
+  ocean: boolean;
+  ice: boolean;
+  coast: boolean;
+};
+
 export type DistrictPlacement = {
   latitude: number;
   longitude: number;
@@ -48,6 +58,11 @@ export function seededRandom(seed: string, purpose: string, index = 0): number {
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
 const smooth = (value: number) => value * value * (3 - 2 * value);
+
+export function parseSrgbHex(hex: string): [number, number, number] {
+  const value = hex.replace('#', '').padStart(6, '0').slice(0, 6);
+  return [Number.parseInt(value.slice(0, 2), 16), Number.parseInt(value.slice(2, 4), 16), Number.parseInt(value.slice(4, 6), 16)];
+}
 
 export function valueNoise2D(seed: string, x: number, y: number, purpose = 'noise'): number {
   const x0 = Math.floor(x);
@@ -76,6 +91,27 @@ export function fbmNoise2D(seed: string, x: number, y: number, octaves = 4, purp
   return value / weight;
 }
 
+export function planetSurfaceSample(seed: string, u: number, v: number, planet: { temperature: number; water: number; geological_activity: number }): PlanetSurfaceSample {
+  const water = clamp(planet.water / 100, 0, 1);
+  const latitude = Math.abs(v * 2 - 1);
+  const warp = (fbmNoise2D(seed, u * 2.5, v * 2.2, 3, 'warp') - 0.5) * 0.42;
+  const continental = fbmNoise2D(seed, u * 2.1 + warp, v * 1.65 + warp, 4, 'continent');
+  const detail = fbmNoise2D(seed, u * 7.5, v * 5.4, 3, 'terrain');
+  const elevation = continental * 0.76 + detail * 0.24;
+  const seaLevel = 0.43 + water * 0.27;
+  const temperature = clamp((planet.temperature - 160) / 300 - latitude * 0.16, 0, 1);
+  const ice = planet.temperature < 285 && (latitude > 0.68 || detail > 0.79);
+  return {
+    continental,
+    elevation,
+    moisture: clamp(fbmNoise2D(seed, u * 3.4, v * 3.1, 3, 'moisture') + water * 0.35, 0, 1),
+    temperature,
+    ocean: elevation <= seaLevel,
+    ice,
+    coast: Math.abs(elevation - seaLevel) < 0.055,
+  };
+}
+
 export function planetVisualConfig(planet: { temperature: number; atmosphere: string; water: number; geological_activity: number }): PlanetVisualConfig {
   const water = clamp(planet.water / 100, 0, 1);
   const temperature = planet.temperature;
@@ -85,9 +121,9 @@ export function planetVisualConfig(planet: { temperature: number; atmosphere: st
   const atmosphere = planet.atmosphere.toLowerCase();
   const dense = atmosphere.includes('dense') ? 0.08 : atmosphere.includes('thin') ? -0.03 : 0;
   return {
-    oceanColor: heat > 0.55 ? '#263b45' : cold > 0.55 ? '#28465b' : '#20526a',
-    landColor: heat > 0.55 ? '#9a694c' : cold > 0.55 ? '#8799a4' : '#527e68',
-    landAccent: geological > 0.65 ? '#b16d58' : heat > 0.55 ? '#c39158' : '#86a875',
+    oceanColor: heat > 0.55 ? '#1c3542' : cold > 0.55 ? '#1f4968' : '#164d68',
+    landColor: heat > 0.55 ? '#8d5c43' : cold > 0.55 ? '#718d98' : '#4e7d58',
+    landAccent: geological > 0.65 ? '#b46d4d' : heat > 0.55 ? '#bc8950' : '#b08a55',
     iceColor: cold > 0.15 ? '#d8edf1' : '#bcd4d2',
     atmosphereColor: heat > 0.55 ? '#cf986d' : cold > 0.55 ? '#98c9dd' : '#8fc4c6',
     atmosphereOpacity: clamp(0.12 + water * 0.08 + dense, 0.04, 0.28),
