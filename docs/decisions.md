@@ -34,8 +34,10 @@ na cadeia atual. Empates entre processos usam prioridade por ID, sem UI de aloca
 A referência em `fleet.ship_ids` define ownership; ARRIVED pode receber novas ordens.
 IDs opcionais no payload preservam chamadas anteriores. Seleção implícita prioriza
 uma fleet ARRIVED por ID e, depois, nave pronta unattached. Destino igual à origem
-é erro em vez de viagem fictícia de distância mínima 1. Estoque global de combustível
-é mantido, sem introduzir reabastecimento local.
+é erro em vez de viagem fictícia de distância mínima 1. `Ship.origin_planet_id` é
+histórico de construção; a origem econômica de uma ordem é o `planet_id` da ação.
+Uma fleet ARRIVED sem planeta próprio selecionado no sistema usa apenas sua
+`fuel_reserve`, sem escolher outro planeta automaticamente.
 
 ## D008 — Unlock derivado de pesquisa
 

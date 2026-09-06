@@ -36,8 +36,9 @@ aceita coordenada arbitrária. Selecionar um node não cria descoberta nem mater
 
 `/api/state?planet_id=...` retorna os stocks, população, distritos, energia e filas do
 planeta ativo. Construções e montagem de nave enviam esse `planet_id`; a UI não soma
-stocks imperiais para autorizar ações. Naves novas preservam sua origem planetária e
-viagens remotas exigem combustível local no sistema da frota.
+stocks imperiais para autorizar ações. Naves novas preservam sua origem planetária;
+em uma frota existente, o planeta selecionado é a fonte econômica atual. Viagens
+remotas sem planeta local usam somente a reserva embarcada.
 
 Ao escolher um sistema desconhecido, o despacho é apresentado como **Explorar
 sistema** e envia `mission=SURVEY`. Sistemas conhecidos usam `MOVE`. A chegada e a

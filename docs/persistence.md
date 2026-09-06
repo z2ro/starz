@@ -96,8 +96,14 @@ reserva persistente, protegida por advisory lock por coordenada durante a ordem/
 Cada PlanetState possui `last_updated`: trocar de mundo não descarta produção nem uma
 obra pendente. Eventos globais continuam usando `Empire.last_updated` e o homeworld.
 
-Produção e processamento usam somente o `stocks` do planeta ativo. Uma viagem usa
-combustível local do planeta próprio no sistema de origem; uma frota remota sem esse
-planeta é rejeitada até existir uma mecânica explícita de abastecimento/transporte.
-Ships persistem `origin_planet_id` e coordenadas de criação para que crew e a primeira
-posição física não sejam inferidas do homeworld.
+Produção e processamento usam somente o `stocks` do planeta ativo. Em uma ordem de
+frota, o `planet_id` da ação é a fonte econômica atual e precisa estar no mesmo
+sistema da fleet; nenhum planeta irmão é escolhido automaticamente. Uma frota remota
+sem fonte planetária local usa somente sua `fuel_reserve`. Ships persistem
+`origin_planet_id` e coordenadas de criação como histórico para crew e a primeira
+posição física, não como fonte econômica futura.
+
+Em `COLONIZE`, o mesmo `planet_id` financia população, recursos e combustível da
+missão, e é persistido como `colonization_origin_planet_id`. A API exige esse campo
+para colonização; `MOVE` e `SURVEY` podem usar a reserva quando não houver planeta
+local aplicável.

@@ -186,13 +186,17 @@ def build_ship(request: BuildShipRequest = Body(default=BuildShipRequest())):
 
 @app.post("/api/travel")
 def travel(request: TravelRequest):
+    if request.mission == 'COLONIZE' and request.planet_id is None:
+        raise HTTPException(status_code=400, detail='COLONIZE exige planet_id como origem da missão')
     target = (request.target_x, request.target_y, request.target_planet_index) if request.mission == 'COLONIZE' and request.target_planet_index is not None else None
-    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id, mission=request.mission, target_planet_index=request.target_planet_index), planet_id=request.planet_id, colony_target=target)
+    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id, mission=request.mission, target_planet_index=request.target_planet_index, planet_id=request.planet_id), planet_id=request.planet_id, colony_target=target)
 
 
 @app.post("/api/travel-preview")
 def travel_preview(request: TravelRequest):
+    if request.mission == 'COLONIZE' and request.planet_id is None:
+        raise HTTPException(status_code=400, detail='COLONIZE exige planet_id como origem da missão')
     def preview(engine):
         catalog.get('travel_modes', request.mode)
-        return {mode: engine.preview_travel(request.target_x, request.target_y, request.propulsion_id, mode, fleet_id=request.fleet_id, ship_id=request.ship_id, intra_system=request.mission == 'COLONIZE') for mode in sorted(catalog.items['travel_modes'])}
+        return {mode: engine.preview_travel(request.target_x, request.target_y, request.propulsion_id, mode, fleet_id=request.fleet_id, ship_id=request.ship_id, planet_id=request.planet_id, intra_system=request.mission == 'COLONIZE') for mode in sorted(catalog.items['travel_modes'])}
     return action(preview, planet_id=request.planet_id)

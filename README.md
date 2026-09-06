@@ -134,6 +134,7 @@ Nesta etapa população, distritos, energia, construções e stocks são planet�
 Recursos existem fisicamente no mundo onde foram produzidos: não há transferência
 implícita entre planetas. Shipyards debitam o estoque local e naves novas nascem no
 sistema do planeta de construção. Pesquisa continua global; naves e frotas continuam
-entidades imperiais. Viagens remotas sem planeta próprio no sistema não recebem
-combustível mágico. Ainda não existem transporte, migração, terraformação, Colony Ship
+entidades imperiais. Viagens usam o planeta explicitamente selecionado no sistema da
+frota ou, sem fonte local, apenas a `fuel_reserve` já embarcada; não escolhem outro
+planeta automaticamente. Ainda não existem transporte, migração, terraformação, Colony Ship
 dedicado ou reembolso/cancelamento colonial.

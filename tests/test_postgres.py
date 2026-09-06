@@ -151,6 +151,28 @@ class PostgresTests(unittest.TestCase):
         with self.assertRaisesRegex(DataValidationError, 'locais'):
             self.store.run(self.empire_id, lambda e: e.build('processor', now=e.state.last_updated), now=1060, planet_id=second_id)
 
+    def test_fleet_uses_explicit_same_system_fuel_planet(self):
+        with Session(self.db) as session, session.begin():
+            empire = session.get(m.Empire, self.empire_id)
+            home = session.get(m.Planet, empire.home_planet_id)
+            second = m.Planet(system_id=home.system_id, planet_index=1, empire_id=empire.id, population_total=20, created_at=utc(1000), last_updated=utc(1000))
+            session.add(second)
+            session.flush()
+            session.add(m.PlanetStock(planet_id=second.id, resource_id='ion_fuel', amount=0))
+            second_id = second.id
+            home_id = home.id
+        self.store.run(self.empire_id, lambda e: e.state.districts.update(orbital_shipyard=1), now=1000, planet_id=home_id)
+        ship = self.store.run(self.empire_id, lambda e: e.build_ship(now=e.state.last_updated), now=1000, planet_id=home_id)
+        state = self.snapshot()
+        outbound = self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'] + 1, state['system_y'], 'chemical_drive', 'NORMAL', now=e.state.last_updated, planet_id=home_id), now=ship['ready_at'], planet_id=home_id)
+        self.store.run(self.empire_id, lambda e: None, now=outbound['arrival_at'], planet_id=home_id)
+        back = self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'], state['system_y'], 'chemical_drive', 'NORMAL', now=e.state.last_updated, fleet_id=outbound['id']), now=outbound['arrival_at'])
+        self.store.run(self.empire_id, lambda e: None, now=back['arrival_at'], planet_id=home_id)
+        with self.assertRaisesRegex(DataValidationError, 'combustível local'):
+            self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'] + 1, state['system_y'], 'chemical_drive', 'NORMAL', now=e.state.last_updated, fleet_id=back['id'], planet_id=second_id), now=back['arrival_at'], planet_id=second_id)
+        mission = self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'] + 1, state['system_y'], 'chemical_drive', 'NORMAL', now=e.state.last_updated, fleet_id=back['id'], planet_id=home_id), now=back['arrival_at'], planet_id=home_id)
+        self.assertEqual(mission['status'], 'TRANSIT')
+
     def test_store_explicit_ownership_supports_two_empires(self):
         with Session(self.db) as session, session.begin():
             first = session.get(m.Empire, self.empire_id)
@@ -394,10 +416,12 @@ class PostgresTests(unittest.TestCase):
         state = self.snapshot()
         first = self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'] - 1, state['system_y'], 'chemical_drive', 'ECONOMY', now=e.state.last_updated), now=ship['ready_at'])
         self.store.run(self.empire_id, lambda e: None, now=first['arrival_at'])
+        back = self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'], state['system_y'], 'chemical_drive', 'ECONOMY', now=e.state.last_updated, fleet_id=first['id']), now=first['arrival_at'])
+        self.store.run(self.empire_id, lambda e: None, now=back['arrival_at'])
         colony = self.store.run(
             self.empire_id,
-            lambda e: e.send_fleet(target[0], target[1], 'chemical_drive', 'ECONOMY', now=e.state.last_updated, fleet_id=first['id'], mission='COLONIZE', target_planet_index=target[2]),
-            now=first['arrival_at'], colony_target=target,
+            lambda e: e.send_fleet(target[0], target[1], 'chemical_drive', 'ECONOMY', now=e.state.last_updated, fleet_id=back['id'], mission='COLONIZE', target_planet_index=target[2]),
+            now=back['arrival_at'], colony_target=target,
         )
         with Session(self.db) as session:
             self.assertEqual(session.scalar(select(func.count()).select_from(m.StarSystem)), 1)
@@ -466,7 +490,9 @@ class PostgresTests(unittest.TestCase):
             state = self.store.run(empire_id, lambda e: e.state.to_dict(), now=ship['ready_at'])
             trip = self.store.run(empire_id, lambda e: e.send_fleet(state['system_x'] - 1, state['system_y'], 'chemical_drive', 'ECONOMY', now=e.state.last_updated), now=ship['ready_at'])
             self.store.run(empire_id, lambda e: None, now=trip['arrival_at'])
-            return trip['id'], trip['arrival_at']
+            back = self.store.run(empire_id, lambda e: e.send_fleet(state['system_x'], state['system_y'], 'chemical_drive', 'ECONOMY', now=e.state.last_updated, fleet_id=trip['id']), now=trip['arrival_at'])
+            self.store.run(empire_id, lambda e: None, now=back['arrival_at'])
+            return back['id'], back['arrival_at']
 
         prepared = {empire_id: prepare(empire_id) for empire_id in (self.empire_id, second_id)}
         barrier = Barrier(2)
