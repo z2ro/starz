@@ -16,12 +16,13 @@ let selectedHull = '';
 let selectedPropulsion = '';
 let selectedFuel = '';
 let previews;
+let selectedPlanetIndex;
 let busy = false;
 let feedback;
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const fmt = (value, digits = 0) => Number(value ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: digits });
 const label = (id) => [...(content?.resources ?? []), ...(content?.fuels ?? []), ...(content?.districts ?? []), ...(content?.technologies ?? []), ...(content?.ships ?? []), ...(content?.propulsion ?? []), ...(content?.travel_modes ?? [])].find(item => item.id === id)?.name ?? id.replaceAll('_', ' ');
-const term = (id) => ({ corvette: 'Corveta', exploration: 'Exploração', MOVE: 'Movimento', SURVEY: 'Levantamento' }[id] ?? id.replaceAll('_', ' '));
+const term = (id) => ({ corvette: 'Corveta', exploration: 'Exploração', MOVE: 'Movimento', SURVEY: 'Levantamento', COLONIZE: 'Colonização', VIABLE: 'Viável', HOSTILE: 'Hostil', UNINHABITABLE: 'Inabitável' }[id] ?? id.replaceAll('_', ' '));
 const hullRole = (hull) => `${term(hull.classification)} · ${term(hull.role)}`;
 const duration = (seconds) => seconds < 60 ? `${Math.max(0, Math.ceil(seconds))}s` : seconds < 3600 ? `${Math.ceil(seconds / 60)}min` : `${Math.floor(seconds / 3600)}h ${Math.ceil(seconds % 3600 / 60)}min`;
 const remaining = (stamp) => stamp === null ? 'Pausada' : duration(stamp - Date.now() / 1000);
@@ -46,6 +47,12 @@ function planetVisual(large = false) {
     const categories = content.districts.filter(item => (current.districts[item.id] ?? 0) > 0).map(item => item.category.toLowerCase());
     const markers = categories.map((category, index) => `<span class="surface-marker marker-${esc(category)} marker-${index % 6}" title="${esc(category)}"></span>`).join('');
     return `<div class="planet-stage ${large ? 'planet-large' : ''}" aria-label="Representação de ${esc(current.system.planet.name)}"><div class="distant-star"></div><div class="orbit-line orbit-a"></div><div class="orbit-line orbit-b"></div><div class="planet-sphere"><div class="planet-clouds"></div><div class="city-lights"></div>${markers}</div>${current.capacities.shipyard_slots > 0 ? '<div class="orbital-station" title="Estaleiro orbital"><i></i></div>' : ''}${current.fleets.length ? '<div class="fleet-marker" title="Presença de frota">▸</div>' : ''}<div class="visual-caption"><b>${esc(current.system.planet.name)}</b><span>${esc(current.system.name)} · ${current.system.x}:${current.system.y}</span></div></div>`;
+}
+function planetSelector() {
+    const worlds = current.planets ?? [];
+    if (!worlds.length)
+        return '';
+    return `<div class="planet-selector"><label>PLANETA ATIVO<select id="planet-select">${worlds.map(world => `<option value="${esc(world.id)}" ${world.id === current.active_planet?.id ? 'selected' : ''}>${world.home ? 'Homeworld' : 'Colônia'} · ${esc(world.name)}</option>`).join('')}</select></label><span>${worlds.length} ${worlds.length === 1 ? 'mundo imperial' : 'mundos imperiais'}</span></div>`;
 }
 function activeItems() {
     const items = [];
@@ -100,7 +107,7 @@ function planetView() {
     const orbit = orbitalDistricts.length
         ? `${orbitalDistricts.map(item => `<div class="metric-line"><span>${esc(item.name)}</span><b>Nível ${current.districts[item.id]}</b></div>`).join('')}<div class="metric-line"><span>Slots disponíveis</span><b>${current.capacities.shipyard_slots_available}/${current.capacities.shipyard_slots}</b></div>`
         : empty('Órbita não industrializada', 'Conclua a pesquisa necessária para liberar infraestrutura orbital.');
-    return `<header class="page-header"><div><div class="eyebrow">PLANETARY COMMAND</div><h1>${esc(p.name)}</h1><p>Ambiente físico, desenvolvimento e presença orbital.</p></div>${badge(`${Object.keys(current.districts).length} TIPOS DE DISTRITO`, 'blue')}</header><div class="planet-layout">${planetVisual(true)}${panel('Perfil físico', `<div class="facts-grid">${physical.map(([name, value]) => stat(name, String(value))).join('')}</div>`, 'PHYSICAL')}</div>${panel('Desenvolvimento planetário', `<div class="entity-table"><div class="table-head"><span>Infraestrutura</span><span>Nível</span><span>Impacto</span><span>Custo / duração</span><span></span></div>${content.districts.map(district => districtRow(district)).join('')}</div>`, 'DEVELOPMENT')}<div class="two-columns">${panel('Órbita', orbit)}${panel('Perfil mineral', Object.entries(p.mineral_profile).map(([id, value]) => `<div class="metric-line"><span>${esc(label(id))}</span><b>${fmt(value, 2)}×</b></div>`).join(''))}</div>`;
+    return `${planetSelector()}<header class="page-header"><div><div class="eyebrow">PLANETARY COMMAND</div><h1>${esc(p.name)}</h1><p>Ambiente físico, desenvolvimento e presença orbital.</p></div>${badge(`${Object.keys(current.districts).length} TIPOS DE DISTRITO`, 'blue')}</header><div class="planet-layout">${planetVisual(true)}${panel('Perfil físico', `<div class="facts-grid">${physical.map(([name, value]) => stat(name, String(value))).join('')}</div>`, 'PHYSICAL')}</div>${panel('Desenvolvimento planetário', `<div class="entity-table"><div class="table-head"><span>Infraestrutura</span><span>Nível</span><span>Impacto</span><span>Custo / duração</span><span></span></div>${content.districts.map(district => districtRow(district)).join('')}</div>`, 'DEVELOPMENT')}<div class="two-columns">${panel('Órbita', orbit)}${panel('Perfil mineral', Object.entries(p.mineral_profile).map(([id, value]) => `<div class="metric-line"><span>${esc(label(id))}</span><b>${fmt(value, 2)}×</b></div>`).join(''))}</div>`;
 }
 function economyView() {
     const resources = [...content.resources, ...content.fuels].filter(item => item.id in current.stocks);
@@ -137,12 +144,16 @@ function travelPlanner() {
         selectedSubject = subjects.find(item => !item.disabled)?.value ?? '';
     if (!content.travel_modes.some(item => item.id === selectedMode))
         selectedMode = content.travel_modes[0]?.id ?? '';
-    const mission = selectedSystem.knowledge_level === 'UNKNOWN' ? 'SURVEY' : 'MOVE';
+    const mission = selectedSystem.knowledge_level === 'UNKNOWN' ? 'SURVEY' : selectedPlanetIndex === undefined ? 'MOVE' : 'COLONIZE';
+    const targetPlanet = selectedSystem.planets?.find(planet => planet.planet_index === selectedPlanetIndex);
     const destination = selectedSystem.name ?? `Sistema ${selectedSystem.x}:${selectedSystem.y}`;
-    return `<div class="travel-planner"><div class="planner-controls"><label>Frota ou nave<select id="travel-subject"><option value="">Selecione</option>${subjects.map(item => `<option value="${esc(item.value)}" ${item.value === selectedSubject ? 'selected' : ''} ${item.disabled ? 'disabled' : ''}>${esc(item.name)}${item.disabled ? ' · indisponível' : ''}</option>`).join('')}</select></label><label>Regime preferido<select id="travel-mode">${content.travel_modes.map(item => `<option value="${esc(item.id)}" ${item.id === selectedMode ? 'selected' : ''}>${esc(item.name)}</option>`).join('')}</select></label><button class="action secondary" data-action="preview" ${selectedSubject && !selectedSystem.home ? '' : 'disabled'}>Comparar regimes</button></div>${previews ? `<div class="mode-comparison">${content.travel_modes.map(mode => { const item = previews[mode.id]; return `<button class="mode-card ${selectedMode === mode.id ? 'selected' : ''}" data-mode="${esc(mode.id)}"><div><b>${esc(mode.name)}</b>${badge(selectedMode === mode.id ? 'SELECIONADO' : 'REGIME')}</div><span>ETA <strong>${duration(item.eta_seconds)}</strong></span><span>Combustível <strong>${fmt(item.fuel_cost, 1)}</strong></span><span>Calor <strong>${fmt(item.heat, 2)}</strong></span><span>Assinatura <strong>${fmt(item.signature, 2)}</strong></span></button>`; }).join('')}</div><button class="action primary dispatch" data-action="travel">${mission === 'SURVEY' ? 'Explorar sistema' : 'Mover frota'} · ${esc(destination)}</button>` : '<div class="planner-hint">Selecione uma força disponível e compare os regimes antes de enviar.</div>'}</div>`;
+    const allowed = mission !== 'COLONIZE' || (!!targetPlanet?.colonization.eligible && selectedSubject.startsWith('fleet:'));
+    const order = targetPlanet ? `<div class="colony-order"><b>Pacote colonial · ${targetPlanet.colonization.population} população</b><div class="cost">${cost(targetPlanet.colonization.cost)}</div>${targetPlanet.colonization.reason ? `<small>${esc(targetPlanet.colonization.reason)}</small>` : ''}</div>` : '';
+    return `<div class="travel-planner">${order}<div class="planner-controls"><label>Frota ou nave<select id="travel-subject"><option value="">Selecione</option>${subjects.map(item => `<option value="${esc(item.value)}" ${item.value === selectedSubject ? 'selected' : ''} ${item.disabled ? 'disabled' : ''}>${esc(item.name)}${item.disabled ? ' · indisponível' : ''}</option>`).join('')}</select></label><label>Regime preferido<select id="travel-mode">${content.travel_modes.map(item => `<option value="${esc(item.id)}" ${item.id === selectedMode ? 'selected' : ''}>${esc(item.name)}</option>`).join('')}</select></label><button class="action secondary" data-action="preview" ${selectedSubject && !selectedSystem.home && allowed ? '' : 'disabled'}>Comparar regimes</button></div>${previews ? `<div class="mode-comparison">${content.travel_modes.map(mode => { const item = previews[mode.id]; return `<button class="mode-card ${selectedMode === mode.id ? 'selected' : ''}" data-mode="${esc(mode.id)}"><div><b>${esc(mode.name)}</b>${badge(selectedMode === mode.id ? 'SELECIONADO' : 'REGIME')}</div><span>ETA <strong>${duration(item.eta_seconds)}</strong></span><span>Combustível <strong>${fmt(item.fuel_cost, 1)}</strong></span><span>Calor <strong>${fmt(item.heat, 2)}</strong></span><span>Assinatura <strong>${fmt(item.signature, 2)}</strong></span></button>`; }).join('')}</div><button class="action primary dispatch" data-action="travel" ${allowed ? '' : 'disabled'}>${mission === 'SURVEY' ? 'Explorar sistema' : mission === 'COLONIZE' ? 'Colonizar planeta' : 'Mover frota'} · ${esc(destination)}</button>` : '<div class="planner-hint">Selecione uma força disponível e compare os regimes antes de enviar.</div>'}</div>`;
 }
 function mapCenters() {
-    const centers = [{ x: current.system.x, y: current.system.y, label: 'Homeworld' }, ...current.fleets.filter(fleet => fleet.status === 'ARRIVED').map(fleet => ({ x: fleet.x, y: fleet.y, label: fleet.name }))];
+    const home = current.planets?.find(planet => planet.home);
+    const centers = [{ x: home?.x ?? current.system.x, y: home?.y ?? current.system.y, label: 'Homeworld' }, ...current.fleets.filter(fleet => fleet.status === 'ARRIVED').map(fleet => ({ x: fleet.x, y: fleet.y, label: fleet.name }))];
     return [...new Map(centers.map(center => [`${center.x}:${center.y}`, center])).values()];
 }
 function galaxyView() {
@@ -151,12 +162,12 @@ function galaxyView() {
     const surveyed = selectedSystem.knowledge_level === 'SURVEYED' && selectedSystem.star && selectedSystem.planet;
     const name = selectedSystem.name ?? `Sistema ${selectedSystem.x}:${selectedSystem.y}`;
     const details = surveyed
-        ? `<div class="selected-star class-${selectedSystem.star.stellar_class.toLowerCase()}"><i></i><span>${esc(selectedSystem.star.stellar_class)}-class</span></div><div class="facts-grid">${stat('Luminosidade', `${fmt(selectedSystem.star.luminosity, 2)}×`)}${stat('Atividade', fmt(selectedSystem.star.activity, 2))}${stat('Planeta', selectedSystem.planet.name)}${stat('Gravidade', `${fmt(selectedSystem.planet.gravity, 2)} g`)}${stat('Temperatura', `${fmt(selectedSystem.planet.temperature)} K`)}${stat('Radiação', fmt(selectedSystem.planet.radiation, 2))}</div>`
+        ? `<div class="selected-star class-${selectedSystem.star.stellar_class.toLowerCase()}"><i></i><span>${esc(selectedSystem.star.stellar_class)}-class</span></div><div class="facts-grid">${stat('Luminosidade', `${fmt(selectedSystem.star.luminosity, 2)}×`)}${stat('Atividade', fmt(selectedSystem.star.activity, 2))}</div>${selectedSystem.planets?.length ? `<div class="galaxy-planets">${selectedSystem.planets.map(planet => `<button class="galaxy-planet ${selectedPlanetIndex === planet.planet_index ? 'selected' : ''}" data-planet-index="${planet.planet_index}"><div><b>${esc(planet.name)}</b>${badge(term(planet.viability), planet.viability === 'VIABLE' ? 'good' : 'warn')}</div><span>${fmt(planet.gravity, 2)} g · ${fmt(planet.temperature)} K · água ${fmt(planet.water)}%</span><small>${planet.ownership === 'UNCLAIMED' ? (planet.colonization.reason ?? 'Disponível para colonização') : planet.ownership === 'OWNED' ? 'Mundo do império' : 'Já ocupado'}</small></button>`).join('')}</div>` : `<div class="facts-grid">${stat('Planeta', selectedSystem.planet.name)}${stat('Gravidade', `${fmt(selectedSystem.planet.gravity, 2)} g`)}${stat('Temperatura', `${fmt(selectedSystem.planet.temperature)} K`)}${stat('Radiação', fmt(selectedSystem.planet.radiation, 2))}</div>`}`
         : `<div class="unknown-detail"><i>?</i><b>Sistema não mapeado</b><p>Envie uma frota em missão de levantamento para revelar estrela e planeta.</p></div>`;
     const controls = mapCenters().map(center => `<button class="map-center ${center.x === galaxyData.center[0] && center.y === galaxyData.center[1] ? 'active' : ''}" data-center="${center.x}:${center.y}">${esc(center.label)} · ${center.x}:${center.y}</button>`).join('');
     return `<header class="page-header"><div><div class="eyebrow">LOCAL STAR CHART</div><h1>Galáxia</h1><p>Conhecimento persistente por império. Sistemas desconhecidos ocultam detalhes físicos.</p></div>${badge(`RAIO ${galaxyData.radius}`, 'neutral')}</header><div class="map-centers" aria-label="Centralizar mapa">${controls}</div><div class="galaxy-layout"><section class="star-map" style="--map-size:${galaxyData.radius * 2 + 1}" aria-label="Mapa de sistemas próximos">${galaxyData.systems.map(system => `<button class="system-node ${system.star ? `class-${system.star.stellar_class.toLowerCase()}` : 'unknown'} ${system.home ? 'home' : ''} ${selectedSystem.x === system.x && selectedSystem.y === system.y ? 'selected' : ''}" style="grid-column:${system.x - minX + 1};grid-row:${system.y - minY + 1}" data-system="${esc(system.id)}" aria-label="${esc(system.name ?? 'Sistema desconhecido')}, coordenadas ${system.x}:${system.y}, ${system.knowledge_level}"><i></i><span>${system.home ? 'HOME' : `${system.x}:${system.y}`}</span></button>`).join('')}<div class="map-grid"></div></section><aside class="system-detail"><div class="eyebrow">SELECTED SYSTEM</div><div class="knowledge-heading"><h2>${esc(name)}</h2>${badge(selectedSystem.knowledge_level, surveyed ? 'good' : 'warn')}</div><p class="coordinates">${selectedSystem.x}:${selectedSystem.y} · ${fmt(selectedSystem.distance, 2)} unidades do centro</p>${details}${selectedSystem.home ? '<div class="home-note">Sistema natal mapeado · escolha outro nó para viajar.</div>' : travelPlanner()}</aside></div>`;
 }
-function viewContent(view) { return { overview, planet: planetView, economy: economyView, research: researchView, shipyard: shipyardView, fleets: fleetsView, galaxy: galaxyView }[view](); }
+function viewContent(view) { const body = { overview, planet: planetView, economy: economyView, research: researchView, shipyard: shipyardView, fleets: fleetsView, galaxy: galaxyView }[view](); return view === 'overview' ? planetSelector() + body : body; }
 function topHud() {
     const active = temporalActivityCount();
     return `<header class="top-hud"><a class="brand" href="#/overview" aria-label="StarZ início"><span>STAR</span><b>Z</b><small>COMMAND</small></a><div class="hud-resources">${strategicResources().map(item => `<div><span>${esc(item.name)}</span><strong>${fmt(current.stocks[item.id], 1)}</strong></div>`).join('')}</div><div class="hud-status"><div title="Geração / demanda de energia"><span>ENERGIA</span><b class="${current.capacities.energy_coverage < 1 ? 'warning-text' : ''}">${fmt(current.capacities.energy_generation)} / ${fmt(current.capacities.energy_consumption)}</b></div><div><span>POPULAÇÃO</span><b>${fmt(current.population.total)} <small>/ ${fmt(current.population.available)} livre</small></b></div><div title="Pesquisa atual"><span>PESQUISA</span><b>${current.research.active ? esc(label(current.research.active)) : 'Inativa'}</b></div><div><span>OPERAÇÕES</span><b>${active}</b></div><button class="icon-button" data-action="refresh" aria-label="Sincronizar estado">↻</button></div></header>`;
@@ -170,8 +181,10 @@ async function request(url, init) { const response = await fetch(url, init); con
     throw new Error(typeof result.detail === 'string' ? result.detail : 'Não foi possível concluir a operação.'); return result; }
 async function refreshGalaxy(center = galaxyData?.center) {
     const selected = selectedSystem && [selectedSystem.x, selectedSystem.y];
-    const operational = center && ((center[0] === current.system.x && center[1] === current.system.y) || current.fleets.some(fleet => fleet.status === 'ARRIVED' && fleet.x === center[0] && fleet.y === center[1]));
-    const [x, y] = operational ? center : [current.system.x, current.system.y];
+    const home = current.planets?.find(planet => planet.home);
+    const homePosition = [home?.x ?? current.system.x, home?.y ?? current.system.y];
+    const operational = center && ((center[0] === homePosition[0] && center[1] === homePosition[1]) || current.fleets.some(fleet => fleet.status === 'ARRIVED' && fleet.x === center[0] && fleet.y === center[1]));
+    const [x, y] = operational ? center : homePosition;
     galaxyData = await request(`/api/galaxy?radius=2&center_x=${x}&center_y=${y}`);
     selectedSystem = galaxyData.systems.find(system => selected && system.x === selected[0] && system.y === selected[1]) ?? galaxyData.systems.find(system => system.x === x && system.y === y) ?? galaxyData.systems[0];
 }
@@ -190,14 +203,14 @@ async function recenter(x, y) {
         render();
     }
 }
-async function load(showBusy = false) { if (showBusy) {
+async function load(showBusy = false, planetId = current?.active_planet?.id) { if (showBusy) {
     busy = true;
     if (current)
         render();
-} current = await request('/api/state'); if (route() === 'galaxy' && galaxyData)
+} current = await request(planetId ? `/api/state?planet_id=${encodeURIComponent(planetId)}` : '/api/state'); if (route() === 'galaxy' && galaxyData)
     await refreshGalaxy(); busy = false; render(); }
 function travelBody() { const [kind, id] = selectedSubject.split(':'); if (!id)
-    throw new Error('Selecione uma frota ou nave disponível.'); const propulsion = kind === 'fleet' ? current.fleets.find(item => item.id === id)?.propulsion : current.ships.find(item => item.id === id)?.propulsion_id; return { target_x: selectedSystem.x, target_y: selectedSystem.y, propulsion_id: propulsion, mode: selectedMode, mission: selectedSystem.knowledge_level === 'UNKNOWN' ? 'SURVEY' : 'MOVE', [kind === 'fleet' ? 'fleet_id' : 'ship_id']: id }; }
+    throw new Error('Selecione uma frota ou nave disponível.'); const propulsion = kind === 'fleet' ? current.fleets.find(item => item.id === id)?.propulsion : current.ships.find(item => item.id === id)?.propulsion_id; const mission = selectedSystem.knowledge_level === 'UNKNOWN' ? 'SURVEY' : selectedPlanetIndex === undefined ? 'MOVE' : 'COLONIZE'; return { target_x: selectedSystem.x, target_y: selectedSystem.y, target_planet_index: mission === 'COLONIZE' ? selectedPlanetIndex : undefined, propulsion_id: propulsion, mode: selectedMode, mission, [kind === 'fleet' ? 'fleet_id' : 'ship_id']: id }; }
 async function perform(action, id) {
     busy = true;
     feedback = undefined;
@@ -211,7 +224,9 @@ async function perform(action, id) {
             render();
             return;
         }
-        if (action === 'build' || action === 'research')
+        if (action === 'build')
+            body = { id, planet_id: current.active_planet?.id };
+        if (action === 'research')
             body = { id };
         if (action === 'build-ship')
             body = { hull_id: selectedHull, propulsion_id: selectedPropulsion, fuel_id: selectedFuel };
@@ -260,6 +275,13 @@ app.onclick = event => {
     }
     if (target.dataset.system) {
         selectedSystem = galaxyData.systems.find(system => system.id === target.dataset.system);
+        selectedPlanetIndex = undefined;
+        previews = undefined;
+        render();
+        return;
+    }
+    if (target.dataset.planetIndex !== undefined) {
+        selectedPlanetIndex = Number(target.dataset.planetIndex);
         previews = undefined;
         render();
         return;
@@ -274,6 +296,10 @@ app.onclick = event => {
 };
 app.onchange = event => {
     const target = event.target;
+    if (target.id === 'planet-select') {
+        void load(true, target.value);
+        return;
+    }
     if (target.id === 'travel-subject') {
         selectedSubject = target.value;
         previews = undefined;

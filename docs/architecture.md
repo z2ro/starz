@@ -18,8 +18,8 @@ frontend/ (SPA TypeScript sem framework + CSS + artefato browser gerado)
 
 O núcleo não depende de FastAPI nem de banco. A engine recebe `now` explicitamente, usa timestamps para trabalho de longa duração e avança estado de forma lazy quando consultado.
 
-O PostgreSQL é a única fonte de estado no runtime. `Store.run(empire_id, action)` abre
-transação, trava a linha do império, carrega o homeworld explícito como contexto atual,
+O PostgreSQL é a única fonte de estado no runtime. `Store.run(empire_id, action,
+planet_id=...)` abre transação, trava a linha do império, carrega o planeta explícito,
 avança a engine e persiste o resultado.
 O ORM não entra na engine. Relógio real é fornecido depois de obter o lock; testes
 podem passar `now` explicitamente. Detalhes em [persistence.md](persistence.md).
@@ -59,7 +59,9 @@ O slice mantém uma nave por frota. `x/y` representam a posição de partida dur
 TRANSIT e o destino após ARRIVED; não há interpolação visual contínua nesta tarefa.
 `travel.py` recebe origem e destino explicitamente, nunca consulta o home system.
 
-Frotas persistem missão `MOVE` ou `SURVEY`. A chegada `SURVEY` usa o mesmo boundary
+Frotas persistem `MOVE`, `SURVEY` ou `COLONIZE`. A chegada colonial cria uma mudança
+de domínio que o Store materializa como StarSystem/PlanetState; a engine não usa ORM.
+A chegada `SURVEY` usa o mesmo boundary
 temporal para registrar a coordenada em `GameState.system_knowledge`; inserção
 idempotente em `(empire_id, system_x, system_y)` evita descoberta e notice duplicadas.
 `MOVE` altera somente posição. Não há etapa adicional de scanning.
@@ -70,6 +72,12 @@ READ COMMITTED + SELECT FOR UPDATE na linha do império serializa ações mesmo 
 processos. Erro de domínio ou de constraint causa rollback de toda a transação,
 incluindo avanço lazy. Não há RLock local nem escrita de state.json.
 Trabalho restante salvo é preservado, inclusive quando a pesquisa está pausada.
+
+Colonização reserva `(x, y, planet_index)` por uma fleet `COLONIZE` em trânsito.
+Advisory lock transacional por alvo serializa a validação entre impérios; a unicidade
+`(system_id, planet_index)` é a garantia final. Abrir Galaxy não materializa corpos.
+`PlanetState.last_updated` mantém o cursor lazy local de produção/obras; eventos
+globais usam `Empire.last_updated`, avançados no contexto do homeworld.
 
 ## Capacidades e pesquisa contínua
 

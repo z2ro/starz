@@ -54,6 +54,7 @@ class Planet(Base):
     empire_id: Mapped[UUID | None] = mapped_column(ForeignKey('empire.id'))
     population_total: Mapped[int]
     created_at: Mapped[datetime]
+    last_updated: Mapped[datetime]
 
 
 class Stock(Base):
@@ -126,7 +127,8 @@ class Fleet(Base):
     __table_args__ = (
         UniqueConstraint('id', 'empire_id'),
         CheckConstraint("status IN ('ARRIVED', 'TRANSIT')", name='fleet_status'),
-        CheckConstraint("mission IN ('MOVE', 'SURVEY')", name='fleet_mission'),
+        CheckConstraint("mission IN ('MOVE', 'SURVEY', 'COLONIZE')", name='fleet_mission'),
+        CheckConstraint("(mission = 'COLONIZE' AND target_planet_index IS NOT NULL AND target_planet_index >= 0 AND colonization_population > 0) OR (mission <> 'COLONIZE' AND target_planet_index IS NULL AND colonization_population IS NULL)", name='fleet_colonization_target'),
         CheckConstraint('arrival_at >= departure_at', name='fleet_time_order'),
         CheckConstraint("fuel_cost >= 0 AND fuel_cost < 'Infinity'::float8", name='fleet_fuel_nonnegative'),
     )
@@ -139,6 +141,8 @@ class Fleet(Base):
     destination_y: Mapped[int]
     status: Mapped[str]
     mission: Mapped[str] = mapped_column(default='MOVE', server_default='MOVE')
+    target_planet_index: Mapped[int | None]
+    colonization_population: Mapped[int | None]
     departure_at: Mapped[datetime]
     arrival_at: Mapped[datetime] = mapped_column(index=True)
     propulsion_id: Mapped[str]

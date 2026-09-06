@@ -17,6 +17,7 @@ from starz.api import galaxy_snapshot
 from starz.db import models as m
 from starz.db.store import Store, load, persist, utc
 from starz.simulation import Engine
+from starz.universe import colonization_viability, generate_system
 from starz.settings import Settings
 
 
@@ -55,6 +56,18 @@ class PostgresTests(unittest.TestCase):
         self.assertEqual(restarted.bootstrap(now=9999), self.empire_id)
         self.store = restarted
 
+    def viable_target(self):
+        state = self.snapshot()
+        rules = next(iter(self.catalog.items['colonization'].values()))
+        for x in range(state['system_x'] - 2, state['system_x'] + 3):
+            for y in range(state['system_y'] - 2, state['system_y'] + 3):
+                if (x, y) == (state['system_x'], state['system_y']):
+                    continue
+                for index, planet in enumerate(generate_system(state['seed'], x, y, self.catalog).planets):
+                    if colonization_viability(planet, rules) == 'VIABLE':
+                        return x, y, index
+        self.fail('no viable colony target')
+
     def test_bootstrap_idempotent_and_concurrent(self):
         before = self.snapshot()
         barrier = Barrier(2)
@@ -85,6 +98,7 @@ class PostgresTests(unittest.TestCase):
                 empire_id=empire.id,
                 population_total=5,
                 created_at=utc(1000),
+                last_updated=utc(1000),
             )
             session.add(second)
             session.flush()
@@ -99,6 +113,7 @@ class PostgresTests(unittest.TestCase):
                 empire_id=self.empire_id,
                 population_total=5,
                 created_at=utc(1000),
+                last_updated=utc(1000),
             ))
             session.flush()
         with Session(self.db) as session:
@@ -120,6 +135,7 @@ class PostgresTests(unittest.TestCase):
             planet = m.Planet(
                 system_id=system.id, planet_index=1, empire_id=second.id,
                 population_total=state.population_total, created_at=utc(1000),
+                last_updated=utc(1000),
             )
             session.add(planet)
             session.flush()
@@ -324,3 +340,100 @@ class PostgresTests(unittest.TestCase):
             session.flush()
             session.add(m.FleetShip(fleet_id=other.id, ship_id=UUID(ship['id']), empire_id=self.empire_id))
         self.assertEqual(self.snapshot()['fleets'][0]['id'], fleet['id'])
+
+    def test_colony_materializes_on_arrival_and_planet_state_isolated(self):
+        target = self.viable_target()
+        self.store.run(self.empire_id, lambda e: (e.state.districts.update(orbital_shipyard=1), e._survey(target[0], target[1], e.state.last_updated)), now=1000)
+        ship = self.store.run(self.empire_id, lambda e: e.build_ship(now=e.state.last_updated), now=1000)
+        state = self.snapshot()
+        first = self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'] - 1, state['system_y'], 'chemical_drive', 'ECONOMY', now=e.state.last_updated), now=ship['ready_at'])
+        self.store.run(self.empire_id, lambda e: None, now=first['arrival_at'])
+        colony = self.store.run(
+            self.empire_id,
+            lambda e: e.send_fleet(target[0], target[1], 'chemical_drive', 'ECONOMY', now=e.state.last_updated, fleet_id=first['id'], mission='COLONIZE', target_planet_index=target[2]),
+            now=first['arrival_at'], colony_target=target,
+        )
+        with Session(self.db) as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.StarSystem)), 1)
+        self.store.run(self.empire_id, lambda e: None, now=colony['arrival_at'])
+        self.restart()
+        state = self.snapshot()
+        self.assertEqual(len(state['planets']), 2)
+        remote = next(item for item in state['planets'] if not item['home'])
+        self.assertEqual((remote['x'], remote['y'], remote['planet_index']), target)
+        self.assertEqual(remote['population_total'], 20)
+        home_districts = dict(state['districts'])
+        job = self.store.run(self.empire_id, lambda e: e.build('ore_extractor', now=e.state.last_updated), now=colony['arrival_at'], planet_id=remote['id'])
+        self.store.run(self.empire_id, lambda e: None, now=job['complete_at'])
+        self.store.run(self.empire_id, lambda e: None, now=job['complete_at'], planet_id=remote['id'])
+        with Session(self.db) as session:
+            empire = session.get(m.Empire, self.empire_id)
+            home = load(session, empire)
+            remote_state = load(session, empire, planet_id=remote['id'], catalog=self.catalog)
+            self.assertEqual(home.districts, home_districts)
+            self.assertEqual(remote_state.districts['ore_extractor'], 1)
+            self.assertEqual(remote_state.population_total, 20)
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.Planet).where(m.Planet.empire_id == self.empire_id)), 2)
+
+    def test_survey_then_colonize_smoke(self):
+        target = self.viable_target()
+        self.store.run(self.empire_id, lambda e: e.state.districts.update(orbital_shipyard=1), now=1000)
+        ship = self.store.run(self.empire_id, lambda e: e.build_ship(now=e.state.last_updated), now=1000)
+        survey = self.store.run(self.empire_id, lambda e: e.send_fleet(target[0], target[1], 'chemical_drive', 'ECONOMY', now=e.state.last_updated, ship_id=ship['id'], mission='SURVEY'), now=ship['ready_at'])
+        self.store.run(self.empire_id, lambda e: None, now=survey['arrival_at'])
+        state = self.snapshot()
+        self.assertIn(f'{target[0]}:{target[1]}', state['system_knowledge'])
+        back = self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'], state['system_y'], 'chemical_drive', 'ECONOMY', now=e.state.last_updated, fleet_id=survey['id']), now=survey['arrival_at'])
+        self.store.run(self.empire_id, lambda e: None, now=back['arrival_at'])
+        mission = self.store.run(self.empire_id, lambda e: e.send_fleet(target[0], target[1], 'chemical_drive', 'ECONOMY', now=e.state.last_updated, fleet_id=survey['id'], mission='COLONIZE', target_planet_index=target[2]), now=back['arrival_at'], colony_target=target)
+        self.restart()
+        self.store.run(self.empire_id, lambda e: None, now=mission['arrival_at'])
+        colony = next(item for item in self.snapshot()['planets'] if not item['home'])
+        home_before = dict(self.snapshot()['districts'])
+        job = self.store.run(self.empire_id, lambda e: e.build('ore_extractor', now=e.state.last_updated), now=mission['arrival_at'], planet_id=colony['id'])
+        self.store.run(self.empire_id, lambda e: None, now=job['complete_at'], planet_id=colony['id'])
+        with Session(self.db) as session:
+            empire = session.get(m.Empire, self.empire_id)
+            self.assertEqual(load(session, empire).districts, home_before)
+            self.assertEqual(load(session, empire, planet_id=colony['id']).districts['ore_extractor'], 1)
+
+    def test_colonization_target_is_reserved_between_empires(self):
+        target = self.viable_target()
+        with Session(self.db) as session, session.begin():
+            first = session.get(m.Empire, self.empire_id)
+            home_system = session.get(m.StarSystem, first.home_system_id)
+            second = m.Empire(universe_id=first.universe_id, home_system_id=home_system.id, name='Colonial Rival', last_updated=utc(1000), created_at=utc(1000))
+            session.add(second)
+            session.flush()
+            planet = m.Planet(system_id=home_system.id, planet_index=1, empire_id=second.id, population_total=100, created_at=utc(1000), last_updated=utc(1000))
+            session.add(planet)
+            session.flush()
+            second.home_planet_id = planet.id
+            state = Engine.new(self.catalog, now=1000).state
+            state.system_x, state.system_y = home_system.x, home_system.y
+            persist(session, second, planet, state)
+            second_id = second.id
+
+        def prepare(empire_id):
+            self.store.run(empire_id, lambda e: (e.state.districts.update(orbital_shipyard=1), e._survey(target[0], target[1], e.state.last_updated)), now=1000)
+            ship = self.store.run(empire_id, lambda e: e.build_ship(now=e.state.last_updated), now=1000)
+            state = self.store.run(empire_id, lambda e: e.state.to_dict(), now=ship['ready_at'])
+            trip = self.store.run(empire_id, lambda e: e.send_fleet(state['system_x'] - 1, state['system_y'], 'chemical_drive', 'ECONOMY', now=e.state.last_updated), now=ship['ready_at'])
+            self.store.run(empire_id, lambda e: None, now=trip['arrival_at'])
+            return trip['id'], trip['arrival_at']
+
+        prepared = {empire_id: prepare(empire_id) for empire_id in (self.empire_id, second_id)}
+        barrier = Barrier(2)
+
+        def claim(empire_id):
+            fleet_id, now = prepared[empire_id]
+            barrier.wait(timeout=10)
+            try:
+                self.store.run(empire_id, lambda e: e.send_fleet(target[0], target[1], 'chemical_drive', 'ECONOMY', now=e.state.last_updated, fleet_id=fleet_id, mission='COLONIZE', target_planet_index=target[2]), now=now, colony_target=target)
+                return 'success'
+            except DataValidationError:
+                return 'rejected'
+
+        with ThreadPoolExecutor(2) as pool:
+            results = list(pool.map(claim, (self.empire_id, second_id)))
+        self.assertCountEqual(results, ['success', 'rejected'])

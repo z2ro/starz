@@ -1,5 +1,10 @@
 # Frontend
 
+Overview e Planet exibem um seletor dos mundos do império. A troca recarrega o
+contexto planetário autorizado; stocks e pesquisa continuam globais. Em Galaxy,
+sistemas `SURVEYED` listam seus planetas, viabilidade e ownership. Selecionar um alvo
+viável, uma fleet `ARRIVED` e um regime produz a ordem `COLONIZE` explícita.
+
 ## Estrutura da experiência
 
 StarZ usa uma SPA pequena em TypeScript nativo. O shell persistente contém HUD global,

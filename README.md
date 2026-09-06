@@ -14,8 +14,8 @@ Abra `http://localhost:8000`. Compose espera o healthcheck do PostgreSQL 17,
 aplica `alembic upgrade head` e inicia a aplicação sem reload. `/health` verifica o banco.
 O estado fica no volume nomeado `starz_postgres_data` e avança lazy por timestamps.
 O bootstrap transacional cria apenas um universo e um império local sem autenticação.
-O schema permite vários PlanetStates por sistema e por império; o slice usa somente o
-homeworld explícito (`Empire.home_planet_id`) como contexto ativo.
+O schema e a experiência permitem homeworld + colônias; `Empire.home_planet_id`
+permanece explícito e cada request planetária informa seu contexto.
 
 ```bash
 docker compose down       # para containers; preserva a partida
@@ -68,7 +68,9 @@ Na interface: use **Planet** para construir o processador, **Research** para pes
 engenharia orbital e **Shipyard** para montar a nave. Em **Galaxy**, selecione um
 sistema desconhecido, uma nave/frota, compare os três regimes e envie uma missão de
 levantamento. Ao chegar, o sistema passa de `UNKNOWN` para `SURVEYED` e revela seus
-dados físicos. A mesma frota aceita nova ordem partindo de sua posição atual. Filas são
+dados físicos. Em seguida, selecione um planeta viável e uma frota para enviar
+`COLONIZE`; população e pacote colonial são debitados no início e o PlanetState nasce
+na chegada. A mesma frota aceita nova ordem partindo de sua posição atual. Filas são
 sincronizadas a cada 15 segundos enquanto a página está visível; não existe tick no servidor.
 
 Conhecimento é persistente e específico por império. O homeworld começa mapeado;
@@ -127,3 +129,7 @@ construção/viagem e recria o Compose sem apagar o volume. Deixa a frota em C p
 o adaptador real, rollback, constraints, concorrência e progresso offline.
 O JavaScript publicado é gerado por TypeScript; não edite `frontend/app.js` manualmente.
 Veja [frontend.md](docs/frontend.md) para views, atualização e princípios visuais.
+
+Nesta etapa população, distritos, energia e construções são planetários. Stocks,
+combustível, naves e pesquisa continuam globais; não existem transporte, migração,
+terraformação, Colony Ship dedicado ou reembolso/cancelamento colonial.

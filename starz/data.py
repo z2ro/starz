@@ -130,6 +130,34 @@ class TravelMode(Content):
     signature_modifier: NonNegative
 
 
+class Colonization(Content):
+    population: int = Field(gt=0, strict=True)
+    initial_districts: dict[str, int] = Field(min_length=1)
+    viable_gravity_range: tuple[Positive, Positive]
+    viable_temperature_range: tuple[Positive, Positive]
+    survivable_gravity_range: tuple[Positive, Positive]
+    survivable_temperature_range: tuple[Positive, Positive]
+    viable_max_radiation: NonNegative
+    survivable_max_radiation: NonNegative
+    viable_min_water: NonNegative
+
+    @model_validator(mode='after')
+    def valid_thresholds(self):
+        for name in ('viable_gravity_range', 'viable_temperature_range', 'survivable_gravity_range', 'survivable_temperature_range'):
+            low, high = getattr(self, name)
+            if low > high:
+                raise ValueError(f'{name}: mínimo maior que máximo')
+        if not (self.survivable_gravity_range[0] <= self.viable_gravity_range[0] <= self.viable_gravity_range[1] <= self.survivable_gravity_range[1]):
+            raise ValueError('gravity ranges inconsistentes')
+        if not (self.survivable_temperature_range[0] <= self.viable_temperature_range[0] <= self.viable_temperature_range[1] <= self.survivable_temperature_range[1]):
+            raise ValueError('temperature ranges inconsistentes')
+        if self.viable_max_radiation > self.survivable_max_radiation or self.viable_min_water > 100:
+            raise ValueError('thresholds ambientais inconsistentes')
+        if any(level <= 0 for level in self.initial_districts.values()):
+            raise ValueError('initial_districts exige níveis positivos')
+        return self
+
+
 KINDS: dict[str, type[Content]] = {
     "resources": Resource,
     "fuels": Fuel,
@@ -140,6 +168,7 @@ KINDS: dict[str, type[Content]] = {
     "stars": StarArchetype,
     "planets": PlanetArchetype,
     "travel_modes": TravelMode,
+    "colonization": Colonization,
 }
 
 
@@ -218,6 +247,10 @@ class Catalog:
             for ref in item.mineral_profile:
                 if ref not in resources:
                     errors.append(f"{item.id}: mineral desconhecido: {ref}")
+        for item in self.items['colonization'].values():
+            for ref in item.initial_districts:
+                if ref not in self.items['districts']:
+                    errors.append(f'{item.id}: distrito inicial desconhecido: {ref}')
         for star_id in self.items['stars']:
             if not any(star_id in planet.star_archetypes for planet in self.items['planets'].values()):
                 errors.append(f"{star_id}: nenhum arquétipo planetário compatível")

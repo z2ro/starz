@@ -44,10 +44,18 @@ class StarSystem:
     x: int
     y: int
     star: Star
-    planet: Planet
+    planets: tuple[Planet, ...]
+    selected_planet_index: int = 0
+
+    @property
+    def planet(self) -> Planet:
+        return self.planets[self.selected_planet_index]
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        value = asdict(self)
+        value['planet'] = value['planets'][self.selected_planet_index]
+        value.pop('selected_planet_index')
+        return value
 
 
 def _choose(items, value: float):
@@ -69,32 +77,50 @@ def generate_system(seed: str, x: int, y: int, catalog: Catalog) -> StarSystem:
     def sample(limits, key):
         return limits[0] + u(key) * (limits[1] - limits[0])
     stellar = _choose(catalog.items['stars'].values(), u('class'))
-    archetype = _choose([p for p in catalog.items['planets'].values() if stellar.id in p.star_archetypes], u('planet_class'))
     mass = sample(stellar.mass_range, 'mass')
     luminosity = stellar.luminosity_offset + mass**3 * sample(stellar.luminosity_scale_range, 'luminosity')
     activity = sample(stellar.activity_range, 'activity')
     star = Star(stellar.stellar_class, mass, luminosity, sample(stellar.age_range, 'age'), activity)
-    orbital_distance = sample(archetype.orbital_distance_range, 'orbit')
-    gravity = sample(archetype.gravity_range, 'gravity')
-    temperature = archetype.temperature_base + archetype.temperature_scale * luminosity / orbital_distance
-    atmospheres = sorted(archetype.atmosphere_profiles)
-    planet = Planet(
-        id=f"planet-{x}-{y}",
-        name=f"{chr(65 + int(u('name') * 26))}{100 + int(u('name2') * 900)}-{abs(x) + abs(y)}",
-        mass=sample(archetype.mass_range, 'pmass'),
-        radius=sample(archetype.radius_range, 'radius'),
-        gravity=gravity,
-        orbital_distance=orbital_distance,
-        temperature=temperature,
-        atmosphere=atmospheres[int(u('atmosphere') * len(atmospheres))],
-        radiation=activity * sample(archetype.radiation_range, 'shield'),
-        magnetic_field=sample(archetype.magnetic_field_range, 'magnetic'),
-        water=sample(archetype.water_range, 'water'),
-        geological_activity=sample(archetype.geological_activity_range, 'geo'),
-        mineral_profile={key: sample(limits, f'mineral:{key}') for key, limits in sorted(archetype.mineral_profile.items())},
-        usable_surface=sample(archetype.usable_surface_range, 'surface'),
+    planets = []
+    for index in range(2 + int(u('planet_count') * 2)):
+        suffix = '' if index == 0 else f':{index}'
+        archetype = _choose([p for p in catalog.items['planets'].values() if stellar.id in p.star_archetypes], u(f'planet_class{suffix}'))
+        orbital_distance = sample(archetype.orbital_distance_range, f'orbit{suffix}')
+        atmospheres = sorted(archetype.atmosphere_profiles)
+        planets.append(Planet(
+            id=f'planet-{x}-{y}-{index}',
+            name=f"{chr(65 + int(u(f'name{suffix}') * 26))}{100 + int(u(f'name2{suffix}') * 900)}-{abs(x) + abs(y)} {index + 1}",
+            mass=sample(archetype.mass_range, f'pmass{suffix}'),
+            radius=sample(archetype.radius_range, f'radius{suffix}'),
+            gravity=sample(archetype.gravity_range, f'gravity{suffix}'),
+            orbital_distance=orbital_distance,
+            temperature=archetype.temperature_base + archetype.temperature_scale * luminosity / orbital_distance,
+            atmosphere=atmospheres[int(u(f'atmosphere{suffix}') * len(atmospheres))],
+            radiation=activity * sample(archetype.radiation_range, f'shield{suffix}'),
+            magnetic_field=sample(archetype.magnetic_field_range, f'magnetic{suffix}'),
+            water=sample(archetype.water_range, f'water{suffix}'),
+            geological_activity=sample(archetype.geological_activity_range, f'geo{suffix}'),
+            mineral_profile={key: sample(limits, f'mineral:{key}{suffix}') for key, limits in sorted(archetype.mineral_profile.items())},
+            usable_surface=sample(archetype.usable_surface_range, f'surface{suffix}'),
+        ))
+    return StarSystem(f"system-{x}-{y}", f"Asterion {x:+d}:{y:+d}", x, y, star, tuple(planets))
+
+
+def colonization_viability(planet: Planet, rules) -> str:
+    survivable = (
+        rules.survivable_gravity_range[0] <= planet.gravity <= rules.survivable_gravity_range[1]
+        and rules.survivable_temperature_range[0] <= planet.temperature <= rules.survivable_temperature_range[1]
+        and planet.radiation <= rules.survivable_max_radiation
     )
-    return StarSystem(f"system-{x}-{y}", f"Asterion {x:+d}:{y:+d}", x, y, star, planet)
+    if not survivable:
+        return 'UNINHABITABLE'
+    viable = (
+        rules.viable_gravity_range[0] <= planet.gravity <= rules.viable_gravity_range[1]
+        and rules.viable_temperature_range[0] <= planet.temperature <= rules.viable_temperature_range[1]
+        and planet.radiation <= rules.viable_max_radiation
+        and planet.water >= rules.viable_min_water
+    )
+    return 'VIABLE' if viable else 'HOSTILE'
 
 
 @dataclass(frozen=True)

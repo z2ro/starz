@@ -40,6 +40,7 @@ app.mount("/static", StaticFiles(directory=ROOT / "frontend"), name="static")
 
 class BuildRequest(BaseModel):
     id: str
+    planet_id: str | None = None
 
 
 class ResearchRequest(BaseModel):
@@ -59,12 +60,18 @@ class TravelRequest(BaseModel):
     mode: str
     fleet_id: str | None = None
     ship_id: str | None = None
-    mission: Literal['MOVE', 'SURVEY'] = 'MOVE'
+    mission: Literal['MOVE', 'SURVEY', 'COLONIZE'] = 'MOVE'
+    target_planet_index: int | None = Field(default=None, ge=0)
 
 
-def action(call):
+def action(call, *, planet_id=None, colony_target=None):
     try:
-        return app.state.store.run(app.state.default_empire_id, call)
+        options = {}
+        if planet_id is not None:
+            options['planet_id'] = planet_id
+        if colony_target is not None:
+            options['colony_target'] = colony_target
+        return app.state.store.run(app.state.default_empire_id, call, **options)
     except DataValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -82,8 +89,18 @@ def index():
 
 
 @app.get("/api/state")
-def state():
-    return action(state_snapshot)
+def state(planet_id: str | None = None):
+    return action(state_snapshot, planet_id=planet_id)
+
+
+@app.get('/api/planets')
+def planets():
+    return action(lambda engine: planet_list(engine))
+
+
+@app.get('/api/planets/{planet_id}')
+def planet_detail(planet_id: str):
+    return action(state_snapshot, planet_id=planet_id)
 
 
 @app.get('/api/catalog')
@@ -93,7 +110,7 @@ def game_catalog():
 
 
 def galaxy_snapshot(engine, center: tuple[int, int], radius: int):
-    home = (engine.state.system_x, engine.state.system_y)
+    home = (engine.state.home_system_x if engine.state.home_system_x is not None else engine.state.system_x, engine.state.home_system_y if engine.state.home_system_y is not None else engine.state.system_y)
     valid_centers = {home, *((fleet['x'], fleet['y']) for fleet in engine.state.fleets if fleet['status'] == 'ARRIVED')}
     if center not in valid_centers:
         raise DataValidationError('centro do mapa deve ser o homeworld ou uma frota em sistema')
@@ -104,10 +121,22 @@ def galaxy_snapshot(engine, center: tuple[int, int], radius: int):
             item = {'id': f'{x}:{y}', 'x': x, 'y': y, 'distance': round(hypot(x - center[0], y - center[1]), 2), 'home': (x, y) == home, 'knowledge_level': level}
             if level == 'SURVEYED':
                 system = generate_system(engine.state.seed, x, y, engine.catalog)
+                planets = []
+                owned = {(item['x'], item['y'], item['planet_index']): item for item in engine.state.planets}
+                for index, planet in enumerate(system.planets):
+                    status = engine.colonization_status(x, y, index)
+                    owner = 'OWNED' if (x, y, index) in owned else ('OCCUPIED' if engine.planet_key(x, y, index) in engine.state.occupied_planets else 'UNCLAIMED')
+                    planets.append({
+                        'planet_index': index, 'name': planet.name, 'gravity': planet.gravity,
+                        'temperature': planet.temperature, 'water': planet.water, 'radiation': planet.radiation,
+                        'viability': status.get('viability'), 'ownership': owner,
+                        'colonization': {**status, 'population': engine.colonization_rules.population, 'cost': engine.colonization_rules.cost},
+                    })
                 item.update({
                     'id': system.id, 'name': system.name,
                     'star': {'stellar_class': system.star.stellar_class, 'luminosity': system.star.luminosity, 'activity': system.star.activity},
                     'planet': {'name': system.planet.name, 'gravity': system.planet.gravity, 'temperature': system.planet.temperature, 'water': system.planet.water, 'radiation': system.planet.radiation},
+                    'planets': planets,
                 })
             systems.append(item)
     return {'center': list(center), 'home': list(home), 'radius': radius, 'systems': systems}
@@ -127,12 +156,20 @@ def galaxy(
 def state_snapshot(engine):
     system = engine.system()
     capacities = engine.capacities()
-    return {"system": system.to_dict(), "stocks": {key: round(value, 2) for key, value in engine.state.stocks.items()}, "capacities": capacities, "population": {"total": engine.state.population_total, "available": capacities["available_population"], "capacity": 100 + sum(engine.catalog.get("districts", key).population_capacity * level for key, level in engine.state.districts.items())}, "districts": dict(engine.state.districts), "construction": list(engine.state.construction), "research": dict(engine.state.research), "ships": [dict(ship) for ship in engine.state.ships], "fleets": [{**fleet, "eta": max(0, round(fleet["arrival_at"] - engine.state.last_updated)) if fleet["status"] == "TRANSIT" else 0} for fleet in engine.state.fleets], "notices": engine.state.notices[:5], "travel_modes": [item.model_dump() for _, item in sorted(catalog.items['travel_modes'].items())], "unlocked_content": sorted(unlocked_content(catalog, engine.state.research['completed']))}
+    return {"system": system.to_dict(), "active_planet": {"id": engine.state.planet_id, "planet_index": engine.state.planet_index, "home": engine.state.planet_id == engine.state.home_planet_id}, "planets": planet_list(engine), "stocks": {key: round(value, 2) for key, value in engine.state.stocks.items()}, "capacities": capacities, "population": {"total": engine.state.population_total, "available": capacities["available_population"], "capacity": 100 + sum(engine.catalog.get("districts", key).population_capacity * level for key, level in engine.state.districts.items())}, "districts": dict(engine.state.districts), "construction": list(engine.state.construction), "research": dict(engine.state.research), "ships": [dict(ship) for ship in engine.state.ships], "fleets": [{**fleet, "eta": max(0, round(fleet["arrival_at"] - engine.state.last_updated)) if fleet["status"] == "TRANSIT" else 0} for fleet in engine.state.fleets], "notices": engine.state.notices[:5], "travel_modes": [item.model_dump() for _, item in sorted(catalog.items['travel_modes'].items())], "unlocked_content": sorted(unlocked_content(catalog, engine.state.research['completed']))}
+
+
+def planet_list(engine):
+    result = []
+    for item in engine.state.planets:
+        physical = generate_system(engine.state.seed, item['x'], item['y'], engine.catalog).planets[item['planet_index']]
+        result.append({**item, 'name': physical.name})
+    return result
 
 
 @app.post("/api/build")
 def build(request: BuildRequest):
-    return action(lambda engine: engine.build(request.id, now=engine.state.last_updated))
+    return action(lambda engine: engine.build(request.id, now=engine.state.last_updated), planet_id=request.planet_id)
 
 
 @app.post("/api/research")
@@ -147,12 +184,13 @@ def build_ship(request: BuildShipRequest = Body(default=BuildShipRequest())):
 
 @app.post("/api/travel")
 def travel(request: TravelRequest):
-    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id, mission=request.mission))
+    target = (request.target_x, request.target_y, request.target_planet_index) if request.mission == 'COLONIZE' and request.target_planet_index is not None else None
+    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id, mission=request.mission, target_planet_index=request.target_planet_index), colony_target=target)
 
 
 @app.post("/api/travel-preview")
 def travel_preview(request: TravelRequest):
     def preview(engine):
         catalog.get('travel_modes', request.mode)
-        return {mode: engine.preview_travel(request.target_x, request.target_y, request.propulsion_id, mode, fleet_id=request.fleet_id, ship_id=request.ship_id) for mode in sorted(catalog.items['travel_modes'])}
+        return {mode: engine.preview_travel(request.target_x, request.target_y, request.propulsion_id, mode, fleet_id=request.fleet_id, ship_id=request.ship_id, intra_system=request.mission == 'COLONIZE') for mode in sorted(catalog.items['travel_modes'])}
     return action(preview)

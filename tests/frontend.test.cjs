@@ -37,6 +37,8 @@ const state = {
   ships: [{ id: 'ship', hull_id: 'scout_hull', propulsion_id: 'chemical_drive', fuel_id: 'ion_fuel', crew: 3, mass: 10, ready_at: 0 }],
   fleets: [{ id: 'fleet', name: 'Fleet 01', status: 'ARRIVED', mission: 'MOVE', x: 0, y: 0, destination_x: 0, destination_y: 0, ship_ids: ['ship'], eta: 0, propulsion: 'chemical_drive', mode: 'NORMAL', fuel_cost: 10, departure_at: 0, arrival_at: 0 }],
   travel_modes: catalog.travel_modes,
+  active_planet: { id: 'home-planet', planet_index: 0, home: true },
+  planets: [{ id: 'home-planet', name: 'Gaia', x: 0, y: 0, planet_index: 0, population_total: 100, home: true }],
 };
 const galaxy = { center: [0, 0], home: [0, 0], radius: 1, systems: [
   { id: 'home', name: 'Home', x: 0, y: 0, distance: 0, home: true, knowledge_level: 'SURVEYED', star: { stellar_class: 'G', luminosity: 1, activity: .2 }, planet: { name: 'Gaia', gravity: 1, temperature: 288, water: 66, radiation: .2 } },
@@ -124,4 +126,25 @@ test('API errors become readable in-game feedback', async () => {
   assert.match(b.app.innerHTML, /toast error/);
   assert.match(b.app.innerHTML, /slots de construção ocupados/);
   assert.doesNotMatch(b.app.innerHTML, /\[object Object\]/);
+});
+
+test('planet selector and colonization order use explicit targets', async () => {
+  const b = await browser();
+  b.location.hash = '#/planet';
+  vm.runInContext('render()', b.context);
+  assert.match(b.app.innerHTML, /PLANETA ATIVO/);
+  b.location.hash = '#/galaxy';
+  vm.runInContext("selectedSystem = {...galaxyData.systems[0], home: false, planets: [{planet_index: 1, name: 'Aurelia II', gravity: 1, temperature: 290, water: 40, radiation: .2, viability: 'VIABLE', ownership: 'UNCLAIMED', colonization: {eligible: true, reason: null, population: 20, cost: {components: 10}}}]}; selectedPlanetIndex = 1; selectedSubject = 'fleet:fleet'; render()", b.context);
+  assert.match(b.app.innerHTML, /Aurelia II/);
+  b.respond({ ok: true, json: async () => Object.fromEntries(catalog.travel_modes.map(mode => [mode.id, { origin: [0, 0], destination: [0, 0], distance: 1, eta_seconds: 60, fuel_cost: 10, heat: 1, signature: 1 }])) });
+  await vm.runInContext("perform('preview')", b.context);
+  assert.match(b.app.innerHTML, /Colonizar planeta/);
+  const payload = JSON.parse(b.calls.at(-1).options.body);
+  assert.equal(payload.mission, 'COLONIZE');
+  assert.equal(payload.target_planet_index, 1);
+  assert.equal(payload.fleet_id, 'fleet');
+  b.respond({ ok: true, json: async () => ({ id: 'fleet' }) });
+  await vm.runInContext("perform('travel')", b.context);
+  const sent = b.calls.findLast(call => call.url === '/api/travel');
+  assert.equal(JSON.parse(sent.options.body).mission, 'COLONIZE');
 });

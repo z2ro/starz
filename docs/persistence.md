@@ -30,7 +30,7 @@ e o escopo de [transações SQLAlchemy](https://docs.sqlalchemy.org/en/20/core/c
 | research_state | PK empire, active ID, remaining_work, ETA, atualização |
 | completed_technology | PK empire/technology_id, instante de conclusão |
 | ship | UUID, owner, IDs de conteúdo, massa/crew snapshot, ready_at/criação |
-| fleet | UUID, owner, origem/posição, destino, estado e movimento atual |
+| fleet | UUID, owner, origem/posição, destino, missão e alvo planetário colonial opcional |
 | fleet_ship | associação, ship_id único; FKs compostas garantem mesmo owner |
 | system_knowledge | coordenada mapeada, nível SURVEYED e instante por império |
 | notice | UUID, owner, sequência única, mensagem e criação |
@@ -43,7 +43,8 @@ permitido no schema para futuros corpos não ocupados, mas não é criado pelo s
 
 Nenhum GameState/definição YAML é armazenado como JSONB. Population está no planeta;
 stocks continuam globais ao império. Só o sistema inicial exige materialização atual.
-Visitar B ou C não precisa duplicar a física procedural no banco.
+Visitar B ou C não duplica a física procedural. Um sistema remoto e seu PlanetState
+só são materializados quando uma missão colonial chega.
 
 Conhecimento usa chave primária `(empire_id, system_x, system_y)`. Ausência significa
 `UNKNOWN`; uma linha significa `SURVEYED`. Não há snapshot físico nessa tabela: estrela
@@ -85,3 +86,10 @@ apenas em tests/json_fixture.py. Não existem dois backends ativos. Um império 
 Persistimos o movimento atual, não histórico de missões; notices não são event sourcing.
 O mapper cobre as operações atuais: não há remoção/transferência de naves ou distritos.
 Qualquer operação futura desse tipo deve acrescentar seu mapeamento e testes.
+
+Stocks, fuel e research permanecem por império. Population, districts e construction
+jobs são por planeta. A UI seleciona um planeta pertencente ao império; ownership é
+validado antes de carregar ou persistir. Uma fleet colonial em trânsito funciona como
+reserva persistente, protegida por advisory lock por coordenada durante a ordem/chegada.
+Cada PlanetState possui `last_updated`: trocar de mundo não descarta produção nem uma
+obra pendente. Eventos globais continuam usando `Empire.last_updated` e o homeworld.

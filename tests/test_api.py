@@ -14,8 +14,10 @@ class ApiTests(unittest.TestCase):
         async def smoke():
             clock = 1000
             engine = Engine.new(api.catalog, now=clock)
+            engine.state.planet_id = engine.state.home_planet_id = 'home'
+            engine.state.planets = [{'id': 'home', 'x': engine.state.system_x, 'y': engine.state.system_y, 'planet_index': 0, 'population_total': 100, 'created_at': clock, 'home': True}]
             class MemoryService:
-                def run(self, empire_id, call):
+                def run(self, empire_id, call, **options):
                     candidate = Engine(api.catalog, copy.deepcopy(engine.state))
                     candidate.advance(clock)
                     result = call(candidate)
@@ -33,6 +35,8 @@ class ApiTests(unittest.TestCase):
                     self.assertEqual(len(response.json()['travel_modes']), 3)
                     self.assertEqual(response.json()['capacities']['industrial_capacity'], 0)
                     self.assertEqual(response.json()['capacities']['construction_slots'], 1)
+                    self.assertEqual((await client.get('/api/planets')).json()[0]['id'], 'home')
+                    self.assertEqual((await client.get('/api/planets/home')).json()['active_planet']['id'], 'home')
                     content = await client.get('/api/catalog')
                     self.assertEqual(content.status_code, 200)
                     self.assertTrue(any(item['id'] == 'processor' for item in content.json()['districts']))
@@ -44,6 +48,8 @@ class ApiTests(unittest.TestCase):
                     unknown = next(item for item in galaxy.json()['systems'] if item['knowledge_level'] == 'UNKNOWN')
                     self.assertEqual(home['knowledge_level'], 'SURVEYED')
                     self.assertIn('planet', home)
+                    self.assertIn('planets', home)
+                    self.assertGreaterEqual(len(home['planets']), 2)
                     self.assertNotIn('planet', unknown)
                     self.assertNotIn('star', unknown)
                     self.assertEqual((await client.get('/api/galaxy?center_x=1&center_y=0')).status_code, 400)

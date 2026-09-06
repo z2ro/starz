@@ -21,6 +21,10 @@
 - `SURVEY` revela o sistema na chegada; `MOVE` não concede conhecimento.
 - Galaxy nunca materializa sistemas apenas por visualização.
 - Horizon é a primeira corveta de exploração; classificação e papel vêm do YAML.
+- Sistemas levantados revelam múltiplos planetas procedurais; somente planetas `VIABLE`
+  podem receber a missão `COLONIZE` neste slice.
+- O pacote colonial compromete população e recursos no despacho; a nova colônia nasce
+  com distrito civil e campo solar, definidos em YAML.
 - Indústria nominal, slots de obras e slots de estaleiro são capacidades distintas.
 - Obras e montagem têm prazo fixo após validação inicial; pesquisa progride conforme
   cobertura contínua de energia e workforce, podendo pausar e retomar.
@@ -31,7 +35,7 @@
 
 - Lore de origem da civilização.
 - Combate orbital e de superfície.
-- Colonização avançada, diplomacia e logística entre planetas.
+- Migração populacional, terraformação, colonização avançada, diplomacia e logística.
 - Fenômenos dinâmicos, debris e efeitos ambientais de guerra.
 - Política de clusters de spawn para escala multi-jogador.
 - Autenticação, ownership multiusuário e operação em produção.

@@ -132,3 +132,18 @@ seed + coordenadas + catálogo. O homeworld é backfilled como conhecido.
 no boundary de chegada e emite notice apenas na primeira vez; não há duração de scan,
 sensor, XP ou nível intermediário. O ID `scout_hull` foi preservado para bancos
 existentes, enquanto YAML o apresenta como Horizon, `corvette`/`exploration`.
+
+## D018 — Colonização materializada na chegada
+
+Sistemas possuem 2–3 planetas determinísticos endereçados por coordenadas e
+`planet_index`; `.planet` continua apontando ao índice 0 por compatibilidade. O YAML
+define custo, população, infraestrutura inicial e thresholds. A engine classifica
+`VIABLE`, `HOSTILE` ou `UNINHABITABLE`; apenas o primeiro é colonizável agora.
+
+População colonial e recursos globais são debitados no despacho, sem cancelamento ou
+reembolso. Uma fleet `COLONIZE` em trânsito reserva o alvo. O Store usa advisory lock
+por alvo entre impérios e a constraint planetária evita ownership duplo. O domínio
+emite a colônia no boundary; PostgreSQL materializa apenas então. Economia local ficou
+limitada a população, distritos, energia e obras; stocks e pesquisa seguem globais.
+Transferência colonial dentro do mesmo sistema usa distância abstrata 0,25 para manter
+custo e duração sem introduzir mecânica orbital detalhada.

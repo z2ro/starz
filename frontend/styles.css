@@ -234,4 +234,15 @@ select { width: 100%; min-height: 39px; margin-top: 6px; padding: 0 34px 0 11px;
   .app-shell { grid-template-columns: 170px minmax(500px, 1fr); }.main-content { padding-inline: 22px; }.sidebar { padding-inline: 8px; }
   .overview-grid, .planet-layout, .galaxy-layout, .ship-builder { grid-template-columns: 1fr; }.system-detail { border-top: 1px solid var(--line); border-left: 0; }.three-columns, .resource-cards { grid-template-columns: repeat(2, 1fr); }.fleet-list, .tech-grid { grid-template-columns: 1fr; }
 }
+.planet-selector { display:flex; align-items:end; justify-content:space-between; gap:16px; margin-bottom:18px; padding:12px 16px; border:1px solid var(--line); background:var(--surface); }
+.planet-selector label { min-width:280px; color:var(--muted); font-size:11px; letter-spacing:.12em; }
+.planet-selector select { display:block; width:100%; margin-top:6px; }
+.planet-selector > span { color:var(--muted); font-size:12px; }
+.galaxy-planets { display:grid; gap:8px; margin:14px 0; }
+.galaxy-planet { display:grid; gap:5px; width:100%; padding:11px; text-align:left; color:var(--text); background:var(--surface-2); border:1px solid var(--line); }
+.galaxy-planet:hover, .galaxy-planet.selected { border-color:var(--accent); }
+.galaxy-planet > div { display:flex; align-items:center; justify-content:space-between; }
+.galaxy-planet span, .galaxy-planet small, .colony-order small { color:var(--muted); }
+.colony-order { display:grid; gap:8px; margin-bottom:12px; padding:12px; border-left:2px solid var(--accent); background:var(--surface-2); }
+
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
