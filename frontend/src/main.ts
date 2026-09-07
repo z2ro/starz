@@ -54,6 +54,8 @@ let busy = false;
 let feedback: { kind: 'success' | 'error'; message: string } | undefined;
 let planetRenderer: PlanetRenderer | undefined;
 let planetTab: PlanetTab = 'overview';
+let noticeOpen = false;
+let settingsOpen = false;
 
 const esc = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 const fmt = (value: number | undefined, digits = 0) => Number(value ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: digits });
@@ -92,6 +94,14 @@ function planetSelector(): string {
   const worlds = current.planets ?? [];
   if (!worlds.length) return '';
   return `<div class="planet-selector"><label>PLANETA ATIVO<select id="planet-select">${worlds.map(world => `<option value="${esc(world.id)}" ${world.id === current.active_planet?.id ? 'selected' : ''}>${world.home ? 'Homeworld' : 'Colônia'} · ${esc(world.name)}</option>`).join('')}</select></label><span>${worlds.length} ${worlds.length === 1 ? 'mundo imperial' : 'mundos imperiais'}</span></div>`;
+}
+
+function planetHeroSelector(): string {
+  const worlds = current.planets ?? [];
+  const index = (current.active_planet?.planet_index ?? 0) + 1;
+  const labelText = `${current.system.name} · Planeta ${index}`;
+  if (!worlds.length) return `<span class="planet-picker-static">${esc(labelText)}</span>`;
+  return `<label class="planet-picker"><span class="sr-only">PLANETA ATIVO</span><span>${esc(labelText)}</span><select id="planet-select" aria-label="Selecionar planeta">${worlds.map(world => `<option value="${esc(world.id)}" ${world.id === current.active_planet?.id ? 'selected' : ''}>${world.home ? 'Homeworld' : 'Colônia'} · ${esc(world.name)}</option>`).join('')}</select><i aria-hidden="true"></i></label>`;
 }
 
 function activeItems(): string {
@@ -149,21 +159,54 @@ function planetOverlayResearch(): string {
 
 function planetRightPanel(tab: PlanetTab): string {
   const p = current.system.planet;
-  const physical = [['Gravidade', `${fmt(p.gravity, 2)} g`], ['Temperatura', `${fmt(p.temperature)} K`], ['Água', `${fmt(p.water, 1)}%`], ['Atmosfera', p.atmosphere], ['Radiação', fmt(p.radiation, 2)], ['Campo magnético', fmt(p.magnetic_field, 2)], ['Superfície útil', `${fmt(p.usable_surface, 1)}%`], ['Atividade geológica', fmt(p.geological_activity, 2)]];
-  const development = [['População', `${fmt(current.population.total)} / ${fmt(current.population.capacity)}`], ['Workforce', `${fmt(current.capacities.workforce_coverage * 100)}%`], ['Energia', `${fmt(current.capacities.energy_generation)} / ${fmt(current.capacities.energy_consumption)}`], ['Indústria', fmt(current.capacities.industrial_capacity)], ['Construção', `${fmt(current.capacities.construction_slots_available)} / ${fmt(current.capacities.construction_slots)}`], ['Estaleiro', `${fmt(current.capacities.shipyard_slots_available)} / ${fmt(current.capacities.shipyard_slots)}`]];
-  const resources = strategicResources().map(item => `<div class="resource-line"><span>${esc(item.name)}</span><b>${fmt(current.stocks[item.id], 1)}</b><small>${nominalRate(item.id) > 0 ? `+${fmt(nominalRate(item.id) * 60, 1)}/h` : '—'}</small></div>`).join('');
-  const districts = content.districts.filter(item => (current.districts[item.id] ?? 0) > 0).map(item => `<div class="inspector-row"><span>${esc(item.name)}</span><b>Nível ${current.districts[item.id]}</b><small>${esc(districtImpact(item))}</small></div>`).join('') || '<span class="muted">Nenhuma infraestrutura registrada.</span>';
+  const physical = [
+    ['Gravidade', `${fmt(p.gravity, 2)} g`], ['Temperatura', `${fmt(p.temperature)} K`],
+    ['Água', `${fmt(p.water, 1)}%`], ['Atmosfera', p.atmosphere],
+    ['Radiação', fmt(p.radiation, 2)], ['Campo magnético', fmt(p.magnetic_field, 2)],
+    ['Superfície útil', `${fmt(p.usable_surface, 1)}%`], ['Atividade geológica', fmt(p.geological_activity, 2)],
+    ['Distância orbital', `${fmt(p.orbital_distance, 2)} UA`], ['Raio', `${fmt(p.radius, 0)} km`],
+  ];
+  const development = [
+    ['População', `${fmt(current.population.total)} / ${fmt(current.population.capacity)}`, current.population.capacity ? current.population.total / current.population.capacity * 100 : 0, ''],
+    ['Workforce', `${fmt(current.capacities.workforce_supply)} / ${fmt(current.capacities.workforce_demand)}`, current.capacities.workforce_coverage * 100, 'green'],
+    ['Consumo de Energia', `${fmt(current.capacities.energy_consumption)} / ${fmt(current.capacities.energy_generation)}`, current.capacities.energy_coverage * 100, 'amber'],
+    ['Capacidade Industrial', fmt(current.capacities.industrial_capacity), null, ''],
+    ['Slots de Construção', `${fmt(current.capacities.construction_slots_available)} / ${fmt(current.capacities.construction_slots)}`, null, ''],
+    ['Slots de Estaleiro', `${fmt(current.capacities.shipyard_slots_available)} / ${fmt(current.capacities.shipyard_slots)}`, null, ''],
+  ] as Array<[string, string, number | null, string]>;
+  const resourceTones = ['pink', 'mint', 'green', 'amber'];
+  const resources = strategicResources().map((item, index) => {
+    const rate = nominalRate(item.id) * 60;
+    return `<div class="prod-row"><span class="small-icon ${resourceTones[index % resourceTones.length]}">${esc(item.name.slice(0, 2))}</span><span>${esc(item.name)}</span><strong>${rate > 0 ? `+${fmt(rate, 1)}` : '—'}</strong></div>`;
+  }).join('');
+  const specMarkup = physical.map(([name, value]) => `<div class="spec"><span>${esc(name)}</span><strong>${esc(value)}</strong></div>`).join('');
+  const devMarkup = development.map(([name, value, meter, tone]) => {
+    const blocks = Array.from({ length: 6 }, (_, index) => `<span class="${meter === null && index < Math.min(6, Math.max(0, Number(value.split('/')[0]) || 0)) ? 'filled' : ''}"></span>`).join('');
+    const meterMarkup = meter === null ? `<div class="blocks">${blocks}</div>` : `<div class="progress"><i class="${tone}" style="width:${percent(meter)}%"></i></div>`;
+    return `<div class="dev-row"><div class="dev-copy"><span>${esc(name)}</span><strong>${esc(value)}</strong></div>${meterMarkup}<em>${meter === null ? '' : `${fmt(meter)}%`}</em></div>`;
+  }).join('');
+  const districts = content.districts.map(item => {
+    const level = current.districts[item.id] ?? 0;
+    const available = requirements(item);
+    return `<div class="inspector-row"><span>${esc(item.name)}</span><b>Nível ${level}</b><small>${esc(districtImpact(item))}</small><button class="inspector-build" data-action="build" data-id="${esc(item.id)}" ${available ? '' : 'disabled'}>${level > 0 ? 'Expandir' : available ? 'Construir' : 'Bloqueado'}</button></div>`;
+  }).join('') || '<span class="muted">Nenhuma infraestrutura registrada.</span>';
   const orbit = `${current.capacities.shipyard_slots > 0 ? `<div class="orbit-state"><span class="orbit-glyph">◎</span><div><b>Estaleiro orbital</b><small>${current.capacities.shipyard_slots_available}/${current.capacities.shipyard_slots} slots livres</small></div></div>` : '<span class="muted">Nenhuma estrutura orbital ativa.</span>'}${current.fleets.filter(fleet => fleet.status === 'ARRIVED' && fleet.x === current.system.x && fleet.y === current.system.y).map(fleet => `<div class="orbit-state"><span class="orbit-glyph">△</span><div><b>${esc(fleet.name)}</b><small>Frota estacionada · ${fleet.ship_ids.length} nave(s)</small></div></div>`).join('')}`;
-  const body = tab === 'districts' ? `<div class="inspector-list">${districts}</div>` : tab === 'orbit' ? `<div class="inspector-list">${orbit}</div>` : tab === 'data' ? `<div class="inspector-facts">${physical.map(([name, value]) => `<div><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join('')}</div>` : `<div class="inspector-section"><div class="inspector-label">CARACTERÍSTICAS FÍSICAS</div><div class="inspector-facts compact-facts">${physical.slice(0, 6).map(([name, value]) => `<div><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join('')}</div></div><div class="inspector-section"><div class="inspector-label">DESENVOLVIMENTO</div><div class="development-list">${development.map(([name, value], index) => `<div><span>${esc(name)}</span><b>${esc(value)}</b>${index < 2 ? `<i><em style="width:${percent(index === 0 ? current.population.capacity ? current.population.total / current.population.capacity * 100 : 0 : current.capacities.workforce_coverage * 100)}%"></em></i>` : ''}</div>`).join('')}</div></div><div class="inspector-section"><div class="inspector-label">PRODUÇÃO DE RECURSOS · ESTOQUE LOCAL</div><div class="resource-list compact-resource-list">${resources}</div></div>`;
-  return `<aside class="planet-inspector" aria-label="Informações do planeta"><div class="inspector-tabs" role="tablist">${(['overview', 'districts', 'orbit', 'data'] as PlanetTab[]).map(item => `<button class="${item === tab ? 'active' : ''}" data-planet-tab="${item}" role="tab" aria-selected="${item === tab}">${({ overview: 'Visão geral', districts: 'Distritos', orbit: 'Órbita', data: 'Dados' } as Record<PlanetTab, string>)[item]}</button>`).join('')}</div><div class="inspector-identity"><div class="planet-band"><span>${esc(current.system.star.stellar_class)}-CLASS STAR · ${fmt(current.system.star.luminosity, 1)}× LUMINOSITY</span></div><div class="eyebrow">PLANETARY PROFILE</div><h2>${esc(p.name)}</h2><p>${esc(current.system.name)} · ${current.system.x}:${current.system.y} · planeta ${(current.active_planet?.planet_index ?? 0) + 1}</p></div>${body}</aside>`;
+  const summary = `<section class="inspector-section intro-section"><div class="eyebrow">PLANET SUMMARY</div><h2>${esc(p.name)}</h2><p class="muted">${esc(current.system.name)} · mundo selecionado para operação e desenvolvimento.</p></section>`;
+  const body = tab === 'districts'
+    ? `<div class="inspector-list">${districts}</div>`
+    : tab === 'orbit'
+      ? `<div class="inspector-list">${orbit}</div>`
+      : tab === 'data'
+        ? `<section class="inspector-section"><div class="section-title"><h3>Dados planetários</h3></div><div class="spec-grid">${specMarkup}</div></section>`
+        : `${summary}<section class="inspector-section"><div class="section-title"><h3>Características Físicas</h3></div><div class="spec-grid">${specMarkup}</div></section><section class="inspector-section"><div class="section-title"><h3>Desenvolvimento</h3><span class="sr-only">Indústria</span></div>${devMarkup}</section><section class="inspector-section production-section"><div class="section-title"><h3>Produção de Recursos</h3><span class="sr-only">PRODUÇÃO DE RECURSOS</span><span>por hora</span></div>${resources}</section>`;
+  return `<aside class="inspector planet-inspector" aria-label="Informações do planeta"><div class="inspector-tabs" role="tablist">${(['overview', 'districts', 'orbit', 'data'] as PlanetTab[]).map(item => `<button class="tab ${item === tab ? 'active' : ''}" data-planet-tab="${item}" role="tab" aria-selected="${item === tab}">${({ overview: 'Visão geral', districts: 'Distritos', orbit: 'Órbita', data: 'Dados' } as Record<PlanetTab, string>)[item]}</button>`).join('')}</div>${body}<button class="fleet-link" data-goto="fleets"><span>↗</span> Ver frotas <span>→</span></button></aside>`;
 }
 
 function planetView(): string {
   const p = current.system.planet;
   const arrived = current.fleets.filter(fleet => fleet.status === 'ARRIVED' && fleet.x === current.system.x && fleet.y === current.system.y).length;
-  const selector = planetSelector();
   const mode = planetVisualMode();
-  return `<div class="planet-command-view">${selector}<div class="planet-command-layout"><section class="planet-hero"><div id="planet-3d-stage" class="planet-3d-stage" data-visual-mode="${mode}" aria-label="Visualização de ${esc(p.name)}"><div class="planet-artwork" role="img" aria-label="Arte espacial do planeta ${esc(p.name)}"></div><div class="planet-fallback-visual">${planetVisual(true)}</div><div class="planet-hero-header"><div><div class="eyebrow">✦ &nbsp; PLANET VIEW · ${esc(current.system.name)}</div><h1>${esc(p.name)}</h1><p>${current.system.x}:${current.system.y} · planeta ${(current.active_planet?.planet_index ?? 0) + 1}</p></div><span class="planet-online"><i></i> ONLINE</span></div><div class="planet-hero-meta"><span>${esc(current.system.star.stellar_class)}-CLASS SYSTEM</span><span>${fmt(p.temperature)} K · ${fmt(p.gravity, 2)} g</span></div><div class="planet-overlays"><section class="planet-overlay construction-overlay"><div class="overlay-heading"><span>CONSTRUCTION QUEUE</span><b>${current.construction.length} / ${current.capacities.construction_slots}</b></div>${planetOverlayQueue()}</section><section class="planet-overlay research-overlay"><div class="overlay-heading"><span>CURRENT RESEARCH</span><b>${current.research.active ? 'ACTIVE' : 'IDLE'}</b></div>${planetOverlayResearch()}<div class="overlay-fleet-row"><span>FLEETS IN SYSTEM</span><b>${arrived}</b><button class="overlay-link" data-goto="fleets">Ver frotas →</button></div></section></div></div>${planetRightPanel(planetTab)}</div><section class="planet-development"><div class="development-heading"><div><div class="eyebrow">PLANETARY INFRASTRUCTURE</div><h2>Desenvolvimento do planeta</h2></div><span>${Object.values(current.districts).reduce((sum, level) => sum + level, 0)} níveis ativos</span></div><div class="entity-table"><div class="table-head"><span>Infraestrutura</span><span>Nível</span><span>Impacto</span><span>Custo / duração</span><span></span></div>${content.districts.map(district => districtRow(district)).join('')}</div></section></div>`;
+  return `<div class="planet-command-view"><div class="planet-command-layout"><section class="planet-hero"><div id="planet-3d-stage" class="planet-stage planet-3d-stage" data-visual-mode="${mode}" aria-label="Visualização de ${esc(p.name)}"><div class="hero-image" role="img" aria-label="Arte espacial do planeta ${esc(p.name)}"></div><div class="hero-shade"></div><div class="planet-fallback-visual">${planetVisual(true)}</div><div class="hero-header"><div class="hero-title"><div class="hero-kicker">✦ &nbsp; PLANET VIEW</div><h1>${esc(p.name)}</h1>${planetHeroSelector()}</div><div class="hero-status"><span class="online-dot"></span> ONLINE</div></div><button class="hotspot planet-hotspot" data-planet-tab="overview" aria-label="Selecionar planeta"></button><button class="hotspot station-hotspot" data-planet-tab="orbit" aria-label="Inspecionar estação orbital"><span>◈ &nbsp; Estação orbital</span></button><button class="hotspot fleet-hotspot" data-goto="fleets" aria-label="Inspecionar frota">↗</button><div class="hero-overlays"><section class="overlay-panel build-panel"><div class="overlay-heading"><div><div class="eyebrow">CONSTRUCTION QUEUE</div><h3>Fila de Construção</h3></div><span class="queue-count">${current.construction.length} / ${current.capacities.construction_slots}</span></div>${planetOverlayQueue()}${current.capacities.construction_slots_available > 0 ? `<button class="slot-button" data-goto="planet"><span>+</span><div><strong>Slot de construção disponível</strong><small>Adicionar projeto ao mundo</small></div></button>` : ''}</section><div class="overlay-stack"><section class="overlay-panel research-panel"><div class="overlay-heading"><div><div class="eyebrow">ACTIVE RESEARCH <span class="sr-only">CURRENT RESEARCH</span></div><h3>Pesquisa Atual</h3></div><span>✦</span></div>${planetOverlayResearch()}</section><section class="overlay-panel fleet-panel"><div><div class="eyebrow">SYSTEM OPERATIONS <span class="sr-only">FLEETS IN SYSTEM</span></div><h3>Frotas no Sistema</h3><span><span class="fleet-pip"></span> ${arrived} ${arrived === 1 ? 'frota presente' : 'frotas presentes'}</span></div><button data-goto="fleets">Ver Frotas <span>→</span></button></section></div></div></div></section>${planetRightPanel(planetTab)}</div></div>`;
 }
 
 function economyView(): string {
@@ -246,7 +289,12 @@ function syncPlanetRenderer(view: View): void {
 }
 function topHud(): string {
   const active = temporalActivityCount();
-  return `<header class="top-hud"><a class="brand" href="#/overview" aria-label="StarZ início"><span>STAR</span><b>Z</b><small>COMMAND</small></a><div class="hud-resources">${strategicResources().map(item => `<div><span>${esc(item.name)}</span><strong>${fmt(current.stocks[item.id], 1)}</strong><small>${nominalRate(item.id) > 0 ? `+${fmt(nominalRate(item.id) * 60, 1)}/h` : 'estoque local'}</small></div>`).join('')}</div><div class="hud-status"><div title="Geração / demanda de energia"><span>ENERGIA</span><b class="${current.capacities.energy_coverage < 1 ? 'warning-text' : ''}">${fmt(current.capacities.energy_generation)} / ${fmt(current.capacities.energy_consumption)}</b></div><div><span>POPULAÇÃO</span><b>${fmt(current.population.total)} <small>/ ${fmt(current.population.available)} livre</small></b></div><div title="Pesquisa atual"><span>PESQUISA</span><b>${current.research.active ? esc(label(current.research.active)) : 'Inativa'}</b></div><div><span>OPERAÇÕES</span><b>${active}</b></div><button class="icon-button" data-action="refresh" aria-label="Sincronizar estado">↻</button></div></header>`;
+  const resources = strategicResources();
+  const tones = ['pink', 'mint', 'green', 'amber'];
+  const now = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date());
+  const research = current.research.active ? label(current.research.active) : 'Inativa';
+  const arrived = current.fleets.filter(fleet => fleet.status === 'ARRIVED').length;
+  return `<header class="top-hud"><a class="brand" href="#/overview" aria-label="StarZ início"><span>STARZ</span><small>COMMAND</small></a><div class="hud-resources">${resources.map((item, index) => `<div class="metric"><span class="metric-icon ${tones[index % tones.length]}">${esc(item.name.slice(0, 2))}</span><div><span class="metric-label">${esc(item.name)}</span><div class="metric-value">${fmt(current.stocks[item.id], 1)}</div><span class="metric-detail">${nominalRate(item.id) > 0 ? `+${fmt(nominalRate(item.id) * 60, 1)}/h` : 'estoque local'}</span></div></div>`).join('')}</div><div class="hud-quick"><div><span class="metric-label">POPULAÇÃO</span><strong>${fmt(current.population.total)}</strong><small>${fmt(current.population.available)} livre</small></div><div><span class="metric-label">PESQUISA</span><strong>${esc(research)}</strong><small>${current.research.active ? `${fmt(100 * (1 - current.research.remaining_work / Math.max(1, content.technologies.find(item => item.id === current.research.active)?.duration ?? 1)))}% concluída` : 'sem programa ativo'}</small></div><div><span class="metric-label">FROTAS</span><strong>${fmt(current.fleets.length)}</strong><small>${fmt(arrived)} estacionada(s)</small></div></div><div class="system-status"><span class="status-dot"></span><span>LIVE</span><b>${esc(now)}</b><small>${esc(current.system.name)} · ${current.system.x}:${current.system.y}</small></div><button class="icon-button" data-action="notice" aria-label="Abrir registros">${current.notices.length ? '!' : '·'}</button><div class="settings-wrap"><button class="icon-button" data-action="settings" aria-label="Abrir configurações">⚙</button>${settingsOpen ? `<div class="settings-popover"><span>Interface</span><strong>Modo estratégico</strong><small>Dados sincronizados da API · atualização automática ativa.</small></div>` : ''}</div>${noticeOpen ? `<div class="notice-popover"><div class="context-heading"><span>REGISTRO RECENTE</span><b>${current.notices.length}</b></div>${current.notices.length ? current.notices.map(message => `<div class="notice"><i></i><span>${esc(message)}</span></div>`).join('') : '<span class="muted">Sem novos registros.</span>'}</div>` : ''}</header>`;
 }
 function render(): void {
   const activeView = route();
@@ -276,7 +324,7 @@ function render(): void {
     return;
   }
   disposePlanetRenderer();
-  app.innerHTML = `${topHud()}<div class="app-shell ${activeView === 'planet' ? 'planet-shell' : ''}"><nav class="sidebar" aria-label="Navegação principal"><div class="nav-label">IMPÉRIO</div>${views.map(view => `<a href="#/${view.id}" class="${view.id === activeView ? 'active' : ''}" aria-current="${view.id === activeView ? 'page' : 'false'}"><span>${view.icon}</span>${esc(view.label)}</a>`).join('')}<div class="sidebar-footer"><span>HOME SYSTEM</span><b>${current.system.x}:${current.system.y}</b><small>${esc(current.system.name)}</small><em>Build an empire. Change the universe.</em></div></nav><main class="main-content ${activeView === 'planet' ? 'main-content-planet' : ''}">${viewContent(activeView)}</main>${activeView === 'planet' ? '' : contextPanel()}</div>${feedback ? `<div class="toast ${feedback.kind}" role="status"><i>${feedback.kind === 'success' ? '✓' : '!'}</i><span>${esc(feedback.message)}</span><button data-dismiss aria-label="Fechar">×</button></div>` : ''}${busy ? '<div class="loading-line"></div>' : ''}`;
+  app.innerHTML = `${topHud()}<div class="app-shell ${activeView === 'planet' ? 'planet-shell' : ''}"><nav class="sidebar" aria-label="Navegação principal"><div class="sidebar-label">IMPÉRIO</div><div class="nav-list">${views.map(view => `<a href="#/${view.id}" class="nav-item ${view.id === activeView ? 'selected' : ''}" aria-current="${view.id === activeView ? 'page' : 'false'}"><span class="nav-mark">${view.icon}</span><span>${esc(view.label)}</span></a>`).join('')}</div><div class="sidebar-foot"><div class="sidebar-label">HOME SYSTEM</div><strong>${current.system.x}:${current.system.y}</strong><span>${esc(current.system.name)}</span><p>Build an empire.<br>Change the universe.</p><div class="sidebar-rule"></div><b>STARZ</b><small>v0.1.0</small></div></nav><main class="main-content ${activeView === 'planet' ? 'main-content-planet' : ''}">${viewContent(activeView)}</main>${activeView === 'planet' ? '' : contextPanel()}</div>${feedback ? `<div class="toast ${feedback.kind}" role="status"><i>${feedback.kind === 'success' ? '✓' : '!'}</i><span>${esc(feedback.message)}</span><button data-dismiss aria-label="Fechar">×</button></div>` : ''}${busy ? '<div class="loading-line"></div>' : ''}`;
   syncPlanetRenderer(activeView);
 }
 
@@ -315,6 +363,8 @@ async function perform(action: string, id?: string): Promise<void> {
 app.onclick = event => {
   const target = (event.target as HTMLElement).closest<HTMLElement>('button, a'); if (!target) return;
   if (target.dataset.dismiss !== undefined) { feedback = undefined; render(); return; }
+  if (target.dataset.action === 'notice') { noticeOpen = !noticeOpen; settingsOpen = false; render(); return; }
+  if (target.dataset.action === 'settings') { settingsOpen = !settingsOpen; noticeOpen = false; render(); return; }
   if (target.dataset.goto) { if (target.dataset.selectFleet) selectedSubject = `fleet:${target.dataset.selectFleet}`; location.hash = `#/${target.dataset.goto}`; return; }
   if (target.dataset.planetTab) { planetTab = target.dataset.planetTab as PlanetTab; render(); return; }
   if (target.dataset.center) { const [x, y] = target.dataset.center.split(':').map(Number); void recenter(x, y); return; }
