@@ -240,6 +240,9 @@ select { width: 100%; min-height: 39px; margin-top: 6px; padding: 0 34px 0 11px;
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 
+.dev-value-only { display: block; height: 10px; }
+.progress i.warning { background: var(--warn); }
+
 /* Planet View — approved command-center layout */
 .planet-command-view { min-width: 0; height: 100%; }
 .planet-command-layout { display: grid; grid-template-columns: minmax(0, 1fr) 370px; height: calc(100vh - 78px); min-height: 700px; }
@@ -247,7 +250,7 @@ select { width: 100%; min-height: 39px; margin-top: 6px; padding: 0 34px 0 11px;
 .planet-stage { position: relative; height: 100%; min-height: 0; overflow: hidden; border: 0; border-radius: 0; background: #020811; isolation: isolate; }
 .planet-stage::before { display: none; }
 .hero-image, .hero-shade, .planet-3d-canvas-host, .planet-fallback-visual { position: absolute; inset: 0; }
-.hero-image { z-index: 0; background-image: url('/static/assets/planet-command-hero.png'); background-position: 53% 50%; background-size: cover; filter: saturate(.92) contrast(1.04); transform: scale(1.08); }
+.hero-image { z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: 53% 50%; filter: saturate(.92) contrast(1.04); transform: scale(1.08); }
 .hero-shade { z-index: 1; background: linear-gradient(180deg, rgba(2, 8, 16, .75) 0%, transparent 19%, transparent 58%, rgba(2, 7, 13, .55) 100%), linear-gradient(90deg, rgba(2, 8, 16, .5), transparent 32%, rgba(2, 7, 13, .1)); pointer-events: none; }
 .planet-3d-canvas-host { z-index: 2; }
 .planet-3d-canvas { display: block; width: 100%; height: 100%; outline: none; }
@@ -256,6 +259,8 @@ select { width: 100%; min-height: 39px; margin-top: 6px; padding: 0 34px 0 11px;
 .planet-stage[data-visual-mode="image"] .planet-fallback-visual, .planet-stage[data-visual-mode="image"] .planet-3d-canvas-host { display: none; }
 .planet-stage[data-visual-mode="3d"] .hero-image { display: none; }
 .planet-stage[data-visual-mode="3d"] .hero-shade { z-index: 3; }
+.energy-metric { min-width: 128px; }
+.energy-metric .metric-detail.warning-text { color: var(--warn); }
 
 .hero-header { position: absolute; z-index: 5; top: 29px; right: 34px; left: 38px; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; pointer-events: none; }
 .hero-title { min-width: 0; }.hero-kicker { display: flex; align-items: center; gap: 7px; color: #76c5f5; font-size: 8px; font-weight: 700; letter-spacing: .22em; }.hero-title h1 { margin: 8px 0 5px; color: #f3f8ff; font-size: clamp(27px, 2.7vw, 36px); font-weight: 600; letter-spacing: -.04em; }.planet-picker, .planet-picker-static { position: relative; display: inline-flex; align-items: center; gap: 8px; color: #b1c4d8; font-size: 11px; pointer-events: auto; }.planet-picker select { position: absolute; inset: -6px -10px; width: calc(100% + 20px); height: calc(100% + 12px); margin: 0; padding: 0; opacity: 0; cursor: pointer; }.planet-picker i { width: 7px; height: 7px; border-right: 1px solid #b8cee1; border-bottom: 1px solid #b8cee1; transform: rotate(45deg) translateY(-2px); }.hero-status { display: flex; align-items: center; gap: 7px; margin-top: 4px; padding: 5px 8px; border: 1px solid rgba(78, 221, 156, .38); color: #73e7b2; background: rgba(5, 25, 27, .4); font-size: 8px; letter-spacing: .16em; }

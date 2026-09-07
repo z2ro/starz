@@ -28,6 +28,13 @@ como hero image-first; o estado do planeta, overlays e ações continuam sendo r
 a partir da API. O renderer Three.js permanece disponível para evolução visual futura e
 pode ser ativado com `?planet_visual=3d`, sem alterar a autoridade ou os contratos de
 gameplay.
+O artwork é resolvido por `frontend/src/visual/PlanetArtworkRegistry.ts`; o registry
+retorna `temperate_default` nesta versão e está preparado para perfis temperate, arid,
+frozen, volcanic, oceanic e barren. O HERO ART V1 é uma composição fixa de PNG: em uma
+versão futura, background, planet, station e ships poderão ser layers condicionais ao
+estado real, sem criar uma simulação 2.5D neste slice. O PNG atual tem 2.566.498 bytes;
+nenhuma ferramenta local de conversão WebP foi encontrada, portanto o asset não foi
+duplicado em WebP.
 O `PlanetRenderer` Three.js é somente a camada de apresentação. A cena recebe um
 `PlanetVisualState` pronto do `main.ts`; não chama API e não decide regras do jogo. A
 superfície é uma CanvasTexture equiretangular determinística, baseada em
@@ -70,7 +77,15 @@ reduzida com `prefers-reduced-motion`.
 
 Os overlays mostram construção, pesquisa e frotas estacionadas com dados reais. O
 inspector possui as abas Visão geral, Distritos, Órbita e Dados; cada aba expõe estado
-existente e não cria regras paralelas.
+existente e não cria regras paralelas. Energia é apresentada como geração/demanda e a
+barra usa `energy_coverage`; produção é explicitamente nominal (antes de limitações
+operacionais). Indicadores de slots renderizam a capacidade real, sem um número fixo de
+blocos. Hotspots de estação e fleet só aparecem quando o estado atual os suporta.
+
+O hero usa um elemento `<img>` no modo padrão. Se o carregamento falhar, a imagem é
+ocultada e o renderer Three.js é ativado; se WebGL também falhar, a representação CSS
+existente permanece como fallback. O modo `?planet_visual=3d` continua forçando o
+renderer. O HUD não inventa world time: mostra apenas `SYSTEM`, nome e coordenadas.
 
 ## Dados e autoridade
 

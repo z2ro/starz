@@ -1,5 +1,6 @@
 import { PlanetRenderer } from './planet3d/PlanetRenderer';
 import type { PlanetVisualState } from './planet3d/types';
+import { planetArtworkFor } from './visual/PlanetArtworkRegistry';
 
 type Content = { id: string; name: string; description: string; category: string; cost: Record<string, number>; requires: string[] };
 type District = Content & { duration: number; workforce: number; energy_generation: number; energy_consumption: number; production: Record<string, number>; processing: Record<string, number>; research_rate: number; population_capacity: number; industrial_capacity: number; construction_slots: number; shipyard_slots: number };
@@ -87,7 +88,8 @@ function temporalActivityCount(): number {
 function planetVisual(large = false): string {
   const categories = content.districts.filter(item => (current.districts[item.id] ?? 0) > 0).map(item => item.category.toLowerCase());
   const markers = categories.map((category, index) => `<span class="surface-marker marker-${esc(category)} marker-${index % 6}" title="${esc(category)}"></span>`).join('');
-  return `<div class="planet-stage ${large ? 'planet-large' : ''}" aria-label="Representação de ${esc(current.system.planet.name)}"><div class="distant-star"></div><div class="orbit-line orbit-a"></div><div class="orbit-line orbit-b"></div><div class="planet-sphere"><div class="planet-clouds"></div><div class="city-lights"></div>${markers}</div>${current.capacities.shipyard_slots > 0 ? '<div class="orbital-station" title="Estaleiro orbital"><i></i></div>' : ''}${current.fleets.length ? '<div class="fleet-marker" title="Presença de frota">▸</div>' : ''}<div class="visual-caption"><b>${esc(current.system.planet.name)}</b><span>${esc(current.system.name)} · ${current.system.x}:${current.system.y}</span></div></div>`;
+  const arrived = current.fleets.some(fleet => fleet.status === 'ARRIVED' && fleet.x === current.system.x && fleet.y === current.system.y);
+  return `<div class="planet-stage ${large ? 'planet-large' : ''}" aria-label="Representação de ${esc(current.system.planet.name)}"><div class="distant-star"></div><div class="orbit-line orbit-a"></div><div class="orbit-line orbit-b"></div><div class="planet-sphere"><div class="planet-clouds"></div><div class="city-lights"></div>${markers}</div>${current.capacities.shipyard_slots > 0 ? '<div class="orbital-station" title="Estaleiro orbital"></div>' : ''}${arrived ? '<div class="fleet-marker" title="Presença de frota ARRIVED">▸</div>' : ''}<div class="visual-caption"><b>${esc(current.system.planet.name)}</b><span>${esc(current.system.name)} · ${current.system.x}:${current.system.y}</span></div></div>`;
 }
 
 function planetSelector(): string {
@@ -166,24 +168,35 @@ function planetRightPanel(tab: PlanetTab): string {
     ['Superfície útil', `${fmt(p.usable_surface, 1)}%`], ['Atividade geológica', fmt(p.geological_activity, 2)],
     ['Distância orbital', `${fmt(p.orbital_distance, 2)} UA`], ['Raio', `${fmt(p.radius, 0)} km`],
   ];
+  const energyGeneration = current.capacities.energy_generation;
+  const energyDemand = current.capacities.energy_consumption;
+  const slotIndicator = (name: string, total: number, available: number, key: string) => ({
+    name,
+    value: `${fmt(Math.max(0, total - available))} / ${fmt(total)}`,
+    meter: null,
+    tone: '',
+    key,
+    blocksTotal: Math.max(0, Math.floor(total)),
+    blocksFilled: Math.max(0, Math.min(Math.floor(total), Math.floor(total - available))),
+  });
   const development = [
-    ['População', `${fmt(current.population.total)} / ${fmt(current.population.capacity)}`, current.population.capacity ? current.population.total / current.population.capacity * 100 : 0, ''],
-    ['Workforce', `${fmt(current.capacities.workforce_supply)} / ${fmt(current.capacities.workforce_demand)}`, current.capacities.workforce_coverage * 100, 'green'],
-    ['Consumo de Energia', `${fmt(current.capacities.energy_consumption)} / ${fmt(current.capacities.energy_generation)}`, current.capacities.energy_coverage * 100, 'amber'],
-    ['Capacidade Industrial', fmt(current.capacities.industrial_capacity), null, ''],
-    ['Slots de Construção', `${fmt(current.capacities.construction_slots_available)} / ${fmt(current.capacities.construction_slots)}`, null, ''],
-    ['Slots de Estaleiro', `${fmt(current.capacities.shipyard_slots_available)} / ${fmt(current.capacities.shipyard_slots)}`, null, ''],
-  ] as Array<[string, string, number | null, string]>;
+    { name: 'População', value: `${fmt(current.population.total)} / ${fmt(current.population.capacity)}`, meter: current.population.capacity ? current.population.total / current.population.capacity * 100 : 0, tone: '', key: 'population', blocksTotal: 0, blocksFilled: 0 },
+    { name: 'Workforce', value: `${fmt(current.capacities.workforce_supply)} / ${fmt(current.capacities.workforce_demand)}`, meter: current.capacities.workforce_coverage * 100, tone: 'green', key: 'workforce-coverage', blocksTotal: 0, blocksFilled: 0 },
+    { name: 'Cobertura de Energia', value: `${fmt(energyGeneration)} / ${fmt(energyDemand)}`, meter: current.capacities.energy_coverage * 100, tone: energyGeneration >= energyDemand ? 'amber' : 'warning', key: 'energy-coverage', blocksTotal: 0, blocksFilled: 0 },
+    { name: 'Capacidade Industrial', value: fmt(current.capacities.industrial_capacity), meter: null, tone: '', key: 'industrial-capacity', blocksTotal: 0, blocksFilled: 0 },
+    slotIndicator('Slots de Construção', current.capacities.construction_slots, current.capacities.construction_slots_available, 'construction-slots'),
+    slotIndicator('Slots de Estaleiro', current.capacities.shipyard_slots, current.capacities.shipyard_slots_available, 'shipyard-slots'),
+  ];
   const resourceTones = ['pink', 'mint', 'green', 'amber'];
   const resources = strategicResources().map((item, index) => {
     const rate = nominalRate(item.id) * 60;
     return `<div class="prod-row"><span class="small-icon ${resourceTones[index % resourceTones.length]}">${esc(item.name.slice(0, 2))}</span><span>${esc(item.name)}</span><strong>${rate > 0 ? `+${fmt(rate, 1)}` : '—'}</strong></div>`;
   }).join('');
   const specMarkup = physical.map(([name, value]) => `<div class="spec"><span>${esc(name)}</span><strong>${esc(value)}</strong></div>`).join('');
-  const devMarkup = development.map(([name, value, meter, tone]) => {
-    const blocks = Array.from({ length: 6 }, (_, index) => `<span class="${meter === null && index < Math.min(6, Math.max(0, Number(value.split('/')[0]) || 0)) ? 'filled' : ''}"></span>`).join('');
-    const meterMarkup = meter === null ? `<div class="blocks">${blocks}</div>` : `<div class="progress"><i class="${tone}" style="width:${percent(meter)}%"></i></div>`;
-    return `<div class="dev-row"><div class="dev-copy"><span>${esc(name)}</span><strong>${esc(value)}</strong></div>${meterMarkup}<em>${meter === null ? '' : `${fmt(meter)}%`}</em></div>`;
+  const devMarkup = development.map(({ name, value, meter, tone, key, blocksTotal, blocksFilled }) => {
+    const blocks = Array.from({ length: blocksTotal }, (_, index) => `<span class="${index < blocksFilled ? 'filled' : ''}"></span>`).join('');
+    const meterMarkup = blocksTotal > 0 ? `<div class="blocks" data-block-count="${blocksTotal}">${blocks}</div>` : meter === null ? '<span class="dev-value-only" aria-hidden="true"></span>' : `<div class="progress" data-meter="${key}"><i class="${tone}" style="width:${percent(meter)}%"></i></div>`;
+    return `<div class="dev-row" data-indicator="${key}"><div class="dev-copy"><span>${esc(name)}</span><strong>${esc(value)}</strong></div>${meterMarkup}<em>${meter === null ? '' : `${fmt(meter)}%`}</em></div>`;
   }).join('');
   const districts = content.districts.map(item => {
     const level = current.districts[item.id] ?? 0;
@@ -198,7 +211,7 @@ function planetRightPanel(tab: PlanetTab): string {
       ? `<div class="inspector-list">${orbit}</div>`
       : tab === 'data'
         ? `<section class="inspector-section"><div class="section-title"><h3>Dados planetários</h3></div><div class="spec-grid">${specMarkup}</div></section>`
-        : `${summary}<section class="inspector-section"><div class="section-title"><h3>Características Físicas</h3></div><div class="spec-grid">${specMarkup}</div></section><section class="inspector-section"><div class="section-title"><h3>Desenvolvimento</h3><span class="sr-only">Indústria</span></div>${devMarkup}</section><section class="inspector-section production-section"><div class="section-title"><h3>Produção de Recursos</h3><span class="sr-only">PRODUÇÃO DE RECURSOS</span><span>por hora</span></div>${resources}</section>`;
+        : `${summary}<section class="inspector-section"><div class="section-title"><h3>Características Físicas</h3></div><div class="spec-grid">${specMarkup}</div></section><section class="inspector-section"><div class="section-title"><h3>Desenvolvimento</h3><span class="sr-only">Indústria</span></div>${devMarkup}</section><section class="inspector-section production-section"><div class="section-title"><h3 title="Antes de limitações operacionais.">Produção Nominal de Recursos</h3><span class="sr-only">PRODUÇÃO DE RECURSOS</span><span title="Antes de limitações operacionais.">por hora</span></div>${resources}</section>`;
   return `<aside class="inspector planet-inspector" aria-label="Informações do planeta"><div class="inspector-tabs" role="tablist">${(['overview', 'districts', 'orbit', 'data'] as PlanetTab[]).map(item => `<button class="tab ${item === tab ? 'active' : ''}" data-planet-tab="${item}" role="tab" aria-selected="${item === tab}">${({ overview: 'Visão geral', districts: 'Distritos', orbit: 'Órbita', data: 'Dados' } as Record<PlanetTab, string>)[item]}</button>`).join('')}</div>${body}<button class="fleet-link" data-goto="fleets"><span>↗</span> Ver frotas <span>→</span></button></aside>`;
 }
 
@@ -206,7 +219,10 @@ function planetView(): string {
   const p = current.system.planet;
   const arrived = current.fleets.filter(fleet => fleet.status === 'ARRIVED' && fleet.x === current.system.x && fleet.y === current.system.y).length;
   const mode = planetVisualMode();
-  return `<div class="planet-command-view"><div class="planet-command-layout"><section class="planet-hero"><div id="planet-3d-stage" class="planet-stage planet-3d-stage" data-visual-mode="${mode}" aria-label="Visualização de ${esc(p.name)}"><div class="hero-image" role="img" aria-label="Arte espacial do planeta ${esc(p.name)}"></div><div class="hero-shade"></div><div class="planet-fallback-visual">${planetVisual(true)}</div><div class="hero-header"><div class="hero-title"><div class="hero-kicker">✦ &nbsp; PLANET VIEW</div><h1>${esc(p.name)}</h1>${planetHeroSelector()}</div><div class="hero-status"><span class="online-dot"></span> ONLINE</div></div><button class="hotspot planet-hotspot" data-planet-tab="overview" aria-label="Selecionar planeta"></button><button class="hotspot station-hotspot" data-planet-tab="orbit" aria-label="Inspecionar estação orbital"><span>◈ &nbsp; Estação orbital</span></button><button class="hotspot fleet-hotspot" data-goto="fleets" aria-label="Inspecionar frota">↗</button><div class="hero-overlays"><section class="overlay-panel build-panel"><div class="overlay-heading"><div><div class="eyebrow">CONSTRUCTION QUEUE</div><h3>Fila de Construção</h3></div><span class="queue-count">${current.construction.length} / ${current.capacities.construction_slots}</span></div>${planetOverlayQueue()}${current.capacities.construction_slots_available > 0 ? `<button class="slot-button" data-goto="planet"><span>+</span><div><strong>Slot de construção disponível</strong><small>Adicionar projeto ao mundo</small></div></button>` : ''}</section><div class="overlay-stack"><section class="overlay-panel research-panel"><div class="overlay-heading"><div><div class="eyebrow">ACTIVE RESEARCH <span class="sr-only">CURRENT RESEARCH</span></div><h3>Pesquisa Atual</h3></div><span>✦</span></div>${planetOverlayResearch()}</section><section class="overlay-panel fleet-panel"><div><div class="eyebrow">SYSTEM OPERATIONS <span class="sr-only">FLEETS IN SYSTEM</span></div><h3>Frotas no Sistema</h3><span><span class="fleet-pip"></span> ${arrived} ${arrived === 1 ? 'frota presente' : 'frotas presentes'}</span></div><button data-goto="fleets">Ver Frotas <span>→</span></button></section></div></div></div></section>${planetRightPanel(planetTab)}</div></div>`;
+  const artwork = planetArtworkFor(p);
+  const stationHotspot = current.capacities.shipyard_slots > 0 ? '<button class="hotspot station-hotspot" data-planet-tab="orbit" aria-label="Inspecionar estação orbital"><span>◈ &nbsp; Estação orbital</span></button>' : '';
+  const fleetHotspot = arrived > 0 ? '<button class="hotspot fleet-hotspot" data-goto="fleets" aria-label="Inspecionar frota estacionada">↗</button>' : '';
+  return `<div class="planet-command-view"><div class="planet-command-layout"><section class="planet-hero"><div id="planet-3d-stage" class="planet-stage planet-3d-stage" data-visual-mode="${mode}" aria-label="Visualização de ${esc(p.name)}"><img class="hero-image" src="${esc(artwork.path)}" alt="" decoding="async" fetchpriority="high"><div class="hero-shade"></div><div class="planet-fallback-visual">${planetVisual(true)}</div><div class="hero-header"><div class="hero-title"><div class="hero-kicker">✦ &nbsp; PLANET VIEW</div><h1>${esc(p.name)}</h1>${planetHeroSelector()}</div></div><button class="hotspot planet-hotspot" data-planet-tab="overview" aria-label="Selecionar planeta"></button>${stationHotspot}${fleetHotspot}<div class="hero-overlays"><section class="overlay-panel build-panel"><div class="overlay-heading"><div><div class="eyebrow">CONSTRUCTION QUEUE</div><h3>Fila de Construção</h3></div><span class="queue-count">${current.construction.length} / ${current.capacities.construction_slots}</span></div>${planetOverlayQueue()}${current.capacities.construction_slots_available > 0 ? `<button class="slot-button" data-goto="planet"><span>+</span><div><strong>Slot de construção disponível</strong><small>Adicionar projeto ao mundo</small></div></button>` : ''}</section><div class="overlay-stack"><section class="overlay-panel research-panel"><div class="overlay-heading"><div><div class="eyebrow">ACTIVE RESEARCH <span class="sr-only">CURRENT RESEARCH</span></div><h3>Pesquisa Atual</h3></div><span>✦</span></div>${planetOverlayResearch()}</section><section class="overlay-panel fleet-panel"><div><div class="eyebrow">SYSTEM OPERATIONS <span class="sr-only">FLEETS IN SYSTEM</span></div><h3>Frotas no Sistema</h3><span><span class="fleet-pip"></span> ${arrived} ${arrived === 1 ? 'frota presente' : 'frotas presentes'}</span></div><button data-goto="fleets">Ver Frotas <span>→</span></button></section></div></div></div></section>${planetRightPanel(planetTab)}</div></div>`;
 }
 
 function economyView(): string {
@@ -273,9 +289,8 @@ function planetVisualState(): PlanetVisualState {
 }
 function disposePlanetRenderer(): void { planetRenderer?.dispose(); planetRenderer = undefined; }
 function syncPlanetRenderer(view: View): void {
-  if (view !== 'planet' || planetVisualMode() !== '3d') { disposePlanetRenderer(); return; }
   const stage = document.querySelector<HTMLElement>('#planet-3d-stage');
-  if (!stage || stage === app) return;
+  if (view !== 'planet' || !stage || stage === app || (planetVisualMode() !== '3d' && stage.dataset.imageFailed !== 'true')) { disposePlanetRenderer(); return; }
   try {
     if (!planetRenderer) planetRenderer = new PlanetRenderer(stage);
     planetRenderer.update(planetVisualState());
@@ -287,14 +302,29 @@ function syncPlanetRenderer(view: View): void {
     feedback = { kind: 'error', message: error instanceof Error ? 'WebGL indisponível; visualização alternativa ativada.' : 'Visualização 3D indisponível.' };
   }
 }
+function bindPlanetArtworkFallback(): void {
+  const stage = document.querySelector<HTMLElement>('#planet-3d-stage');
+  if (!stage || stage === app || typeof stage.querySelector !== 'function') return;
+  const image = stage?.querySelector<HTMLImageElement>('.hero-image');
+  if (!image) return;
+  image.addEventListener('error', () => {
+    if (stage.dataset.imageFailed === 'true') return;
+    stage.dataset.imageFailed = 'true';
+    image.hidden = true;
+    stage.dataset.visualMode = '3d';
+    syncPlanetRenderer('planet');
+  }, { once: true });
+}
 function topHud(): string {
-  const active = temporalActivityCount();
   const resources = strategicResources();
   const tones = ['pink', 'mint', 'green', 'amber'];
-  const now = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date());
+  const energyGeneration = current.capacities.energy_generation;
+  const energyDemand = current.capacities.energy_consumption;
+  const energyMargin = energyGeneration - energyDemand;
+  const energyTone = energyMargin >= 0 ? '' : ' warning-text';
   const research = current.research.active ? label(current.research.active) : 'Inativa';
   const arrived = current.fleets.filter(fleet => fleet.status === 'ARRIVED').length;
-  return `<header class="top-hud"><a class="brand" href="#/overview" aria-label="StarZ início"><span>STARZ</span><small>COMMAND</small></a><div class="hud-resources">${resources.map((item, index) => `<div class="metric"><span class="metric-icon ${tones[index % tones.length]}">${esc(item.name.slice(0, 2))}</span><div><span class="metric-label">${esc(item.name)}</span><div class="metric-value">${fmt(current.stocks[item.id], 1)}</div><span class="metric-detail">${nominalRate(item.id) > 0 ? `+${fmt(nominalRate(item.id) * 60, 1)}/h` : 'estoque local'}</span></div></div>`).join('')}</div><div class="hud-quick"><div><span class="metric-label">POPULAÇÃO</span><strong>${fmt(current.population.total)}</strong><small>${fmt(current.population.available)} livre</small></div><div><span class="metric-label">PESQUISA</span><strong>${esc(research)}</strong><small>${current.research.active ? `${fmt(100 * (1 - current.research.remaining_work / Math.max(1, content.technologies.find(item => item.id === current.research.active)?.duration ?? 1)))}% concluída` : 'sem programa ativo'}</small></div><div><span class="metric-label">FROTAS</span><strong>${fmt(current.fleets.length)}</strong><small>${fmt(arrived)} estacionada(s)</small></div></div><div class="system-status"><span class="status-dot"></span><span>LIVE</span><b>${esc(now)}</b><small>${esc(current.system.name)} · ${current.system.x}:${current.system.y}</small></div><button class="icon-button" data-action="notice" aria-label="Abrir registros">${current.notices.length ? '!' : '·'}</button><div class="settings-wrap"><button class="icon-button" data-action="settings" aria-label="Abrir configurações">⚙</button>${settingsOpen ? `<div class="settings-popover"><span>Interface</span><strong>Modo estratégico</strong><small>Dados sincronizados da API · atualização automática ativa.</small></div>` : ''}</div>${noticeOpen ? `<div class="notice-popover"><div class="context-heading"><span>REGISTRO RECENTE</span><b>${current.notices.length}</b></div>${current.notices.length ? current.notices.map(message => `<div class="notice"><i></i><span>${esc(message)}</span></div>`).join('') : '<span class="muted">Sem novos registros.</span>'}</div>` : ''}</header>`;
+  return `<header class="top-hud"><a class="brand" href="#/overview" aria-label="StarZ início"><span>STARZ</span><small>COMMAND</small></a><div class="hud-resources">${resources.map((item, index) => `<div class="metric"><span class="metric-icon ${tones[index % tones.length]}">${esc(item.name.slice(0, 2))}</span><div><span class="metric-label">${esc(item.name)}</span><div class="metric-value">${fmt(current.stocks[item.id], 1)}</div><span class="metric-detail">${nominalRate(item.id) > 0 ? `+${fmt(nominalRate(item.id) * 60, 1)}/h` : 'estoque local'}</span></div></div>`).join('')}</div><div class="metric energy-metric" data-energy-coverage="${current.capacities.energy_coverage}" data-energy-state="${energyMargin >= 0 ? 'stable' : 'warning'}"><span class="metric-icon amber">EN</span><div><span class="metric-label">ENERGIA</span><div class="metric-value">${fmt(energyGeneration)} / ${fmt(energyDemand)}</div><span class="metric-detail${energyTone}">${energyMargin >= 0 ? '+' : ''}${fmt(energyMargin)} margem</span></div></div><div class="hud-quick"><div><span class="metric-label">POPULAÇÃO</span><strong>${fmt(current.population.total)}</strong><small>${fmt(current.population.available)} livre</small></div><div><span class="metric-label">PESQUISA</span><strong>${esc(research)}</strong><small>${current.research.active ? `${fmt(100 * (1 - current.research.remaining_work / Math.max(1, content.technologies.find(item => item.id === current.research.active)?.duration ?? 1)))}% concluída` : 'sem programa ativo'}</small></div><div><span class="metric-label">FROTAS</span><strong>${fmt(current.fleets.length)}</strong><small>${fmt(arrived)} estacionada(s)</small></div></div><div class="system-status"><span class="status-dot"></span><span>SYSTEM</span><small>${esc(current.system.name)} · ${current.system.x}:${current.system.y}</small></div><button class="icon-button" data-action="notice" aria-label="Abrir registros">${current.notices.length ? '!' : '·'}</button><div class="settings-wrap"><button class="icon-button" data-action="settings" aria-label="Abrir configurações">⚙</button>${settingsOpen ? `<div class="settings-popover"><span>Interface</span><strong>Modo estratégico</strong><small>Dados sincronizados da API · atualização automática ativa.</small></div>` : ''}</div>${noticeOpen ? `<div class="notice-popover"><div class="context-heading"><span>REGISTRO RECENTE</span><b>${current.notices.length}</b></div>${current.notices.length ? current.notices.map(message => `<div class="notice"><i></i><span>${esc(message)}</span></div>`).join('') : '<span class="muted">Sem novos registros.</span>'}</div>` : ''}</header>`;
 }
 function render(): void {
   const activeView = route();
@@ -320,11 +350,13 @@ function render(): void {
     app.querySelector('.toast')?.remove(); app.querySelector('.loading-line')?.remove();
     if (feedback) app.insertAdjacentHTML('beforeend', `<div class="toast ${feedback.kind}" role="status"><i>${feedback.kind === 'success' ? '✓' : '!'}</i><span>${esc(feedback.message)}</span><button data-dismiss aria-label="Fechar">×</button></div>`);
     if (busy) app.insertAdjacentHTML('beforeend', '<div class="loading-line"></div>');
+    bindPlanetArtworkFallback();
     syncPlanetRenderer(activeView);
     return;
   }
   disposePlanetRenderer();
   app.innerHTML = `${topHud()}<div class="app-shell ${activeView === 'planet' ? 'planet-shell' : ''}"><nav class="sidebar" aria-label="Navegação principal"><div class="sidebar-label">IMPÉRIO</div><div class="nav-list">${views.map(view => `<a href="#/${view.id}" class="nav-item ${view.id === activeView ? 'selected' : ''}" aria-current="${view.id === activeView ? 'page' : 'false'}"><span class="nav-mark">${view.icon}</span><span>${esc(view.label)}</span></a>`).join('')}</div><div class="sidebar-foot"><div class="sidebar-label">HOME SYSTEM</div><strong>${current.system.x}:${current.system.y}</strong><span>${esc(current.system.name)}</span><p>Build an empire.<br>Change the universe.</p><div class="sidebar-rule"></div><b>STARZ</b><small>v0.1.0</small></div></nav><main class="main-content ${activeView === 'planet' ? 'main-content-planet' : ''}">${viewContent(activeView)}</main>${activeView === 'planet' ? '' : contextPanel()}</div>${feedback ? `<div class="toast ${feedback.kind}" role="status"><i>${feedback.kind === 'success' ? '✓' : '!'}</i><span>${esc(feedback.message)}</span><button data-dismiss aria-label="Fechar">×</button></div>` : ''}${busy ? '<div class="loading-line"></div>' : ''}`;
+  bindPlanetArtworkFallback();
   syncPlanetRenderer(activeView);
 }
 

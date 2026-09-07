@@ -30,4 +30,17 @@ implementation: real STARZ frontend on `http://127.0.0.1:4178/#/planet`, served 
 
 The exact required 1792 x 854 and 1536 x 1024 browser screenshots could not be captured because the available Codex in-app browser exposes a fixed viewport and does not export screenshots to the shared checkout filesystem. Console inspection and automated browser clicks also were not exposed by the available CUA surface; interaction coverage is therefore backed by the existing frontend tests and the browser accessibility tree.
 
+## Hardening pass
+
+- Added real energy generation/demand/margin to the top HUD; negative margin uses warning tone.
+- Inspector energy now consistently shows generation/demand while its progress bar is `energy_coverage`.
+- Resource output is labeled “Produção Nominal de Recursos” with the operational-limitations tooltip.
+- Construction and shipyard indicators now render exactly their real total slot count and filled usage; industrial capacity remains numeric.
+- Station and fleet hotspots are conditional on shipyard capacity and `ARRIVED` fleets in the selected system.
+- Removed the hero’s decorative `ONLINE` badge and browser date/time from the HUD.
+- Replaced CSS-background hero art with an image-first `<img>` and real image-error → Three.js → CSS fallback flow.
+- Added `PlanetArtworkRegistry.ts`; HERO ART V1 remains a fixed composition and is documented as a future layer-based evolution.
+- Accessibility remains explicit: decorative hero image uses `alt=""`, the container carries the planet label, hotspots have clear labels, and tabs retain `role="tab"` / `aria-selected`.
+- No local WebP converter was available; the 2,566,498-byte PNG remains the runtime asset.
+
 final result: blocked
