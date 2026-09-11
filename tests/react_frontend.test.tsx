@@ -22,8 +22,18 @@ describe('React frontend parity', () => {
     await screen.findByText('CENTRO DE COMANDO // HOMEWORLD');
     fireEvent.click(screen.getByText('Planeta'));
     await waitFor(() => expect(screen.getByText('PLANET VIEW')).toBeInTheDocument());
+    expect(screen.getByRole('link', { name: 'Planeta' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByAltText('')).toHaveAttribute('src', '/static/assets/planet-command-hero.png');
     expect(screen.getByRole('tab', { name: 'Visão geral' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('opens notification and settings icon actions with accessible labels', async () => {
+    render(<App />);
+    await screen.findByText('CENTRO DE COMANDO // HOMEWORLD');
+    fireEvent.click(screen.getByLabelText('Abrir registros'));
+    expect(screen.getAllByText('REGISTRO RECENTE')).toHaveLength(2);
+    fireEvent.click(screen.getByLabelText('Abrir configurações'));
+    expect(screen.getByText('Modo estratégico')).toBeInTheDocument();
   });
 
   it('renders the Galaxy unknown state without physical details', async () => {

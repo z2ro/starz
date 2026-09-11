@@ -38,11 +38,9 @@ test('sidebar, HUD and action controls use the registry helper', () => {
     assert.match(sidebarSource, new RegExp(`icon: '${name}'`));
   }
   for (const name of ['energy', 'population', 'research', 'fleets', 'system', 'notifications', 'settings']) {
-    assert.match(hudSource, new RegExp(`name=\"${name}\"`));
+    assert.match(hudSource, new RegExp(`icon=\"${name}\"`));
   }
   assert.match(hudSource, /resourceIcon\(item\.id\)/);
-  assert.match(hudSource, /aria-label="Abrir registros"/);
-  assert.match(hudSource, /aria-label="Abrir configurações"/);
 });
 
 test('CSS preserves currentColor mask behavior and state styling', () => {
