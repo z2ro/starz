@@ -12,7 +12,7 @@ const iconBlock = registrySource.match(/export const ICONS = \{([\s\S]*?)\} as c
 const registryEntries = Object.fromEntries([...iconBlock.matchAll(/^\s+(\w+): '([^']+)'/gm)].map(match => [match[1], match[2]]));
 
 test('all approved Stellar Atlas SVGs exist and are safe monochrome assets', () => {
-  assert.equal(Object.keys(registryEntries).length, 17);
+  assert.equal(Object.keys(registryEntries).length, 18);
   for (const [name, url] of Object.entries(registryEntries)) {
     const file = path.join(root, 'frontend', 'assets', url.replace(/^\/static\//, ''));
     assert.ok(fs.existsSync(file), `${name} points to a missing asset: ${file}`);

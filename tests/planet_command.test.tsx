@@ -29,6 +29,11 @@ describe('Imperial Command Planet view', () => {
     expect(screen.getByText('Gaia')).toBeInTheDocument();
     expect(screen.getByText('Asterion · 2:-1 · Planeta 1')).toBeInTheDocument();
     expect(screen.getByText('HOMEWORLD')).toBeInTheDocument();
+    expect(screen.getByLabelText('Homeworld — mundo principal do império')).toHaveClass('homeworld-badge');
+    expect(screen.getByLabelText('Homeworld — mundo principal do império')).not.toHaveClass('badge');
+    expect(document.querySelector('.homeworld-badge-wide')).toHaveTextContent('HOMEWORLD');
+    expect(document.querySelector('.homeworld-badge-compact')).toHaveTextContent('HOME');
+    expect(document.querySelector('.hero-kicker .ui-icon')).toHaveStyle({ '--icon': "url('/static/icons/stellar-atlas/icon-planet-active.svg')" });
     fireEvent.change(screen.getByLabelText('Selecionar planeta'), { target: { value: 'colony' } });
     expect(onChange).toHaveBeenCalledWith('colony');
   });
@@ -41,6 +46,7 @@ describe('Imperial Command Planet view', () => {
     expect(screen.getByText('+120/h nom.')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Órbita' })).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByRole('button', { name: 'Abrir estaleiro' })).toBeInTheDocument();
+    expect(document.querySelector('.planet-active-icon .ui-icon')).toHaveStyle({ '--icon': "url('/static/icons/stellar-atlas/icon-planet-active.svg')" });
     render(<PlanetInspector catalog={catalog} state={state} tab="data" onTab={vi.fn()} onNavigate={vi.fn()} />);
     expect(screen.getByText('Contexto astronômico')).toBeInTheDocument();
     expect(screen.queryByText('Informações minerais')).not.toBeInTheDocument();

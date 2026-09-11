@@ -1,6 +1,7 @@
 export const ICONS = {
   overview: '/static/icons/stellar-atlas/icon-overview.svg',
   planet: '/static/icons/stellar-atlas/icon-planet.svg',
+  planetActive: '/static/icons/stellar-atlas/icon-planet-active.svg',
   economy: '/static/icons/stellar-atlas/icon-economy.svg',
   research: '/static/icons/stellar-atlas/icon-research.svg',
   shipyard: '/static/icons/stellar-atlas/icon-shipyard.svg',
