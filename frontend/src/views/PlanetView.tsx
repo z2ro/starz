@@ -9,5 +9,5 @@ export function PlanetView() {
   const { catalog, state, setActivePlanetId } = useOutletContext<ShellContext>();
   const [tab, setTab] = useState<PlanetTab>('overview');
   const navigate = useNavigate();
-  return <div className="planet-command-view"><div className="planet-command-layout"><PlanetHero catalog={catalog} state={state} tab={tab} onTab={setTab} onPlanetChange={setActivePlanetId} onNavigate={navigate} /><PlanetInspector catalog={catalog} state={state} tab={tab} onTab={setTab} /></div></div>;
+  return <div className="planet-command-view"><div className="planet-command-layout"><PlanetHero catalog={catalog} state={state} onPlanetChange={setActivePlanetId} onNavigate={navigate} /><PlanetInspector catalog={catalog} state={state} tab={tab} onTab={setTab} /></div></div>;
 }
