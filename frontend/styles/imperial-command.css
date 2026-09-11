@@ -72,3 +72,90 @@ h1, .page-title { font-size: clamp(24px, 2vw, 30px); font-weight: 650; letter-sp
 @media (max-width: 900px) { .top-hud { height: 54px; }.brand { width: 138px; }.brand small, .hud-metrics, .hud-quick .hud-metric:nth-child(2), .hud-quick .hud-metric:nth-child(3) { display: none; }.hud-quick { margin-left: auto; }.app-shell, .planet-shell { grid-template-columns: 76px minmax(0, 1fr); }.sidebar { width: 76px; }.sidebar-label, .sidebar-foot { display: none; }.nav-item { height: 60px; font-size: 0; }.planet-command-layout { grid-template-columns: 1fr; height: auto; }.planet-hero { min-height: 680px; }.planet-inspector { border-top: 1px solid var(--border-subtle); }.operations-deck { grid-template-columns: 1fr; }.operations-column { border-right: 0; border-bottom: 1px solid var(--border-subtle); }.operations-column:last-child { border-bottom: 0; } }
 @media (max-width: 520px) { .main-content { padding: var(--space-4); }.brand { width: 124px; padding-inline: var(--space-3); }.brand span { font-size: 18px; }.hud-quick { display: none; }.icon-button { width: 44px; height: 54px; }.app-shell, .planet-shell { display: block; }.sidebar { position: static; width: 100%; height: 62px; min-height: 0; border-top: 1px solid var(--border-subtle); border-right: 0; }.nav-list { display: flex; height: 100%; overflow-x: auto; }.nav-item { min-width: 58px; flex: 1; height: 62px; }.context-panel { display: block; }.planet-hero { min-height: 620px; }.hero-header { top: var(--space-4); right: var(--space-4); left: var(--space-4); }.hero-overlays { right: var(--space-2); bottom: var(--space-2); left: var(--space-2); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+
+/* Planet Command V2: the artwork is the workspace; UI only frames live state. */
+.planet-command-view { height: 100%; min-width: 0; }
+.planet-command-layout { grid-template-columns: minmax(0, 1fr) 390px; height: calc(100dvh - 54px); min-height: 620px; }
+.planet-hero { position: relative; min-width: 0; min-height: 0; overflow: hidden; isolation: isolate; border-right: 1px solid var(--border-subtle); background: var(--background-primary); }
+.planet-art-layer { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.hero-image { object-position: 58% 50%; filter: saturate(1.03) contrast(1.06); transform: none; }
+.hero-shade { background: linear-gradient(180deg, rgb(3 11 20 / .78), transparent 20%, transparent 54%, rgb(3 11 20 / .76) 100%), linear-gradient(90deg, rgb(3 11 20 / .55), transparent 38%, rgb(3 11 20 / .16)); }
+.hero-header { top: 24px; right: 28px; left: 28px; }
+.planet-header { display: grid; gap: 4px; max-width: min(490px, 58%); }
+.planet-header-title { display: flex; gap: var(--space-3); align-items: center; min-width: 0; }
+.planet-header-title h1 { margin: 0; overflow: hidden; font-size: clamp(26px, 2.4vw, 36px); font-weight: 620; letter-spacing: .08em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.planet-header .badge { flex: 0 0 auto; }
+.planet-picker { width: fit-content; max-width: 100%; color: var(--text-secondary); font-size: 11px; letter-spacing: .04em; }
+.planet-picker span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.planet-picker:hover { color: var(--accent-primary); }
+.hero-markers { position: absolute; z-index: 4; top: 29%; right: 7%; display: grid; gap: 8px; pointer-events: none; }
+.hero-markers span { display: inline-flex; justify-self: end; gap: 7px; align-items: center; padding: 6px 8px; border: 1px solid rgb(49 212 255 / .44); color: var(--text-primary); background: rgb(3 11 20 / .78); box-shadow: var(--glow-accent); font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+.hero-markers .ui-icon { width: 15px; height: 15px; color: var(--accent-primary); }
+.hero-overlays.operations-deck { right: 16px; bottom: 16px; left: 16px; z-index: 6; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-color: rgb(49 212 255 / .34); border-radius: 0; background: rgb(3 11 20 / .86); }
+.hero-overlays .operations-column { min-height: 126px; padding: 11px 14px; }
+.hero-overlays .operations-column .empty { min-height: 70px; }
+.hero-overlays .button-ghost { min-height: 24px; font-size: 9px; }
+
+.planet-inspector { overflow-y: auto; overscroll-behavior: contain; background: linear-gradient(180deg, rgb(6 21 34 / .99), var(--background-primary)); }
+.planet-inspector-header { display: flex; gap: 10px; align-items: center; padding: 16px 18px 12px; border-bottom: 1px solid rgb(25 57 77 / .72); }
+.planet-inspector-header > .ui-icon { width: 30px; height: 30px; color: var(--accent-primary); }
+.planet-inspector-header > div { min-width: 0; flex: 1; }
+.planet-inspector-header strong, .planet-inspector-header small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.planet-inspector-header strong { color: var(--text-primary); font-size: 15px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; }
+.planet-inspector-header small { color: var(--text-muted); font-size: 10px; }
+.planet-inspector-header .badge { flex: 0 0 auto; }
+.planet-inspector .tabs { min-height: 42px; gap: 16px; padding: 0 18px; }
+.planet-inspector .tabs button { min-height: 34px; padding-bottom: 9px; font-size: 10px; }
+.planet-inspector .inspector-summary { border-bottom: 1px solid rgb(25 57 77 / .72); }
+.planet-inspector-summary { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; padding: 14px 18px; }
+.planet-summary-art { min-height: 78px; margin: 0; border: 1px solid var(--border-subtle); background: url('/static/planet-command-hero.png') 38% 48% / cover; }
+.planet-summary-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.planet-summary-metrics .metric { display: block; min-width: 0; padding: 5px 0; border: 0; background: transparent; }
+.planet-summary-metrics .metric-label { display: block; margin-bottom: 4px; font-size: 8px; }
+.planet-summary-metrics .metric-value { display: block; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.planet-summary-metrics .metric-detail { display: block; overflow: hidden; margin-top: 2px; color: var(--text-muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.planet-inspector .inspector-section { padding: 16px 18px; }
+.planet-inspector .inspector-section-header { margin-bottom: 9px; }
+.planet-inspector .inspector-section-header h2 { font-size: 11px; }
+.planet-inspector .spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+.planet-inspector .data-row { min-height: 31px; }
+.planet-inspector .development-list .data-row { padding-top: 3px; }
+.planet-inspector .development-list .data-row-visualization { padding-bottom: 2px; }
+.planet-inspector .development-list .progress { height: 5px; margin: 4px 0 0; }
+.planet-inspector .development-list .progress + small { display: none; }
+.planet-inspector .production-list .data-row { min-height: 29px; }
+.planet-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.planet-actions .button { min-width: 0; min-height: 36px; padding-inline: 8px; font-size: 9px; }
+.planet-actions .button-ghost { grid-column: 1 / -1; justify-self: start; }
+.planet-inspector .entity-list .data-row-status { grid-column: 1 / -1; padding-bottom: 6px; font-size: 9px; }
+.planet-inspector .empty { min-height: 82px; }
+
+@media (max-width: 1500px) {
+  .planet-command-layout { grid-template-columns: minmax(0, 1fr) 370px; }
+  .hero-header { top: 20px; right: 20px; left: 20px; }
+  .hero-overlays.operations-deck { right: 12px; bottom: 12px; left: 12px; }
+  .hero-overlays .operations-column { padding-inline: 11px; }
+}
+@media (max-width: 1380px) {
+  .planet-command-layout { grid-template-columns: minmax(0, 1fr) 350px; }
+  .planet-header { max-width: 68%; }
+  .hero-markers { right: 5%; }
+  .planet-inspector-summary { grid-template-columns: 78px minmax(0, 1fr); gap: 10px; padding-inline: 14px; }
+  .planet-inspector .inspector-section, .planet-inspector-header { padding-right: 14px; padding-left: 14px; }
+  .planet-inspector .tabs { gap: 12px; padding-inline: 14px; }
+}
+@media (max-height: 820px) and (min-width: 901px) {
+  .planet-command-layout { min-height: calc(100dvh - 54px); }
+  .hero-header { top: 16px; }
+  .hero-markers { top: 24%; }
+  .hero-overlays.operations-deck { bottom: 10px; }
+  .hero-overlays .operations-column { min-height: 112px; padding-top: 8px; padding-bottom: 8px; }
+  .hero-overlays .operations-column .empty { min-height: 58px; }
+  .operations-column > header { padding-bottom: 5px; }
+}
+@media (max-width: 900px) {
+  .planet-command-layout { height: auto; min-height: 0; }
+  .planet-hero { min-height: 680px; }
+  .planet-header { max-width: 100%; }
+  .hero-overlays.operations-deck { grid-template-columns: 1fr; }
+}

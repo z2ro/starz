@@ -4,7 +4,7 @@ export const fmt = (value: number | undefined, digits = 0) => Number(value ?? 0)
 export const duration = (seconds: number) => seconds < 60 ? `${Math.max(0, Math.ceil(seconds))}s` : seconds < 3600 ? `${Math.ceil(seconds / 60)}min` : `${Math.floor(seconds / 3600)}h ${Math.ceil(seconds % 3600 / 60)}min`;
 export const remaining = (stamp: number | null) => stamp === null ? 'Pausada' : duration(stamp - Date.now() / 1000);
 export const percent = (value: number) => Math.max(0, Math.min(100, value));
-export const term = (id: string) => ({ corvette: 'Corveta', exploration: 'Exploração', MOVE: 'Movimento', SURVEY: 'Levantamento', COLONIZE: 'Colonização', VIABLE: 'Viável', HOSTILE: 'Hostil', UNINHABITABLE: 'Inabitável' } as Record<string, string>)[id] ?? id.replaceAll('_', ' ');
+export const term = (id: string) => ({ corvette: 'Corveta', exploration: 'Exploração', MOVE: 'Movimento', SURVEY: 'Levantamento', COLONIZE: 'Colonização', ARRIVED: 'Estacionada', TRANSIT: 'Em trânsito', VIABLE: 'Viável', HOSTILE: 'Hostil', UNINHABITABLE: 'Inabitável' } as Record<string, string>)[id] ?? id.replaceAll('_', ' ');
 export const label = (catalog: Catalog, id: string) => [...catalog.resources, ...catalog.fuels, ...catalog.districts, ...catalog.technologies, ...catalog.ships, ...catalog.propulsion, ...catalog.travel_modes].find(item => item.id === id)?.name ?? id.replaceAll('_', ' ');
 export const hullRole = (hull: Hull) => `${term(hull.classification)} · ${term(hull.role)}`;
 export const cost = (catalog: Catalog, values: Record<string, number>) => Object.keys(values).length ? Object.entries(values).map(([id, amount]) => `${label(catalog, id)} ${fmt(amount, 1)}`).join(' · ') : 'Sem custo';
