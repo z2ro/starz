@@ -47,9 +47,30 @@ Não tratá-los como classes independentes da frota principal nesta etapa.
 - modelo completo;
 - materiais separados por função;
 - LOD strategy;
-- versões modulares para Stargrave.
+- versões modulares por função.
 
-## Módulos Stargrave
+## Assets específicos da Stargrave-class
 
-command section, central spine, propulsion blocks, weapon blocks, armor modules, docking structures e secondary structures.
+### SVG
 
+- silhouette;
+- containment schematic;
+- Dyson segment diagram;
+- class symbol.
+
+### Raster / WebP
+
+- hero presentation;
+- stellar core presentation;
+- siege alignment concept.
+
+### Future 3D
+
+- modular Dyson segments;
+- captive stellar core;
+- containment structures;
+- military superstructure;
+- docking sectors;
+- translation-field structures.
+
+A Stargrave não inclui seção de motores convencional. Consultar [STARGRAVE-CLASS.md](STARGRAVE-CLASS.md) para a decomposição completa da megastructura.

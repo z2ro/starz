@@ -10,7 +10,7 @@ DNA compartilhado:
 - navy espacial, graphite e cold metal;
 - emissivos ice-cyan contidos;
 - iluminação warm-white funcional;
-- painéis, manutenção e propulsão plausíveis;
+- painéis, manutenção e sistemas de movimento plausíveis quando aplicável;
 - silhueta legível em UI e em preto sólido;
 - superfícies grandes e proporcionais antes de microdetalhes.
 
@@ -21,13 +21,16 @@ DNA compartilhado:
 | Leviathan | Battleship | massa de linha, blindagem, bateria pesada e permanência em combate |
 | Atlas | Carrier | volume operacional, hangares, suporte e projeção de frota |
 | Dominion | Dreadnought | comando estratégico, presença monumental e domínio militar |
-| Stargrave-class | Titan | supercapital arquitetônico, modular e raro |
+| Stargrave-class | Titan | megastructura militar móvel construída ao redor de uma estrela cativa |
 
 Os modelos não devem parecer versões ampliadas uns dos outros. Função, arquitetura e silhueta são os principais diferenciadores.
 
-## Stargrave
+## Stargrave — category break
 
-O Titan deve ser tratado como categoria estrutural própria: command section, central spine, propulsion blocks, weapon blocks, armor modules, docking structures e secondary structures. A divisão modular deve permanecer consistente entre hero, ortográficas e blueprint.
+Leviathan, Atlas e Dominion são capital ships. Stargrave é uma quebra de categoria: uma **mobile military megastructure that contains a star**, com estrutura Dyson parcial e núcleo estelar cativo.
+
+Sua identidade deve ser lida por captive star, segmented Dyson cage e Imperial military superstructure. Não tratar como “Dominion but larger”; sua forma não depende de um casco linear nem de uma seção de movimento traseira.
+
+Consultar [STARGRAVE-CLASS.md](STARGRAVE-CLASS.md) para a arquitetura final, a contenção, o Stellar Translation Field e o Judgment Alignment.
 
 Não usar estética gótica, planeta artificial, megaestrutura genérica, espinhos decorativos ou referências reconhecíveis de outras franquias.
-

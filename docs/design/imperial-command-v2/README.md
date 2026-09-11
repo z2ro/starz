@@ -17,3 +17,4 @@ Este diretório é um handoff de design. Ele não substitui a implementação ex
 
 **Direction 01 — Imperial Command**: comando imperial, espaço profundo em navy, acentos ice-cyan, inspector operacional e operations deck contínuo.
 
+`VISUAL-SYSTEM.md` é a source of truth da UI; `frotas/` é a source of truth visual naval; gameplay e API continuam autoritativos para dados e disponibilidade.

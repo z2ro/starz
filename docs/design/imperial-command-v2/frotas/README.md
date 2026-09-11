@@ -16,7 +16,7 @@ Pranchas e documentação naval das rodadas Ship Visual Language V1/V2 e Capital
 | [Leviathan](LEVIATHAN.md) | Battleship | Combate pesado de linha, guerra sustentada, bateria pesada e engajamento de cerco. | [PNG](assets/leviathan-concept.png) |
 | [Atlas](ATLAS.md) | Carrier | Suporte de frota, operações de strike craft, comando e projeção de longo alcance. | [PNG](assets/atlas-concept.png) |
 | [Dominion](DOMINION.md) | Dreadnought | Domínio militar estratégico, combate de grande escala e plataforma pesada de comando. | [PNG](assets/dominion-concept.png) |
-| [Stargrave-class](STARGRAVE-CLASS.md) | Titan | Supercapital estratégico, centro da frota de endgame e plataforma extrema de comando e projeção. | [PNG](assets/stargrave-class-concept.png) |
+| [Stargrave-class](STARGRAVE-CLASS.md) | Titan / Stellar Siege Titan | Megastructura militar móvel construída ao redor de uma estrela cativa. | [PNG](assets/stargrave-class-concept.png) |
 
 O complemento do Atlas possui fichas próprias: [Interceptor](INTERCEPTOR.md), [Fighter](FIGHTER.md) e [Bomber](BOMBER.md). São unidades subordinadas, além das 11 classes principais.
 
@@ -38,9 +38,8 @@ O complemento do Atlas possui fichas próprias: [Interceptor](INTERCEPTOR.md), [
 
 As imagens são as pranchas originais geradas nesta tarefa, preservadas sem redesenho. A ficha individual de cada nave é a referência de identidade do casco. Os quadros coletivos ilustram composição e contexto; contêm variações de geometria, sobretudo no Stargrave, no Atlas e no Odyssey, e não substituem os modelos individuais.
 
-O Spearhead usa a última revisão, com SPEARHEAD no casco e no detalhe de materiais. As versões anteriores dessa prancha não foram incluídas.
+O Spearhead usa a última revisão, com SPEARHEAD no casco e no detalhe de materiais. A Stargrave usa o asset final com estrela cativa central, contenção Dyson segmentada e megafortaleza militar; as versões anteriores não são referência oficial.
 
 Escala visual não equivale a dimensão física canônica. Os PNGs são concept sheets compostos; SVGs, layers separados e modelos 3D ainda não foram exportados. As vistas técnicas precisam de conferência geométrica antes da modelagem.
 
 [Voltar ao pacote Imperial Command V2](../README.md)
-

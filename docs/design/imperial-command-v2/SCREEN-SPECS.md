@@ -131,11 +131,24 @@ Escolher uma classe de nave, entender sua função técnica e colocá-la em cons
 
 ### Conceitos de display
 
+- Design catalog visual oficial: Horizon, Wayfarer, Vanguard, Sentinel, Odyssey, Aegis, Spearhead, Leviathan, Atlas, Dominion e Stargrave.
 - Horizon: exploration corvette; leitura leve, sensores e alcance.
 - Wayfarer: freighter; volume, carga e logística.
 - Vanguard: frigate; presença, defesa e capacidade militar.
+- Sentinel: destroyer; defesa e escolta reforçada.
+- Odyssey: science cruiser; sensores, observação e análise.
+- Aegis: cruiser; presença de linha e combate sustentado.
+- Spearhead: battlecruiser; ruptura e assalto frontal.
+- Leviathan: battleship; linha pesada e cerco.
+- Atlas: carrier; suporte de frota e strike craft.
+- Dominion: dreadnought; comando estratégico e domínio militar.
+- Stargrave: Titan / Stellar Siege Titan; megastructura militar móvel ao redor de uma estrela cativa.
 
-São arquétipos visuais de apresentação; a implementação deve mapear somente modelos existentes no catálogo do STARZ.
+Essa lista é o **DESIGN CATALOG** visual. Ela não afirma que todas as classes existem, estão desbloqueadas ou estão disponíveis no **CURRENT GAMEPLAY CATALOG**. A implementação deve mostrar apenas os modelos realmente presentes no catálogo e no estado real da API.
+
+### Stargrave selected — tratamento visual futuro
+
+Quando Stargrave estiver disponível e selecionada, usar presentation area maior, stellar core como elemento visual principal, megastructure schematic e o rótulo `TITAN / STELLAR MEGASTRUCTURE`. A escala deve ser tratada como categoria própria. Não inventar requirements ou alterar gameplay.
 
 ## 06 — Fleets / Fleet Operations
 

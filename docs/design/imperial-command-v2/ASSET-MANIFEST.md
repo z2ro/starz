@@ -50,9 +50,13 @@
 - Nebula/galaxy map backing plates.
 - Planet surface base por classe ou planeta real.
 - Station/orbital dock renders.
-- Ship renders ou silhouettes de Horizon, Wayfarer e Vanguard.
+- Ship renders ou silhouettes conforme o catálogo real.
 - Small inspector thumbnails para planet, system, fleet, ship e technology.
 - Economy/overview contextual art quando houver asset real.
+
+## Naval visual source of truth
+
+O catálogo naval oficial completo, incluindo Horizon, Wayfarer, Vanguard, Sentinel, Odyssey, Aegis, Spearhead, Leviathan, Atlas, Dominion, Stargrave-class e o complemento de strike craft do Atlas, está documentado em [`frotas/SHIP-ASSET-MANIFEST.md`](frotas/SHIP-ASSET-MANIFEST.md). Este manifesto geral não duplica aquele pacote.
 
 ## Transparent layers
 

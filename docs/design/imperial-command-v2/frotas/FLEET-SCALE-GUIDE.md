@@ -6,7 +6,13 @@ As pranchas definem **visual scale relationship**, não dimensões físicas can�
 
 ## Progressão oficial
 
-Horizon → Wayfarer → Vanguard → Sentinel → Odyssey → Aegis → Spearhead → Leviathan / Atlas → Dominion → Stargrave-class.
+Horizon → Wayfarer → Vanguard → Sentinel → Odyssey → Aegis → Spearhead → Leviathan / Atlas → Dominion
+
+→ **conventional spacecraft progression**
+
+Stargrave-class
+
+→ **stellar megastructure category**
 
 ## Progressão funcional
 
@@ -24,7 +30,6 @@ Exploration → Logistics → Escort → Defense → Science → Line Combat →
 - Leviathan: massa longitudinal blindada.
 - Atlas: corpo modular com volume de hangar.
 - Dominion: command fortress em camadas.
-- Stargrave: arquitetura supercapital em módulos profundos.
+- Stargrave: captive star, segmented Dyson cage e superestrutura militar imperial; forma aproximadamente omnidirecional e sem propulsão convencional.
 
-Em qualquer escala, a nave deve continuar identificável sem depender de cor, texto ou efeitos.
-
+Em qualquer escala, a nave deve continuar identificável sem depender de cor, texto ou efeitos. Stargrave é uma quebra de categoria, não apenas o próximo aumento linear de tamanho.

@@ -6,6 +6,8 @@ Este pacote entrega **visual concept + sistema de UX** para a Direction 01 — I
 
 O trabalho de produção deve adaptar a linguagem ao código existente e conectar cada elemento aos dados reais. Não criar valores de gameplay para preencher a composição.
 
+Para identidade visual naval, Shipyard, Fleets e Planet orbital presence devem consultar [`frotas/README.md`](frotas/README.md), [`frotas/SHIP-ASSET-MANIFEST.md`](frotas/SHIP-ASSET-MANIFEST.md) e [`frotas/CODEX-SHIP-HANDOFF.md`](frotas/CODEX-SHIP-HANDOFF.md). A disponibilidade real continua sendo determinada pelo catálogo e estado da API.
+
 ## Ordem recomendada de implementação
 
 1. Tokens visuais e shell global.
