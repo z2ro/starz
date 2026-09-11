@@ -5,7 +5,9 @@
     "moduleResolution": "Bundler",
     "lib": ["ES2021", "DOM"],
     "strict": true,
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "jsx": "react-jsx",
+    "types": ["vite/client"]
   },
-  "files": ["frontend/src/main.ts"]
+  "include": ["frontend/src", "vite.config.ts"]
 }

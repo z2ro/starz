@@ -58,10 +58,10 @@ o schema e pode ser carregado; novos testes de balanceamento devem usar partida 
 
 Histórico: o RLock/JSON abaixo foi substituído por transações PostgreSQL em D013.
 
-TypeScript 5.9.3 como dependência de desenvolvimento gera o artefato JS antes mantido
-manualmente. Sem troca de framework, navegação ou estilo. Testes Node usam o artefato
-real para verificar payloads de viagem e mensagens de erro. Um RLock na API protege
-operações locais concorrentes sobre o mesmo JSON; não suporta múltiplos processos.
+TypeScript 5.9.3 com React, Vite e TanStack Query gera o cliente browser a partir de
+`frontend/src/main.tsx`. HashRouter preserva as URLs e React controla o lifecycle do
+Three.js; não há bundle manual ou renderização vanilla concorrente. A persistência usa
+as transações PostgreSQL descritas em D013.
 
 ## D011 — Capacidade sem filas implícitas
 
@@ -112,12 +112,12 @@ bootstrap atual sempre atribua o planeta inicial ao império local.
 local e `run(empire_id, action)` recebe o owner da request. A API ainda passa um
 `default_empire_id` no startup apenas como placeholder sem autenticação.
 
-## D016 — Command center em TypeScript nativo
+## D016 — Command center React/Vite
 
-O frontend permanece TypeScript nativo: o tamanho atual não justifica React, router
-ou biblioteca visual. Rotas hash preservam a view no refresh; um render central usa
-componentes HTML pequenos e estilos reutilizáveis. CSS/SVG tipográfico representam
-planeta, órbitas e mapa sem WebGL ou assets externos.
+O frontend usa React + TypeScript + Vite, com `HashRouter` para preservar as URLs,
+TanStack Query para server state e componentes HTML pequenos com os estilos existentes.
+CSS/SVG tipográfico e o wrapper Three.js representam planeta, órbitas e mapa sem mover
+regras de gameplay para o browser.
 
 O conteúdo comum vem de `/api/catalog`, derivado do YAML. `/api/galaxy` limita o raio
 a 3 e só deriva sistemas da seed; abrir o mapa não materializa nem cria descoberta. A UI sincroniza

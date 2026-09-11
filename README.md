@@ -104,7 +104,7 @@ python scripts/check_frontend.py
 npm run typecheck
 npm run build
 npm test
-node --check frontend/app.js
+npm run build
 ruff check starz scripts tests  # opcional, quando Ruff estiver instalado
 ```
 
@@ -127,7 +127,8 @@ O smoke HTTP exige partida nova, leva alguns minutos, para/reinicia a app durant
 construção/viagem e recria o Compose sem apagar o volume. Deixa a frota em C para inspeção.
 `tests/test_api.py` preserva o contrato HTTP sem banco; `tests/test_postgres.py` cobre
 o adaptador real, rollback, constraints, concorrência e progresso offline.
-O JavaScript publicado é gerado por TypeScript; não edite `frontend/app.js` manualmente.
+O frontend publicado é gerado por Vite a partir de `frontend/src/main.tsx`; não edite
+artefatos dentro de `frontend/dist` manualmente.
 Veja [frontend.md](docs/frontend.md) para views, atualização e princípios visuais.
 
 Nesta etapa população, distritos, energia, construções e stocks são planetários.
