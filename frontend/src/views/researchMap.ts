@@ -5,6 +5,10 @@ export type TechnologyState = 'completed' | 'active' | 'available' | 'locked';
 export type TechnologyEdge = { from: string; to: string };
 export type TechnologyGraph = { depth: Record<string, number>; edges: TechnologyEdge[]; hasCycle: boolean };
 
+export function visibleColumnMap(depths: number[]): Map<number, number> {
+  return new Map(depths.map((depth, index) => [depth, index]));
+}
+
 export function technologyState(catalog: Catalog, state: State, technology: Technology): TechnologyState {
   if (state.research.completed.includes(technology.id)) return 'completed';
   if (state.research.active === technology.id) return 'active';

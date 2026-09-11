@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ResearchView } from '../frontend/src/views/ResearchView';
-import { defaultTechnologyId, technologyGraph, technologyState } from '../frontend/src/views/researchMap';
+import { defaultTechnologyId, technologyGraph, technologyState, visibleColumnMap } from '../frontend/src/views/researchMap';
 import type { ShellContext } from '../frontend/src/components/shell/AppShell';
 import type { Catalog, State, Technology } from '../frontend/src/types/game';
 
@@ -47,6 +47,12 @@ describe('Scientific Systems Map', () => {
     const cycle = technologyGraph([{ ...technologies[0], requires: ['nuclear_propulsion'] }, technologies[1]]);
     expect(cycle.hasCycle).toBe(true);
     expect(cycle.depth.orbital_engineering).toBeGreaterThanOrEqual(0);
+  });
+
+  it('maps non-contiguous visible depths to contiguous SVG columns', () => {
+    expect([...visibleColumnMap([0, 2])]).toEqual([[0, 0], [2, 1]]);
+    expect([...visibleColumnMap([3])]).toEqual([[3, 0]]);
+    expect([...visibleColumnMap([1, 3, 5])]).toEqual([[1, 0], [3, 1], [5, 2]]);
   });
 
   it('shows real external requirement labels and unlocks in the inspector', () => {

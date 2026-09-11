@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { cost, fmt, label, remaining } from '../app/format';
 import { Badge } from '../components/ui/Badge';
@@ -11,7 +11,7 @@ import { Progress } from '../components/ui/Progress';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import type { ShellContext } from '../components/shell/AppShell';
 import type { Technology } from '../types/game';
-import { defaultTechnologyId, technologyGraph, technologyState, type TechnologyState } from './researchMap';
+import { defaultTechnologyId, technologyGraph, technologyState, visibleColumnMap, type TechnologyState } from './researchMap';
 
 type StatusFilter = 'all' | TechnologyState;
 const statusLabel: Record<TechnologyState, string> = { completed: 'CONCLUÍDA', active: 'ATIVA', available: 'DISPONÍVEL', locked: 'BLOQUEADA' };
@@ -25,8 +25,9 @@ export function ResearchView() {
   const [category, setCategory] = useState('all');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [selectedId, setSelectedId] = useState(() => defaultTechnologyId(catalog, state));
-  const selected = catalog.technologies.find(technology => technology.id === selectedId) ?? catalog.technologies.find(technology => technology.id === defaultTechnologyId(catalog, state));
   const visible = catalog.technologies.filter(technology => (category === 'all' || technology.category === category) && (status === 'all' || technologyState(catalog, state, technology) === status));
+  const selected = visible.find(technology => technology.id === selectedId) ?? visible.find(technology => technologyState(catalog, state, technology) === 'active') ?? visible.find(technology => technologyState(catalog, state, technology) === 'available') ?? visible.find(technology => technologyState(catalog, state, technology) === 'completed') ?? visible[0];
+  useEffect(() => { if (selected && selected.id !== selectedId) setSelectedId(selected.id); }, [selectedId, selected?.id]);
   const completed = state.research.completed.length;
 
   if (!catalog.technologies.length) return <div className="research-command"><header className="research-command-header"><div><span className="eyebrow">SCIENCE DIRECTORATE</span><h1>Pesquisa</h1></div></header><EmptyState title="Nenhuma tecnologia catalogada" icon="research">O catálogo atual não contém programas científicos.</EmptyState></div>;
@@ -45,9 +46,10 @@ function TechnologyMap({ catalog, state, technologies, graph, selectedId, onSele
   const visibleIds = new Set(technologies.map(technology => technology.id));
   const edges = graph.edges.filter(edge => visibleIds.has(edge.from) && visibleIds.has(edge.to));
   const columns = [...new Set(technologies.map(technology => graph.depth[technology.id] ?? 0))].sort((a, b) => a - b);
+  const columnByDepth = visibleColumnMap(columns);
   const rows = Math.max(1, ...columns.map(depth => technologies.filter(technology => graph.depth[technology.id] === depth).length));
   return <section className="technology-map-shell" aria-label="Mapa de sistemas científicos"><SectionHeader title="Mapa tecnológico" eyebrow="DEPENDÊNCIAS REAIS" count={technologies.length} />
-    {technologies.length ? <div className="technology-map" style={{ '--graph-columns': columns.length, '--graph-rows': rows } as CSSProperties}><svg className="technology-edges" aria-hidden="true" viewBox={`0 0 ${columns.length * 100} ${rows * 100}`} preserveAspectRatio="none">{edges.map(edge => { const fromDepth = graph.depth[edge.from]; const toDepth = graph.depth[edge.to]; const fromRow = technologies.filter(technology => graph.depth[technology.id] === fromDepth).findIndex(technology => technology.id === edge.from); const toRow = technologies.filter(technology => graph.depth[technology.id] === toDepth).findIndex(technology => technology.id === edge.to); const sourceCompleted = state.research.completed.includes(edge.from); return <line key={`${edge.from}-${edge.to}`} className={sourceCompleted ? 'complete' : ''} x1={fromDepth * 100 + 92} y1={fromRow * 100 + 50} x2={toDepth * 100 + 8} y2={toRow * 100 + 50} />; })}</svg>{columns.map(depth => <div className="technology-column" key={depth}>{technologies.filter(technology => graph.depth[technology.id] === depth).map(technology => <TechnologyNode key={technology.id} technology={technology} state={technologyState(catalog, state, technology)} selected={technology.id === selectedId} activeProgress={state.research.active === technology.id ? progress(technology, state.research.remaining_work) : undefined} onSelect={onSelect} />)}</div>)}</div> : <EmptyState title="Nenhuma tecnologia neste filtro" icon="research">Ajuste categoria ou estado para ver outros programas científicos.</EmptyState>}
+    {technologies.length ? <div className="technology-map" style={{ '--graph-columns': columns.length, '--graph-rows': rows } as CSSProperties}><svg className="technology-edges" aria-hidden="true" viewBox={`0 0 ${columns.length * 100} ${rows * 100}`} preserveAspectRatio="none">{edges.map(edge => { const fromDepth = graph.depth[edge.from]; const toDepth = graph.depth[edge.to]; const fromRow = technologies.filter(technology => graph.depth[technology.id] === fromDepth).findIndex(technology => technology.id === edge.from); const toRow = technologies.filter(technology => graph.depth[technology.id] === toDepth).findIndex(technology => technology.id === edge.to); const sourceCompleted = state.research.completed.includes(edge.from); return <line key={`${edge.from}-${edge.to}`} className={sourceCompleted ? 'complete' : ''} x1={(columnByDepth.get(fromDepth) ?? 0) * 100 + 92} y1={fromRow * 100 + 50} x2={(columnByDepth.get(toDepth) ?? 0) * 100 + 8} y2={toRow * 100 + 50} />; })}</svg>{columns.map(depth => <div className="technology-column" key={depth}>{technologies.filter(technology => graph.depth[technology.id] === depth).map(technology => <TechnologyNode key={technology.id} technology={technology} state={technologyState(catalog, state, technology)} selected={technology.id === selectedId} activeProgress={state.research.active === technology.id ? progress(technology, state.research.remaining_work) : undefined} onSelect={onSelect} />)}</div>)}</div> : <EmptyState title="Nenhuma tecnologia neste filtro" icon="research">Ajuste categoria ou estado para ver outros programas científicos.</EmptyState>}
   </section>;
 }
 
