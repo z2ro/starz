@@ -12,14 +12,14 @@ afterEach(() => cleanup());
 describe('React frontend parity', () => {
   it('mounts the app, renders HUD and exposes all routes', async () => {
     render(<App />);
-    await screen.findByText('CENTRO DE COMANDO // HOMEWORLD');
+    await screen.findByText('COMANDO IMPERIAL');
     expect(screen.getAllByText('Ferrita').length).toBeGreaterThan(0);
     for (const route of ['Visão geral', 'Planeta', 'Economia', 'Pesquisa', 'Estaleiro', 'Frotas', 'Galáxia']) expect(screen.getAllByText(route).length).toBeGreaterThan(0);
   });
 
   it('navigates to Planet and keeps image mode by default', async () => {
     render(<App />);
-    await screen.findByText('CENTRO DE COMANDO // HOMEWORLD');
+    await screen.findByText('COMANDO IMPERIAL');
     fireEvent.click(screen.getByText('Planeta'));
     await waitFor(() => expect(screen.getByText('COMANDO PLANETÁRIO')).toBeInTheDocument());
     expect(screen.getByRole('link', { name: 'Planeta' })).toHaveAttribute('aria-current', 'page');
@@ -29,7 +29,7 @@ describe('React frontend parity', () => {
 
   it('opens notification and settings icon actions with accessible labels', async () => {
     render(<App />);
-    await screen.findByText('CENTRO DE COMANDO // HOMEWORLD');
+    await screen.findByText('COMANDO IMPERIAL');
     fireEvent.click(screen.getByLabelText('Abrir registros'));
     expect(screen.getAllByText('REGISTRO RECENTE')).toHaveLength(2);
     fireEvent.click(screen.getByLabelText('Abrir configurações'));
@@ -38,7 +38,7 @@ describe('React frontend parity', () => {
 
   it('renders the Galaxy unknown state without physical details', async () => {
     render(<App />);
-    await screen.findByText('CENTRO DE COMANDO // HOMEWORLD');
+    await screen.findByText('COMANDO IMPERIAL');
     fireEvent.click(screen.getByText('Galáxia'));
     await screen.findByRole('button', { name: /Sistema desconhecido, coordenadas 1:0/ });
     fireEvent.click(screen.getByRole('button', { name: /Sistema desconhecido, coordenadas 1:0/ }));
