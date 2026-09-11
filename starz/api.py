@@ -35,7 +35,7 @@ async def lifespan(app):
 
 
 app = FastAPI(title="StarZ", version="0.1.0", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory=ROOT / "frontend"), name="static")
+app.mount("/static", StaticFiles(directory=ROOT / "frontend" / "dist", check_dir=False), name="static")
 
 
 class BuildRequest(BaseModel):
@@ -87,7 +87,7 @@ def health():
 
 @app.get("/")
 def index():
-    return FileResponse(ROOT / "frontend" / "index.html")
+    return FileResponse(ROOT / "frontend" / "dist" / "index.html")
 
 
 @app.get("/api/state")

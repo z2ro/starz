@@ -1,8 +1,7 @@
 FROM node:22-bookworm-slim AS frontend
 WORKDIR /build
-COPY package.json package-lock.json tsconfig.json ./
+COPY package.json package-lock.json tsconfig.json vite.config.ts ./
 RUN npm ci --ignore-scripts
-COPY scripts/format_frontend.cjs ./scripts/format_frontend.cjs
 COPY frontend ./frontend
 RUN npm run build
 

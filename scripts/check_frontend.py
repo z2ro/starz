@@ -2,13 +2,12 @@ from pathlib import Path
 
 
 root = Path(__file__).parents[1] / "frontend"
-source = root / "src/main.ts"
-artifact = root / "app.js"
-html = root / "index.html"
+source = root / "src/main.tsx"
+artifact = root / "dist"
+html = artifact / "index.html"
 for path in (source, artifact, html, root / "styles.css"):
     assert path.exists(), path
-assert "type State" in source.read_text()
-assert "/static/app.js" in html.read_text()
-assert "request<State>('/api/state')" in source.read_text()
-assert "location.hash = `#/${target.dataset.goto}`" in source.read_text()
-print("frontend source and browser artifact present")
+assert "createRoot" in source.read_text()
+assert "/static/" in html.read_text()
+assert any(path.suffix in {".js", ".css"} for path in artifact.rglob("*"))
+print("frontend React source and Vite artifact present")

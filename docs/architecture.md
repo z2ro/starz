@@ -13,7 +13,7 @@ FastAPI (api.py)
       -> effects.py (handler de unlock e requirements)
     -> db/models.py (SQLAlchemy 2 / PostgreSQL)
 alembic (schema) / bootstrap (dados iniciais)
-frontend/ (SPA TypeScript sem framework + CSS + artefato browser gerado)
+frontend/ (SPA React + TypeScript + Vite + CSS)
 ```
 
 Na apresentação 3D, `PlanetRenderer` permanece um adaptador pequeno sobre Three.js.
@@ -33,7 +33,7 @@ paletas, posições, value noise/FBM e decisões visuais puras. O hero 3D fica n
 overlays HTML mostram filas e o inspector HTML mostra dados físicos, desenvolvimento,
 órbita e produção. O renderer mantém um canvas host enquanto a rota Planet está aberta,
 atualiza a cena sem criar outro WebGLRenderer e faz `dispose()` ao sair. O bundle é
-gerado localmente por esbuild; não há CDN nem assets 3D externos. Textura de superfície,
+gerado localmente por Vite; não há CDN nem assets 3D externos. Textura de superfície,
 bump, atmosfera Fresnel, night lights, estação, naves e órbitas continuam sendo apenas
 apresentação; não existe física orbital, terrain simulation ou gameplay no WebGL.
 
@@ -137,8 +137,8 @@ expõem somente navegação; `SURVEYED` deriva os detalhes da seed. O centro só
 o homeworld ou a posição de uma frota `ARRIVED`. O frontend envia missão e seleção
 explícitas e mostra erros da API.
 
-O cliente usa rotas hash e re-renderização simples. Carrega state, catálogo e
-vizinhança em paralelo; depois sincroniza `/api/state` a cada 15 segundos somente
-quando há atividade temporal e a página está visível. Countdowns são visuais: o
-backend continua avançando o universo apenas em requests. Detalhes em
+O cliente usa React Router `HashRouter` e TanStack Query. Queries de state, catálogo e
+galáxia possuem chaves explícitas; mutations invalidam o state afetado. O state sincroniza
+a cada 15 segundos enquanto há atividade temporal e a página está visível. Countdowns são
+visuais: o backend continua avançando o universo apenas em requests. Detalhes em
 [frontend.md](frontend.md).

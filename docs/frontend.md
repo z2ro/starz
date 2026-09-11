@@ -8,7 +8,7 @@ viável, uma fleet `ARRIVED` e um regime produz a ordem `COLONIZE` explícita.
 
 ## Estrutura da experiência
 
-StarZ usa uma SPA pequena em TypeScript nativo. O shell persistente contém HUD global,
+StarZ usa uma SPA pequena em React + TypeScript. O shell persistente contém HUD global,
 navegação lateral, conteúdo principal e contexto de filas/notices. Rotas hash mantêm
 a view no refresh:
 
@@ -36,7 +36,7 @@ estado real, sem criar uma simulação 2.5D neste slice. O PNG atual tem 2.566.4
 nenhuma ferramenta local de conversão WebP foi encontrada, portanto o asset não foi
 duplicado em WebP.
 O `PlanetRenderer` Three.js é somente a camada de apresentação. A cena recebe um
-`PlanetVisualState` pronto do `main.ts`; não chama API e não decide regras do jogo. A
+`PlanetVisualState` pronto do wrapper React; não chama API e não decide regras do jogo. A
 superfície é uma CanvasTexture equiretangular determinística, baseada em
 `system + coordinates + planet_index`; água altera a proporção oceânica e temperatura
 altera a paleta. Atmosfera, iluminação estelar, districts agregados, luzes noturnas
@@ -121,6 +121,6 @@ polling por frame, scheduler nem tick server-side.
 
 ## Build
 
-`frontend/src/main.ts` é a fonte. `npm run build` executa typecheck e gera o bundle
-local de Three.js em `frontend/app.js`; não edite o artefato manualmente. `npm test`
-executa testes DOM leves e testes puros do visual sem dependência de navegador/WebGL.
+`frontend/src/main.tsx` é a entrada. `npm run build` executa typecheck e gera
+`frontend/dist` com Vite. `npm test` executa testes React em jsdom e testes puros do
+visual/asset sem dependência de WebGL.

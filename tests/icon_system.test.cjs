@@ -5,7 +5,8 @@ const path = require('node:path');
 
 const root = process.cwd();
 const registrySource = fs.readFileSync(path.join(root, 'frontend/src/visual/IconRegistry.ts'), 'utf8');
-const mainSource = fs.readFileSync(path.join(root, 'frontend/src/main.ts'), 'utf8');
+const sidebarSource = fs.readFileSync(path.join(root, 'frontend/src/components/shell/Sidebar.tsx'), 'utf8');
+const hudSource = fs.readFileSync(path.join(root, 'frontend/src/components/shell/TopHud.tsx'), 'utf8');
 const stylesSource = fs.readFileSync(path.join(root, 'frontend/styles.css'), 'utf8');
 const iconBlock = registrySource.match(/export const ICONS = \{([\s\S]*?)\} as const;/)?.[1] ?? '';
 const registryEntries = Object.fromEntries([...iconBlock.matchAll(/^\s+(\w+): '([^']+)'/gm)].map(match => [match[1], match[2]]));
@@ -34,16 +35,14 @@ test('registry keeps semantic resource mapping tied to catalog IDs', () => {
 
 test('sidebar, HUD and action controls use the registry helper', () => {
   for (const name of ['overview', 'planet', 'economy', 'research', 'shipyard', 'fleets', 'galaxy']) {
-    assert.match(mainSource, new RegExp(`icon: '${name}'`));
+    assert.match(sidebarSource, new RegExp(`icon: '${name}'`));
   }
   for (const name of ['energy', 'population', 'research', 'fleets', 'system', 'notifications', 'settings']) {
-    assert.match(mainSource, new RegExp(`icon\\('${name}'`));
+    assert.match(hudSource, new RegExp(`name=\"${name}\"`));
   }
-  assert.match(mainSource, /resourceIcon\(item\.id\)/);
-  assert.match(mainSource, /data-action="notice"/);
-  assert.match(mainSource, /data-action="settings"/);
-  assert.match(mainSource, /aria-label="Abrir registros"/);
-  assert.match(mainSource, /aria-label="Abrir configurações"/);
+  assert.match(hudSource, /resourceIcon\(item\.id\)/);
+  assert.match(hudSource, /aria-label="Abrir registros"/);
+  assert.match(hudSource, /aria-label="Abrir configurações"/);
 });
 
 test('CSS preserves currentColor mask behavior and state styling', () => {
