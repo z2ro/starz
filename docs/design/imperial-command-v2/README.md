@@ -11,7 +11,9 @@ Este diretório é um handoff de design. Ele não substitui a implementação ex
 - `ASSET-MANIFEST.md` — composição do hero, camadas e requisitos de assets.
 - `CODEX-HANDOFF.md` — ordem de implementação, mapeamento de dados e critérios de aceite.
 - `assets/` — referências visuais aprovadas e sheets de exploração.
+- [`frotas/`](frotas/README.md) — pranchas navais, fichas por nave, escala da frota e guias de capital ships.
 
 ## Fonte aprovada
 
 **Direction 01 — Imperial Command**: comando imperial, espaço profundo em navy, acentos ice-cyan, inspector operacional e operations deck contínuo.
+
