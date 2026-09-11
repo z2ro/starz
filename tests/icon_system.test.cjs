@@ -14,7 +14,7 @@ const registryEntries = Object.fromEntries([...iconBlock.matchAll(/^\s+(\w+): '(
 test('all approved Stellar Atlas SVGs exist and are safe monochrome assets', () => {
   assert.equal(Object.keys(registryEntries).length, 17);
   for (const [name, url] of Object.entries(registryEntries)) {
-    const file = path.join(root, 'frontend', url.replace(/^\/static\//, ''));
+    const file = path.join(root, 'frontend', 'assets', url.replace(/^\/static\//, ''));
     assert.ok(fs.existsSync(file), `${name} points to a missing asset: ${file}`);
     const source = fs.readFileSync(file, 'utf8');
     assert.match(source, /viewBox="0 0 24 24"/);
