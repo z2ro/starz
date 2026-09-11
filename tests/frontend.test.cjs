@@ -132,7 +132,8 @@ test('planet selector and colonization order use explicit targets', async () => 
   const b = await browser();
   b.location.hash = '#/planet';
   vm.runInContext('render()', b.context);
-  assert.match(b.app.innerHTML, /PLANETA ATIVO/);
+  assert.doesNotMatch(b.app.innerHTML, /class="planet-selector"/);
+  assert.match(b.app.innerHTML, /<label class="planet-picker"/);
   assert.match(b.app.innerHTML, /planet-3d-stage/);
   assert.match(b.app.innerHTML, /planet-sphere/);
   b.location.hash = '#/galaxy';
@@ -165,6 +166,62 @@ test('Planet View is a command-center composition with real state overlays', asy
   assert.match(b.app.innerHTML, /PRODUÇÃO DE RECURSOS/);
   assert.match(b.app.innerHTML, /Ferrita do catálogo/);
   assert.match(b.app.innerHTML, /planet-3d-stage/);
+});
+
+test('Planet View hardening keeps semantics tied to real state', async () => {
+  const b = await browser();
+  b.location.hash = '#/planet';
+  vm.runInContext('render()', b.context);
+  const html = b.app.innerHTML;
+  assert.doesNotMatch(html, /class="planet-selector"/);
+  assert.match(html, /<label class="planet-picker"/);
+  assert.match(html, /class="metric energy-metric"[^>]+data-energy-coverage="1"/);
+  assert.match(html, /<span class="metric-label">ENERGIA<\/span>[\s\S]*24 \/ 10[\s\S]*\+14 margem/);
+  assert.match(html, /data-indicator="energy-coverage"[\s\S]*Cobertura de Energia[\s\S]*24 \/ 10[\s\S]*data-meter="energy-coverage"/);
+  assert.match(html, /Produção Nominal de Recursos/);
+  assert.match(html, /Antes de limitações operacionais\./);
+  assert.match(html, /station-hotspot/);
+  assert.match(html, /fleet-hotspot/);
+  assert.doesNotMatch(html, /hero-status|>ONLINE</);
+  assert.doesNotMatch(html, />LIVE</);
+  assert.match(html, /<img class="hero-image" src="\/static\/assets\/planet-command-hero\.png" alt=""/);
+});
+
+test('Planet View slot indicators render exact capacity and usage', async () => {
+  const b = await browser();
+  b.location.hash = '#/planet';
+  vm.runInContext("current.capacities.construction_slots = 2; current.capacities.construction_slots_available = 1; current.capacities.shipyard_slots = 3; current.capacities.shipyard_slots_available = 2; render()", b.context);
+  const construction = b.app.innerHTML.match(/data-indicator="construction-slots"[\s\S]*?data-block-count="2">([\s\S]*?)<\/div>/)?.[1] ?? '';
+  const shipyard = b.app.innerHTML.match(/data-indicator="shipyard-slots"[\s\S]*?data-block-count="3">([\s\S]*?)<\/div>/)?.[1] ?? '';
+  assert.equal((construction.match(/<span class="(?:filled)?"><\/span>/g) ?? []).length, 2);
+  assert.equal((construction.match(/<span class="filled"><\/span>/g) ?? []).length, 1);
+  assert.equal((shipyard.match(/<span class="(?:filled)?"><\/span>/g) ?? []).length, 3);
+  assert.equal((shipyard.match(/<span class="filled"><\/span>/g) ?? []).length, 1);
+  assert.match(b.app.innerHTML, /Capacidade Industrial[\s\S]*dev-value-only/);
+});
+
+test('Planet View hotspots and visual mode follow state and query parameters', async () => {
+  const b = await browser();
+  b.location.hash = '#/planet';
+  vm.runInContext("current.capacities.shipyard_slots = 0; current.fleets[0].status = 'TRANSIT'; render()", b.context);
+  assert.doesNotMatch(b.app.innerHTML, /station-hotspot/);
+  assert.doesNotMatch(b.app.innerHTML, /fleet-hotspot/);
+  assert.match(b.app.innerHTML, /data-visual-mode="image"/);
+  b.location.search = '?planet_visual=3d';
+  vm.runInContext('render()', b.context);
+  assert.match(b.app.innerHTML, /data-visual-mode="3d"/);
+});
+
+test('Planet View fallback and artwork registry are explicit in source', () => {
+  const main = readFileSync('frontend/src/main.ts', 'utf8');
+  const artwork = readFileSync('frontend/src/visual/PlanetArtworkRegistry.ts', 'utf8');
+  assert.match(artwork, /PLANET_ARTWORK/);
+  assert.match(artwork, /temperate_default/);
+  assert.match(main, /planetArtworkFor\(p\)/);
+  assert.match(main, /image\.addEventListener\('error'/);
+  assert.match(main, /stage\.dataset\.imageFailed = 'true'/);
+  assert.match(main, /syncPlanetRenderer\('planet'\)/);
+  assert.doesNotMatch(main.slice(main.indexOf('function topHud'), main.indexOf('function render')), /new Date\(|>LIVE</);
 });
 
 test('Planet renderer keeps update/dispose lifecycle and clears transient station state', () => {
