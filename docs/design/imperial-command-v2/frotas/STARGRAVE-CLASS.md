@@ -4,22 +4,24 @@
 
 Rodada: V3 — supercapital. Direção: Imperial Command.
 
-![Prancha conceitual Stargrave-class](assets/stargrave-class-concept.png)
+![Prancha conceitual Stargrave-class — novo asset Stellar Siege Titan](assets/stargrave-class-concept.png)
 
 ## Função
 
-Supercapital estratégico, centro da frota de endgame e plataforma extrema de comando e projeção.
+Titan de cerco estratégico, centro da frota de endgame e plataforma extrema de comando e projeção. O novo asset o identifica como **Stellar Siege Titan**: uma arma de escala interestelar, construída para projetar poder além de uma única nação.
 
 ## Silhueta e arquitetura
 
-Espinha central massiva, volumes internos profundos, camadas estruturais e módulos industriais gigantescos com docagem e serviço.
+Núcleo estelar móvel contido por anéis de blindagem e contenção, espinha central de armas e um emissor primário de alta energia. A arquitetura combina fortaleza de megastruturas, volumes internos profundos, camadas estruturais e módulos industriais gigantescos com docagem e serviço.
 
 Stargrave é a classe, não um nome individual obrigatório. A prancha individual define o casco longitudinal modular; os quadros coletivos exibem uma versão mais vertical e não substituem esta referência.
 
 ## Regiões funcionais
 
 - Seção de comando e espinha central.
-- Blocos de armas e módulos de blindagem.
+- Núcleo estelar móvel e anéis de contenção.
+- Emissor primário / arma de extinção planetária.
+- Blocos de armas, blindagem de fortaleza e suportes de titânio.
 - Estruturas de docagem, propulsão e estruturas secundárias.
 
 ## Materiais e identificação
