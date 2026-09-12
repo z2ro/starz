@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ShipyardView } from '../frontend/src/views/ShipyardView';
+import { SHIP_DESIGNS } from '../frontend/src/visual/ShipArtworkRegistry';
 import type { ShellContext } from '../frontend/src/components/shell/AppShell';
 import type { Catalog, State } from '../frontend/src/types/game';
 
@@ -13,7 +14,7 @@ const catalog: Catalog = {
   districts: [{ id: 'orbital_shipyard', name: 'Estaleiro orbital', category: 'orbital', description: '', cost: {}, requires: [], duration: 1, workforce: 0, energy_generation: 0, energy_consumption: 0, production: {}, processing: {}, research_rate: 0, population_capacity: 0, industrial_capacity: 0, construction_slots: 0, shipyard_slots: 1 }],
   technologies: [],
   ships: [
-    { id: 'horizon', name: 'Horizon', category: 'naval', description: 'Corveta de exploração.', cost: { refined_alloy: 4 }, requires: [], classification: 'corvette', role: 'exploration', mass: 10, crew: 3, duration: 30, compatible_propulsion: ['chemical_drive'] },
+    { id: 'scout_hull', name: 'Horizon', category: 'naval', description: 'Corveta de exploração.', cost: { refined_alloy: 4 }, requires: [], classification: 'corvette', role: 'exploration', mass: 10, crew: 3, duration: 30, compatible_propulsion: ['chemical_drive'] },
     { id: 'wayfarer', name: 'Wayfarer', category: 'naval', description: 'Modelo de teste.', cost: { refined_alloy: 4 }, requires: [], classification: 'freighter', role: 'logistics', mass: 20, crew: 2, duration: 60, compatible_propulsion: ['nuclear_drive'] },
   ],
   propulsion: [
@@ -49,7 +50,7 @@ describe('Ship Command', () => {
     expect(screen.getByText('1 / 2 livres')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Selecionar nave Horizon' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Selecionar nave Wayfarer' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Apresentação técnica da nave')).toHaveTextContent('Horizon');
+    expect(screen.getByLabelText('Apresentação visual da nave')).toHaveTextContent('Horizon');
   });
 
   it('keeps the propulsion-to-fuel compatibility chain valid when the hull changes', () => {
@@ -59,20 +60,15 @@ describe('Ship Command', () => {
     expect(within(inspector).getByText('Combustível iônico')).toBeInTheDocument();
     expect(within(inspector).queryByText('Propulsão nuclear')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Selecionar nave Wayfarer' }));
-    expect(within(screen.getByLabelText('Inspector de nave')).getByText('Propulsão nuclear')).toBeInTheDocument();
-    expect(within(screen.getByLabelText('Inspector de nave')).getByText('Combustível de fusão')).toBeInTheDocument();
-    expect(within(screen.getByLabelText('Inspector de nave')).queryByText('Combustível iônico')).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText('Inspector de nave')).getByText('CONCEITO')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Inspector de nave')).queryByText('Construir nave')).not.toBeInTheDocument();
   });
 
-  it('only exposes useful classification filters and keeps filtered selection deterministic', () => {
-    renderShipyard(state, { ...catalog, ships: [catalog.ships[0]] });
-    expect(screen.queryByRole('group', { name: 'Classificação naval' })).not.toBeInTheDocument();
-    cleanup();
-    const second = { ...catalog.ships[0], id: 'wayfarer', name: 'Wayfarer', classification: 'freighter' };
-    renderShipyard(state, { ...catalog, ships: [catalog.ships[0], second] });
+  it('exposes design classifications as real filters and keeps filtered selection deterministic', () => {
+    renderShipyard();
     const filters = screen.getByRole('group', { name: 'Classificação naval' });
-    expect(within(filters).getByRole('button', { name: 'corvette' })).toBeInTheDocument();
-    fireEvent.click(within(filters).getByRole('button', { name: 'freighter' }));
+    expect(within(filters).getByRole('button', { name: 'Corvette' })).toBeInTheDocument();
+    fireEvent.click(within(filters).getByRole('button', { name: 'Freighter' }));
     expect(screen.getByRole('button', { name: 'Selecionar nave Wayfarer' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByRole('button', { name: 'Selecionar nave Horizon' })).not.toBeInTheDocument();
   });
@@ -80,7 +76,7 @@ describe('Ship Command', () => {
   it('sends the exact domain payload with the active planet and selected configuration', () => {
     const { execute } = renderShipyard();
     fireEvent.click(screen.getByRole('button', { name: 'Construir nave' }));
-    expect(execute).toHaveBeenCalledWith('build-ship', { planet_id: 'home', hull_id: 'horizon', propulsion_id: 'chemical_drive', fuel_id: 'ion_fuel' });
+    expect(execute).toHaveBeenCalledWith('build-ship', { planet_id: 'home', hull_id: 'scout_hull', propulsion_id: 'chemical_drive', fuel_id: 'ion_fuel' });
   });
 
   it('blocks construction when yard capacity, cost or crew is unavailable', () => {
@@ -93,7 +89,7 @@ describe('Ship Command', () => {
 
   it('shows only active construction for the selected planet and has no fake queue controls', () => {
     const now = Date.now() / 1000;
-    renderShipyard({ ...state, ships: [{ id: 'local-build', hull_id: 'horizon', propulsion_id: 'chemical_drive', fuel_id: 'ion_fuel', crew: 3, mass: 10, ready_at: now + 30, origin_planet_id: 'home' }, { id: 'remote-build', hull_id: 'wayfarer', propulsion_id: 'nuclear_drive', fuel_id: 'fusion_fuel', crew: 2, mass: 20, ready_at: now + 30, origin_planet_id: 'colony' }] });
+    renderShipyard({ ...state, ships: [{ id: 'local-build', hull_id: 'scout_hull', propulsion_id: 'chemical_drive', fuel_id: 'ion_fuel', crew: 3, mass: 10, ready_at: now + 30, origin_planet_id: 'home' }, { id: 'remote-build', hull_id: 'wayfarer', propulsion_id: 'nuclear_drive', fuel_id: 'fusion_fuel', crew: 2, mass: 20, ready_at: now + 30, origin_planet_id: 'colony' }] });
     const operations = screen.getByLabelText('Operações do estaleiro');
     expect(operations).toHaveTextContent('Horizon');
     expect(operations).not.toHaveTextContent('Wayfarer');
@@ -104,5 +100,22 @@ describe('Ship Command', () => {
   it('renders a safe empty catalog state', () => {
     renderShipyard(state, { ...catalog, ships: [] });
     expect(screen.getByText('Nenhum modelo naval disponível')).toBeInTheDocument();
+  });
+
+  it('renders all approved classes as visual concepts without exposing strike craft as hulls', () => {
+    expect(SHIP_DESIGNS).toHaveLength(11);
+    renderShipyard();
+    for (const name of ['Horizon', 'Wayfarer', 'Vanguard', 'Sentinel', 'Odyssey', 'Aegis', 'Spearhead', 'Leviathan', 'Atlas', 'Dominion', 'Stargrave-class']) expect(screen.getByRole('button', { name: `Selecionar nave ${name}` })).toBeInTheDocument();
+    for (const name of ['Interceptor', 'Fighter', 'Bomber']) expect(screen.queryByRole('button', { name: `Selecionar nave ${name}` })).not.toBeInTheDocument();
+  });
+
+  it('shows concept artwork without fake gameplay fields and treats Stargrave as a titan', () => {
+    renderShipyard();
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar nave Stargrave-class' }));
+    expect(screen.getByLabelText('Apresentação visual da nave')).toHaveTextContent('CONCEITO');
+    expect(screen.getByLabelText('Inspector de nave')).toHaveTextContent('Stellar Siege Titan');
+    expect(screen.getByLabelText('Inspector de nave')).not.toHaveTextContent('Construir nave');
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar nave Atlas' }));
+    expect(screen.getByLabelText('Inspector de nave')).toHaveTextContent('Interceptor · Fighter · Bomber');
   });
 });

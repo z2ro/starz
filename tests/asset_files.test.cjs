@@ -9,6 +9,16 @@ const files = [
   ['orbital_shipyard.glb', [2, 1, 1]],
 ];
 
+const shipArt = ['horizon', 'wayfarer', 'vanguard', 'sentinel', 'odyssey', 'aegis', 'spearhead', 'leviathan', 'atlas', 'dominion', 'stargrave-class'];
+
+test('the eleven approved naval design artworks are available at runtime', () => {
+  for (const id of shipArt) {
+    const path = `frontend/assets/ships/${id}.png`;
+    const bytes = fs.statSync(path).size;
+    assert.ok(bytes > 100_000, `${id} artwork is unexpectedly small`);
+  }
+});
+
 test('authored StarZ GLBs exist, are non-empty and parse through GLTFLoader', async () => {
   for (const [name, minimumSize] of files) {
     const path = `frontend/assets/models/${name}`;
