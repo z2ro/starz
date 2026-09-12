@@ -64,6 +64,19 @@ describe('Ship Command', () => {
     expect(within(screen.getByLabelText('Inspector de nave')).queryByText('Combustível iônico')).not.toBeInTheDocument();
   });
 
+  it('only exposes useful classification filters and keeps filtered selection deterministic', () => {
+    renderShipyard(state, { ...catalog, ships: [catalog.ships[0]] });
+    expect(screen.queryByRole('group', { name: 'Classificação naval' })).not.toBeInTheDocument();
+    cleanup();
+    const second = { ...catalog.ships[0], id: 'wayfarer', name: 'Wayfarer', classification: 'freighter' };
+    renderShipyard(state, { ...catalog, ships: [catalog.ships[0], second] });
+    const filters = screen.getByRole('group', { name: 'Classificação naval' });
+    expect(within(filters).getByRole('button', { name: 'corvette' })).toBeInTheDocument();
+    fireEvent.click(within(filters).getByRole('button', { name: 'freighter' }));
+    expect(screen.getByRole('button', { name: 'Selecionar nave Wayfarer' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: 'Selecionar nave Horizon' })).not.toBeInTheDocument();
+  });
+
   it('sends the exact domain payload with the active planet and selected configuration', () => {
     const { execute } = renderShipyard();
     fireEvent.click(screen.getByRole('button', { name: 'Construir nave' }));

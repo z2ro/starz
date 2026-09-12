@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { cost, duration, fmt, hullRole, label, meetsRequirements, remaining } from '../app/format';
 import { Badge } from '../components/ui/Badge';
@@ -66,7 +66,10 @@ function ShipyardHeader({ state }: { state: ShellContext['state'] }) {
 
 function ShipCatalog({ catalog, state, selectedId, onSelect }: { catalog: ShellContext['catalog']; state: ShellContext['state']; selectedId?: string; onSelect: (id: string) => void }) {
   const classes = useMemo(() => [...new Set(catalog.ships.map(ship => ship.classification))], [catalog.ships]);
-  return <section className="ship-catalog" aria-label="Catálogo de naves"><SectionHeader title="Modelos navais" eyebrow="CATÁLOGO ATUAL" count={catalog.ships.length} /><div className="ship-catalog-filters"><span>TODOS</span>{classes.map(item => <span key={item}>{item}</span>)}</div><div className="ship-list">{catalog.ships.map(hull => { const available = meetsRequirements(catalog, state, hull); return <button type="button" className={`ship-row ${hull.id === selectedId ? 'selected' : ''} ${available ? '' : 'locked'}`} aria-pressed={hull.id === selectedId} aria-label={`Selecionar nave ${hull.name}`} key={hull.id} onClick={() => onSelect(hull.id)}><Icon name="fleets" className="ui-icon" /><span><strong>{hull.name}</strong><small>{hullRole(hull)}</small></span><em>{available ? 'AVAILABLE' : 'LOCKED'}</em></button>; })}</div></section>;
+  const [classification, setClassification] = useState('all');
+  const visibleShips = classification === 'all' ? catalog.ships : catalog.ships.filter(ship => ship.classification === classification);
+  useEffect(() => { if (visibleShips.length && !visibleShips.some(ship => ship.id === selectedId)) onSelect(visibleShips[0].id); }, [onSelect, selectedId, visibleShips]);
+  return <section className="ship-catalog" aria-label="Catálogo de naves"><SectionHeader title="Modelos navais" eyebrow="CATÁLOGO ATUAL" count={visibleShips.length} />{classes.length > 1 && <div className="ship-catalog-filters" role="group" aria-label="Classificação naval"><button type="button" aria-pressed={classification === 'all'} className={classification === 'all' ? 'active' : ''} onClick={() => setClassification('all')}>TODOS</button>{classes.map(item => <button type="button" aria-pressed={classification === item} className={classification === item ? 'active' : ''} key={item} onClick={() => setClassification(item)}>{item}</button>)}</div>}<div className="ship-list">{visibleShips.map(hull => { const available = meetsRequirements(catalog, state, hull); return <button type="button" className={`ship-row ${hull.id === selectedId ? 'selected' : ''} ${available ? '' : 'locked'}`} aria-pressed={hull.id === selectedId} aria-label={`Selecionar nave ${hull.name}`} key={hull.id} onClick={() => onSelect(hull.id)}><Icon name="fleets" className="ui-icon" /><span><strong>{hull.name}</strong><small>{hullRole(hull)}</small></span><em>{available ? 'DISPONÍVEL' : 'BLOQUEADO'}</em></button>; })}</div></section>;
 }
 
 function ShipPresentation({ hull, propulsion, fuel }: { hull?: Hull; propulsion?: Propulsion; fuel?: Fuel }) {
