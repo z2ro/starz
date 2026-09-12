@@ -8,7 +8,7 @@ export type TravelMode = Content & { travel_time_modifier: number; fuel_modifier
 export type Catalog = { resources: Content[]; districts: District[]; technologies: Technology[]; ships: Hull[]; propulsion: Propulsion[]; fuels: Fuel[]; travel_modes: TravelMode[] };
 export type Planet = { name: string; mass: number; radius: number; gravity: number; orbital_distance: number; temperature: number; atmosphere: string; radiation: number; magnetic_field: number; water: number; geological_activity: number; mineral_profile: Record<string, number>; usable_surface: number };
 export type Fleet = { id: string; name: string; status: 'ARRIVED' | 'TRANSIT'; mission: 'MOVE' | 'SURVEY' | 'COLONIZE'; target_planet_index?: number | null; x: number; y: number; destination_x: number; destination_y: number; ship_ids: string[]; eta: number; propulsion: string; mode: string; fuel_cost: number; departure_at: number; arrival_at: number };
-export type Ship = { id: string; hull_id: string; propulsion_id: string; fuel_id: string; crew: number; mass: number; ready_at: number };
+export type Ship = { id: string; hull_id: string; propulsion_id: string; fuel_id: string; crew: number; mass: number; ready_at: number; origin_planet_id?: string | null; system_x?: number | null; system_y?: number | null };
 export type State = {
   system: { name: string; x: number; y: number; star: { stellar_class: string; mass: number; luminosity: number; age: number; activity: number }; planet: Planet };
   stocks: Record<string, number>;

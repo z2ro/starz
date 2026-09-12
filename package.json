@@ -4,7 +4,7 @@
     "typecheck": "tsc --noEmit",
     "dev": "vite --config vite.config.ts",
     "build": "npm run typecheck && vite build --config vite.config.ts",
-    "test": "vitest run --config vitest.config.ts && node tests/planet_visual.test.cjs && node tests/asset_registry.test.cjs && node tests/asset_files.test.cjs && node tests/icon_system.test.cjs"
+    "test": "vitest run --config vitest.config.ts && node tests/planet_visual.test.cjs && node tests/asset_registry.test.cjs && node tests/asset_files.test.cjs && node tests/ship_runtime_assets.test.cjs && node tests/icon_system.test.cjs"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
@@ -28,3 +28,4 @@
     "three": "^0.185.1"
   }
 }
+
