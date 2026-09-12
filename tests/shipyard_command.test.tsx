@@ -101,7 +101,7 @@ describe('Ship Command', () => {
     renderShipyard(state, { ...catalog, ships: [] });
     expect(screen.getByRole('button', { name: 'Selecionar nave Horizon' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Selecionar nave Stargrave-class' })).toBeInTheDocument();
-    expect(screen.getByText('CONCEITO')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Inspector de nave')).getByText('CONCEITO')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Construir nave' })).not.toBeInTheDocument();
   });
 
