@@ -97,9 +97,12 @@ describe('Ship Command', () => {
     expect(operations).not.toHaveTextContent('Cancelar');
   });
 
-  it('renders a safe empty catalog state', () => {
+  it('keeps the visual design catalog available when the gameplay catalog is empty', () => {
     renderShipyard(state, { ...catalog, ships: [] });
-    expect(screen.getByText('Nenhum modelo naval disponível')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Selecionar nave Horizon' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Selecionar nave Stargrave-class' })).toBeInTheDocument();
+    expect(screen.getByText('CONCEITO')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Construir nave' })).not.toBeInTheDocument();
   });
 
   it('renders all approved classes as visual concepts without exposing strike craft as hulls', () => {
@@ -118,4 +121,15 @@ describe('Ship Command', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Selecionar nave Atlas' }));
     expect(screen.getByLabelText('Inspector de nave')).toHaveTextContent('Interceptor · Fighter · Bomber');
   });
+
+  it('swaps the selected runtime presentation and falls back to the technical schematic on load failure', () => {
+    renderShipyard();
+    expect(screen.getByRole('img', { name: 'Nave Horizon' })).toHaveAttribute('src', '/static/ships/presentation/horizon.webp');
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar nave Wayfarer' }));
+    const presentation = screen.getByRole('img', { name: 'Nave Wayfarer' });
+    expect(presentation).toHaveAttribute('src', '/static/ships/presentation/wayfarer.webp');
+    fireEvent.error(presentation);
+    expect(screen.getByText('+Z FORWARD · TECHNICAL SCHEMATIC')).toBeInTheDocument();
+  });
 });
+

@@ -11,11 +11,11 @@ const files = [
 
 const shipArt = ['horizon', 'wayfarer', 'vanguard', 'sentinel', 'odyssey', 'aegis', 'spearhead', 'leviathan', 'atlas', 'dominion', 'stargrave-class'];
 
-test('the eleven approved naval design artworks are available at runtime', () => {
+test('the eleven approved naval concept sheets remain preserved in design documentation', () => {
   for (const id of shipArt) {
-    const path = `frontend/assets/ships/${id}.png`;
+    const path = `docs/design/imperial-command-v2/frotas/assets/${id}-concept.png`;
     const bytes = fs.statSync(path).size;
-    assert.ok(bytes > 100_000, `${id} artwork is unexpectedly small`);
+    assert.ok(bytes > 100_000, `${id} concept sheet is unexpectedly small`);
   }
 });
 
@@ -36,3 +36,4 @@ test('authored StarZ GLBs exist, are non-empty and parse through GLTFLoader', as
     assert.ok(size.x >= minimumSize[0] && size.y >= minimumSize[1] && size.z >= minimumSize[2], `${name} has invalid scale`);
   }
 });
+
