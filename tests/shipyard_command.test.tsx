@@ -1,0 +1,95 @@
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ShipyardView } from '../frontend/src/views/ShipyardView';
+import type { ShellContext } from '../frontend/src/components/shell/AppShell';
+import type { Catalog, State } from '../frontend/src/types/game';
+
+const catalog: Catalog = {
+  resources: [
+    { id: 'refined_alloy', name: 'Liga refinada', category: 'material', description: '', cost: {}, requires: [] },
+    { id: 'components', name: 'Componentes', category: 'component', description: '', cost: {}, requires: [] },
+  ],
+  districts: [{ id: 'orbital_shipyard', name: 'Estaleiro orbital', category: 'orbital', description: '', cost: {}, requires: [], duration: 1, workforce: 0, energy_generation: 0, energy_consumption: 0, production: {}, processing: {}, research_rate: 0, population_capacity: 0, industrial_capacity: 0, construction_slots: 0, shipyard_slots: 1 }],
+  technologies: [],
+  ships: [
+    { id: 'horizon', name: 'Horizon', category: 'naval', description: 'Corveta de exploração.', cost: { refined_alloy: 4 }, requires: [], classification: 'corvette', role: 'exploration', mass: 10, crew: 3, duration: 30, compatible_propulsion: ['chemical_drive'] },
+    { id: 'wayfarer', name: 'Wayfarer', category: 'naval', description: 'Modelo de teste.', cost: { refined_alloy: 4 }, requires: [], classification: 'freighter', role: 'logistics', mass: 20, crew: 2, duration: 60, compatible_propulsion: ['nuclear_drive'] },
+  ],
+  propulsion: [
+    { id: 'chemical_drive', name: 'Propulsão química', category: 'propulsion', description: '', cost: {}, requires: [], compatible_fuels: ['ion_fuel'], speed_factor: 1, fuel_efficiency: .8, thermal_load: .2, signature: .3 },
+    { id: 'nuclear_drive', name: 'Propulsão nuclear', category: 'propulsion', description: '', cost: {}, requires: [], compatible_fuels: ['fusion_fuel'], speed_factor: 1.5, fuel_efficiency: 1.1, thermal_load: .4, signature: .5 },
+  ],
+  fuels: [
+    { id: 'ion_fuel', name: 'Combustível iônico', category: 'fuel', description: '', cost: {}, requires: [], energy_density: 1, storage_factor: 1 },
+    { id: 'fusion_fuel', name: 'Combustível de fusão', category: 'fuel', description: '', cost: {}, requires: [], energy_density: 2, storage_factor: .7 },
+  ],
+  travel_modes: [],
+};
+
+const state: State = {
+  system: { name: 'Asterion', x: 2, y: -1, star: { stellar_class: 'G', mass: 1, luminosity: 1, age: 4, activity: .2 }, planet: { name: 'Gaia', mass: 1, radius: 1, gravity: 1, orbital_distance: 1, temperature: 288, atmosphere: 'nitrogen', radiation: .2, magnetic_field: 1, water: 60, geological_activity: .2, mineral_profile: {}, usable_surface: 70 } },
+  stocks: { refined_alloy: 20, ion_fuel: 2, fusion_fuel: 2 }, capacities: { energy_generation: 10, energy_consumption: 4, energy_coverage: 1, industrial_capacity: 1, construction_slots: 1, construction_slots_available: 1, shipyard_slots: 2, shipyard_slots_available: 1, effective_research_rate: 0, workforce_supply: 8, workforce_demand: 1, workforce_coverage: 1, crew_committed: 0 }, population: { total: 10, available: 8, capacity: 20 }, districts: { orbital_shipyard: 1 }, construction: [], research: { active: null, complete_at: null, completed: [], remaining_work: 0 }, active_planet: { id: 'home', planet_index: 0, home: true }, planets: [{ id: 'home', name: 'Gaia', x: 2, y: -1, planet_index: 0, population_total: 10, home: true }], fleets: [], ships: [], travel_modes: [], notices: [], unlocked_content: [],
+};
+
+function renderShipyard(nextState: State = state, nextCatalog: Catalog = catalog) {
+  const execute = vi.fn().mockResolvedValue({});
+  const context: ShellContext = { catalog: nextCatalog, state: nextState, activePlanetId: 'home', setActivePlanetId: vi.fn(), execute, busy: false, setFeedback: vi.fn() };
+  render(<MemoryRouter initialEntries={['/shipyard']}><Routes><Route element={<Outlet context={context} />}><Route path="/shipyard" element={<ShipyardView />} /></Route></Routes></MemoryRouter>);
+  return { execute };
+}
+
+afterEach(cleanup);
+
+describe('Ship Command', () => {
+  it('renders the real local yard context, catalog and capacity', () => {
+    renderShipyard();
+    expect(screen.getByText('ORBITAL SHIPYARD')).toBeInTheDocument();
+    expect(screen.getByText('Gaia · Asterion · 2:-1')).toBeInTheDocument();
+    expect(screen.getByText('1 / 2 livres')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Selecionar nave Horizon' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Selecionar nave Wayfarer' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Apresentação técnica da nave')).toHaveTextContent('Horizon');
+  });
+
+  it('keeps the propulsion-to-fuel compatibility chain valid when the hull changes', () => {
+    renderShipyard();
+    const inspector = screen.getByLabelText('Inspector de nave');
+    expect(within(inspector).getByText('Propulsão química')).toBeInTheDocument();
+    expect(within(inspector).getByText('Combustível iônico')).toBeInTheDocument();
+    expect(within(inspector).queryByText('Propulsão nuclear')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar nave Wayfarer' }));
+    expect(within(screen.getByLabelText('Inspector de nave')).getByText('Propulsão nuclear')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Inspector de nave')).getByText('Combustível de fusão')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Inspector de nave')).queryByText('Combustível iônico')).not.toBeInTheDocument();
+  });
+
+  it('sends the exact domain payload with the active planet and selected configuration', () => {
+    const { execute } = renderShipyard();
+    fireEvent.click(screen.getByRole('button', { name: 'Construir nave' }));
+    expect(execute).toHaveBeenCalledWith('build-ship', { planet_id: 'home', hull_id: 'horizon', propulsion_id: 'chemical_drive', fuel_id: 'ion_fuel' });
+  });
+
+  it('blocks construction when yard capacity, cost or crew is unavailable', () => {
+    renderShipyard({ ...state, capacities: { ...state.capacities, shipyard_slots_available: 0 }, stocks: { refined_alloy: 0, ion_fuel: 0 }, population: { ...state.population, available: 1 } });
+    expect(screen.getByRole('button', { name: 'Construir nave' })).toBeDisabled();
+    expect(screen.getByText('Não há slots de estaleiro disponíveis.')).toBeInTheDocument();
+    expect(screen.getByText('Recursos locais insuficientes.')).toBeInTheDocument();
+    expect(screen.getByText('População disponível insuficiente para a tripulação.')).toBeInTheDocument();
+  });
+
+  it('shows only active construction for the selected planet and has no fake queue controls', () => {
+    const now = Date.now() / 1000;
+    renderShipyard({ ...state, ships: [{ id: 'local-build', hull_id: 'horizon', propulsion_id: 'chemical_drive', fuel_id: 'ion_fuel', crew: 3, mass: 10, ready_at: now + 30, origin_planet_id: 'home' }, { id: 'remote-build', hull_id: 'wayfarer', propulsion_id: 'nuclear_drive', fuel_id: 'fusion_fuel', crew: 2, mass: 20, ready_at: now + 30, origin_planet_id: 'colony' }] });
+    const operations = screen.getByLabelText('Operações do estaleiro');
+    expect(operations).toHaveTextContent('Horizon');
+    expect(operations).not.toHaveTextContent('Wayfarer');
+    expect(operations).not.toHaveTextContent('Pausar');
+    expect(operations).not.toHaveTextContent('Cancelar');
+  });
+
+  it('renders a safe empty catalog state', () => {
+    renderShipyard(state, { ...catalog, ships: [] });
+    expect(screen.getByText('Nenhum modelo naval disponível')).toBeInTheDocument();
+  });
+});
