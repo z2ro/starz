@@ -53,7 +53,7 @@ small { display: block; color: var(--muted); font-size: 11px; }
 .context-heading b { display: grid; width: 24px; height: 24px; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--accent-strong); font-size: 11px; }
 .context-alerts { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
 
-.page-header { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: 28px; margin-bottom: 26px; }.page-header > div { min-width: 0; flex: 1 1 auto; }.page-header > .badge { flex: 0 1 30%; min-width: 0; max-width: 30%; overflow-wrap: anywhere; white-space: normal; text-align: center; }
+.page-header { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: 28px; margin-bottom: 26px; }.page-header > div { min-width: 0; flex: 1 1 auto; }.page-header > .badge { flex: 0 1 auto; max-width: 100%; overflow-wrap: anywhere; white-space: normal; text-align: center; }
 .page-header p { margin: 0; }
 .page-header > .stat { min-width: 150px; }
 .eyebrow { margin-bottom: 7px; color: var(--accent); font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
