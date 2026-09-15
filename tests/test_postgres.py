@@ -79,6 +79,51 @@ class PostgresTests(unittest.TestCase):
             session.add_all([m.FleetShip(fleet_id=fleet_id, ship_id=first_id, empire_id=self.empire_id), m.FleetShip(fleet_id=fleet_id, ship_id=second_id, empire_id=self.empire_id)])
         return str(fleet_id), (first_id, second_id), state
 
+    def test_dispatch_multi_ship_persists_composition_and_aggregate_fuel(self):
+        state = self.snapshot()
+        first_id, second_id = uuid4(), uuid4()
+        with Session(self.db) as session, session.begin():
+            home = session.get(m.Planet, session.get(m.Empire, self.empire_id).home_planet_id)
+            session.add_all([
+                m.Ship(id=first_id, empire_id=self.empire_id, hull_id='scout_hull', propulsion_id='chemical_drive', fuel_id='ion_fuel', crew=3, mass=10, ready_at=utc(1000), created_at=utc(1000), origin_planet_id=home.id, system_x=state['system_x'], system_y=state['system_y']),
+                m.Ship(id=second_id, empire_id=self.empire_id, hull_id='scout_hull', propulsion_id='chemical_drive', fuel_id='ion_fuel', crew=5, mass=20, ready_at=utc(1000), created_at=utc(1000), origin_planet_id=home.id, system_x=state['system_x'], system_y=state['system_y']),
+            ])
+        result = self.store.run(self.empire_id, lambda e: e.dispatch(state['system_x'] + 1, state['system_y'], 'NORMAL', 'MOVE', [str(first_id), str(second_id)], now=1000), now=1000)
+        self.assertEqual(result['preview']['fuel_cost'], 30)
+        self.assertEqual(result['preview']['total_crew'], 8)
+        self.restart()
+        snapshot = self.snapshot()
+        self.assertEqual(len(snapshot['fleets']), 1)
+        self.assertCountEqual(snapshot['fleets'][0]['ship_ids'], [str(first_id), str(second_id)])
+        with Session(self.db) as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.FleetShip)), 2)
+            home = session.get(m.Empire, self.empire_id).home_planet_id
+            self.assertEqual(session.scalar(select(m.PlanetStock.amount).where(m.PlanetStock.planet_id == home, m.PlanetStock.resource_id == 'ion_fuel')), 20)
+
+    def test_concurrent_dispatch_cannot_attach_same_hangar_ships_twice(self):
+        state = self.snapshot()
+        ship_ids = [uuid4(), uuid4()]
+        with Session(self.db) as session, session.begin():
+            home = session.get(m.Planet, session.get(m.Empire, self.empire_id).home_planet_id)
+            session.add_all([
+                m.Ship(id=ship_ids[0], empire_id=self.empire_id, hull_id='scout_hull', propulsion_id='chemical_drive', fuel_id='ion_fuel', crew=3, mass=10, ready_at=utc(1000), created_at=utc(1000), origin_planet_id=home.id, system_x=state['system_x'], system_y=state['system_y']),
+                m.Ship(id=ship_ids[1], empire_id=self.empire_id, hull_id='scout_hull', propulsion_id='chemical_drive', fuel_id='ion_fuel', crew=3, mass=10, ready_at=utc(1000), created_at=utc(1000), origin_planet_id=home.id, system_x=state['system_x'], system_y=state['system_y']),
+            ])
+        barrier = Barrier(2)
+        def dispatch():
+            barrier.wait(timeout=10)
+            try:
+                self.store.run(self.empire_id, lambda e: e.dispatch(state['system_x'] + 1, state['system_y'], 'NORMAL', 'MOVE', [str(ship_id) for ship_id in ship_ids], now=1000), now=1000)
+                return 'success'
+            except DataValidationError:
+                return 'rejected'
+        with ThreadPoolExecutor(2) as pool:
+            results = list(pool.map(lambda _: dispatch(), range(2)))
+        self.assertCountEqual(results, ['success', 'rejected'])
+        with Session(self.db) as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.Fleet)), 1)
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.FleetShip)), 2)
+
     def test_multi_ship_travel_persists_reload_arrival_and_invalid_rollback(self):
         fleet_id, ship_ids, state = self.create_multi_ship_fleet()
         preview = self.store.run(self.empire_id, lambda e: e.preview_travel(state['system_x'] + 1, state['system_y'], 'chemical_drive', 'NORMAL', fleet_id=fleet_id), now=1000)

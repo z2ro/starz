@@ -71,6 +71,36 @@ async def direct_endpoint(function, **kwargs):
 
 
 class ApiTests(unittest.TestCase):
+    def test_http_hangar_dispatch_preview_and_dispatch(self):
+        async def smoke():
+            engine = Engine.new(api.catalog, now=30)
+            first = {'id': 'dispatch-first', 'hull_id': 'scout_hull', 'propulsion_id': 'chemical_drive', 'fuel_id': 'ion_fuel', 'crew': 3, 'mass': 10, 'ready_at': 30, 'origin_planet_id': None, 'system_x': engine.state.system_x, 'system_y': engine.state.system_y}
+            second = {**first, 'id': 'dispatch-second', 'crew': 5, 'mass': 20}
+            engine.state.ships = [first, second]
+
+            class MemoryService:
+                def run(self, empire_id, call, **options):
+                    candidate = Engine(api.catalog, copy.deepcopy(engine.state))
+                    result = call(candidate)
+                    engine.state = candidate.state
+                    return result
+
+            with patch.object(fastapi.routing, 'run_in_threadpool', direct_endpoint), patch.object(api.app.state, 'store', MemoryService(), create=True):
+                api.app.state.default_empire_id = 'local'
+                async with ASGIClient(api.app) as client:
+                    payload = {'ship_ids': ['dispatch-first', 'dispatch-second'], 'target_x': engine.state.system_x + 1, 'target_y': engine.state.system_y, 'mode': 'NORMAL', 'mission': 'MOVE'}
+                    response = await client.post('/api/fleet/dispatch-preview', json=payload)
+                    self.assertEqual(response.status_code, 200, response.text)
+                    self.assertEqual(response.json()['total_mass'], 30)
+                    self.assertEqual(response.json()['total_crew'], 8)
+                    self.assertEqual(engine.state.fleets, [])
+                    response = await client.post('/api/fleet/dispatch', json=payload)
+                    self.assertEqual(response.status_code, 200, response.text)
+                    self.assertEqual(len(response.json()['ship_ids']), 2)
+                    self.assertEqual(len(engine.state.fleets), 1)
+
+        asyncio.run(smoke())
+
     def test_http_multi_ship_travel_preview_uses_total_mass(self):
         async def smoke():
             engine = Engine.new(api.catalog, now=30)

@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import yaml
 
-from starz.data import Catalog, DataValidationError
+from starz.data import Catalog, DataValidationError, Hull
 from starz.simulation import Engine, GameState
 from tests.json_fixture import load_or_create, save
 from starz.effects import require_available, unlocked_content
@@ -244,6 +244,62 @@ class OfflineAndFleetTests(unittest.TestCase):
         second = e.send_fleet(e.state.system_x + 2, e.state.system_y, 'chemical_drive', 'NORMAL', now=trip['arrival_at'], fleet_id=fleet['id'])
         self.assertEqual(second['preview']['origin'], [e.state.system_x + 1, e.state.system_y])
         self.assertEqual(second['preview']['fuel_cost'], 30)
+
+    def dispatch_pair(self):
+        e = Engine.new(self.catalog, now=0)
+        e.state.districts['orbital_shipyard'] = 1
+        first = e.build_ship(now=0)
+        e.advance(30)
+        second = {**first, 'id': 'dispatch-second', 'mass': 20, 'crew': 5}
+        e.state.ships.append(second)
+        return e, first, second
+
+    def test_dispatch_preview_and_dispatch_aggregate_free_ships(self):
+        e, first, second = self.dispatch_pair()
+        before = copy.deepcopy(e.state.to_dict())
+        preview = e.preview_dispatch(e.state.system_x + 1, e.state.system_y, 'NORMAL', 'MOVE', [first['id'], second['id']])
+        self.assertEqual(preview['ship_count'], 2)
+        self.assertEqual(preview['total_mass'], 30)
+        self.assertEqual(preview['total_crew'], 8)
+        self.assertEqual(preview['fuel_cost'], 30)
+        self.assertEqual(preview['eta_seconds'], 180)
+        self.assertEqual(e.state.to_dict(), before)
+        fleet = e.dispatch(e.state.system_x + 1, e.state.system_y, 'NORMAL', 'MOVE', [first['id'], second['id']], now=30)
+        self.assertEqual(len(e.state.fleets), 1)
+        self.assertEqual(fleet['ship_ids'], [first['id'], second['id']])
+        self.assertEqual(fleet['fuel_reserve'], 0)
+
+    def test_dispatch_allows_different_hulls_with_common_propulsion(self):
+        e, first, second = self.dispatch_pair()
+        e.catalog.items['ships']['heavy_hull'] = Hull(
+            id='heavy_hull', name='Heavy', description='test', category='hull', classification='corvette',
+            role='exploration', mass=20, crew=5, duration=30, compatible_propulsion=['chemical_drive'],
+        )
+        second['hull_id'] = 'heavy_hull'
+        result = e.dispatch(e.state.system_x + 1, e.state.system_y, 'NORMAL', 'MOVE', [first['id'], second['id']], now=30)
+        self.assertEqual(result['preview']['total_mass'], 30)
+
+    def test_dispatch_rejects_invalid_selection_without_mutation(self):
+        for change, message in (
+            (lambda e, a, b: None, 'IDs de naves duplicados'),
+            (lambda e, a, b: e.state.fleets.append({'ship_ids': [a['id']]}), 'já pertence'),
+            (lambda e, a, b: b.update(system_x=99), 'sistemas diferentes'),
+            (lambda e, a, b: b.update(origin_planet_id='other'), 'hangares diferentes'),
+            (lambda e, a, b: b.update(propulsion_id='nuclear_drive'), 'propulsões heterogêneas'),
+            (lambda e, a, b: b.update(fuel_id='fusion_fuel'), 'combustíveis heterogêneos'),
+            (lambda e, a, b: b.update(ready_at=31), 'montagem'),
+        ):
+            with self.subTest(message=message):
+                e, first, second = self.dispatch_pair()
+                if message == 'IDs de naves duplicados':
+                    ids = [first['id'], first['id']]
+                else:
+                    change(e, first, second)
+                    ids = [first['id'], second['id']]
+                before = copy.deepcopy(e.state.to_dict())
+                with self.assertRaisesRegex(DataValidationError, message):
+                    e.dispatch(e.state.system_x + 1, e.state.system_y, 'NORMAL', 'MOVE', ids, now=30)
+                self.assertEqual(e.state.to_dict(), before)
 
     def test_heterogeneous_multi_ship_fleet_fails_before_fuel_debit(self):
         for field, value, message in (
