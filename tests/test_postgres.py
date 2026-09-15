@@ -68,6 +68,104 @@ class PostgresTests(unittest.TestCase):
                         return x, y, index
         self.fail('no viable colony target')
 
+    def create_multi_ship_fleet(self):
+        state = self.snapshot()
+        fleet_id, first_id, second_id = uuid4(), uuid4(), uuid4()
+        with Session(self.db) as session, session.begin():
+            home = session.get(m.Planet, session.get(m.Empire, self.empire_id).home_planet_id)
+            for ship_id, mass in ((first_id, 10), (second_id, 20)):
+                session.add(m.Ship(id=ship_id, empire_id=self.empire_id, hull_id='scout_hull', propulsion_id='chemical_drive', fuel_id='ion_fuel', crew=3, mass=mass, ready_at=utc(1000), created_at=utc(1000), origin_planet_id=home.id, system_x=state['system_x'], system_y=state['system_y']))
+            session.add(m.Fleet(id=fleet_id, empire_id=self.empire_id, name='Multi', x=state['system_x'], y=state['system_y'], destination_x=state['system_x'], destination_y=state['system_y'], status='ARRIVED', mission='MOVE', target_planet_index=None, colonization_population=None, colonization_origin_planet_id=None, fuel_reserve=30, departure_at=utc(1000), arrival_at=utc(1000), propulsion_id='chemical_drive', mode='NORMAL', fuel_cost=0))
+            session.add_all([m.FleetShip(fleet_id=fleet_id, ship_id=first_id, empire_id=self.empire_id), m.FleetShip(fleet_id=fleet_id, ship_id=second_id, empire_id=self.empire_id)])
+        return str(fleet_id), (first_id, second_id), state
+
+    def test_dispatch_multi_ship_persists_composition_and_aggregate_fuel(self):
+        state = self.snapshot()
+        first_id, second_id = uuid4(), uuid4()
+        with Session(self.db) as session, session.begin():
+            home = session.get(m.Planet, session.get(m.Empire, self.empire_id).home_planet_id)
+            session.add_all([
+                m.Ship(id=first_id, empire_id=self.empire_id, hull_id='scout_hull', propulsion_id='chemical_drive', fuel_id='ion_fuel', crew=3, mass=10, ready_at=utc(1000), created_at=utc(1000), origin_planet_id=home.id, system_x=state['system_x'], system_y=state['system_y']),
+                m.Ship(id=second_id, empire_id=self.empire_id, hull_id='scout_hull', propulsion_id='chemical_drive', fuel_id='ion_fuel', crew=5, mass=20, ready_at=utc(1000), created_at=utc(1000), origin_planet_id=home.id, system_x=state['system_x'], system_y=state['system_y']),
+            ])
+        result = self.store.run(self.empire_id, lambda e: e.dispatch(state['system_x'] + 1, state['system_y'], 'NORMAL', 'MOVE', [str(first_id), str(second_id)], now=1000), now=1000)
+        self.assertEqual(result['preview']['fuel_cost'], 30)
+        self.assertEqual(result['preview']['total_crew'], 8)
+        self.restart()
+        snapshot = self.snapshot()
+        self.assertEqual(len(snapshot['fleets']), 1)
+        self.assertCountEqual(snapshot['fleets'][0]['ship_ids'], [str(first_id), str(second_id)])
+        with Session(self.db) as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.FleetShip)), 2)
+            home = session.get(m.Empire, self.empire_id).home_planet_id
+            self.assertEqual(session.scalar(select(m.PlanetStock.amount).where(m.PlanetStock.planet_id == home, m.PlanetStock.resource_id == 'ion_fuel')), 20)
+
+    def test_concurrent_dispatch_cannot_attach_same_hangar_ships_twice(self):
+        state = self.snapshot()
+        ship_ids = [uuid4(), uuid4()]
+        with Session(self.db) as session, session.begin():
+            home = session.get(m.Planet, session.get(m.Empire, self.empire_id).home_planet_id)
+            session.add_all([
+                m.Ship(id=ship_ids[0], empire_id=self.empire_id, hull_id='scout_hull', propulsion_id='chemical_drive', fuel_id='ion_fuel', crew=3, mass=10, ready_at=utc(1000), created_at=utc(1000), origin_planet_id=home.id, system_x=state['system_x'], system_y=state['system_y']),
+                m.Ship(id=ship_ids[1], empire_id=self.empire_id, hull_id='scout_hull', propulsion_id='chemical_drive', fuel_id='ion_fuel', crew=3, mass=10, ready_at=utc(1000), created_at=utc(1000), origin_planet_id=home.id, system_x=state['system_x'], system_y=state['system_y']),
+            ])
+        barrier = Barrier(2)
+        def dispatch():
+            barrier.wait(timeout=10)
+            try:
+                self.store.run(self.empire_id, lambda e: e.dispatch(state['system_x'] + 1, state['system_y'], 'NORMAL', 'MOVE', [str(ship_id) for ship_id in ship_ids], now=1000), now=1000)
+                return 'success'
+            except DataValidationError:
+                return 'rejected'
+        with ThreadPoolExecutor(2) as pool:
+            results = list(pool.map(lambda _: dispatch(), range(2)))
+        self.assertCountEqual(results, ['success', 'rejected'])
+        with Session(self.db) as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.Fleet)), 1)
+            self.assertEqual(session.scalar(select(func.count()).select_from(m.FleetShip)), 2)
+
+    def test_multi_ship_travel_persists_reload_arrival_and_invalid_rollback(self):
+        fleet_id, ship_ids, state = self.create_multi_ship_fleet()
+        preview = self.store.run(self.empire_id, lambda e: e.preview_travel(state['system_x'] + 1, state['system_y'], 'chemical_drive', 'NORMAL', fleet_id=fleet_id), now=1000)
+        self.assertEqual(preview['fuel_cost'], 30)
+        trip = self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'] + 1, state['system_y'], 'chemical_drive', 'NORMAL', now=1000, fleet_id=fleet_id), now=1000)
+        self.assertEqual(trip['fuel_cost'], 30)
+        self.restart()
+        pending = self.snapshot()['fleets'][0]
+        self.assertEqual(pending['status'], 'TRANSIT')
+        self.assertCountEqual(pending['ship_ids'], [str(ship_id) for ship_id in ship_ids])
+        self.store.run(self.empire_id, lambda e: None, now=trip['arrival_at'])
+        self.restart()
+        arrived = self.snapshot()['fleets'][0]
+        self.assertEqual((arrived['status'], arrived['x'], arrived['y']), ('ARRIVED', state['system_x'] + 1, state['system_y']))
+        self.assertCountEqual(arrived['ship_ids'], [str(ship_id) for ship_id in ship_ids])
+        second = self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'] + 2, state['system_y'], 'chemical_drive', 'NORMAL', now=trip['arrival_at'], fleet_id=fleet_id), now=trip['arrival_at'])
+        self.assertEqual(second['preview']['origin'], [state['system_x'] + 1, state['system_y']])
+        with Session(self.db) as session, session.begin():
+            ship = session.get(m.Ship, ship_ids[1])
+            ship.propulsion_id, ship.fuel_id = 'nuclear_drive', 'fusion_fuel'
+        before = self.snapshot()
+        with self.assertRaisesRegex(DataValidationError, 'propulsões heterogêneas'):
+            self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'], state['system_y'], 'chemical_drive', 'NORMAL', now=second['arrival_at'], fleet_id=fleet_id), now=second['arrival_at'])
+        self.assertEqual(before, self.snapshot())
+
+    def test_concurrent_multi_ship_orders_debit_once(self):
+        fleet_id, _, state = self.create_multi_ship_fleet()
+        barrier = Barrier(2)
+
+        def send():
+            barrier.wait(timeout=10)
+            try:
+                self.store.run(self.empire_id, lambda e: e.send_fleet(state['system_x'] + 1, state['system_y'], 'chemical_drive', 'NORMAL', now=1000, fleet_id=fleet_id), now=1000)
+                return 'success'
+            except DataValidationError:
+                return 'rejected'
+
+        with ThreadPoolExecutor(2) as pool:
+            results = list(pool.map(lambda _: send(), range(2)))
+        self.assertCountEqual(results, ['success', 'rejected'])
+        self.assertEqual(self.snapshot()['stocks']['ion_fuel'], 50)
+
     def test_bootstrap_idempotent_and_concurrent(self):
         before = self.snapshot()
         barrier = Barrier(2)

@@ -66,6 +66,16 @@ class TravelRequest(BaseModel):
     target_planet_index: int | None = Field(default=None, ge=0)
 
 
+class DispatchRequest(BaseModel):
+    ship_ids: list[str]
+    target_x: int = Field(ge=-100, le=100)
+    target_y: int = Field(ge=-100, le=100)
+    mode: str
+    mission: Literal['MOVE', 'SURVEY', 'COLONIZE'] = 'MOVE'
+    target_planet_index: int | None = Field(default=None, ge=0)
+    planet_id: str | None = None
+
+
 def action(call, *, planet_id=None, colony_target=None):
     try:
         options = {}
@@ -200,3 +210,23 @@ def travel_preview(request: TravelRequest):
         catalog.get('travel_modes', request.mode)
         return {mode: engine.preview_travel(request.target_x, request.target_y, request.propulsion_id, mode, fleet_id=request.fleet_id, ship_id=request.ship_id, planet_id=request.planet_id, intra_system=request.mission == 'COLONIZE') for mode in sorted(catalog.items['travel_modes'])}
     return action(preview, planet_id=request.planet_id)
+
+
+@app.post('/api/fleet/dispatch-preview')
+def dispatch_preview(request: DispatchRequest):
+    target = (request.target_x, request.target_y, request.target_planet_index) if request.mission == 'COLONIZE' and request.target_planet_index is not None else None
+    return action(
+        lambda engine: engine.preview_dispatch(request.target_x, request.target_y, request.mode, request.mission, request.ship_ids, target_planet_index=request.target_planet_index, planet_id=request.planet_id, now=engine.state.last_updated),
+        planet_id=request.planet_id,
+        colony_target=target,
+    )
+
+
+@app.post('/api/fleet/dispatch')
+def dispatch(request: DispatchRequest):
+    target = (request.target_x, request.target_y, request.target_planet_index) if request.mission == 'COLONIZE' and request.target_planet_index is not None else None
+    return action(
+        lambda engine: engine.dispatch(request.target_x, request.target_y, request.mode, request.mission, request.ship_ids, now=engine.state.last_updated, target_planet_index=request.target_planet_index, planet_id=request.planet_id),
+        planet_id=request.planet_id,
+        colony_target=target,
+    )

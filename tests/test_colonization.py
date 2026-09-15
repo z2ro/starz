@@ -1,6 +1,7 @@
 import copy
 import unittest
 from pathlib import Path
+from uuid import uuid4
 
 from pydantic import ValidationError
 
@@ -86,6 +87,26 @@ class ColonizationDomainTests(unittest.TestCase):
         self.assertEqual(self.engine.state.notices.count(notice), 1)
         self.engine.advance(mission['arrival_at'] + 200)
         self.assertEqual(self.engine.state.notices.count(notice), 1)
+
+    def test_multi_ship_colonization_keeps_composition_and_pays_once(self):
+        fleet = next(item for item in self.engine.state.fleets if item['id'] == self.fleet_id)
+        first = next(ship for ship in self.engine.state.ships if ship['id'] == fleet['ship_ids'][0])
+        second = {**first, 'id': str(uuid4()), 'mass': 20}
+        self.engine.state.ships.append(second)
+        fleet['ship_ids'].append(second['id'])
+        target = self.target()
+        self.engine._survey(target[0], target[1], self.engine.state.last_updated)
+        population_before = self.engine.state.population_total
+        stocks_before = dict(self.engine.state.stocks)
+        rules = self.engine.colonization_rules
+        mission = self.colonize(target)
+        self.engine.advance(mission['arrival_at'])
+        self.assertEqual(self.engine.state.population_total, population_before - rules.population)
+        for resource, amount in rules.cost.items():
+            self.assertEqual(self.engine.state.stocks[resource], stocks_before[resource] - amount)
+        self.assertEqual(len(self.engine.state.new_colonies), 1)
+        self.assertEqual(fleet['ship_ids'], [first['id'], second['id']])
+        self.assertEqual(fleet['status'], 'ARRIVED')
 
     def test_move_and_survey_remain_compatible(self):
         x, y = self.engine.state.system_x + 1, self.engine.state.system_y

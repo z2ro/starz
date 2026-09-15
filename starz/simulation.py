@@ -158,7 +158,7 @@ class Engine:
     def planet_key(x: int, y: int, planet_index: int) -> str:
         return f'{x}:{y}:{planet_index}'
 
-    def colonization_status(self, x: int, y: int, planet_index: int) -> dict[str, Any]:
+    def colonization_status(self, x: int, y: int, planet_index: int, *, fleet_available: bool = False) -> dict[str, Any]:
         if self.knowledge_level(x, y) != 'SURVEYED':
             return {'eligible': False, 'reason': 'Requer levantamento do sistema.'}
         system = generate_system(self.state.seed, x, y, self.catalog)
@@ -176,7 +176,7 @@ class Engine:
             return {'eligible': False, 'reason': 'População disponível insuficiente.', 'viability': viability}
         if any(self.state.stocks.get(resource, 0) < amount for resource, amount in self.colonization_rules.cost.items()):
             return {'eligible': False, 'reason': 'Recursos insuficientes para o pacote colonial.', 'viability': viability}
-        if not any(fleet['status'] == 'ARRIVED' for fleet in self.state.fleets):
+        if not fleet_available and not any(fleet['status'] == 'ARRIVED' for fleet in self.state.fleets):
             return {'eligible': False, 'reason': 'Nenhuma frota disponível.', 'viability': viability}
         return {'eligible': True, 'reason': None, 'viability': viability}
 
@@ -312,22 +312,45 @@ class Engine:
         self._research_eta()
         return ship
 
-    def _travel_subject(self, fleet_id: str | None, ship_id: str | None):
+    def _fleet_structure(self, fleet_id: str | None, propulsion_id: str | None = None, ship_id: str | None = None):
         if fleet_id and ship_id:
             raise DataValidationError('selecione fleet_id ou ship_id')
-        fleets = sorted(self.state.fleets, key=lambda f: f['id'])
-        fleet = next((f for f in fleets if f['id'] == fleet_id), None) if fleet_id else None
-        if fleet_id and fleet is None:
+        if fleet_id is None:
+            return None, None
+        fleet = next((f for f in self.state.fleets if f['id'] == fleet_id), None)
+        if fleet is None:
             raise DataValidationError('frota inexistente')
+        if not fleet['ship_ids']:
+            raise DataValidationError('frota sem naves não pode viajar')
+        ships = {ship['id']: ship for ship in self.state.ships}
+        composition = [ships.get(ship_id) for ship_id in fleet['ship_ids']]
+        if any(ship is None for ship in composition):
+            raise DataValidationError('nave da frota inexistente')
+        propulsion_ids = {ship['propulsion_id'] for ship in composition}
+        if len(propulsion_ids) != 1:
+            raise DataValidationError('frota contém propulsões heterogêneas')
+        fuel_ids = {ship['fuel_id'] for ship in composition}
+        if len(fuel_ids) != 1:
+            raise DataValidationError('frota contém combustíveis heterogêneos')
+        if propulsion_id is not None and propulsion_id != next(iter(propulsion_ids)):
+            raise DataValidationError('propulsão solicitada diferente da composição da frota')
+        return fleet, composition
+
+    def _travel_subject(self, fleet_id: str | None, ship_id: str | None, propulsion_id: str | None = None):
+        fleets = sorted(self.state.fleets, key=lambda f: f['id'])
+        fleet, composition = self._fleet_structure(fleet_id, propulsion_id, ship_id)
         if not fleet_id and not ship_id:
             fleet = next((f for f in fleets if f['status'] == 'ARRIVED'), None)
+            if fleet:
+                _, composition = self._fleet_structure(fleet['id'], propulsion_id)
         attached = {sid for f in fleets for sid in f['ship_ids']}
         if fleet:
             if fleet['status'] != 'ARRIVED':
                 raise DataValidationError('frota em trânsito')
-            if len(fleet['ship_ids']) != 1:
-                raise DataValidationError('slice suporta uma nave por frota')
-            ship = next((s for s in self.state.ships if s['id'] == fleet['ship_ids'][0]), None)
+            if any(ship['ready_at'] > self.state.last_updated for ship in composition):
+                raise DataValidationError('nave ainda em montagem')
+            ship = dict(composition[0])
+            ship['mass'] = sum(item['mass'] for item in composition)
             origin = (fleet['x'], fleet['y'])
         else:
             ship = next((s for s in self.state.ships if s['id'] not in attached and (s['id'] == ship_id if ship_id else s['ready_at'] <= self.state.last_updated)), None)
@@ -341,17 +364,133 @@ class Engine:
             raise DataValidationError('nave ainda em montagem')
         return fleet, ship, origin
 
+    def resolve_free_ships(self, ship_ids: list[str], *, now: float | None = None) -> list[dict[str, Any]]:
+        if not ship_ids:
+            raise DataValidationError('selecione ao menos uma nave')
+        if len(ship_ids) != len(set(ship_ids)):
+            raise DataValidationError('IDs de naves duplicados')
+        ships = {ship['id']: ship for ship in self.state.ships}
+        selected = [ships.get(ship_id) for ship_id in ship_ids]
+        if any(ship is None for ship in selected):
+            raise DataValidationError('nave inexistente')
+        attached = {ship_id for fleet in self.state.fleets for ship_id in fleet['ship_ids']}
+        if any(ship['id'] in attached for ship in selected):
+            raise DataValidationError('nave já pertence a uma frota')
+        ready_at = self.state.last_updated if now is None else now
+        if any(ship['ready_at'] > ready_at for ship in selected):
+            raise DataValidationError('nave ainda em montagem')
+        locations = {(ship.get('system_x'), ship.get('system_y')) for ship in selected}
+        if any(x is None or y is None for x, y in locations):
+            raise DataValidationError('nave sem localização operacional')
+        if len(locations) != 1:
+            raise DataValidationError('naves estão em sistemas diferentes')
+        origins = {str(ship.get('origin_planet_id')) if ship.get('origin_planet_id') is not None else None for ship in selected}
+        if any(origin is not None for origin in origins) and len(origins) != 1:
+            raise DataValidationError('naves pertencem a hangares diferentes')
+        if len({ship['propulsion_id'] for ship in selected}) != 1:
+            raise DataValidationError('naves têm propulsões heterogêneas')
+        if len({ship['fuel_id'] for ship in selected}) != 1:
+            raise DataValidationError('naves têm combustíveis heterogêneos')
+        return selected  # type: ignore[return-value]
+
+    def _dispatch_subject(self, ship_ids: list[str], planet_id: str | None = None, *, now: float | None = None):
+        ships = self.resolve_free_ships(ship_ids, now=now)
+        origin = (ships[0]['system_x'], ships[0]['system_y'])
+        origin_planet_id = ships[0].get('origin_planet_id')
+        if planet_id is not None and origin_planet_id is not None and str(planet_id) != str(origin_planet_id):
+            raise DataValidationError('planeta de origem diferente do hangar das naves')
+        aggregate = dict(ships[0])
+        aggregate['mass'] = sum(ship['mass'] for ship in ships)
+        return ships, aggregate, origin
+
+    def _validate_dispatch_mission(self, target_x: int, target_y: int, mission: str, target_planet_index: int | None, planet_id: str | None):
+        if mission not in {'MOVE', 'SURVEY', 'COLONIZE'}:
+            raise DataValidationError('missão de frota inválida')
+        if mission == 'COLONIZE':
+            if target_planet_index is None:
+                raise DataValidationError('colonização exige planeta alvo')
+            source_id = planet_id or self.state.planet_id
+            if self.state.stocks_by_planet and str(source_id) != str(self.state.planet_id):
+                raise DataValidationError('selecione o planeta de origem da missão')
+            status = self.colonization_status(target_x, target_y, target_planet_index, fleet_available=True)
+            if not status['eligible']:
+                raise DataValidationError(status['reason'])
+        elif target_planet_index is not None:
+            raise DataValidationError('planeta alvo só é válido para colonização')
+
+    def preview_dispatch(self, target_x: int, target_y: int, mode: str, mission: str, ship_ids: list[str], *, target_planet_index: int | None = None, planet_id: str | None = None, now: float | None = None) -> dict[str, Any]:
+        ships, aggregate, origin = self._dispatch_subject(ship_ids, planet_id, now=now)
+        self._validate_dispatch_mission(target_x, target_y, mission, target_planet_index, planet_id)
+        self._travel_source(None, aggregate, origin, planet_id)
+        require_available(self.catalog, self.state, self.catalog.get('travel_modes', mode))
+        preview = calculate_travel(self.catalog, origin, (target_x, target_y), aggregate, aggregate['propulsion_id'], mode, intra_system=mission == 'COLONIZE')
+        return {
+            **preview,
+            'ship_count': len(ships),
+            'total_mass': aggregate['mass'],
+            'total_crew': sum(ship['crew'] for ship in ships),
+            'propulsion_id': aggregate['propulsion_id'],
+            'fuel_id': aggregate['fuel_id'],
+        }
+
+    def dispatch(self, target_x: int, target_y: int, mode: str, mission: str, ship_ids: list[str], now: float | None = None, *, target_planet_index: int | None = None, planet_id: str | None = None) -> dict[str, Any]:
+        dispatch_now = self.state.last_updated if now is None else now
+        ships, aggregate, origin = self._dispatch_subject(ship_ids, planet_id, now=dispatch_now)
+        self._validate_dispatch_mission(target_x, target_y, mission, target_planet_index, planet_id)
+        self._travel_source(None, aggregate, origin, planet_id)
+        require_available(self.catalog, self.state, self.catalog.get('travel_modes', mode))
+        preview = self.preview_dispatch(target_x, target_y, mode, mission, ship_ids, target_planet_index=target_planet_index, planet_id=planet_id, now=dispatch_now)
+        fuel_stocks, source_id = self._travel_source(None, aggregate, origin, planet_id)
+        reserve_mode = bool(self.state.stocks_by_planet)
+        required = preview['fuel_cost'] * 2 if reserve_mode else preview['fuel_cost']
+        if fuel_stocks is None or fuel_stocks.get(aggregate['fuel_id'], 0) < required:
+            raise DataValidationError('combustível local insuficiente para a viagem')
+        if mission == 'COLONIZE':
+            source_stocks = self.state.stocks_by_planet.get(str(source_id), self.state.stocks) if self.state.stocks_by_planet else self.state.stocks
+            if any(source_stocks.get(resource, 0) < amount for resource, amount in self.colonization_rules.cost.items()):
+                raise DataValidationError('recursos locais insuficientes para o pacote colonial')
+        if dispatch_now != self.state.last_updated:
+            self.advance(dispatch_now)
+        fuel_stocks[aggregate['fuel_id']] -= required
+        if mission == 'COLONIZE':
+            if source_id is None and self.state.stocks_by_planet:
+                raise DataValidationError('colonização exige um planeta de origem no sistema da frota')
+            source_stocks = self.state.stocks_by_planet.get(str(source_id), self.state.stocks) if self.state.stocks_by_planet else self.state.stocks
+            self._pay_from(source_stocks, self.colonization_rules.cost)
+            self.state.population_total -= self.colonization_rules.population
+        fleet = {
+            'id': str(uuid4()), 'name': f'Fleet {len(self.state.fleets) + 1:02d}',
+            'ship_ids': list(ship_ids), 'x': origin[0], 'y': origin[1],
+            'origin_planet_id': aggregate.get('origin_planet_id') or self.state.planet_id,
+            'fuel_reserve': preview['fuel_cost'] if reserve_mode else 0,
+        }
+        self.state.fleets.append(fleet)
+        fleet.update(
+            destination_x=target_x, destination_y=target_y, status='TRANSIT',
+            departure_at=self.state.last_updated, arrival_at=self.state.last_updated + preview['eta_seconds'],
+            propulsion=aggregate['propulsion_id'], mode=mode, fuel_cost=preview['fuel_cost'],
+            mission=mission, target_planet_index=target_planet_index,
+            colonization_population=self.colonization_rules.population if mission == 'COLONIZE' else None,
+            colonization_origin_planet_id=source_id if mission == 'COLONIZE' else None,
+        )
+        if mission == 'COLONIZE':
+            self.state.colonization_claims[self.planet_key(target_x, target_y, target_planet_index)] = fleet['id']
+        return {**fleet, 'preview': preview}
+
+    dispatch_preview = preview_dispatch
+
     def preview_travel(self, target_x: int, target_y: int, propulsion_id: str, mode: str, *, fleet_id: str | None = None, ship_id: str | None = None, planet_id: str | None = None, intra_system: bool = False) -> dict[str, Any]:
-        fleet, ship, origin = self._travel_subject(fleet_id, ship_id)
+        fleet, ship, origin = self._travel_subject(fleet_id, ship_id, propulsion_id)
         self._travel_source(fleet, ship, origin, planet_id)
         require_available(self.catalog, self.state, self.catalog.get('travel_modes', mode))
         return {**calculate_travel(self.catalog, origin, (target_x, target_y), ship, propulsion_id, mode, intra_system=intra_system), 'fleet_id': fleet['id'] if fleet else None, 'ship_id': ship['id']}
 
     def send_fleet(self, target_x: int, target_y: int, propulsion_id: str, mode: str, now: float | None = None, *, fleet_id: str | None = None, ship_id: str | None = None, mission: str = 'MOVE', target_planet_index: int | None = None, planet_id: str | None = None) -> dict[str, Any]:
+        self._fleet_structure(fleet_id, propulsion_id, ship_id)
         self.advance(now)
         if mission not in {'MOVE', 'SURVEY', 'COLONIZE'}:
             raise DataValidationError('missão de frota inválida')
-        fleet, ship, origin = self._travel_subject(fleet_id, ship_id)
+        fleet, ship, origin = self._travel_subject(fleet_id, ship_id, propulsion_id)
         if mission == 'COLONIZE':
             if fleet is None or target_planet_index is None:
                 raise DataValidationError('colonização exige uma frota e planeta alvo')
