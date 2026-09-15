@@ -1,15 +1,100 @@
 import asyncio
 import copy
+import json
 import unittest
+from urllib.parse import urlsplit
 from unittest.mock import patch
 
-import httpx
+import fastapi.routing
 
 from starz import api
 from starz.simulation import Engine
 
 
+class HTTPResponse:
+    def __init__(self, status_code, body):
+        self.status_code, self._body = status_code, body
+        self.text = body.decode()
+
+    def json(self):
+        return json.loads(self._body)
+
+
+class ASGIClient:
+    def __init__(self, app):
+        self.app = app
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        return None
+
+    async def request(self, method, path, json_body=None):
+        target = urlsplit(path)
+        body = json.dumps(json_body).encode() if json_body is not None else b''
+        used = False
+        status, response_body = None, b''
+
+        async def receive():
+            nonlocal used
+            if used:
+                return {'type': 'http.request', 'body': b'', 'more_body': False}
+            used = True
+            return {'type': 'http.request', 'body': body, 'more_body': False}
+
+        async def send(message):
+            nonlocal status, response_body
+            if message['type'] == 'http.response.start':
+                status = message['status']
+            elif message['type'] == 'http.response.body':
+                response_body += message.get('body', b'')
+
+        await self.app({
+            'type': 'http', 'asgi': {'version': '3.0'}, 'http_version': '1.1',
+            'method': method, 'scheme': 'http', 'path': target.path,
+            'raw_path': target.path.encode(), 'query_string': target.query.encode(),
+            'headers': [(b'host', b'test'), (b'content-type', b'application/json'), (b'content-length', str(len(body)).encode())],
+            'client': ('test', 1), 'server': ('test', 80), 'root_path': '',
+        }, receive, send)
+        return HTTPResponse(status, response_body)
+
+    async def get(self, path):
+        return await self.request('GET', path)
+
+    async def post(self, path, json=None):
+        return await self.request('POST', path, json)
+
+
+async def direct_endpoint(function, **kwargs):
+    return function(**kwargs)
+
+
 class ApiTests(unittest.TestCase):
+    def test_http_multi_ship_travel_preview_uses_total_mass(self):
+        async def smoke():
+            engine = Engine.new(api.catalog, now=30)
+            first = {'id': 'first', 'hull_id': 'scout_hull', 'propulsion_id': 'chemical_drive', 'fuel_id': 'ion_fuel', 'crew': 3, 'mass': 10, 'ready_at': 30, 'origin_planet_id': None, 'system_x': engine.state.system_x, 'system_y': engine.state.system_y}
+            second = {**first, 'id': 'second', 'mass': 20}
+            engine.state.ships = [first, second]
+            engine.state.fleets = [{'id': 'fleet', 'ship_ids': ['first', 'second'], 'status': 'ARRIVED', 'x': engine.state.system_x, 'y': engine.state.system_y}]
+
+            class MemoryService:
+                def run(self, empire_id, call, **options):
+                    candidate = Engine(api.catalog, copy.deepcopy(engine.state))
+                    result = call(candidate)
+                    engine.state = candidate.state
+                    return result
+
+            with patch.object(fastapi.routing, 'run_in_threadpool', direct_endpoint), patch.object(api.app.state, 'store', MemoryService(), create=True):
+                api.app.state.default_empire_id = 'local'
+                async with ASGIClient(api.app) as client:
+                    response = await client.post('/api/travel-preview', json={'target_x': engine.state.system_x + 1, 'target_y': engine.state.system_y, 'propulsion_id': 'chemical_drive', 'mode': 'NORMAL', 'fleet_id': 'fleet'})
+                    self.assertEqual(response.status_code, 200, response.text)
+                    self.assertEqual(response.json()['NORMAL']['fuel_cost'], 30)
+
+        asyncio.run(smoke())
+
     def test_http_action_contract_without_database(self):
         async def smoke():
             clock = 1000
@@ -23,9 +108,9 @@ class ApiTests(unittest.TestCase):
                     result = call(candidate)
                     engine.state = candidate.state
                     return result
-            with patch.object(api.app.state, 'store', MemoryService(), create=True):
+            with patch.object(fastapi.routing, 'run_in_threadpool', direct_endpoint), patch.object(api.app.state, 'store', MemoryService(), create=True):
                 api.app.state.default_empire_id = 'local'
-                async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api.app), base_url='http://test') as client:
+                async with ASGIClient(api.app) as client:
                     async def post(endpoint, payload=None):
                         response = await client.post(endpoint, json=payload or {})
                         self.assertEqual(response.status_code, 200, response.text)

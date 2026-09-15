@@ -312,22 +312,45 @@ class Engine:
         self._research_eta()
         return ship
 
-    def _travel_subject(self, fleet_id: str | None, ship_id: str | None):
+    def _fleet_structure(self, fleet_id: str | None, propulsion_id: str | None = None, ship_id: str | None = None):
         if fleet_id and ship_id:
             raise DataValidationError('selecione fleet_id ou ship_id')
-        fleets = sorted(self.state.fleets, key=lambda f: f['id'])
-        fleet = next((f for f in fleets if f['id'] == fleet_id), None) if fleet_id else None
-        if fleet_id and fleet is None:
+        if fleet_id is None:
+            return None, None
+        fleet = next((f for f in self.state.fleets if f['id'] == fleet_id), None)
+        if fleet is None:
             raise DataValidationError('frota inexistente')
+        if not fleet['ship_ids']:
+            raise DataValidationError('frota sem naves não pode viajar')
+        ships = {ship['id']: ship for ship in self.state.ships}
+        composition = [ships.get(ship_id) for ship_id in fleet['ship_ids']]
+        if any(ship is None for ship in composition):
+            raise DataValidationError('nave da frota inexistente')
+        propulsion_ids = {ship['propulsion_id'] for ship in composition}
+        if len(propulsion_ids) != 1:
+            raise DataValidationError('frota contém propulsões heterogêneas')
+        fuel_ids = {ship['fuel_id'] for ship in composition}
+        if len(fuel_ids) != 1:
+            raise DataValidationError('frota contém combustíveis heterogêneos')
+        if propulsion_id is not None and propulsion_id != next(iter(propulsion_ids)):
+            raise DataValidationError('propulsão solicitada diferente da composição da frota')
+        return fleet, composition
+
+    def _travel_subject(self, fleet_id: str | None, ship_id: str | None, propulsion_id: str | None = None):
+        fleets = sorted(self.state.fleets, key=lambda f: f['id'])
+        fleet, composition = self._fleet_structure(fleet_id, propulsion_id, ship_id)
         if not fleet_id and not ship_id:
             fleet = next((f for f in fleets if f['status'] == 'ARRIVED'), None)
+            if fleet:
+                _, composition = self._fleet_structure(fleet['id'], propulsion_id)
         attached = {sid for f in fleets for sid in f['ship_ids']}
         if fleet:
             if fleet['status'] != 'ARRIVED':
                 raise DataValidationError('frota em trânsito')
-            if len(fleet['ship_ids']) != 1:
-                raise DataValidationError('slice suporta uma nave por frota')
-            ship = next((s for s in self.state.ships if s['id'] == fleet['ship_ids'][0]), None)
+            if any(ship['ready_at'] > self.state.last_updated for ship in composition):
+                raise DataValidationError('nave ainda em montagem')
+            ship = dict(composition[0])
+            ship['mass'] = sum(item['mass'] for item in composition)
             origin = (fleet['x'], fleet['y'])
         else:
             ship = next((s for s in self.state.ships if s['id'] not in attached and (s['id'] == ship_id if ship_id else s['ready_at'] <= self.state.last_updated)), None)
@@ -342,16 +365,17 @@ class Engine:
         return fleet, ship, origin
 
     def preview_travel(self, target_x: int, target_y: int, propulsion_id: str, mode: str, *, fleet_id: str | None = None, ship_id: str | None = None, planet_id: str | None = None, intra_system: bool = False) -> dict[str, Any]:
-        fleet, ship, origin = self._travel_subject(fleet_id, ship_id)
+        fleet, ship, origin = self._travel_subject(fleet_id, ship_id, propulsion_id)
         self._travel_source(fleet, ship, origin, planet_id)
         require_available(self.catalog, self.state, self.catalog.get('travel_modes', mode))
         return {**calculate_travel(self.catalog, origin, (target_x, target_y), ship, propulsion_id, mode, intra_system=intra_system), 'fleet_id': fleet['id'] if fleet else None, 'ship_id': ship['id']}
 
     def send_fleet(self, target_x: int, target_y: int, propulsion_id: str, mode: str, now: float | None = None, *, fleet_id: str | None = None, ship_id: str | None = None, mission: str = 'MOVE', target_planet_index: int | None = None, planet_id: str | None = None) -> dict[str, Any]:
+        self._fleet_structure(fleet_id, propulsion_id, ship_id)
         self.advance(now)
         if mission not in {'MOVE', 'SURVEY', 'COLONIZE'}:
             raise DataValidationError('missão de frota inválida')
-        fleet, ship, origin = self._travel_subject(fleet_id, ship_id)
+        fleet, ship, origin = self._travel_subject(fleet_id, ship_id, propulsion_id)
         if mission == 'COLONIZE':
             if fleet is None or target_planet_index is None:
                 raise DataValidationError('colonização exige uma frota e planeta alvo')

@@ -199,18 +199,16 @@ class OfflineAndFleetTests(unittest.TestCase):
         self.assertEqual(first['arrival_at'], 570)
         with self.assertRaises(DataValidationError):
             e.send_fleet(4, 0, 'chemical_drive', 'NORMAL', now=30, fleet_id=first['id'])
-        e.advance(first['arrival_at'])
-        self.assertEqual((e.state.fleets[0]['x'], e.state.fleets[0]['y']), (3, 0))
+        self.assertEqual(e.state.fleets[0]['status'], 'TRANSIT')
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'state.json'
             save(e, path)
             e = load_or_create(self.catalog, path)
-        preview = e.preview_travel(4, 0, 'chemical_drive', 'NORMAL', fleet_id=first['id'])
-        self.assertEqual(preview['origin'], [3, 0])
-        self.assertEqual(preview['distance'], 1)
-        self.assertEqual(preview['fuel_cost'], 10)
-        self.assertEqual(preview['eta_seconds'], 180)
         second = e.send_fleet(4, 0, 'chemical_drive', 'NORMAL', now=570, fleet_id=first['id'])
+        self.assertEqual(second['preview']['origin'], [3, 0])
+        self.assertEqual(second['preview']['distance'], 1)
+        self.assertEqual(second['preview']['fuel_cost'], 10)
+        self.assertEqual(second['preview']['eta_seconds'], 180)
         self.assertEqual(second['id'], first['id'])
         self.assertEqual(second['ship_ids'], first['ship_ids'])
         self.assertEqual(len(e.state.fleets), 1)
@@ -218,6 +216,61 @@ class OfflineAndFleetTests(unittest.TestCase):
         self.assertEqual((e.state.fleets[0]['x'], e.state.fleets[0]['y']), (4, 0))
         self.assertEqual(e.state.fleets[0]['status'], 'ARRIVED')
         self.assertEqual(e.state.stocks['ion_fuel'], fuel_before - 40)
+
+    def multi_ship_fleet(self):
+        e = Engine.new(self.catalog, now=0)
+        e.state.districts['orbital_shipyard'] = 1
+        first = e.build_ship(now=0)
+        e.advance(30)
+        second = {**first, 'id': 'second-ship', 'mass': 20}
+        e.state.ships.append(second)
+        fleet = {'id': 'multi', 'name': 'Multi', 'ship_ids': [first['id'], second['id']], 'status': 'ARRIVED', 'x': e.state.system_x, 'y': e.state.system_y, 'fuel_reserve': 30}
+        e.state.fleets = [fleet]
+        return e, fleet
+
+    def test_homogeneous_multi_ship_travel_aggregates_mass_and_keeps_eta(self):
+        e, fleet = self.multi_ship_fleet()
+        before = copy.deepcopy(e.state.to_dict())
+        preview = e.preview_travel(e.state.system_x + 1, e.state.system_y, 'chemical_drive', 'NORMAL', fleet_id=fleet['id'])
+        self.assertEqual(preview['fuel_cost'], 30)
+        self.assertEqual(preview['eta_seconds'], 180)
+        self.assertEqual(e.state.to_dict(), before)
+        trip = e.send_fleet(e.state.system_x + 1, e.state.system_y, 'chemical_drive', 'NORMAL', now=30, fleet_id=fleet['id'])
+        self.assertEqual(trip['ship_ids'], fleet['ship_ids'])
+        e.state.ships[1]['system_x'], e.state.ships[1]['system_y'] = 99, 99
+        e.advance(trip['arrival_at'])
+        self.assertEqual((e.state.fleets[0]['x'], e.state.fleets[0]['y']), (e.state.system_x + 1, e.state.system_y))
+        self.assertEqual(e.state.fleets[0]['ship_ids'], fleet['ship_ids'])
+        second = e.send_fleet(e.state.system_x + 2, e.state.system_y, 'chemical_drive', 'NORMAL', now=trip['arrival_at'], fleet_id=fleet['id'])
+        self.assertEqual(second['preview']['origin'], [e.state.system_x + 1, e.state.system_y])
+        self.assertEqual(second['preview']['fuel_cost'], 30)
+
+    def test_heterogeneous_multi_ship_fleet_fails_before_fuel_debit(self):
+        for field, value, message in (
+            ('propulsion_id', 'nuclear_drive', 'propulsões heterogêneas'),
+            ('fuel_id', 'fusion_fuel', 'combustíveis heterogêneos'),
+        ):
+            with self.subTest(field=field):
+                e, fleet = self.multi_ship_fleet()
+                e.state.ships[1][field] = value
+                last_updated_before = e.state.last_updated
+                stocks_before = copy.deepcopy(e.state.stocks)
+                fleet_before = copy.deepcopy(fleet)
+                fuel_reserve_before = fleet.get('fuel_reserve')
+                with self.assertRaisesRegex(DataValidationError, message):
+                    e.preview_travel(e.state.system_x + 1, e.state.system_y, 'chemical_drive', 'NORMAL', fleet_id=fleet['id'])
+                with self.assertRaisesRegex(DataValidationError, message):
+                    e.send_fleet(e.state.system_x + 1, e.state.system_y, 'chemical_drive', 'NORMAL', now=60, fleet_id=fleet['id'])
+                self.assertEqual(e.state.last_updated, last_updated_before)
+                self.assertEqual(e.state.stocks, stocks_before)
+                self.assertEqual(fleet, fleet_before)
+                self.assertEqual(fleet.get('fuel_reserve'), fuel_reserve_before)
+
+    def test_empty_multi_ship_fleet_cannot_travel(self):
+        e = self.engine
+        e.state.fleets = [{'id': 'empty', 'name': 'Empty', 'ship_ids': [], 'status': 'ARRIVED', 'x': e.state.system_x, 'y': e.state.system_y}]
+        with self.assertRaisesRegex(DataValidationError, 'frota sem naves'):
+            e.preview_travel(e.state.system_x + 1, e.state.system_y, 'chemical_drive', 'NORMAL', fleet_id='empty')
 
     def test_preview_and_send_reject_invalid_subject_without_debit(self):
         e = self.engine
