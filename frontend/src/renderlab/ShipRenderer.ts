@@ -11,6 +11,7 @@ import { CAMERA_PRESETS, HORIZON_ASSET_PATH, type CameraPreset, type RenderLabOp
 type HullInputs = { position: any; variation: any };
 type EngineInputs = { position: any; intensity: any };
 export type DebugStats = { bounds: [number, number, number]; meshCount: number; materialCount: number; cameraDistance: number; fps: number; frameTime: number };
+type UniformValue = { value: number };
 
 const { hullRoughness } = tslExports<{ hullRoughness: HullInputs }>(hullSurfaceShader)('hullRoughness');
 const { engineEmission } = tslExports<{ engineEmission: EngineInputs }>(engineEmissiveShader)('engineEmission');
@@ -19,9 +20,50 @@ type MeshRecord = {
   mesh: THREE.Mesh;
   original: THREE.Material | THREE.Material[];
   experimental: MeshPhysicalNodeMaterial;
-  roughness?: { value: number };
-  emission?: { value: number };
+  roughness?: UniformValue;
+  surfaceVariation?: UniformValue;
+  emission?: UniformValue;
 };
+
+export type MaterialUniformRecord = Pick<MeshRecord, 'experimental' | 'roughness' | 'surfaceVariation' | 'emission'>;
+export type RenderResources = { geometries: Set<THREE.BufferGeometry>; materials: Set<THREE.Material>; textures: Set<THREE.Texture> };
+
+export function updateMaterialUniforms(records: readonly MaterialUniformRecord[], options: Pick<RenderLabOptions, 'baseRoughness' | 'surfaceVariation' | 'engineEmission' | 'metalness'>): void {
+  records.forEach(record => {
+    record.experimental.metalness = options.metalness;
+    if (record.roughness) record.roughness.value = options.baseRoughness;
+    if (record.surfaceVariation) record.surfaceVariation.value = options.surfaceVariation;
+    if (record.emission) record.emission.value = options.engineEmission;
+  });
+}
+
+export function countUniqueMaterials(materials: Iterable<THREE.Material | THREE.Material[]>): number {
+  const unique = new Set<THREE.Material>();
+  for (const material of materials) for (const item of Array.isArray(material) ? material : [material]) unique.add(item);
+  return unique.size;
+}
+
+export function collectUniqueResources(root: THREE.Object3D, extraMaterials: Iterable<THREE.Material | THREE.Material[]> = []): RenderResources {
+  const resources: RenderResources = { geometries: new Set(), materials: new Set(), textures: new Set() };
+  const addMaterial = (material: THREE.Material) => {
+    if (resources.materials.has(material)) return;
+    resources.materials.add(material);
+    for (const value of Object.values(material)) if (value instanceof THREE.Texture) resources.textures.add(value);
+  };
+  root.traverse(child => {
+    if (!(child instanceof THREE.Mesh) && !(child instanceof THREE.Points)) return;
+    resources.geometries.add(child.geometry);
+    for (const material of materialsOf(child)) addMaterial(material);
+  });
+  for (const material of extraMaterials) for (const item of Array.isArray(material) ? material : [material]) addMaterial(item);
+  return resources;
+}
+
+export function disposeResources(resources: RenderResources): void {
+  resources.textures.forEach(texture => texture.dispose());
+  resources.materials.forEach(material => material.dispose());
+  resources.geometries.forEach(geometry => geometry.dispose());
+}
 
 export class ShipRenderer {
   private readonly scene = new THREE.Scene();
@@ -95,11 +137,7 @@ export class ShipRenderer {
     this.scene.environmentIntensity = this.options.environmentIntensity;
     this.star.intensity = this.options.starIntensity;
     this.setStarDirection();
-    this.records.forEach(record => {
-      record.experimental.metalness = this.options.metalness;
-      if (record.roughness) record.roughness.value = this.options.baseRoughness;
-      if (record.emission) record.emission.value = this.options.engineEmission;
-    });
+    updateMaterialUniforms(this.records, this.options);
     if (this.ship && next.cameraPreset) this.fitCamera(next.cameraPreset);
     if (next.materialMode) this.setMaterialMode(next.materialMode);
     if (next.showBounds !== undefined || next.showAxes !== undefined) this.applyDebugHelpers();
@@ -122,7 +160,7 @@ export class ShipRenderer {
     return {
       bounds: [size.x, size.y, size.z],
       meshCount: this.records.length,
-      materialCount: this.records.length,
+      materialCount: countUniqueMaterials(this.records.map(record => record.original)),
       cameraDistance: this.camera.position.distanceTo(this.controls.target),
       fps: this.frameTimes.length ? 1000 / (this.frameTimes.reduce((sum, value) => sum + value, 0) / this.frameTimes.length) : 0,
       frameTime: this.frameTimes.length ? this.frameTimes.reduce((sum, value) => sum + value, 0) / this.frameTimes.length : 0,
@@ -139,7 +177,8 @@ export class ShipRenderer {
     this.axesHelper?.dispose();
     this.environmentTarget?.dispose();
     disposeObject(this.starfield);
-    if (this.ship) disposeObject(this.ship);
+    if (this.ship) disposeObject(this.ship, this.records.flatMap(record => [record.original, record.experimental]));
+    this.records.length = 0;
     this.renderer.dispose();
     this.renderer.domElement.remove();
     this.host = null;
@@ -178,7 +217,7 @@ export class ShipRenderer {
       if (!(object instanceof THREE.Mesh)) return;
       const original = object.material;
       const material = this.createExperimentalMaterial(object);
-      this.records.push({ mesh: object, original, experimental: material, roughness: material.userData.roughnessUniform, emission: material.userData.emissionUniform });
+      this.records.push({ mesh: object, original, experimental: material, roughness: material.userData.roughnessUniform, surfaceVariation: material.userData.surfaceVariationUniform, emission: material.userData.emissionUniform });
       object.material = material;
     });
   }
@@ -288,13 +327,6 @@ function materialsOf(object: { material: THREE.Material | THREE.Material[] }): T
   return Array.isArray(object.material) ? object.material : [object.material];
 }
 
-function disposeObject(object: THREE.Object3D): void {
-  object.traverse(child => {
-    if (!(child instanceof THREE.Mesh) && !(child instanceof THREE.Points)) return;
-    child.geometry.dispose();
-    for (const material of materialsOf(child)) {
-      for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose();
-      material.dispose();
-    }
-  });
+function disposeObject(object: THREE.Object3D, extraMaterials: Iterable<THREE.Material | THREE.Material[]> = []): void {
+  disposeResources(collectUniqueResources(object, extraMaterials));
 }
