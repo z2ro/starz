@@ -1,9 +1,48 @@
-# Space Scene Lab 01
+# Space Scene Lab 02 — Living Orbital World
 
 Abra `http://localhost:8000/#/space-scene-lab` com o build servido, ou use a URL
 do `npm run dev` com `#/space-scene-lab`. Preview frontend disponível na porta 8000
 quando iniciado com `npm exec vite preview -- --port 8000`.
-Rota lazy fora do AppShell, sem consultas à API. Base: main `46da678`, merge da PR #5.
+Rota lazy fora do AppShell, sem consultas à API. Lab 02 parte de main `066a4ac`,
+merge da PR #6 (Space Scene Lab 01). Sem alterações nos geradores aprovados.
+
+## Conteúdo incremental
+
+- **Lua:** esfera 96×64 com 64 crateras determinísticas, depressão, borda elevada
+  e variação mineral por vertex colors. Seed derivada de `seed:moon`. Raio inicial
+  0,24 contra 1,28 do planeta; rotação 0,025 rad/s e órbita 0,035 rad/s independentes.
+  Usa a mesma estrela, shadow map e depth buffer. Nenhuma imagem ou GLB externo.
+- **Luzes noturnas:** simulação visual experimental, sem civilizações ou população
+  de gameplay. Uma distribuição Fibonacci amostra o `samplePlanet` existente:
+  terra sem gelo, altitude moderada, latitude, temperatura, umidade e preferência
+  costeira. Concentrações regionais determinísticas evitam um tapete uniforme.
+  Terran é o padrão; Oceanic prioriza as ilhas disponíveis, Desert tem densidade
+  reduzida e Frozen não recebe assentamentos. Um único Points com shader próprio
+  mascara emissão por `smoothstep(0.03, 0.25, -dot(normalMundial, direçãoSolar))`.
+  A normal acompanha inclinação e rotação planetárias; o oceano não recebe cidades.
+  Nuvens continuam separadas e passam sobre as luzes. Sem bloom ou PointLights.
+- **Estação:** núcleo conectado, módulos de serviço, dois braços de atracação,
+  painéis segmentados, suportes e navigation lights emissivas. GeometryBuilder
+  existente consolida tudo em três meshes. Largura inicial aproximada 0,47,
+  menor que o comprimento visual 1,0 da nave. Não é um estaleiro de gameplay.
+
+Moon/Station Focus foram acrescentados para inspecionar esses objetos. Os quatro
+presets anteriores permanecem. Cinematic mantém o enquadramento aprovado;
+Orbit Overview inclui as órbitas externas. Fases iniciais 0,5 (lua) e 4,9 (estação)
+preservam espaço para a nave e os títulos. Objetos secundários podem sair do
+enquadramento Cinematic durante sua órbita: use Overview ou Focus para acompanhá-los.
+
+O raio orbital da estação é `raioNave + esferaNave + esferaEstação + 0,14`.
+A lua fica além de `raioEstação + esferaEstação + raioLua + 0,18`.
+Essas faixas radiais garantem separação completa mesmo com inclinações diferentes
+e ao alterar escala/raio. São escolhas de apresentação, não mecânica orbital.
+
+Controles independentes de visibilidade, escala, velocidade e intensidade permitem
+comparar conteúdo. **Compare Lab 01** desliga os três acréscimos e volta a Cinematic,
+sem modificar seed, planeta, nave, iluminação ou render settings. Para Planet Only,
+desligue também Ship visibility. Pause congela todas as órbitas, rotações e pulsos;
+câmera e controles continuam utilizáveis. Nenhum objeto é reconstruído por frame.
+Seed/família substituem e descartam lua/luzes junto ao planeta, mantendo a estação.
 
 ## Reutilização
 
@@ -66,6 +105,24 @@ Orbit Overview e nave à frente/atrás. Artefatos: `/tmp/starz-space-scene-lab01
 A inspeção inicial levou ao ajuste da fase, câmera e escala iniciais, sem remodelar.
 Também foram verificados pause/câmera, tracking durante uma órbita e os labs isolados.
 
+Lab 02: capturas Cinematic PIXEL, RAW, Night Lights ON/OFF, Moon Focus, Station Focus,
+Ship Focus, Overview, Planet Only e as quatro famílias ficam em
+`/tmp/starz-space-scene-lab02-qa/`. Testes adicionais cobrem crateras/geometria finita,
+elegibilidade e determinismo das cidades, máscara solar, estação batched, separação
+orbital por bounding spheres, controles, pausa e descarte dos recursos substituídos.
+
+Comparação na mesma execução do build, 1440×900, Cinematic PIXEL 3, seed aurelia-01,
+tempo pausado, Chromium/ANGLE SwiftShader (três amostras após aquecimento):
+
+| Conteúdo | Triângulos nos passes | Draw calls | FPS observado | Frame time |
+| --- | ---: | ---: | ---: | ---: |
+| Lab 01, acréscimos desligados | 69.630 | 23 | 31–32 | 31,4–32,3 ms |
+| Lab 02 | 95.118 | 32 | 29–30 | 33,3–34,4 ms |
+
+Não são benchmarks de hardware. Os três viewports passaram sem overflow e sem
+erros JS/shader. O build na porta 8000 não fez chamadas à API; Planet Lab 02 e
+Ship Geometry Lab 01 também foram abertos para conferir regressão visual.
+
 ## Limitações
 
 Órbita e escala são visuais, sem física ou dados de gameplay. Na sombra ou atrás do
@@ -74,3 +131,6 @@ planeta a nave pode perder visibilidade, conforme luz e depth buffer. O pós-pas
 Contadores incluem os passes de sombra e pós-processamento. A geração CPU ainda
 pode causar uma pausa breve ao trocar planeta. O 404 de favicon.ico é preexistente.
 Não há integração com Planet View ou Shipyard; aprovação artística final é humana.
+Luzes urbanas não simulam estradas, história ou densidade populacional. Seu tamanho
+tem um mínimo de um pixel para leitura no pós-processamento. A lua é uma aproximação
+rochosa estilizada, sem geologia física; crateras menores se perdem no zoom Cinematic.

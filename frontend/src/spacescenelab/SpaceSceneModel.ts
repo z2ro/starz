@@ -5,6 +5,7 @@ import { createPrototypeShip } from '../shipgeometrylab/ShipGeometry';
 import { DEFAULT_SHIP_SETTINGS } from '../shipgeometrylab/shipLabTypes';
 import { presentationScale, safeOrbitRadius, updateOrbitTransform } from './orbit';
 import type { SpaceSceneSettings } from './spaceSceneTypes';
+import { createLivingWorld } from './LivingWorld';
 
 const planetSettings = (settings: SpaceSceneSettings) => ({ ...DEFAULT_PLANET_LAB_SETTINGS, ...PLANET_PRESETS[settings.family].parameters, family: settings.family, seed: settings.seed });
 
@@ -13,6 +14,8 @@ export function createSpaceSceneModel(initial: SpaceSceneSettings) {
   root.name = 'Space Scene Lab';
   let settings = initial;
   let planet = createLabPlanet(planetSettings(initial));
+  const living = createLivingWorld(planetSettings(initial));
+  planet.root.add(living.cities);
   planet.root.name = 'Procedural planet';
   const ship = createPrototypeShip();
   const shipPivot = new THREE.Group(), shipPresentation = new THREE.Group();
@@ -27,7 +30,7 @@ export function createSpaceSceneModel(initial: SpaceSceneSettings) {
   for (let index = 0; index < 128; index++) { const angle = index / 128 * Math.PI * 2; positions.push(Math.cos(angle), 0, Math.sin(angle)); }
   const orbitLine = new THREE.LineLoop(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)), new THREE.LineBasicMaterial({ color: '#466174', transparent: true, opacity: 0.24, depthWrite: false }));
   orbitLine.name = 'Presentation orbit';
-  root.add(planet.root, shipPivot, orbitLine);
+  root.add(planet.root, shipPivot, orbitLine, living.root);
   let radius = initial.orbitRadius, shipRadius = 0;
   let visualTime = 0, phase = 1.85, disposed = false;
   const tangent = new THREE.Vector3();
@@ -43,11 +46,12 @@ export function createSpaceSceneModel(initial: SpaceSceneSettings) {
     orbitLine.scale.setScalar(radius);
     orbitLine.rotation.x = -THREE.MathUtils.degToRad(settings.orbitInclination);
     updateOrbitTransform(shipPivot, phase, radius, settings.orbitInclination, tangent);
+    living.apply(settings, radius, shipRadius, visualTime);
   };
   applyPresentation();
 
   return {
-    root, ship, shipPivot, shipPresentation, orbitLine,
+    root, ship, shipPivot, shipPresentation, orbitLine, living,
     get planet() { return planet; },
     get radius() { return radius; },
     get shipRadius() { return shipRadius; },
@@ -57,6 +61,7 @@ export function createSpaceSceneModel(initial: SpaceSceneSettings) {
       if (disposed) return;
       if (next.seed !== settings.seed || next.family !== settings.family || next.regeneration !== settings.regeneration) {
         const replacement = createLabPlanet(planetSettings(next));
+        living.regenerate(planetSettings(next), replacement.root);
         root.remove(planet.root);
         disposeLabObject(planet.root);
         planet = replacement;
@@ -77,11 +82,13 @@ export function createSpaceSceneModel(initial: SpaceSceneSettings) {
       planet.cloudLayer.rotation.y = visualTime * DEFAULT_PLANET_LAB_SETTINGS.planetRotationSpeed * 1.35;
       updateOrbitTransform(shipPivot, phase, radius, settings.orbitInclination, tangent);
       ship.coreMaterial.emissiveIntensity = settings.engineEmission * (1 + Math.sin(visualTime * 1.6) * 0.035);
+      living.update(delta, settings, visualTime);
     },
-    setLightDirection(direction: THREE.Vector3) { planet.atmosphere.material.uniforms.uLight.value.copy(direction); },
+    setLightDirection(direction: THREE.Vector3) { planet.atmosphere.material.uniforms.uLight.value.copy(direction); living.setLight(direction); },
     dispose() {
       if (disposed) return;
       disposed = true;
+      living.dispose();
       disposeLabObject(planet.root);
       ship.dispose();
       orbitLine.geometry.dispose();
