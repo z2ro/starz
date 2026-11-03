@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { generatePlanetTextures, samplePlanet } from './planetGenerator';
-import { PLANET_PRESETS, type CameraPreset, type PlanetGenerationDiagnostics, type PlanetLabSettings, type PlanetLabStats } from './planetLabTypes';
+import { createLabPlanet, disposeLabObject } from './PlanetModel';
+import type { CameraPreset, PlanetGenerationDiagnostics, PlanetLabSettings, PlanetLabStats } from './planetLabTypes';
+export { disposeLabObject } from './PlanetModel';
 
 const PALETTE = [
   '#020711', '#081425', '#102a40', '#183f55', '#0b4a63', '#14728a',
@@ -70,23 +71,6 @@ const paletteVectors = PALETTE.map(hex => {
   return new THREE.Vector3(color.r, color.g, color.b);
 });
 
-export function disposeLabObject(object: THREE.Object3D) {
-  const geometries = new Set<THREE.BufferGeometry>();
-  const materials = new Set<THREE.Material>();
-  const textures = new Set<THREE.Texture>();
-  object.traverse(child => {
-    if (!(child instanceof THREE.Mesh || child instanceof THREE.Points)) return;
-    geometries.add(child.geometry);
-    for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
-      materials.add(material);
-      for (const value of Object.values(material)) if (value instanceof THREE.Texture) textures.add(value);
-    }
-  });
-  textures.forEach(texture => texture.dispose());
-  materials.forEach(material => material.dispose());
-  geometries.forEach(geometry => geometry.dispose());
-  object.clear();
-}
 
 export class PlanetLabRenderer {
   private renderer: THREE.WebGLRenderer;
@@ -234,54 +218,11 @@ export class PlanetLabRenderer {
     this.generationKey = this.getGenerationKey(settings);
     this.root.remove(this.planetGroup);
     disposeLabObject(this.planetGroup);
-    this.planetGroup = new THREE.Group();
+    const planet = createLabPlanet(settings);
+    this.planetGroup = planet.root;
+    this.cloudLayer = planet.cloudLayer;
+    this.generationDiagnostics = planet.diagnostics;
     this.root.add(this.planetGroup);
-    const textures = generatePlanetTextures(settings);
-    this.generationDiagnostics = textures.diagnostics;
-    const colorTexture = new THREE.CanvasTexture(textures.color);
-    const roughnessTexture = new THREE.CanvasTexture(textures.roughness);
-    const cloudTexture = new THREE.CanvasTexture(textures.clouds);
-    colorTexture.colorSpace = THREE.SRGBColorSpace;
-    colorTexture.anisotropy = 1;
-    roughnessTexture.colorSpace = THREE.NoColorSpace;
-    cloudTexture.colorSpace = THREE.NoColorSpace;
-    for (const texture of [colorTexture, roughnessTexture, cloudTexture]) {
-      texture.minFilter = THREE.LinearFilter;
-      texture.magFilter = THREE.LinearFilter;
-      texture.wrapS = THREE.RepeatWrapping;
-    }
-    const radius = 1.28;
-    const geometry = new THREE.SphereGeometry(radius, 128, 80);
-    const positions = geometry.getAttribute('position');
-    for (let index = 0; index < positions.count; index += 1) {
-      const direction = new THREE.Vector3(positions.getX(index), positions.getY(index), positions.getZ(index)).normalize();
-      const sample = samplePlanet(direction, settings);
-      const displacement = sample.land ? sample.elevation * 0.045 : 0;
-      positions.setXYZ(index, direction.x * (radius + displacement), direction.y * (radius + displacement), direction.z * (radius + displacement));
-    }
-    geometry.computeVertexNormals();
-    const surface = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ map: colorTexture, roughnessMap: roughnessTexture, roughness: 0.72, metalness: 0.04 }));
-    surface.castShadow = true;
-    surface.receiveShadow = true;
-    this.planetGroup.add(surface);
-    const cloudGeometry = new THREE.SphereGeometry(radius * 1.045, 96, 64);
-    this.cloudLayer = new THREE.Mesh(cloudGeometry, new THREE.MeshStandardMaterial({ color: 0xe4edf0, alphaMap: cloudTexture, transparent: true, opacity: 0.52, roughness: 1, depthWrite: false }));
-    this.cloudLayer.renderOrder = 2;
-    this.cloudLayer.castShadow = false;
-    this.planetGroup.add(this.cloudLayer);
-    const preset = PLANET_PRESETS[settings.family];
-    const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.06, 96, 64), new THREE.ShaderMaterial({
-      uniforms: { uLight: { value: new THREE.Vector3(1, 0.45, 0.5).normalize() }, uColor: { value: new THREE.Color(preset.atmosphereColor).multiplyScalar(preset.atmosphereStrength) } },
-      vertexShader: 'varying vec3 vNormal; varying vec3 vView; void main(){ vec4 world = modelMatrix * vec4(position, 1.0); vNormal = normalize(mat3(modelMatrix) * normal); vView = cameraPosition - world.xyz; gl_Position = projectionMatrix * viewMatrix * world; }',
-      fragmentShader: 'uniform vec3 uLight; uniform vec3 uColor; varying vec3 vNormal; varying vec3 vView; void main(){ float rim = pow(1.0 - max(dot(normalize(vNormal), normalize(vView)), 0.0), 2.25); float lit = 0.28 + max(dot(normalize(vNormal), normalize(uLight)), 0.0) * 0.72; gl_FragColor = vec4(uColor * rim * lit, rim * 0.44); }',
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      side: THREE.FrontSide,
-      depthWrite: false,
-    }));
-    atmosphere.renderOrder = 3;
-    this.planetGroup.add(atmosphere);
-    this.planetGroup.rotation.z = THREE.MathUtils.degToRad(settings.axialTilt);
   }
 
   private createStarfield() {

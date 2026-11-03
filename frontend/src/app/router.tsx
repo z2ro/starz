@@ -11,9 +11,11 @@ import { lazy, Suspense } from 'react';
 
 const PlanetLabView = lazy(() => import('../planetlab/PlanetLabView').then(module => ({ default: module.PlanetLabView })));
 const ShipGeometryLabView = lazy(() => import('../shipgeometrylab/ShipGeometryLabView').then(module => ({ default: module.ShipGeometryLabView })));
+const SpaceSceneLabView = lazy(() => import('../spacescenelab/SpaceSceneLabView').then(module => ({ default: module.SpaceSceneLabView })));
 
 export function AppRouter() {
   return <HashRouter><Routes>
+    <Route path="/space-scene-lab" element={<Suspense fallback={<div>Carregando Space Scene Lab…</div>}><SpaceSceneLabView /></Suspense>} />
     <Route path="/ship-geometry-lab" element={<Suspense fallback={<div>Carregando Ship Geometry Lab…</div>}><ShipGeometryLabView /></Suspense>} />
     <Route path="/planet-lab" element={<Suspense fallback={<div className="planet-lab-loading">Carregando Planet Lab…</div>}><PlanetLabView /></Suspense>} />
     <Route element={<AppShell />}>
