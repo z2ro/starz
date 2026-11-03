@@ -1,0 +1,111 @@
+{
+  "system": {
+    "id": "system-0-1",
+    "name": "Asterion +0:+1",
+    "x": 0,
+    "y": 1,
+    "star": {
+      "stellar_class": "F",
+      "mass": 1.1963364282451519,
+      "luminosity": 2.30596177233229,
+      "age": 1.580639263169089,
+      "activity": 0.6520676422970061
+    },
+    "planet": {
+      "id": "planet-0-1-0",
+      "name": "H185-1 1",
+      "mass": 2.5873610734460164,
+      "radius": 0.7707049437391971,
+      "gravity": 1.0516643893022484,
+      "orbital_distance": 1.8203587499648484,
+      "temperature": 299.0086038062078,
+      "atmosphere": "dense methane",
+      "radiation": 0.5916733721784097,
+      "magnetic_field": 0.9719268376363679,
+      "water": 40.402224447953046,
+      "geological_activity": 0.2547793221654157,
+      "mineral_profile": {
+        "raw_ore": 1.4568471458088514,
+        "volatiles": 1.065916313836575
+      },
+      "usable_surface": 53.38243852390221
+    }
+  },
+  "active_planet": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "planet_index": 0,
+    "home": true
+  },
+  "planets": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "name": "H185-1 1",
+      "x": 0,
+      "y": 1,
+      "planet_index": 0,
+      "population_total": 100,
+      "home": true
+    }
+  ],
+  "population": {
+    "total": 100,
+    "available": 40,
+    "capacity": 260
+  },
+  "districts": {
+    "civil_district": 2,
+    "solar_field": 4,
+    "ore_extractor": 2,
+    "research_lab": 2,
+    "processor": 2,
+    "orbital_shipyard": 1
+  },
+  "ships": [
+    {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "hull_id": "scout_hull",
+      "propulsion_id": "chemical_drive",
+      "fuel_id": "ion_fuel",
+      "crew": 3,
+      "mass": 10,
+      "ready_at": 1788636928.752507,
+      "origin_planet_id": "11111111-1111-4111-8111-111111111111",
+      "system_x": 0,
+      "system_y": 1
+    },
+    {
+      "id": "44444444-3333-4333-8333-333333333333",
+      "hull_id": "scout_hull",
+      "propulsion_id": "chemical_drive",
+      "fuel_id": "ion_fuel",
+      "crew": 3,
+      "mass": 10,
+      "ready_at": 1789227840.310539,
+      "origin_planet_id": "11111111-1111-4111-8111-111111111111",
+      "system_x": 0,
+      "system_y": 1
+    }
+  ],
+  "fleets": [
+    {
+      "id": "55555555-5555-4555-8555-555555555555",
+      "name": "Fleet 01",
+      "status": "ARRIVED",
+      "mission": "SURVEY",
+      "x": 0,
+      "y": 0,
+      "destination_x": 0,
+      "destination_y": 0,
+      "ship_ids": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "eta": 0,
+      "propulsion": "chemical_drive",
+      "mode": "ECONOMY",
+      "fuel_cost": 10,
+      "departure_at": 1788663951.974439,
+      "arrival_at": 1788664346.974439,
+      "target_planet_index": null
+    }
+  ]
+}
