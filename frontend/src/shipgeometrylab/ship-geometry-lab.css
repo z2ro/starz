@@ -1,0 +1,41 @@
+body:has(.ship-lab-shell) { min-width: 0; }
+.ship-lab-shell { height: 100dvh; min-height: 640px; display: grid; grid-template-rows: auto minmax(0, 1fr); color: #d2e3ef; background: #030711; }
+.ship-lab-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 28px; border-bottom: 1px solid #20384b; background: #081521; }
+.ship-lab-header p { margin: 0 0 6px; font: 10px ui-monospace, monospace; letter-spacing: .18em; color: #77b9ce; }
+.ship-lab-header h1 { margin: 0; font-size: 23px; font-weight: 550; letter-spacing: .025em; }
+.ship-lab-header a { padding: 10px 14px; color: #a4d0dd; border: 1px solid #27495b; text-decoration: none; font-size: 12px; }
+.ship-lab-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 0; gap: 12px; padding: 12px; }
+.ship-lab-viewport { min-width: 0; min-height: 0; position: relative; border: 1px solid #1c3446; background: #030711; }
+.ship-lab-stage { position: absolute; inset: 0; overflow: hidden; }
+.ship-lab-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.ship-lab-identity { position: absolute; top: 26px; left: 28px; pointer-events: none; }
+.ship-lab-identity > span { font: 10px ui-monospace, monospace; letter-spacing: .22em; color: #81b5c8; }
+.ship-lab-identity h2 { margin: 8px 0; font-size: clamp(22px, 2vw, 34px); font-weight: 500; letter-spacing: .08em; }
+.ship-lab-identity b { font-weight: 350; color: #638696; }
+.ship-lab-identity p, .ship-lab-caption p { color: #637f90; font-size: 11px; }
+.ship-lab-caption { position: absolute; bottom: 20px; left: 28px; pointer-events: none; }
+.ship-lab-caption > span { margin-right: 8px; padding: 5px 8px; border: 1px solid #294555; color: #95bdcc; background: #06111bed; font: 10px ui-monospace, monospace; letter-spacing: .06em; }
+.ship-lab-panel { min-width: 0; min-height: 0; overflow-y: auto; background: #07131f; border: 1px solid #20384b; scrollbar-width: thin; }
+.ship-lab-panel section { padding: 15px; border-bottom: 1px solid #1e3242; }
+.ship-lab-panel h2 { margin: 0 0 12px; color: #74bdd2; font: 11px ui-monospace, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.ship-lab-camera-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.ship-lab-panel button { min-height: 34px; padding: 6px; border: 1px solid #2a485d; border-radius: 2px; background: #0b1d2c; color: #adc9d7; cursor: pointer; font-size: 12px; }
+.ship-lab-panel button:hover, .ship-lab-panel button[aria-pressed=true] { color: #e6f6fc; background: #163447; border-color: #73b8cc; }
+.ship-lab-panel input { accent-color: #83b9ce; }
+.ship-lab-toggle { display: flex; align-items: center; gap: 8px; min-height: 28px; font-size: 12px; color: #a2b9c9; }
+.ship-lab-range { display: block; margin-bottom: 9px; color: #97b0c1; font-size: 12px; }
+.ship-lab-range > span { display: flex; justify-content: space-between; }
+.ship-lab-range output { color: #c7dfec; font-variant-numeric: tabular-nums; }
+.ship-lab-range input { width: 100%; margin-top: 6px; }
+.ship-lab-pause { width: 100%; margin-top: 4px; }
+.ship-lab-select { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #a2b9c9; font-size: 12px; margin-bottom: 8px; }
+.ship-lab-select select { background: #0b1d2c; border: 1px solid #2a485d; color: #d2e3ef; padding: 7px; min-width: 110px; }
+.ship-lab-stats dl { margin: 0; display: grid; gap: 6px; font: 11px ui-monospace, monospace; }
+.ship-lab-stats dl div { display: flex; justify-content: space-between; gap: 7px; }
+.ship-lab-stats dt { color: #7192a7; }
+.ship-lab-stats dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.ship-lab-stats p { color: #6d8b9d; font-size: 11px; line-height: 1.5; }
+.ship-lab-error { position: absolute; inset: 50% auto auto 50%; transform: translate(-50%, -50%); color: #ebba99; padding: 20px; border: 1px solid #77513b; }
+.ship-lab-shell :focus-visible { outline: 2px solid #9bdef0; outline-offset: 3px; }
+@media (max-width: 1000px) { .ship-lab-layout { grid-template-columns: minmax(0, 1fr) 260px; } .ship-lab-identity { left: 18px; top: 18px; } }
+@media (max-width: 720px) { .ship-lab-shell { height: auto; } .ship-lab-layout { display: block; } .ship-lab-viewport { height: 58vh; min-height: 360px; } .ship-lab-panel { margin-top: 12px; } .ship-lab-header { padding: 14px; gap: 10px; } .ship-lab-header h1 { font-size: 18px; } .ship-lab-identity h2 { font-size: 20px; } }

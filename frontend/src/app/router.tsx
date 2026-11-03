@@ -10,9 +10,11 @@ import { GalaxyView } from '../views/GalaxyView';
 import { lazy, Suspense } from 'react';
 
 const PlanetLabView = lazy(() => import('../planetlab/PlanetLabView').then(module => ({ default: module.PlanetLabView })));
+const ShipGeometryLabView = lazy(() => import('../shipgeometrylab/ShipGeometryLabView').then(module => ({ default: module.ShipGeometryLabView })));
 
 export function AppRouter() {
   return <HashRouter><Routes>
+    <Route path="/ship-geometry-lab" element={<Suspense fallback={<div>Carregando Ship Geometry Lab…</div>}><ShipGeometryLabView /></Suspense>} />
     <Route path="/planet-lab" element={<Suspense fallback={<div className="planet-lab-loading">Carregando Planet Lab…</div>}><PlanetLabView /></Suspense>} />
     <Route element={<AppShell />}>
       <Route path="/overview" element={<OverviewView />} />

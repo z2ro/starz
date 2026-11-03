@@ -1,0 +1,62 @@
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ShipLabRenderer } from './ShipLabRenderer';
+import { DEFAULT_SHIP_SETTINGS, SHIP_CAMERAS, type ShipCamera, type ShipLabSettings, type ShipLabStats } from './shipLabTypes';
+import './ship-geometry-lab.css';
+
+function ShipCanvas({ settings, camera, onStats }: { settings: ShipLabSettings; camera: { preset: ShipCamera; revision: number }; onStats: (stats: ShipLabStats) => void }) {
+  const host = useRef<HTMLDivElement>(null);
+  const renderer = useRef<ShipLabRenderer | null>(null);
+  const [error, setError] = useState<string>();
+  useEffect(() => {
+    if (!host.current) return;
+    try {
+      const probe = document.createElement('canvas').getContext('webgl2');
+      if (!probe) throw new Error('WebGL 2 não disponível neste navegador.');
+      probe.getExtension('WEBGL_lose_context')?.loseContext();
+      renderer.current = new ShipLabRenderer(host.current, settings, onStats);
+      renderer.current.start();
+    } catch (failure) {
+      renderer.current?.dispose();
+      renderer.current = null;
+      setError(failure instanceof Error ? failure.message : 'Falha ao iniciar laboratório.');
+    }
+    return () => { renderer.current?.dispose(); renderer.current = null; };
+  }, []);
+  useEffect(() => { renderer.current?.setSettings(settings); }, [settings]);
+  useEffect(() => { renderer.current?.setCamera(camera.preset); }, [camera]);
+  return <div className="ship-lab-stage" ref={host}>{error && <div className="ship-lab-error" role="alert">{error}</div>}</div>;
+}
+
+export function ShipGeometryLabView() {
+  const [settings, setSettings] = useState<ShipLabSettings>(() => ({ ...DEFAULT_SHIP_SETTINGS, paused: window.matchMedia('(prefers-reduced-motion: reduce)').matches }));
+  const [camera, setCamera] = useState<{ preset: ShipCamera; revision: number }>({ preset: '3/4 Front', revision: 0 });
+  const [stats, setStats] = useState<ShipLabStats | null>(null);
+  const update = <K extends keyof ShipLabSettings>(key: K, value: ShipLabSettings[K]) => setSettings(current => ({ ...current, [key]: value }));
+  const toggle = (key: 'hullOnly' | 'armor' | 'engines' | 'details' | 'boundingBox' | 'silhouette' | 'outlines' | 'dither' | 'raw', label: string) => <label className="ship-lab-toggle"><input type="checkbox" checked={settings[key]} onChange={event => update(key, event.target.checked)} /><span>{label}</span></label>;
+  const range = (key: 'azimuth' | 'elevation' | 'intensity' | 'hullTone' | 'armorContrast' | 'engineEmission', label: string, min: number, max: number, step: number) => <label className="ship-lab-range"><span>{label}<output>{settings[key]}</output></span><input aria-label={label} type="range" min={min} max={max} step={step} value={settings[key]} onChange={event => update(key, Number(event.target.value))} /></label>;
+  const chooseCamera = (preset: ShipCamera) => setCamera(current => ({ preset, revision: current.revision + 1 }));
+  return <main className="ship-lab-shell">
+    <header className="ship-lab-header"><div><p>STARZ / EXPERIMENTAL NAVAL DESIGN</p><h1>Ship Geometry Lab 01</h1></div><Link to="/overview">Voltar ao STARZ</Link></header>
+    <div className="ship-lab-layout">
+      <section className="ship-lab-viewport" aria-label="Visualizador da nave">
+        <ShipCanvas settings={settings} camera={camera} onStats={setStats} />
+        <div className="ship-lab-identity"><span>EXPLORATION CORVETTE</span><h2>HORIZON <b>PROTOTYPE</b></h2><p>Design experimental · proporções provisórias</p></div>
+        <div className="ship-lab-caption"><span>{camera.preset.toUpperCase()}</span><span>{settings.silhouette ? 'SILHOUETTE' : settings.raw ? 'RAW 3D' : `PIXEL / ${settings.pixelSize}px`}</span>{settings.hullOnly && <span>HULL ONLY</span>}<p>Arraste para orbitar · scroll para zoom</p></div>
+      </section>
+      <aside className="ship-lab-panel" aria-label="Controles do laboratório">
+        <section><h2>Camera</h2><div className="ship-lab-camera-grid">{SHIP_CAMERAS.map(preset => <button key={preset} aria-pressed={camera.preset === preset} onClick={() => chooseCamera(preset)}>{preset}</button>)}<button onClick={() => chooseCamera('3/4 Front')}>Reset</button></div></section>
+        <section><h2>Geometry</h2>{toggle('hullOnly', 'Show hull only')}{toggle('armor', 'Show armor')}{toggle('engines', 'Show engines')}{toggle('details', 'Show details')}{toggle('boundingBox', 'Show bounding box')}{toggle('silhouette', 'SILHOUETTE')}</section>
+        <section><h2>Lighting</h2>{range('azimuth', 'Star azimuth', 0, 360, 1)}{range('elevation', 'Star elevation', -20, 85, 1)}{range('intensity', 'Intensity', 0.2, 5, 0.1)}</section>
+        <section><h2>Material</h2>{range('hullTone', 'Hull tone', 0.4, 1.5, 0.05)}{range('armorContrast', 'Armor contrast', 0.5, 1.5, 0.05)}{range('engineEmission', 'Engine emission', 0, 3, 0.1)}<button className="ship-lab-pause" aria-pressed={settings.paused} onClick={() => update('paused', !settings.paused)}>{settings.paused ? 'Resume' : 'Pause'}</button></section>
+        <section><h2>Render</h2><label className="ship-lab-select">Pixel size<select aria-label="Pixel size" value={settings.pixelSize} onChange={event => update('pixelSize', Number(event.target.value))}>{[1, 2, 3, 4, 5, 6].map(size => <option key={size} value={size}>{size}px</option>)}</select></label>{toggle('outlines', 'Outlines')}{toggle('dither', 'Dither')}{toggle('raw', 'RAW 3D')}</section>
+        <section className="ship-lab-stats"><h2>Debug</h2><dl>
+          <div><dt>FPS</dt><dd>{stats?.fps ?? '—'}</dd></div><div><dt>Frame time</dt><dd>{stats ? `${stats.frameTime.toFixed(1)}ms` : '—'}</dd></div>
+          <div><dt>Triangles</dt><dd>{stats?.triangles ?? '—'}</dd></div><div><dt>Draw calls</dt><dd>{stats?.drawCalls ?? '—'}</dd></div>
+          <div><dt>Mesh count</dt><dd>{stats?.meshes ?? '—'}</dd></div><div><dt>Bounds X/Y/Z</dt><dd>{stats ? stats.bounds.map(value => value.toFixed(2)).join(' / ') : '—'}</dd></div>
+          <div><dt>Render resolution</dt><dd>{stats?.resolution ?? '—'}</dd></div>
+        </dl><p>Dimensões em unidades do laboratório, sem escala física canônica.</p></section>
+      </aside>
+    </div>
+  </main>;
+}
