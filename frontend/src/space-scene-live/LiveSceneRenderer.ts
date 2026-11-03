@@ -5,6 +5,8 @@ import { ShipPixelPipeline } from '../shipgeometrylab/ShipPixelPipeline';
 import { DEFAULT_SHIP_SETTINGS } from '../shipgeometrylab/shipLabTypes';
 import type { SpaceSceneDescriptor } from '../visual-state/types';
 import { createLiveSceneModel } from './LiveSceneModel';
+import { representativeShip } from './livePresentation';
+import { heroFrustum, type HeroInsets } from './heroFraming';
 
 export type LiveRenderOptions = { raw: boolean; paused: boolean };
 export type LiveSceneStats = { fps: number; frameTime: number; triangles: number; drawCalls: number; generationCount: number; renderResolution: string };
@@ -27,7 +29,9 @@ export class LiveSceneRenderer {
   private frames = 0;
   private disposed = false;
   private options: LiveRenderOptions = { raw: false, paused: false };
-  constructor(private host: HTMLElement, private report: (stats: LiveSceneStats) => void) {
+  private heroInsets: HeroInsets | null = null;
+  private shipVisible = false;
+  constructor(private host: HTMLElement, private report: (stats: LiveSceneStats) => void, private onFailure?: (error: unknown) => void) {
     this.renderer.setPixelRatio(1); this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.08;
     this.renderer.info.autoReset = false; this.renderer.setClearColor('#030711');
@@ -50,6 +54,9 @@ export class LiveSceneRenderer {
   start() { this.host.appendChild(this.renderer.domElement); this.observer.observe(this.host); this.resize(); this.frameId = requestAnimationFrame(this.frame); }
   setDescriptor(descriptor: SpaceSceneDescriptor | null) {
     this.model.setDescriptor(descriptor);
+    const shipVisible = representativeShip(descriptor) !== null;
+    const shipChanged = shipVisible !== this.shipVisible; this.shipVisible = shipVisible;
+    if (this.heroInsets && shipChanged) this.resize();
     if (descriptor) {
       const az = THREE.MathUtils.degToRad(descriptor.presentation.starAzimuth), el = THREE.MathUtils.degToRad(descriptor.presentation.starElevation);
       const direction = new THREE.Vector3(Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az)).normalize();
@@ -58,6 +65,7 @@ export class LiveSceneRenderer {
     }
     this.draw(); // Clear stale planet pixels immediately on selection/loading/error, before React paints.
   }
+  setHeroInsets(insets: HeroInsets) { this.heroInsets = insets; this.resize(); this.draw(); }
   setOptions(options: LiveRenderOptions) {
     const resize = this.options.raw !== options.raw;
     this.options = options; this.renderSettings.raw = options.raw;
@@ -67,14 +75,16 @@ export class LiveSceneRenderer {
   private resize() {
     if (this.disposed) return;
     const rect = this.host.getBoundingClientRect(), width = Math.max(1, rect.width), height = Math.max(1, rect.height);
-    const span = Math.max(2.2, 2.8 * height / width);
-    this.camera.top = span; this.camera.bottom = -span; this.camera.right = span * width / height; this.camera.left = -this.camera.right; this.camera.updateProjectionMatrix();
+    if (this.heroInsets) Object.assign(this.camera, heroFrustum(width, height, this.heroInsets, this.shipVisible));
+    else { const span = Math.max(2.2, 2.8 * height / width); this.camera.top = span; this.camera.bottom = -span; this.camera.right = span * width / height; this.camera.left = -this.camera.right; }
+    this.camera.updateProjectionMatrix();
     this.pipeline.resize(width, height, this.renderSettings); this.renderer.setSize(this.pipeline.width, this.pipeline.height, false);
     this.renderer.domElement.style.imageRendering = this.options.raw ? 'auto' : 'pixelated';
   }
   private draw() { this.renderer.info.reset(); this.pipeline.render(this.renderer, this.scene, this.camera, this.renderSettings); }
   private frame = (time: number) => {
     if (this.disposed) return;
+    try {
     if (!this.lastTime) this.reportTime = time;
     const delta = this.lastTime ? Math.min(0.1, (time - this.lastTime) / 1000) : 0;
     this.lastTime = time; this.model.update(delta, this.options.paused, this.pipeline.height); this.controls.update(); this.draw(); this.frames++;
@@ -84,6 +94,7 @@ export class LiveSceneRenderer {
       this.reportTime = time; this.frames = 0;
     }
     this.frameId = requestAnimationFrame(this.frame);
+    } catch (error) { this.dispose(); if (this.onFailure) this.onFailure(error); else throw error; }
   };
   dispose() {
     if (this.disposed) return; this.disposed = true;
