@@ -20,7 +20,9 @@ export function platedHull(b: ShipBuilders, sections: HullSection[]) {
 export function bridge(b: ShipBuilders, z: number, y: number, width: number, height: number) {
   b.hull.taperedBox([0, y, z], [width, height, width * 1.6], width * 0.62, width * 1.2, '#4c687d');
   b.armor.taperedBox([0, y + height / 2, z], [width * 0.95, 0.12, width * 1.5], width * 0.85, width * 1.3, '#9bafbc');
-  b.windows.box([0, y + height * 0.28, z - width * 0.73], [width * 0.68, 0.08, 0.05], '#a2d1dd');
+  const lowY = y + height * 0.18, highY = y + height * 0.32;
+  const lowZ = z - width * 0.664 - 0.012, highZ = z - width * 0.636 - 0.012;
+  b.windows.quad([-width * 0.3, lowY, lowZ], [-width * 0.3, highY, highZ], [width * 0.3, highY, highZ], [width * 0.3, lowY, lowZ], '#a2d1dd');
   b.details.beam([0, y + height / 2, z], [0, y + height / 2 + 0.55, z + 0.08], 0.045, '#a5b7c0');
 }
 

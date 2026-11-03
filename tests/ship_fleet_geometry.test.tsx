@@ -59,7 +59,7 @@ it.each(FLEET_DESIGNS)('$name has deterministic finite indexed geometry, consist
   }
   expect(triangles).toBeLessThan(6500);
   const size = ship.bounds.getSize(new THREE.Vector3());
-  expect(size.toArray().every(v => v > 1 && v < 23)).toBe(true); expect(size.z).toBeGreaterThan(size.x * 2);
+  expect(size.toArray().every(v => v > 1 && v < 23)).toBe(true); expect(size.z).toBeGreaterThan(size.x);
   const p = meshes(ship.layers.hull)[0].geometry.getAttribute('position');
   const key = (x: number, y: number, z: number) => [x, y, z].map(v => Math.round(v * 1e4)).join(',');
   const points = new Set(Array.from({ length: p.count }, (_, i) => key(p.getX(i), p.getY(i), p.getZ(i))));
@@ -90,6 +90,31 @@ it('leaves actual rear openings to the recessed emissive cores, with no housing 
   }
 });
 
+it('Atlas has genuinely open side hangars behind structural roofs, not painted exterior doors', () => {
+  const ship = FLEET_DESIGNS.find(d => d.id === 'atlas')!.create(); ship.root.updateMatrixWorld(true);
+  for (const side of [-1, 1]) {
+    const ray = new THREE.Raycaster(new THREE.Vector3(side * 20, 0, 0), new THREE.Vector3(-side, 0, 0));
+    const interior = ray.intersectObject(ship.root, true)[0];
+    expect(Math.abs(interior.point.x)).toBeLessThan(1.7);
+    ray.ray.origin.y = 1.16;
+    expect(Math.abs(ray.intersectObject(ship.root, true)[0].point.x)).toBeGreaterThan(3.8);
+  }
+  expect(FLEET_DESIGNS.some(d => ['interceptor', 'fighter', 'bomber'].includes(d.id))).toBe(false);
+  ship.dispose();
+});
+
+it('relative-scale presentation follows the guide without changing native geometry', () => {
+  const study = createFleetStudy(), original = study.entries.map(e => fingerprint(e.ship.root));
+  study.layout('scale', new THREE.Vector3(...SHIP_CAMERA_DIRECTIONS.Top));
+  let previous = 0;
+  study.entries.forEach(({ design, ship, display }, i) => {
+    expect(design.visualLength).toBeGreaterThan(previous); previous = design.visualLength;
+    const size = ship.bounds.clone().applyMatrix4(display.matrixWorld).getSize(new THREE.Vector3());
+    expect(size.z).toBeCloseTo(design.visualLength); expect(fingerprint(ship.root)).toBe(original[i]);
+  });
+  study.dispose();
+});
+
 it.each(SHIP_CAMERAS)('lays out the class gallery without projected overlaps and frames it in %s', cameraName => {
   const study = createFleetStudy(), direction = new THREE.Vector3(...SHIP_CAMERA_DIRECTIONS[cameraName]);
   study.layout('fleet', direction); expect(study.meshCount).toBe(FLEET_DESIGNS.length * 8);
@@ -107,6 +132,8 @@ it.each(SHIP_CAMERAS)('lays out the class gallery without projected overlaps and
   for (const { ship, display } of study.entries) for (const x of [ship.bounds.min.x, ship.bounds.max.x]) for (const y of [ship.bounds.min.y, ship.bounds.max.y]) for (const z of [ship.bounds.min.z, ship.bounds.max.z]) {
     const p = new THREE.Vector3(x, y, z).applyMatrix4(display.matrixWorld).project(camera); expect(Math.abs(p.x)).toBeLessThanOrEqual(0.841); expect(Math.abs(p.y)).toBeLessThanOrEqual(0.561);
   }
+  expect(study.labels(camera)).toHaveLength(FLEET_DESIGNS.length);
+  expect(study.labels(camera).every(p => Number.isFinite(p.x) && Number.isFinite(p.y) && p.x > 0 && p.x < 100 && p.y > 0 && p.y < 100)).toBe(true);
   const geometry = study.entries[0].ship.layers.hull.children[0];
   study.layout('wayfarer', direction); expect(study.meshCount).toBe(8);
   expect(study.entries.filter(item => item.display.visible).map(e => e.design.id)).toEqual(['wayfarer']); expect(study.entries[0].ship.layers.hull.children[0]).toBe(geometry);

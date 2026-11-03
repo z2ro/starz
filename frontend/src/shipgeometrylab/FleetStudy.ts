@@ -7,6 +7,9 @@ import { createSentinelShip } from './SentinelGeometry';
 import { createOdysseyShip } from './OdysseyGeometry';
 import { createAegisShip } from './AegisGeometry';
 import { createSpearheadShip } from './SpearheadGeometry';
+import { createLeviathanShip } from './LeviathanGeometry';
+import { createAtlasShip } from './AtlasGeometry';
+import { createDominionShip } from './DominionGeometry';
 
 export const FLEET_DESIGNS = [
   { id: 'horizon', name: 'Horizon', role: 'Exploration Corvette', summary: 'Casco leve · sensores · três motores', visualLength: 11, create: createPrototypeShip },
@@ -16,6 +19,9 @@ export const FLEET_DESIGNS = [
   { id: 'odyssey', name: 'Odyssey', role: 'Science Cruiser', summary: 'Observatório · laboratórios · aquisição científica', visualLength: 28, create: createOdysseyShip },
   { id: 'aegis', name: 'Aegis', role: 'Cruiser', summary: 'Plataforma de linha · proteção equilibrada', visualLength: 32, create: createAegisShip },
   { id: 'spearhead', name: 'Spearhead', role: 'Battlecruiser', summary: 'Proa em lança · assalto frontal · seis motores', visualLength: 39, create: createSpearheadShip },
+  { id: 'leviathan', name: 'Leviathan', role: 'Battleship', summary: 'Massa longitudinal · baterias pesadas · blindagem profunda', visualLength: 49, create: createLeviathanShip },
+  { id: 'atlas', name: 'Atlas', role: 'Carrier', summary: 'Hangares abertos · Interceptor / Fighter / Bomber subordinados', visualLength: 51, create: createAtlasShip },
+  { id: 'dominion', name: 'Dominion', role: 'Dreadnought', summary: 'Fortaleza de comando · cidadela elevada · núcleo blindado', visualLength: 64, create: createDominionShip },
 ] as const;
 export type FleetDesign = typeof FLEET_DESIGNS[number]['id'];
 export type FleetSelection = FleetDesign | 'fleet' | 'scale';
