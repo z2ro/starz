@@ -1,0 +1,40 @@
+.planet-lab-loading,
+.planet-lab-shell { min-height: 100vh; background: #030711; color: #dceaf0; }
+body:has(.planet-lab-shell) { min-width: 0; }
+.planet-lab-shell { display: flex; flex-direction: column; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+.planet-lab-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px clamp(16px, 3vw, 48px); border-bottom: 1px solid rgba(137, 205, 223, .2); background: linear-gradient(180deg, rgba(11, 33, 52, .82), rgba(3, 7, 17, .94)); }
+.planet-lab-kicker { margin: 0 0 5px; color: #74cfe1; font: 600 11px/1.2 ui-monospace, monospace; letter-spacing: .16em; }
+.planet-lab-header h1 { margin: 0; font-size: clamp(24px, 3vw, 38px); letter-spacing: -.03em; }
+.planet-lab-subtitle { margin: 6px 0 0; color: #8299a7; font-size: 13px; }
+.planet-lab-back, .planet-lab-button-grid button, .planet-lab-wide-button, .planet-lab-seed button { border: 1px solid rgba(124, 205, 222, .35); background: rgba(10, 28, 43, .86); color: #cfeef2; border-radius: 3px; padding: 9px 12px; cursor: pointer; text-transform: uppercase; font: 600 10px/1.1 ui-monospace, monospace; letter-spacing: .08em; }
+.planet-lab-back:hover, .planet-lab-button-grid button:hover, .planet-lab-wide-button:hover, .planet-lab-seed button:hover, .planet-lab-button-grid button.is-active { border-color: #74d9eb; background: rgba(42, 117, 139, .45); color: white; }
+.planet-lab-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; flex: 1; min-height: 0; gap: 14px; padding: 14px clamp(12px, 2.4vw, 36px) 24px; }
+.planet-lab-viewport { position: relative; min-height: 520px; overflow: hidden; border: 1px solid rgba(127, 195, 214, .28); background: radial-gradient(circle at 52% 44%, rgba(24, 61, 80, .18), transparent 48%), #030711; }
+.planet-lab-stage { position: absolute; inset: 0; }
+.planet-lab-canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.planet-lab-overlay { position: absolute; left: 16px; bottom: 14px; display: flex; gap: 8px; flex-wrap: wrap; pointer-events: none; }
+.planet-lab-overlay span, .planet-lab-error { padding: 7px 9px; border: 1px solid rgba(122, 200, 216, .25); background: rgba(3, 10, 18, .78); color: #9ec0ca; font: 10px ui-monospace, monospace; letter-spacing: .08em; }
+.planet-lab-error { position: absolute; inset: 50% auto auto 50%; display: grid; gap: 6px; transform: translate(-50%, -50%); min-width: 240px; color: #f0c2a8; text-align: center; }
+.planet-lab-error strong { color: #ffd9bc; font-size: 13px; }
+.planet-lab-panel { min-width: 0; max-height: calc(100vh - 130px); overflow-y: auto; border: 1px solid rgba(127, 195, 214, .22); background: rgba(7, 18, 29, .9); }
+.planet-lab-panel section { padding: 13px 14px 15px; border-bottom: 1px solid rgba(127, 195, 214, .16); }
+.planet-lab-panel h2 { margin: 0 0 11px; color: #74cfe1; font: 600 10px/1.1 ui-monospace, monospace; letter-spacing: .14em; text-transform: uppercase; }
+.planet-lab-control { display: block; margin: 10px 0; color: #9bb2bd; font-size: 12px; }
+.planet-lab-control > span, .planet-lab-select, .planet-lab-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.planet-lab-control output { color: #dceaf0; font: 11px ui-monospace, monospace; }
+.planet-lab-control input { display: block; width: 100%; margin-top: 6px; accent-color: #74cfe1; }
+.planet-lab-button-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.planet-lab-button-grid button { min-width: 0; padding-inline: 6px; text-transform: capitalize; }
+.planet-lab-seed { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 7px; color: #9bb2bd; font-size: 12px; }
+.planet-lab-seed input, .planet-lab-select select { min-width: 0; width: 100%; border: 1px solid rgba(127, 195, 214, .28); border-radius: 2px; background: #081522; color: #dceaf0; padding: 7px; }
+.planet-lab-seed button { padding: 7px 6px; }
+.planet-lab-wide-button { width: 100%; }
+.planet-lab-toggle { justify-content: flex-start; margin: 9px 0; color: #a9bdc5; font-size: 12px; }
+.planet-lab-toggle input { accent-color: #74cfe1; }
+.planet-lab-stats dl { display: grid; gap: 5px; margin: 0; }
+.planet-lab-stats dl div { display: flex; justify-content: space-between; gap: 12px; color: #839ca8; font: 11px ui-monospace, monospace; }
+.planet-lab-stats dt, .planet-lab-stats dd { margin: 0; }
+.planet-lab-stats dd { color: #dceaf0; }
+@media (max-width: 980px) { .planet-lab-layout { grid-template-columns: minmax(0, 1fr) 260px; } }
+@media (max-width: 720px) { .planet-lab-header { align-items: flex-start; flex-direction: column; } .planet-lab-layout { display: flex; flex-direction: column; } .planet-lab-viewport { min-height: 56vh; } .planet-lab-panel { max-height: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .planet-lab-panel section { min-width: 0; } }
+@media (prefers-reduced-motion: reduce) { .planet-lab-canvas { image-rendering: auto; } }
