@@ -29,6 +29,8 @@ body:has(.planet-lab-shell) { min-width: 0; }
 .planet-lab-seed input, .planet-lab-select select { min-width: 0; width: 100%; border: 1px solid rgba(127, 195, 214, .28); border-radius: 2px; background: #081522; color: #dceaf0; padding: 7px; }
 .planet-lab-seed button { padding: 7px 6px; }
 .planet-lab-wide-button { width: 100%; }
+.planet-lab-seed-navigation { margin-top: 7px; }
+.planet-lab-diagnostic-note { color: #839ca8; font-size: 11px; line-height: 1.5; margin: 0 0 10px; }
 .planet-lab-toggle { justify-content: flex-start; margin: 9px 0; color: #a9bdc5; font-size: 12px; }
 .planet-lab-toggle input { accent-color: #74cfe1; }
 .planet-lab-stats dl { display: grid; gap: 5px; margin: 0; }

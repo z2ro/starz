@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { generatePlanetTextures, samplePlanet } from './planetGenerator';
-import type { CameraPreset, PlanetLabSettings, PlanetLabStats } from './planetLabTypes';
+import { PLANET_PRESETS, type CameraPreset, type PlanetGenerationDiagnostics, type PlanetLabSettings, type PlanetLabStats } from './planetLabTypes';
 
 const PALETTE = [
   '#020711', '#081425', '#102a40', '#183f55', '#0b4a63', '#14728a',
@@ -115,6 +115,7 @@ export class PlanetLabRenderer {
   private onStats?: (stats: PlanetLabStats) => void;
   private resizeObserver: ResizeObserver;
   private generationKey = '';
+  private generationDiagnostics?: PlanetGenerationDiagnostics;
 
   constructor(private host: HTMLElement, settings: PlanetLabSettings, onStats?: (stats: PlanetLabStats) => void) {
     this.settings = settings;
@@ -226,7 +227,7 @@ export class PlanetLabRenderer {
   }
 
   private getGenerationKey(settings: PlanetLabSettings) {
-    return [settings.seed, settings.waterCoverage, settings.temperature, settings.mountainIntensity, settings.cloudCoverage, settings.regeneration].join('|');
+    return [settings.family, settings.seed, settings.waterCoverage, settings.temperature, settings.mountainIntensity, settings.cloudCoverage, settings.continentScale, settings.warpStrength, settings.moistureBias, settings.regeneration].join('|');
   }
 
   private createPlanet(settings: PlanetLabSettings) {
@@ -236,6 +237,7 @@ export class PlanetLabRenderer {
     this.planetGroup = new THREE.Group();
     this.root.add(this.planetGroup);
     const textures = generatePlanetTextures(settings);
+    this.generationDiagnostics = textures.diagnostics;
     const colorTexture = new THREE.CanvasTexture(textures.color);
     const roughnessTexture = new THREE.CanvasTexture(textures.roughness);
     const cloudTexture = new THREE.CanvasTexture(textures.clouds);
@@ -267,8 +269,9 @@ export class PlanetLabRenderer {
     this.cloudLayer.renderOrder = 2;
     this.cloudLayer.castShadow = false;
     this.planetGroup.add(this.cloudLayer);
+    const preset = PLANET_PRESETS[settings.family];
     const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.06, 96, 64), new THREE.ShaderMaterial({
-      uniforms: { uLight: { value: new THREE.Vector3(1, 0.45, 0.5).normalize() }, uColor: { value: new THREE.Color('#65cbe6') } },
+      uniforms: { uLight: { value: new THREE.Vector3(1, 0.45, 0.5).normalize() }, uColor: { value: new THREE.Color(preset.atmosphereColor).multiplyScalar(preset.atmosphereStrength) } },
       vertexShader: 'varying vec3 vNormal; varying vec3 vView; void main(){ vec4 world = modelMatrix * vec4(position, 1.0); vNormal = normalize(mat3(modelMatrix) * normal); vView = cameraPosition - world.xyz; gl_Position = projectionMatrix * viewMatrix * world; }',
       fragmentShader: 'uniform vec3 uLight; uniform vec3 uColor; varying vec3 vNormal; varying vec3 vView; void main(){ float rim = pow(1.0 - max(dot(normalize(vNormal), normalize(vView)), 0.0), 2.25); float lit = 0.28 + max(dot(normalize(vNormal), normalize(uLight)), 0.0) * 0.72; gl_FragColor = vec4(uColor * rim * lit, rim * 0.44); }',
       transparent: true,
@@ -388,7 +391,7 @@ export class PlanetLabRenderer {
     this.frames += 1;
     if (time - this.statsTime > 500) {
       const elapsed = Math.max(1, time - this.statsTime);
-      this.onStats?.({ fps: Math.round((this.frames * 1000) / elapsed), frameTime: elapsed / Math.max(1, this.frames), triangles: this.renderer.info.render.triangles, drawCalls: this.renderer.info.render.calls, seed: this.settings.seed, renderResolution: `${this.renderTarget.width} × ${this.renderTarget.height}` });
+      this.onStats?.({ fps: Math.round((this.frames * 1000) / elapsed), frameTime: elapsed / Math.max(1, this.frames), triangles: this.renderer.info.render.triangles, drawCalls: this.renderer.info.render.calls, seed: this.settings.seed, renderResolution: `${this.renderTarget.width} × ${this.renderTarget.height}`, generation: this.generationDiagnostics });
       this.frames = 0;
       this.statsTime = time;
     }

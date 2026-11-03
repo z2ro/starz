@@ -1,9 +1,9 @@
-export type PlanetGenerationSettings = Pick<
-  import('./planetLabTypes').PlanetLabSettings,
-  'seed' | 'waterCoverage' | 'temperature' | 'mountainIntensity' | 'cloudCoverage'
->;
+import type { PlanetFamily, PlanetGenerationDiagnostics, PlanetGenerationParameters } from './planetLabTypes';
 
-export type PlanetSample = { land: boolean; elevation: number; oceanDepth: number; temperature: number; moisture: number };
+export type PlanetGenerationSettings = PlanetGenerationParameters & { seed: string; family: PlanetFamily };
+export type PlanetBiome = 'ocean' | 'shelf' | 'sea-ice' | 'ice' | 'rock' | 'desert' | 'mineral' | 'forest' | 'tundra' | 'grassland';
+export type PlanetSample = { land: boolean; elevation: number; oceanDepth: number; temperature: number; moisture: number; geology: number; ice: boolean; coastal: boolean; biome: PlanetBiome };
+type Direction = { x: number; y: number; z: number };
 
 const clamp = (value: number, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 const smooth = (value: number) => { const x = clamp(value); return x * x * (3 - 2 * x); };
@@ -41,68 +41,124 @@ function fbm(x: number, y: number, z: number, seed: number, octaves = 4): number
   return sum / total;
 }
 
-export function samplePlanet(direction: { x: number; y: number; z: number }, settings: PlanetGenerationSettings): PlanetSample {
-  const seed = seedNumber(settings.seed);
-  const warpX = (fbm(direction.x * 2.1 + 4, direction.y * 2.1, direction.z * 2.1, seed + 11, 3) - 0.5) * 0.38;
-  const warpY = (fbm(direction.x * 2.1, direction.y * 2.1 + 8, direction.z * 2.1, seed + 23, 3) - 0.5) * 0.38;
-  const warpZ = (fbm(direction.x * 2.1, direction.y * 2.1, direction.z * 2.1 + 13, seed + 37, 3) - 0.5) * 0.38;
+export function samplePlanet(direction: Direction, settings: PlanetGenerationSettings): PlanetSample {
+  // Keep the approved Terran geography; other families have deterministic independent geography.
+  const seed = seedNumber(settings.family === 'terran' ? settings.seed : `${settings.seed}:${settings.family}`);
+  const warpX = (fbm(direction.x * 2.1 + 4, direction.y * 2.1, direction.z * 2.1, seed + 11, 3) - 0.5) * settings.warpStrength;
+  const warpY = (fbm(direction.x * 2.1, direction.y * 2.1 + 8, direction.z * 2.1, seed + 23, 3) - 0.5) * settings.warpStrength;
+  const warpZ = (fbm(direction.x * 2.1, direction.y * 2.1, direction.z * 2.1 + 13, seed + 37, 3) - 0.5) * settings.warpStrength;
   const x = direction.x + warpX, y = direction.y + warpY, z = direction.z + warpZ;
-  const continental = fbm(x * 1.55, y * 1.55, z * 1.55, seed, 5);
+  const continental = fbm(x * settings.continentScale, y * settings.continentScale, z * settings.continentScale, seed, 5);
   const ridged = 1 - Math.abs(fbm(x * 3.3 + 7, y * 3.3, z * 3.3, seed + 71, 4) * 2 - 1);
   const seaLevel = 0.25 + settings.waterCoverage * 0.42;
   const land = continental > seaLevel;
   const elevation = land ? clamp((continental - seaLevel) / (1 - seaLevel) * 1.65 + Math.pow(ridged, 5) * settings.mountainIntensity * 0.48) : 0;
   const regional = (fbm(x * 2.8 - 19, y * 2.8 + 3, z * 2.8 + 5, seed + 101, 3) - 0.5) * 0.2;
   const temperature = clamp(settings.temperature * (1 - Math.abs(direction.y) * 0.82) + regional - elevation * 0.16);
-  const moisture = clamp(fbm(x * 3.9 + 2, y * 3.9 - 4, z * 3.9 + 9, seed + 151, 4) * 0.85 + (1 - Math.abs(direction.y)) * 0.12);
-  return { land, elevation, oceanDepth: clamp((seaLevel - continental) * 6), temperature, moisture };
+  const moisture = clamp(fbm(x * 3.9 + 2, y * 3.9 - 4, z * 3.9 + 9, seed + 151, 4) * 0.85 + (1 - Math.abs(direction.y)) * 0.12 + settings.moistureBias);
+  const geology = fbm(x * 2.4 - 5, y * 2.4 + 12, z * 2.4, seed + 211, 3);
+  const oceanDepth = clamp((seaLevel - continental) * 6);
+  const ice = temperature < 0.15 && !(land && elevation > 0.58 && geology > 0.52);
+  let biome: PlanetBiome;
+  if (ice) biome = land ? 'ice' : 'sea-ice';
+  else if (!land) biome = oceanDepth < 0.15 ? 'shelf' : 'ocean';
+  else if (temperature < 0.16 || elevation > 0.76) biome = 'rock';
+  else if (temperature > 0.48 && moisture < 0.47) biome = geology > 0.53 ? 'mineral' : 'desert';
+  else if (moisture < 0.28) biome = elevation > 0.5 ? 'rock' : geology > 0.53 ? 'mineral' : 'desert';
+  else if (temperature < 0.32) biome = 'tundra';
+  else if (moisture > 0.65) biome = 'forest';
+  else biome = 'grassland';
+  return { land, elevation, oceanDepth, temperature, moisture, geology, ice, coastal: Math.abs(continental - seaLevel) < 0.018, biome };
 }
 
-export type GeneratedPlanetTextures = { color: HTMLCanvasElement; roughness: HTMLCanvasElement; clouds: HTMLCanvasElement };
-
-const color = (context: CanvasRenderingContext2D, x: number, y: number, r: number, g: number, b: number, a = 255) => {
-  context.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
-  context.fillRect(x, y, 1, 1);
-};
-
-export function generatePlanetTextures(settings: PlanetGenerationSettings, width = 512, height = 256): GeneratedPlanetTextures {
-  const colorCanvas = document.createElement('canvas');
-  const roughnessCanvas = document.createElement('canvas');
-  const cloudsCanvas = document.createElement('canvas');
-  colorCanvas.width = roughnessCanvas.width = cloudsCanvas.width = width;
-  colorCanvas.height = roughnessCanvas.height = cloudsCanvas.height = height;
-  const colorContext = colorCanvas.getContext('2d');
-  const roughnessContext = roughnessCanvas.getContext('2d');
-  const cloudContext = cloudsCanvas.getContext('2d');
-  if (!colorContext || !roughnessContext || !cloudContext) throw new Error('Canvas 2D não disponível');
+export function sampleCloud(direction: Direction, settings: PlanetGenerationSettings): number {
+  if (settings.cloudCoverage <= 0) return 0;
   const seed = seedNumber(settings.seed);
+  const cloudNoise = fbm(direction.x * 4.2 + 3, direction.y * 4.2 - 7, direction.z * 4.2 + 11, seed + 401, 4);
+  return smooth((cloudNoise - (0.75 - settings.cloudCoverage * 0.42)) * 8);
+}
+
+export function planetSurfaceColor(sample: PlanetSample): [number, number, number] {
+  if (sample.ice) {
+    const variation = sample.geology * 25 + sample.elevation * 16;
+    return sample.land ? [176 + variation, 202 + variation, 207 + variation] : [132 + variation, 182 + variation, 205 + variation];
+  }
+  if (!sample.land) {
+    const shallow = 1 - sample.oceanDepth;
+    return [12 + shallow * 14, 44 + shallow * 44, 72 + shallow * 32];
+  }
+  let rgb: [number, number, number];
+  switch (sample.biome) {
+    case 'rock': rgb = [93, 94, 90]; break;
+    case 'desert': rgb = [166, 135, 78]; break;
+    case 'mineral': rgb = [106, 87, 64]; break;
+    case 'forest': rgb = [43, 105, 74]; break;
+    case 'tundra': rgb = [97, 116, 113]; break;
+    default: rgb = [91, 133, 78];
+  }
+  const shade = sample.elevation * 24;
+  return rgb.map(value => clamp(value + shade, 0, 255)) as [number, number, number];
+}
+
+export type PlanetSurfaceData = { color: Uint8ClampedArray; roughness: Uint8ClampedArray; clouds: Uint8ClampedArray; diagnostics: PlanetGenerationDiagnostics };
+
+export function generatePlanetData(settings: PlanetGenerationSettings, width = 512, height = 256): PlanetSurfaceData {
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 2 || height < 2) throw new RangeError('Planet texture dimensions must be integers >= 2');
+  const started = performance.now();
+  const color = new Uint8ClampedArray(width * height * 4);
+  const roughness = new Uint8ClampedArray(color.length);
+  const clouds = new Uint8ClampedArray(color.length);
+  let area = 0, water = 0, openWater = 0, ice = 0, coastal = 0;
+  let elevationMin = Infinity, elevationMax = -Infinity, temperatureMin = Infinity, temperatureMax = -Infinity;
+  const biomes: Record<string, number> = {};
   for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
-    const lon = x / width * Math.PI * 2;
-    const lat = (0.5 - y / height) * Math.PI;
+    const lon = (x + 0.5) / width * Math.PI * 2;
+    const lat = (0.5 - (y + 0.5) / height) * Math.PI;
     const direction = { x: -Math.cos(lat) * Math.cos(lon), y: Math.sin(lat), z: Math.cos(lat) * Math.sin(lon) };
     const sample = samplePlanet(direction, settings);
-    let r = 8, g = 32, b = 57;
-    if (sample.land) {
-      if (sample.temperature < 0.16) [r, g, b] = [185, 213, 216];
-      else if (sample.elevation > 0.76) [r, g, b] = [93, 94, 90];
-      else if (sample.temperature > 0.48 && sample.moisture < 0.47) [r, g, b] = [166, 135, 78];
-      else if (sample.moisture > 0.65) [r, g, b] = [43, 105, 74];
-      else if (sample.temperature < 0.32) [r, g, b] = [91, 119, 94];
-      else [r, g, b] = [91, 133, 78];
-      const shade = Math.round(sample.elevation * 24);
-      r = clamp(r + shade, 0, 255); g = clamp(g + shade, 0, 255); b = clamp(b + shade, 0, 255);
-    } else {
-      const shallow = 1 - sample.oceanDepth;
-      [r, g, b] = [7 + Math.round(shallow * 8), 32 + Math.round(shallow * 39), 60 + Math.round(shallow * 29)];
-    }
-    if (sample.temperature < 0.15) [r, g, b] = [185, 213, 216];
-    color(colorContext, x, y, r, g, b);
-    const roughness = sample.land ? 190 + Math.round(sample.elevation * 40) : 55;
-    color(roughnessContext, x, y, roughness, roughness, roughness);
-    const cloudNoise = fbm(direction.x * 4.2 + 3, direction.y * 4.2 - 7, direction.z * 4.2 + 11, seed + 401, 4);
-    const cloud = smooth((cloudNoise - (0.75 - settings.cloudCoverage * 0.42)) * 8);
-    const density = Math.round(cloud * 255);
-    color(cloudContext, x, y, density, density, density);
+    const index = (y * width + x) * 4;
+    const rgb = planetSurfaceColor(sample);
+    color.set([...rgb, 255], index);
+    const rough = sample.ice ? 155 : sample.land ? 190 + Math.round(sample.elevation * 40) : 55;
+    roughness.set([rough, rough, rough, 255], index);
+    const density = Math.round(sampleCloud(direction, settings) * 255);
+    clouds.set([density, density, density, 255], index);
+    // Integrate each latitude row's spherical area, not its equirectangular pixel count.
+    const north = Math.min(Math.PI / 2, lat + Math.PI / height / 2);
+    const south = Math.max(-Math.PI / 2, lat - Math.PI / height / 2);
+    const weight = Math.sin(north) - Math.sin(south);
+    area += weight;
+    water += sample.land ? 0 : weight;
+    openWater += !sample.land && !sample.ice ? weight : 0;
+    ice += sample.ice ? weight : 0;
+    coastal += sample.coastal ? weight : 0;
+    biomes[sample.biome] = (biomes[sample.biome] ?? 0) + weight;
+    elevationMin = Math.min(elevationMin, sample.elevation);
+    elevationMax = Math.max(elevationMax, sample.elevation);
+    temperatureMin = Math.min(temperatureMin, sample.temperature);
+    temperatureMax = Math.max(temperatureMax, sample.temperature);
   }
-  return { color: colorCanvas, roughness: roughnessCanvas, clouds: cloudsCanvas };
+  for (const biome of Object.keys(biomes)) biomes[biome] /= area;
+  return { color, roughness, clouds, diagnostics: {
+    waterCoverage: water / area, openWaterCoverage: openWater / area, iceCoverage: ice / area, coastalCoverage: coastal / area,
+    biomeCount: Object.values(biomes).filter(fraction => fraction > 0.001).length,
+    biomes, elevationMin, elevationMax, temperatureMin, temperatureMax,
+    generationMs: performance.now() - started, width, height,
+  } };
+}
+
+export function generatePlanetTextures(settings: PlanetGenerationSettings, width = 512, height = 256) {
+  const data = generatePlanetData(settings, width, height);
+  const canvasFrom = (pixels: Uint8ClampedArray) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Canvas 2D não disponível');
+    const image = context.createImageData(width, height);
+    image.data.set(pixels);
+    context.putImageData(image, 0, 0);
+    return canvas;
+  };
+  return { color: canvasFrom(data.color), roughness: canvasFrom(data.roughness), clouds: canvasFrom(data.clouds), diagnostics: data.diagnostics };
 }

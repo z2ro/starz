@@ -3,7 +3,7 @@ import { fireEvent, render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import * as THREE from 'three';
 import { samplePlanet, seedNumber } from '../frontend/src/planetlab/planetGenerator';
-import { DEFAULT_PLANET_LAB_SETTINGS as defaults, isPixelSize } from '../frontend/src/planetlab/planetLabTypes';
+import { DEFAULT_PLANET_LAB_SETTINGS as defaults, isPixelSize, PLANET_PRESETS } from '../frontend/src/planetlab/planetLabTypes';
 import { disposeLabObject, planetLabPaletteSize } from '../frontend/src/planetlab/PlanetLabRenderer';
 import { PlanetLabView } from '../frontend/src/planetlab/PlanetLabView';
 import { readFileSync } from 'node:fs';
@@ -64,7 +64,7 @@ describe('isolated planet lab controls', () => {
   beforeEach(() => { cleanup(); vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null); });
   it('opens without gameplay shell and reports unsupported graphics', () => {
     render(<MemoryRouter><PlanetLabView /></MemoryRouter>);
-    expect(screen.getByRole('heading', { name: 'Planet Lab 01' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Planet Lab 02' })).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('WebGL não disponível');
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Voltar ao STARZ/ })).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('isolated planet lab controls', () => {
     expect(screen.getByLabelText('RAW 3D')).toBeChecked();
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
     expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument();
-    const water = screen.getByRole('slider', { name: /Water coverage/ });
+    const water = screen.getByRole('slider', { name: /Water level/ });
     fireEvent.change(water, { target: { value: '0.4' } });
     expect(water).toHaveValue('0.4');
     fireEvent.click(screen.getByRole('button', { name: 'polar' }));
@@ -86,5 +86,34 @@ describe('isolated planet lab controls', () => {
     expect(router.indexOf('path="/planet-lab"')).toBeLessThan(router.indexOf('element={<AppShell'));
     expect(router).toContain("import('../planetlab/PlanetLabView')");
     expect(readFileSync('frontend/src/components/shell/Sidebar.tsx', 'utf8')).not.toContain('planet-lab');
+  });
+  it('applies family presets while preserving the current seed and render mode', () => {
+    render(<MemoryRouter><PlanetLabView /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'STARZ-003' }));
+    fireEvent.click(screen.getByLabelText('RAW 3D'));
+    fireEvent.click(screen.getByRole('button', { name: 'OCEANIC' }));
+    expect(screen.getByRole('button', { name: 'OCEANIC' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'STARZ-003' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('slider', { name: 'Water level' })).toHaveValue(String(PLANET_PRESETS.oceanic.parameters.waterCoverage));
+    expect(screen.getByRole('slider', { name: 'Continent scale' })).toHaveValue(String(PLANET_PRESETS.oceanic.parameters.continentScale));
+    expect(screen.getByLabelText('RAW 3D')).toBeChecked();
+    fireEvent.change(screen.getByRole('slider', { name: 'Water level' }), { target: { value: '0.65' } });
+    expect(screen.getByRole('slider', { name: 'Water level' })).toHaveValue('0.65');
+    fireEvent.click(screen.getByRole('button', { name: 'FROZEN' }));
+    expect(screen.getByRole('slider', { name: 'Temperature' })).toHaveValue(String(PLANET_PRESETS.frozen.parameters.temperature));
+    expect(screen.getByRole('button', { name: 'STARZ-003' })).toHaveAttribute('aria-pressed', 'true');
+  });
+  it('navigates fixed seeds and applies an explicit custom seed without changing the family', () => {
+    render(<MemoryRouter><PlanetLabView /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'DESERT' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next seed' }));
+    expect(screen.getByRole('button', { name: 'STARZ-001' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Previous seed' }));
+    expect(screen.getByRole('button', { name: 'STARZ-005' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.change(screen.getByLabelText('Seed'), { target: { value: 'my-world' } });
+    fireEvent.click(screen.getByRole('button', { name: 'regenerate' }));
+    expect(screen.getByText('DESERT · SEED my-world')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'DESERT' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('region', { name: 'Planet generation diagnostics' })).toHaveTextContent('Area-weighted');
   });
 });

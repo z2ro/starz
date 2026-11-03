@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlanetLabRenderer } from './PlanetLabRenderer';
-import { CAMERA_PRESETS, DEFAULT_PLANET_LAB_SETTINGS, PIXEL_SIZES, type CameraPreset, type PlanetLabSettings, type PlanetLabStats } from './planetLabTypes';
+import { adjacentTestSeed, CAMERA_PRESETS, DEFAULT_PLANET_LAB_SETTINGS, PIXEL_SIZES, PLANET_FAMILIES, PLANET_PRESETS, TEST_SEEDS, type CameraPreset, type PlanetLabSettings, type PlanetLabStats } from './planetLabTypes';
 import './planet-lab.css';
 
 export function supportsWebGL(): boolean {
@@ -50,24 +50,53 @@ export function PlanetLabView() {
   const [error, setError] = useState<string>();
   const update = <K extends keyof PlanetLabSettings>(key: K, value: PlanetLabSettings[K]) => setSettings(current => ({ ...current, [key]: value }));
   const regenerate = () => update('regeneration', settings.regeneration + 1);
+  const selectSeed = (seed: string) => { setDraftSeed(seed); update('seed', seed); };
+  const diagnostics = stats.generation;
+  const percent = (value: number | undefined) => value === undefined ? '—' : `${(value * 100).toFixed(1)}%`;
   return <main className="planet-lab-shell">
     <header className="planet-lab-header">
-      <div><p className="planet-lab-kicker">STARZ // EXPERIMENTAL GRAPHICS</p><h1>Planet Lab 01</h1><p className="planet-lab-subtitle">Pixel-art procedural planet · WebGL low-resolution pipeline</p></div>
+      <div><p className="planet-lab-kicker">STARZ // EXPERIMENTAL GRAPHICS</p><h1>Planet Lab 02</h1><p className="planet-lab-subtitle">Procedural planet diversity · One generator, four families</p></div>
       <button className="planet-lab-back" onClick={() => navigate('/overview')}>← Voltar ao STARZ</button>
     </header>
     <div className="planet-lab-layout">
       <section className="planet-lab-viewport">
         <PlanetCanvas settings={settings} onStats={setStats} onError={setError} cameraPreset={cameraPreset} cameraReset={cameraReset} />
         {error && <div className="planet-lab-error" role="alert"><strong>Planet Lab indisponível</strong><span>{error}</span></div>}
-        <div className="planet-lab-overlay"><span>SEED {stats.seed}</span><span>{settings.raw3d ? 'RAW 3D' : `PIXEL ${settings.pixelSize}px`}</span></div>
+        <div className="planet-lab-overlay"><span>{settings.family.toUpperCase()} · SEED {settings.seed}</span><span>{settings.raw3d ? 'RAW 3D' : `PIXEL ${settings.pixelSize}px`}</span></div>
       </section>
       <aside className="planet-lab-panel">
         <section><h2>Camera</h2><div className="planet-lab-button-grid">{CAMERA_PRESETS.map(preset => <button key={preset} aria-pressed={cameraPreset === preset} className={cameraPreset === preset ? 'is-active' : ''} onClick={() => { setCameraPreset(preset); setCameraReset(value => value + 1); }}>{preset.replace('-', ' ')}</button>)}<button onClick={() => { setCameraPreset('cinematic'); setCameraReset(value => value + 1); }}>reset</button></div></section>
-        <section><h2>Planet</h2><label className="planet-lab-seed"><span>Seed</span><input value={draftSeed} onChange={event => setDraftSeed(event.target.value)} /><button onClick={() => { update('seed', draftSeed || 'aurelia-01'); regenerate(); }}>regenerate</button></label><RangeControl label="Water coverage" value={settings.waterCoverage} min={0.35} max={0.75} step={0.01} onChange={value => update('waterCoverage', value)} /><RangeControl label="Temperature" value={settings.temperature} min={0.25} max={0.95} step={0.01} onChange={value => update('temperature', value)} /><RangeControl label="Mountain intensity" value={settings.mountainIntensity} min={0.1} max={1} step={0.01} onChange={value => update('mountainIntensity', value)} /><RangeControl label="Cloud coverage" value={settings.cloudCoverage} min={0.1} max={0.9} step={0.01} onChange={value => update('cloudCoverage', value)} /><RangeControl label="Axial tilt" value={settings.axialTilt} min={0} max={35} step={1} suffix="°" onChange={value => update('axialTilt', value)} /></section>
+        <section aria-label="Planet family"><h2>Planet family</h2><div className="planet-lab-button-grid">{PLANET_FAMILIES.map(family => <button key={family} aria-pressed={settings.family === family} className={settings.family === family ? 'is-active' : ''} onClick={() => setSettings(current => ({ ...current, ...PLANET_PRESETS[family].parameters, family }))}>{family.toUpperCase()}</button>)}</div></section>
+        <section aria-label="Seed gallery"><h2>Seed gallery</h2>
+          <div className="planet-lab-button-grid">{TEST_SEEDS.map(seed => <button key={seed} aria-pressed={settings.seed === seed} className={settings.seed === seed ? 'is-active' : ''} onClick={() => selectSeed(seed)}>{seed}</button>)}</div>
+          <div className="planet-lab-button-grid planet-lab-seed-navigation"><button onClick={() => selectSeed(adjacentTestSeed(settings.seed, -1))}>Previous seed</button><button onClick={() => selectSeed(adjacentTestSeed(settings.seed, 1))}>Next seed</button></div>
+        </section>
+        <section><h2>Planet</h2>
+          <div className="planet-lab-seed"><label htmlFor="planet-lab-seed">Seed</label><input id="planet-lab-seed" value={draftSeed} onChange={event => setDraftSeed(event.target.value)} /><button onClick={() => { selectSeed(draftSeed.trim() || 'aurelia-01'); regenerate(); }}>regenerate</button></div>
+          <RangeControl label="Water level" value={settings.waterCoverage} min={0} max={1} step={0.01} onChange={value => update('waterCoverage', value)} />
+          <RangeControl label="Temperature" value={settings.temperature} min={0.1} max={0.95} step={0.01} onChange={value => update('temperature', value)} />
+          <RangeControl label="Mountain intensity" value={settings.mountainIntensity} min={0.1} max={1} step={0.01} onChange={value => update('mountainIntensity', value)} />
+          <RangeControl label="Cloud coverage" value={settings.cloudCoverage} min={0} max={0.9} step={0.01} onChange={value => update('cloudCoverage', value)} />
+          <RangeControl label="Continent scale" value={settings.continentScale} min={0.8} max={3.5} step={0.05} onChange={value => update('continentScale', value)} />
+          <RangeControl label="Domain warp" value={settings.warpStrength} min={0} max={0.8} step={0.01} onChange={value => update('warpStrength', value)} />
+          <RangeControl label="Moisture bias" value={settings.moistureBias} min={-0.5} max={0.4} step={0.01} onChange={value => update('moistureBias', value)} />
+          <RangeControl label="Axial tilt" value={settings.axialTilt} min={0} max={35} step={1} suffix="°" onChange={value => update('axialTilt', value)} />
+        </section>
         <section><h2>Lighting</h2><RangeControl label="Star azimuth" value={settings.starAzimuth} min={0} max={360} step={1} suffix="°" onChange={value => update('starAzimuth', value)} /><RangeControl label="Star elevation" value={settings.starElevation} min={5} max={80} step={1} suffix="°" onChange={value => update('starElevation', value)} /><RangeControl label="Light intensity" value={settings.lightIntensity} min={0.4} max={3.5} step={0.05} onChange={value => update('lightIntensity', value)} /></section>
         <section><h2>Animation</h2><RangeControl label="Planet rotation" value={settings.planetRotationSpeed} min={0} max={0.12} step={0.005} onChange={value => update('planetRotationSpeed', value)} /><RangeControl label="Ship orbit" value={settings.shipOrbitSpeed} min={0} max={0.8} step={0.01} onChange={value => update('shipOrbitSpeed', value)} /><button className="planet-lab-wide-button" onClick={() => update('paused', !settings.paused)}>{settings.paused ? 'Resume' : 'Pause'}</button></section>
         <section><h2>Rendering</h2><label className="planet-lab-select"><span>Pixel size</span><select value={settings.pixelSize} onChange={event => update('pixelSize', Number(event.target.value) as PlanetLabSettings['pixelSize'])}>{PIXEL_SIZES.map(size => <option key={size} value={size}>{size}px</option>)}</select></label><ToggleControl label="Depth outlines" checked={settings.outline} onChange={value => update('outline', value)} /><ToggleControl label="Bayer dither" checked={settings.dither} onChange={value => update('dither', value)} /><ToggleControl label="RAW 3D" checked={settings.raw3d} onChange={value => update('raw3d', value)} /></section>
         <section className="planet-lab-stats"><h2>Debug</h2><dl><div><dt>FPS</dt><dd>{stats.fps || '—'}</dd></div><div><dt>Frame</dt><dd>{stats.frameTime ? `${stats.frameTime.toFixed(1)}ms` : '—'}</dd></div><div><dt>Triangles</dt><dd>{stats.triangles || '—'}</dd></div><div><dt>Draw calls</dt><dd>{stats.drawCalls || '—'}</dd></div><div><dt>Resolution</dt><dd>{stats.renderResolution}</dd></div></dl></section>
+        <section className="planet-lab-stats" aria-label="Planet generation diagnostics"><h2>Planet generation diagnostics</h2><p className="planet-lab-diagnostic-note">Area-weighted surface samples. Water includes frozen ocean basins.</p><dl>
+          <div><dt>Actual water</dt><dd>{percent(diagnostics?.waterCoverage)}</dd></div>
+          <div><dt>Open water</dt><dd>{percent(diagnostics?.openWaterCoverage)}</dd></div>
+          <div><dt>Ice coverage</dt><dd>{percent(diagnostics?.iceCoverage)}</dd></div>
+          <div><dt>Coastal band</dt><dd>{percent(diagnostics?.coastalCoverage)}</dd></div>
+          <div><dt>Biomes &gt;0.1%</dt><dd>{diagnostics?.biomeCount ?? '—'}</dd></div>
+          <div><dt>Elevation (relative)</dt><dd>{diagnostics ? `${diagnostics.elevationMin.toFixed(2)}–${diagnostics.elevationMax.toFixed(2)}` : '—'}</dd></div>
+          <div><dt>Temperature (relative)</dt><dd>{diagnostics ? `${diagnostics.temperatureMin.toFixed(2)}–${diagnostics.temperatureMax.toFixed(2)}` : '—'}</dd></div>
+          <div><dt>Generation (CPU raster)</dt><dd>{diagnostics ? `${diagnostics.generationMs.toFixed(0)}ms` : '—'}</dd></div>
+          <div><dt>Surface grid</dt><dd>{diagnostics ? `${diagnostics.width} × ${diagnostics.height}` : '—'}</dd></div>
+        </dl></section>
       </aside>
     </div>
   </main>;
