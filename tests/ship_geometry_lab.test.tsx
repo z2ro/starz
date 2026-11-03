@@ -22,7 +22,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 describe('isolated ship geometry lab', () => {
   it('mounts one renderer and propagates functional geometry, material and rendering controls', () => {
     render(<MemoryRouter><ShipGeometryLabView /></MemoryRouter>);
-    expect(screen.getByRole('heading', { name: 'Ship Geometry Lab 02 · Fleet Diversity' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ship Geometry Lab 03 · Imperial Fleet' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Voltar ao STARZ' })).toHaveAttribute('href', '/overview');
     expect(renderer.construct).toHaveBeenCalledTimes(1);
@@ -57,10 +57,13 @@ describe('isolated ship geometry lab', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Comparar frota' }));
     expect(renderer.setSelection).toHaveBeenLastCalledWith('fleet');
     expect(screen.getByLabelText('Naves em comparação')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Inspecionar Wayfarer' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wayfarer' }));
     expect(renderer.setSelection).toHaveBeenLastCalledWith('wayfarer');
     expect(renderer.construct).toHaveBeenCalledTimes(1);
     expect(renderer.dispose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar escala' }));
+    expect(renderer.setSelection).toHaveBeenLastCalledWith('scale');
+    expect(renderer.setCamera).toHaveBeenLastCalledWith('Top');
   });
   it('disposes the renderer on unmount', () => {
     const view = render(<MemoryRouter><ShipGeometryLabView /></MemoryRouter>);

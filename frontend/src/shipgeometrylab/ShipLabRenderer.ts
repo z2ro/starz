@@ -73,7 +73,7 @@ export class ShipLabRenderer {
 
   private fit(direction: THREE.Vector3) {
     const rect = this.host.getBoundingClientRect();
-    this.fleet.layout(this.fleet.selection, direction);
+    this.fleet.layout(this.fleet.selection, direction, Math.max(1, rect.width) / Math.max(1, rect.height));
     this.meshCount = this.fleet.meshCount;
     const framing = this.fleet.framing(Math.max(1, rect.width) / Math.max(1, rect.height), direction);
     this.camera.position.copy(framing.position);
@@ -124,7 +124,7 @@ export class ShipLabRenderer {
       this.onStats({ fps: Math.round(this.frames * 1000 / interval), frameTime: interval / this.frames,
         triangles: this.renderer.info.render.triangles, drawCalls: this.renderer.info.render.calls,
         meshes: this.meshCount, bounds: this.fleet.bounds.getSize(new THREE.Vector3()).toArray(),
-        resolution: `${this.pipeline.width} × ${this.pipeline.height}` });
+        resolution: `${this.pipeline.width} × ${this.pipeline.height}`, selection: this.fleet.selection, labels: this.fleet.labels(this.camera) });
       this.frames = 0;
       this.reportTime = time;
     }

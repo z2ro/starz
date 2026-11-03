@@ -12,4 +12,4 @@ export const DEFAULT_SHIP_SETTINGS: ShipLabSettings = {
   hullTone: 1, armorContrast: 1, engineEmission: 1.6,
   pixelSize: 3, outlines: true, dither: true, raw: false,
 };
-export type ShipLabStats = { fps: number; frameTime: number; triangles: number; drawCalls: number; meshes: number; bounds: [number, number, number]; resolution: string };
+export type ShipLabStats = { fps: number; frameTime: number; triangles: number; drawCalls: number; meshes: number; bounds: [number, number, number]; resolution: string; selection?: string; labels?: Array<{ id: string; x: number; y: number }> };

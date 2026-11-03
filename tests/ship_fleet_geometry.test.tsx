@@ -28,6 +28,17 @@ it('preserves the original main Horizon position/normal/color/index buffers byte
   ship.dispose();
 });
 
+it('preserves the three Lab 02 recipes', () => {
+  const baseline: Record<string, string> = {
+    horizon: 'fd4a2eda53093f63a48aa5c4472606b288cea99820311c7cb0b60fcede5c1b01',
+    wayfarer: '400ac4c61b46482c1e134ea48255976bed5eb9c4d1cfcf96be224272b3f44a47',
+    vanguard: '146229556395c1f1f5c13e83203e4f581b9800323d51f94088863000cde6c625',
+  };
+  for (const design of FLEET_DESIGNS.slice(0, 3)) {
+    const ship = design.create(); expect(fingerprint(ship.root)).toBe(baseline[design.id]); ship.dispose();
+  }
+});
+
 it.each(FLEET_DESIGNS)('$name has deterministic finite indexed geometry, consistent face orientation and symmetric structure', ({ create }) => {
   const ship = create(), repeated = create();
   expect(fingerprint(ship.root)).toBe(fingerprint(repeated.root));
@@ -79,25 +90,26 @@ it('leaves actual rear openings to the recessed emissive cores, with no housing 
   }
 });
 
-it.each(SHIP_CAMERAS)('lays out the three distinct ships without projected overlaps and frames them in %s', cameraName => {
+it.each(SHIP_CAMERAS)('lays out the class gallery without projected overlaps and frames it in %s', cameraName => {
   const study = createFleetStudy(), direction = new THREE.Vector3(...SHIP_CAMERA_DIRECTIONS[cameraName]);
-  study.layout('fleet', direction); expect(study.meshCount).toBe(24);
+  study.layout('fleet', direction); expect(study.meshCount).toBe(FLEET_DESIGNS.length * 8);
   const right = new THREE.Vector3(0, 1, 0).cross(direction).normalize();
+  const up = direction.clone().normalize().cross(right).normalize();
   const ranges = study.entries.map(({ ship, display }) => {
-    const projected: number[] = [];
-    for (const x of [ship.bounds.min.x, ship.bounds.max.x]) for (const y of [ship.bounds.min.y, ship.bounds.max.y]) for (const z of [ship.bounds.min.z, ship.bounds.max.z]) projected.push(new THREE.Vector3(x, y, z).add(display.position).dot(right));
-    return [Math.min(...projected), Math.max(...projected)];
+    const projected: number[] = [], vertical: number[] = [];
+    for (const x of [ship.bounds.min.x, ship.bounds.max.x]) for (const y of [ship.bounds.min.y, ship.bounds.max.y]) for (const z of [ship.bounds.min.z, ship.bounds.max.z]) { const p = new THREE.Vector3(x, y, z).applyMatrix4(display.matrixWorld); projected.push(p.dot(right)); vertical.push(p.dot(up)); }
+    return [Math.min(...projected), Math.max(...projected), Math.min(...vertical), Math.max(...vertical)];
   });
-  expect(ranges[0][1]).toBeLessThan(ranges[1][0]); expect(ranges[1][1]).toBeLessThan(ranges[2][0]);
+  for (let i = 0; i < ranges.length; i++) for (let j = i + 1; j < ranges.length; j++) { const a = ranges[i], b = ranges[j]; expect(a[1] < b[0] || b[1] < a[0] || a[3] < b[2] || b[3] < a[2]).toBe(true); }
   const frame = study.framing(1.6, direction); expect(frame).toEqual(study.framing(1.6, direction));
   const camera = new THREE.OrthographicCamera(-frame.halfHeight * 1.6, frame.halfHeight * 1.6, frame.halfHeight, -frame.halfHeight, 0.1, frame.distance * 3);
   camera.position.copy(frame.position); camera.lookAt(frame.center); camera.updateMatrixWorld();
   for (const { ship, display } of study.entries) for (const x of [ship.bounds.min.x, ship.bounds.max.x]) for (const y of [ship.bounds.min.y, ship.bounds.max.y]) for (const z of [ship.bounds.min.z, ship.bounds.max.z]) {
-    const p = new THREE.Vector3(x, y, z).add(display.position).project(camera); expect(Math.abs(p.x)).toBeLessThanOrEqual(0.841); expect(Math.abs(p.y)).toBeLessThanOrEqual(0.641);
+    const p = new THREE.Vector3(x, y, z).applyMatrix4(display.matrixWorld).project(camera); expect(Math.abs(p.x)).toBeLessThanOrEqual(0.841); expect(Math.abs(p.y)).toBeLessThanOrEqual(0.561);
   }
   const geometry = study.entries[0].ship.layers.hull.children[0];
   study.layout('wayfarer', direction); expect(study.meshCount).toBe(8);
-  expect(study.entries.map(item => item.display.visible)).toEqual([false, true, false]); expect(study.entries[0].ship.layers.hull.children[0]).toBe(geometry);
+  expect(study.entries.filter(item => item.display.visible).map(e => e.design.id)).toEqual(['wayfarer']); expect(study.entries[0].ship.layers.hull.children[0]).toBe(geometry);
   study.layout('horizon', direction); expect(study.bounds).toEqual(study.entries[0].ship.bounds);
   study.dispose(); study.dispose(); expect(study.root.children).toHaveLength(0);
 });
