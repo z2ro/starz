@@ -1,0 +1,168 @@
+{
+  "ships": [
+    {
+      "id": "scout_hull",
+      "name": "Horizon",
+      "description": "Corveta leve projetada para reconhecimento e levantamento de sistemas.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 16,
+        "components": 8
+      },
+      "requires": [
+        "orbital_shipyard"
+      ],
+      "classification": "corvette",
+      "role": "exploration",
+      "mass": 10,
+      "crew": 3,
+      "duration": 30,
+      "compatible_propulsion": [
+        "chemical_drive",
+        "nuclear_drive"
+      ]
+    }
+  ],
+  "districts": [
+    {
+      "id": "civil_district",
+      "name": "Distrito civil",
+      "description": "Habitação, serviços e suporte populacional agregados.",
+      "category": "Civil",
+      "cost": {
+        "refined_alloy": 20,
+        "components": 4
+      },
+      "requires": [],
+      "duration": 25,
+      "workforce": 3,
+      "energy_generation": 0,
+      "energy_consumption": 2,
+      "production": {},
+      "processing": {},
+      "research_rate": 0,
+      "population_capacity": 80,
+      "industrial_capacity": 0,
+      "construction_slots": 1,
+      "shipyard_slots": 0
+    },
+    {
+      "id": "orbital_shipyard",
+      "name": "Estaleiro orbital",
+      "description": "Estrutura especial para montar naves na órbita do planeta.",
+      "category": "Logistics",
+      "cost": {
+        "refined_alloy": 50,
+        "components": 20
+      },
+      "requires": [],
+      "duration": 60,
+      "workforce": 10,
+      "energy_generation": 0,
+      "energy_consumption": 6,
+      "production": {},
+      "processing": {},
+      "research_rate": 0,
+      "population_capacity": 0,
+      "industrial_capacity": 0,
+      "construction_slots": 0,
+      "shipyard_slots": 1
+    },
+    {
+      "id": "ore_extractor",
+      "name": "Extrator de ferrita",
+      "description": "Extrai matéria-prima da superfície.",
+      "category": "Mining",
+      "cost": {
+        "refined_alloy": 18,
+        "components": 4
+      },
+      "requires": [],
+      "duration": 20,
+      "workforce": 4,
+      "energy_generation": 0,
+      "energy_consumption": 2,
+      "production": {
+        "raw_ore": 2
+      },
+      "processing": {},
+      "research_rate": 0,
+      "population_capacity": 0,
+      "industrial_capacity": 0,
+      "construction_slots": 0,
+      "shipyard_slots": 0
+    },
+    {
+      "id": "processor",
+      "name": "Processador de materiais",
+      "description": "Converte ferrita e voláteis em ligas utilizáveis.",
+      "category": "Industrial",
+      "cost": {
+        "refined_alloy": 22,
+        "components": 6
+      },
+      "requires": [],
+      "duration": 28,
+      "workforce": 6,
+      "energy_generation": 0,
+      "energy_consumption": 4,
+      "production": {
+        "refined_alloy": 1,
+        "components": 0.25
+      },
+      "processing": {
+        "raw_ore": 1.5,
+        "volatiles": 0.5
+      },
+      "research_rate": 0,
+      "population_capacity": 0,
+      "industrial_capacity": 2,
+      "construction_slots": 0,
+      "shipyard_slots": 0
+    },
+    {
+      "id": "research_lab",
+      "name": "Laboratório de pesquisa",
+      "description": "Sustenta pesquisa aplicada sem microgerenciar cientistas.",
+      "category": "Research",
+      "cost": {
+        "refined_alloy": 25,
+        "components": 8
+      },
+      "requires": [],
+      "duration": 35,
+      "workforce": 5,
+      "energy_generation": 0,
+      "energy_consumption": 3,
+      "production": {},
+      "processing": {},
+      "research_rate": 1,
+      "population_capacity": 0,
+      "industrial_capacity": 0,
+      "construction_slots": 0,
+      "shipyard_slots": 0
+    },
+    {
+      "id": "solar_field",
+      "name": "Campo solar",
+      "description": "Gera capacidade energética em órbita baixa.",
+      "category": "Energy",
+      "cost": {
+        "refined_alloy": 15,
+        "components": 3
+      },
+      "requires": [],
+      "duration": 18,
+      "workforce": 2,
+      "energy_generation": 8,
+      "energy_consumption": 0,
+      "production": {},
+      "processing": {},
+      "research_rate": 0,
+      "population_capacity": 0,
+      "industrial_capacity": 0,
+      "construction_slots": 0,
+      "shipyard_slots": 0
+    }
+  ]
+}
