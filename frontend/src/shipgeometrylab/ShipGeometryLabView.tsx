@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { ShipLabRenderer } from './ShipLabRenderer';
 import { DEFAULT_SHIP_SETTINGS, SHIP_CAMERAS, type ShipCamera, type ShipLabSettings, type ShipLabStats } from './shipLabTypes';
 import './ship-geometry-lab.css';
+import { FLEET_DESIGNS, type FleetSelection } from './FleetStudy';
 
-function ShipCanvas({ settings, camera, onStats }: { settings: ShipLabSettings; camera: { preset: ShipCamera; revision: number }; onStats: (stats: ShipLabStats) => void }) {
+function ShipCanvas({ settings, camera, selection, onStats }: { settings: ShipLabSettings; camera: { preset: ShipCamera; revision: number }; selection: FleetSelection; onStats: (stats: ShipLabStats) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const renderer = useRef<ShipLabRenderer | null>(null);
   const [error, setError] = useState<string>();
@@ -25,6 +26,7 @@ function ShipCanvas({ settings, camera, onStats }: { settings: ShipLabSettings; 
   }, []);
   useEffect(() => { renderer.current?.setSettings(settings); }, [settings]);
   useEffect(() => { renderer.current?.setCamera(camera.preset); }, [camera]);
+  useEffect(() => { renderer.current?.setSelection(selection); }, [selection]);
   return <div className="ship-lab-stage" ref={host}>{error && <div className="ship-lab-error" role="alert">{error}</div>}</div>;
 }
 
@@ -32,19 +34,23 @@ export function ShipGeometryLabView() {
   const [settings, setSettings] = useState<ShipLabSettings>(() => ({ ...DEFAULT_SHIP_SETTINGS, paused: window.matchMedia('(prefers-reduced-motion: reduce)').matches }));
   const [camera, setCamera] = useState<{ preset: ShipCamera; revision: number }>({ preset: '3/4 Front', revision: 0 });
   const [stats, setStats] = useState<ShipLabStats | null>(null);
+  const [selection, setSelection] = useState<FleetSelection>('horizon');
+  const design = FLEET_DESIGNS.find(item => item.id === selection);
   const update = <K extends keyof ShipLabSettings>(key: K, value: ShipLabSettings[K]) => setSettings(current => ({ ...current, [key]: value }));
   const toggle = (key: 'hullOnly' | 'armor' | 'engines' | 'details' | 'boundingBox' | 'silhouette' | 'outlines' | 'dither' | 'raw', label: string) => <label className="ship-lab-toggle"><input type="checkbox" checked={settings[key]} onChange={event => update(key, event.target.checked)} /><span>{label}</span></label>;
   const range = (key: 'azimuth' | 'elevation' | 'intensity' | 'hullTone' | 'armorContrast' | 'engineEmission', label: string, min: number, max: number, step: number) => <label className="ship-lab-range"><span>{label}<output>{settings[key]}</output></span><input aria-label={label} type="range" min={min} max={max} step={step} value={settings[key]} onChange={event => update(key, Number(event.target.value))} /></label>;
   const chooseCamera = (preset: ShipCamera) => setCamera(current => ({ preset, revision: current.revision + 1 }));
-  return <main className="ship-lab-shell">
-    <header className="ship-lab-header"><div><p>STARZ / EXPERIMENTAL NAVAL DESIGN</p><h1>Ship Geometry Lab 01</h1></div><Link to="/overview">Voltar ao STARZ</Link></header>
+  return <main className="ship-lab-shell" data-design={selection}>
+    <header className="ship-lab-header"><div><p>STARZ / EXPERIMENTAL NAVAL DESIGN</p><h1>Ship Geometry Lab 02 · Fleet Diversity</h1></div><Link to="/overview">Voltar ao STARZ</Link></header>
     <div className="ship-lab-layout">
       <section className="ship-lab-viewport" aria-label="Visualizador da nave">
-        <ShipCanvas settings={settings} camera={camera} onStats={setStats} />
-        <div className="ship-lab-identity"><span>EXPLORATION CORVETTE</span><h2>HORIZON <b>PROTOTYPE</b></h2><p>Design experimental · proporções provisórias</p></div>
+        <ShipCanvas settings={settings} camera={camera} selection={selection} onStats={setStats} />
+        <div className="ship-lab-identity"><span>{design?.role.toUpperCase() ?? 'COMPARATIVE FLEET STUDY'}</span><h2>{design?.name.toUpperCase() ?? 'FLEET'} <b>{design ? 'PROTOTYPE' : '/ 03'}</b></h2><p>{design?.summary ?? 'Escalas de laboratório · sem proporções físicas canônicas'}</p><p>Estudo experimental · não substitui os designs oficiais</p></div>
+        {selection === 'fleet' && <div className="ship-lab-fleet-legend" aria-label="Naves em comparação">{FLEET_DESIGNS.map(item => <button key={item.id} aria-label={`Inspecionar ${item.name}`} onClick={() => setSelection(item.id)}>{item.name}<small>{item.role}</small></button>)}</div>}
         <div className="ship-lab-caption"><span>{camera.preset.toUpperCase()}</span><span>{settings.silhouette ? 'SILHOUETTE' : settings.raw ? 'RAW 3D' : `PIXEL / ${settings.pixelSize}px`}</span>{settings.hullOnly && <span>HULL ONLY</span>}<p>Arraste para orbitar · scroll para zoom</p></div>
       </section>
       <aside className="ship-lab-panel" aria-label="Controles do laboratório">
+        <section><h2>Design gallery</h2><div className="ship-lab-designs">{FLEET_DESIGNS.map(item => <button key={item.id} aria-label={item.name} aria-pressed={selection === item.id} onClick={() => setSelection(item.id)}><strong>{item.name}</strong><span>{item.role}</span></button>)}<button aria-pressed={selection === 'fleet'} onClick={() => setSelection('fleet')}>Comparar frota</button></div></section>
         <section><h2>Camera</h2><div className="ship-lab-camera-grid">{SHIP_CAMERAS.map(preset => <button key={preset} aria-pressed={camera.preset === preset} onClick={() => chooseCamera(preset)}>{preset}</button>)}<button onClick={() => chooseCamera('3/4 Front')}>Reset</button></div></section>
         <section><h2>Geometry</h2>{toggle('hullOnly', 'Show hull only')}{toggle('armor', 'Show armor')}{toggle('engines', 'Show engines')}{toggle('details', 'Show details')}{toggle('boundingBox', 'Show bounding box')}{toggle('silhouette', 'SILHOUETTE')}</section>
         <section><h2>Lighting</h2>{range('azimuth', 'Star azimuth', 0, 360, 1)}{range('elevation', 'Star elevation', -20, 85, 1)}{range('intensity', 'Intensity', 0.2, 5, 0.1)}</section>

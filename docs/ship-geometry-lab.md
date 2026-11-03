@@ -1,5 +1,8 @@
 # Ship Geometry Lab 01
 
+O laboratório agora inclui a galeria do [Ship Geometry Lab 02](ship-geometry-lab-02.md).
+A Horizon original, seu enquadramento individual e seus buffers foram preservados.
+
 Abra `#/ship-geometry-lab` na aplicação, ou
 `http://localhost:5173/static/#/ship-geometry-lab` com `npm run dev`.
 Rota lazy fora do AppShell, sem acesso à API ou alteração de gameplay.
