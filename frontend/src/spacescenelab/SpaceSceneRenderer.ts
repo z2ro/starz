@@ -89,12 +89,12 @@ export class SpaceSceneRenderer {
     this.star.position.copy(this.sunDirection).multiplyScalar(4);
     this.sun.intensity = settings.intensity;
     this.model.setLightDirection(this.sunDirection);
-    if (previous.pixelSize !== settings.pixelSize || previous.raw !== settings.raw || previous.orbitRadius !== settings.orbitRadius || previous.orbitInclination !== settings.orbitInclination || previous.shipLength !== settings.shipLength) this.resize();
+    if (previous.pixelSize !== settings.pixelSize || previous.raw !== settings.raw || previous.orbitRadius !== settings.orbitRadius || previous.orbitInclination !== settings.orbitInclination || previous.shipLength !== settings.shipLength || previous.moonScale !== settings.moonScale || previous.stationScale !== settings.stationScale || previous.moonVisible !== settings.moonVisible || previous.stationVisible !== settings.stationVisible) this.resize();
   }
 
   setCamera(mode: SpaceCamera) {
     this.mode = mode;
-    this.star.visible = mode !== 'Ship Focus';
+    this.star.visible = !['Ship Focus', 'Moon Focus', 'Station Focus'].includes(mode);
     this.camera.up.set(0, 1, 0);
     this.camera.zoom = 1;
     this.fitCamera(true);
@@ -108,9 +108,10 @@ export class SpaceSceneRenderer {
       if (this.mode === 'Orbit Overview') direction.set(2, 6, -3);
       else if (this.mode === 'Planet Focus') direction.set(3.2, 2.2, 4.6);
       else direction.set(3.4, 3.5, 4.6);
-      if (this.mode === 'Ship Focus') {
-        direction.copy(this.model.shipPivot.position).normalize().multiplyScalar(0.8);
-        direction.addScaledVector(new THREE.Vector3(0, 0, -1).applyQuaternion(this.model.shipPivot.quaternion), 0.5);
+      if (this.focusObject()) {
+        const focus = this.focusObject()!;
+        direction.copy(focus.position).normalize().multiplyScalar(0.8);
+        direction.addScaledVector(new THREE.Vector3(0, 0, -1).applyQuaternion(focus.quaternion), 0.5);
         direction.y += 0.4;
       }
     }
@@ -123,8 +124,15 @@ export class SpaceSceneRenderer {
       target.copy(this.model.shipPivot.position);
       halfHeight = framing.halfHeight * scale;
       distance = framing.distance * scale;
+    } else if (this.mode === 'Moon Focus' || this.mode === 'Station Focus') {
+      const moon = this.mode === 'Moon Focus';
+      target.copy(this.focusObject()!.position);
+      const radius = moon ? this.settings.moonScale * 1.03 : this.model.living.station.bounds.getBoundingSphere(new THREE.Sphere()).radius * this.settings.stationScale;
+      halfHeight = radius * 1.4 * Math.max(1, 1 / aspect);
+      distance = 5;
     } else {
       halfHeight = this.mode === 'Planet Focus' ? 2.15 : orbitCameraSpan(this.model.radius, this.model.shipRadius, this.settings.orbitInclination, aspect, direction, this.mode === 'Orbit Overview');
+      if (this.mode === 'Orbit Overview' && (this.settings.moonVisible || this.settings.stationVisible)) halfHeight = Math.max(halfHeight, this.model.living.outerRadius * 1.08 * Math.max(1, 1 / aspect));
     }
     this.camera.position.copy(target).addScaledVector(direction, distance);
     this.camera.top = halfHeight;
@@ -146,15 +154,23 @@ export class SpaceSceneRenderer {
   }
 
   private rememberShip() {
-    this.oldShipPosition.copy(this.model.shipPivot.position);
-    this.oldShipRotation.copy(this.model.shipPivot.quaternion);
+    const focus = this.focusObject() ?? this.model.shipPivot;
+    this.oldShipPosition.copy(focus.position);
+    this.oldShipRotation.copy(focus.quaternion);
+  }
+
+  private focusObject() {
+    if (this.mode === 'Moon Focus') return this.model.living.moonPivot;
+    if (this.mode === 'Station Focus') return this.model.living.stationPivot;
+    return this.mode === 'Ship Focus' ? this.model.shipPivot : null;
   }
 
   private followShip() {
-    if (this.mode !== 'Ship Focus') return;
-    this.rotationDelta.copy(this.oldShipRotation).invert().premultiply(this.model.shipPivot.quaternion);
-    this.camera.position.sub(this.oldShipPosition).applyQuaternion(this.rotationDelta).add(this.model.shipPivot.position);
-    this.controls.target.copy(this.model.shipPivot.position);
+    const focus = this.focusObject();
+    if (!focus) return;
+    this.rotationDelta.copy(this.oldShipRotation).invert().premultiply(focus.quaternion);
+    this.camera.position.sub(this.oldShipPosition).applyQuaternion(this.rotationDelta).add(focus.position);
+    this.controls.target.copy(focus.position);
   }
 
   private createStarfield() {
@@ -175,6 +191,7 @@ export class SpaceSceneRenderer {
     this.model.update(delta);
     this.followShip();
     this.controls.update();
+    this.model.living.cities.material.uniforms.uHeight.value = this.pipeline.height;
     this.renderer.info.reset();
     this.pipeline.render(this.renderer, this.scene, this.camera, this.renderOptions);
     this.frames += 1;

@@ -17,7 +17,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 it('mounts outside gameplay and propagates family, seed, orbital and render controls', () => {
   render(<MemoryRouter><SpaceSceneLabView /></MemoryRouter>);
-  expect(screen.getByRole('heading', { name: 'Space Scene Lab 01' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Space Scene Lab 02' })).toBeInTheDocument();
   expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Voltar ao STARZ' })).toHaveAttribute('href', '/overview');
   fireEvent.click(screen.getByRole('button', { name: 'OCEANIC' }));
@@ -54,6 +54,22 @@ it('keeps camera controls available while paused and resets an active preset', (
   fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
   expect(renderer.setCamera.mock.calls.length).toBe(count + 1);
   expect(renderer.setCamera).toHaveBeenLastCalledWith('Cinematic');
+});
+
+it('controls the three additions independently and restores the original scene content', () => {
+  render(<MemoryRouter><SpaceSceneLabView /></MemoryRouter>);
+  for (const [label, value] of [['Moon orbit speed', '0.08'], ['Moon scale', '0.3'], ['Station orbit speed', '0.1'], ['Station scale', '0.2'], ['City light intensity', '2']]) {
+    fireEvent.change(screen.getByRole('slider', { name: label }), { target: { value } });
+  }
+  expect(renderer.setSettings).toHaveBeenLastCalledWith(expect.objectContaining({ moonSpeed: 0.08, moonScale: 0.3, stationSpeed: 0.1, stationScale: 0.2, cityIntensity: 2 }));
+  for (const name of ['Moon Focus', 'Station Focus']) {
+    fireEvent.click(screen.getByRole('button', { name, exact: true }));
+    expect(renderer.setCamera).toHaveBeenLastCalledWith(name);
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Compare Lab 01' }));
+  expect(renderer.setSettings).toHaveBeenLastCalledWith(expect.objectContaining({ moonVisible: false, stationVisible: false, cityVisible: false, shipVisible: true }));
+  for (const name of ['Moon visibility', 'Station visibility', 'City light visibility']) expect(screen.getByLabelText(name)).not.toBeChecked();
+  expect(screen.getByText(/Civilização simulada/)).toBeInTheDocument();
 });
 
 it('refreshes debug output without reconstructing the renderer and disposes on unmount', () => {
