@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { planetArtworkFor } from '../../visual/PlanetArtworkRegistry';
 import { Icon } from '../ui/Icon';
 import { EmptyState } from '../ui/EmptyState';
@@ -8,22 +8,31 @@ import { duration, label, remaining, term } from '../../app/format';
 import { PlanetThreeView } from './PlanetThreeView';
 import { PlanetHeader } from './PlanetHeader';
 import type { Catalog, State } from '../../types/game';
+import { PlanetProceduralView } from './PlanetProceduralView';
+import { readPlanetVisualPreference, savePlanetVisualPreference, type PlanetVisualMode } from './planetVisualPreference';
+import './planet-procedural.css';
 
 function mode(): 'image' | '3d' { return typeof window !== 'undefined' && /(^|[?&])planet_visual=3d(&|$)/.test(window.location.search) ? '3d' : 'image'; }
 
-export function PlanetHero({ catalog, state, onPlanetChange, onNavigate }: { catalog: Catalog; state: State; onPlanetChange: (id: string) => void; onNavigate: (path: string) => void }) {
+export function PlanetHero({ catalog, state, onPlanetChange, onNavigate, snapshotReady = true }: { catalog: Catalog; state: State; onPlanetChange: (id: string) => void; onNavigate: (path: string) => void; snapshotReady?: boolean }) {
   const [failed, setFailed] = useState(false);
+  const [preference, setPreference] = useState<PlanetVisualMode>(readPlanetVisualPreference);
+  const [proceduralReady, setProceduralReady] = useState(false), [proceduralError, setProceduralError] = useState<string>();
+  const [legacy, setLegacy] = useState(() => mode() === '3d');
+  const ready = useCallback(() => setProceduralReady(true), []);
+  const unavailable = useCallback((message: string) => { setProceduralReady(false); setProceduralError(message); }, []);
+  const chooseMode = (next: PlanetVisualMode) => { savePlanetVisualPreference(next); setPreference(next); setProceduralError(undefined); setLegacy(false); setFailed(false); if (next === 'image') setProceduralReady(false); };
   const artwork = planetArtworkFor(state.system.planet);
-  const visualMode = mode();
-  const currentMode = visualMode === '3d' || failed ? '3d' : 'image';
+  const useProcedural = !legacy && preference === 'procedural' && !proceduralError;
+  const currentMode = useProcedural && proceduralReady && snapshotReady ? 'procedural' : legacy || failed ? '3d' : 'image';
   const job = state.construction[0];
   const research = state.research.active ? catalog.technologies.find(item => item.id === state.research.active) : undefined;
   const systemFleets = state.fleets.filter(fleet => fleet.x === state.system.x && fleet.y === state.system.y);
   const arrived = systemFleets.filter(fleet => fleet.status === 'ARRIVED');
   const fleet = systemFleets.find(item => item.status === 'TRANSIT') ?? systemFleets[0];
-  return <section className="planet-hero">
-    <div className="planet-art-layer"><img className="hero-image" hidden={currentMode === '3d'} src={artwork.path} alt="" decoding="async" fetchPriority="high" onError={() => setFailed(true)} />{currentMode === 'image' ? <div className="hero-shade" /> : <PlanetThreeView state={state} catalog={catalog} mode="3d" />}</div>
-    <div className="hero-header"><PlanetHeader state={state} onPlanetChange={onPlanetChange} /></div>
+  return <section className="planet-hero" data-visual-mode={currentMode}>
+    <div className="planet-art-layer"><img className="hero-image" hidden={currentMode !== 'image'} src={artwork.path} alt="" decoding="async" fetchPriority="high" onError={() => { if (!useProcedural) setFailed(true); }} />{useProcedural && <PlanetProceduralView state={state} catalog={catalog} snapshotReady={snapshotReady} onReady={ready} onFailure={unavailable} />}{currentMode === '3d' && <PlanetThreeView state={state} catalog={catalog} mode="3d" />}<div className="hero-shade" /></div>
+    <div className="hero-header"><PlanetHeader state={state} onPlanetChange={onPlanetChange} /><div className="planet-visual-toolbar"><div className="planet-visual-switch" role="group" aria-label="Visualização do planeta"><Button variant="ghost" aria-pressed={!useProcedural} onClick={() => chooseMode('image')}>IMAGE</Button><Button variant="ghost" aria-pressed={useProcedural} onClick={() => chooseMode('procedural')}>PROCEDURAL</Button></div>{proceduralError && <p role="status" className="planet-visual-notice" title={proceduralError}>Procedural indisponível. Exibindo imagem.</p>}{useProcedural && !proceduralReady && <p role="status" className="planet-visual-notice">Preparando visualização…</p>}</div></div>
     <div className="hero-markers" aria-label="Presença orbital do sistema">
       {state.capacities.shipyard_slots > 0 && <span><Icon name="shipyard" className="ui-icon" /> Estaleiro orbital</span>}
       {arrived.length > 0 && <span><Icon name="fleets" className="ui-icon" /> {arrived.length} {arrived.length === 1 ? 'frota no sistema' : 'frotas no sistema'}</span>}
