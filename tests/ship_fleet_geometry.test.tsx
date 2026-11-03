@@ -1,10 +1,11 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { createHash } from 'node:crypto';
 import { FLEET_DESIGNS, createFleetStudy } from '../frontend/src/shipgeometrylab/FleetStudy';
 import { DEFAULT_SHIP_SETTINGS, SHIP_CAMERAS } from '../frontend/src/shipgeometrylab/shipLabTypes';
 import { SHIP_CAMERA_DIRECTIONS } from '../frontend/src/shipgeometrylab/shipCamera';
 import { createPrototypeShip } from '../frontend/src/shipgeometrylab/ShipGeometry';
+import { createStargrave, STELLAR_CORE_RADIUS } from '../frontend/src/shipgeometrylab/StargraveGeometry';
 
 function meshes(root: THREE.Object3D) {
   const result: THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>[] = [];
@@ -39,10 +40,10 @@ it('preserves the three Lab 02 recipes', () => {
   }
 });
 
-it.each(FLEET_DESIGNS)('$name has deterministic finite indexed geometry, consistent face orientation and symmetric structure', ({ create }) => {
+it.each(FLEET_DESIGNS)('$name has deterministic finite indexed geometry, consistent face orientation and symmetric structure', ({ id, create }) => {
   const ship = create(), repeated = create();
   expect(fingerprint(ship.root)).toBe(fingerprint(repeated.root));
-  const all = meshes(ship.root); expect(all).toHaveLength(8);
+  const all = meshes(ship.root); expect(all).toHaveLength(id === 'stargrave' ? 6 : 8);
   let triangles = 0;
   for (const { geometry } of all) {
     const p = geometry.getAttribute('position'), n = geometry.getAttribute('normal'), c = geometry.getAttribute('color'), ids = geometry.index!;
@@ -59,11 +60,14 @@ it.each(FLEET_DESIGNS)('$name has deterministic finite indexed geometry, consist
   }
   expect(triangles).toBeLessThan(6500);
   const size = ship.bounds.getSize(new THREE.Vector3());
-  expect(size.toArray().every(v => v > 1 && v < 23)).toBe(true); expect(size.z).toBeGreaterThan(size.x);
+  expect(size.toArray().every(v => v > 1 && v < 23)).toBe(true);
+  if (id === 'stargrave') expect(Math.max(...size.toArray()) / Math.min(...size.toArray())).toBeLessThan(1.35);
+  else expect(size.z).toBeGreaterThan(size.x);
   const p = meshes(ship.layers.hull)[0].geometry.getAttribute('position');
   const key = (x: number, y: number, z: number) => [x, y, z].map(v => Math.round(v * 1e4)).join(',');
   const points = new Set(Array.from({ length: p.count }, (_, i) => key(p.getX(i), p.getY(i), p.getZ(i))));
-  for (let i = 0; i < p.count; i++) expect(points.has(key(-p.getX(i), p.getY(i), p.getZ(i)))).toBe(true);
+  if (id === 'stargrave') expect(ship.bounds.getCenter(new THREE.Vector3()).length()).toBeLessThan(0.1);
+  else for (let i = 0; i < p.count; i++) expect(points.has(key(-p.getX(i), p.getY(i), p.getZ(i)))).toBe(true);
   ship.dispose(); repeated.dispose();
 });
 
@@ -108,6 +112,8 @@ it('relative-scale presentation follows the guide without changing native geomet
   study.layout('scale', new THREE.Vector3(...SHIP_CAMERA_DIRECTIONS.Top));
   let previous = 0;
   study.entries.forEach(({ design, ship, display }, i) => {
+    expect(fingerprint(ship.root)).toBe(original[i]);
+    if (design.id === 'stargrave') { expect(display.visible).toBe(false); return; }
     expect(design.visualLength).toBeGreaterThan(previous); previous = design.visualLength;
     const size = ship.bounds.clone().applyMatrix4(display.matrixWorld).getSize(new THREE.Vector3());
     expect(size.z).toBeCloseTo(design.visualLength); expect(fingerprint(ship.root)).toBe(original[i]);
@@ -117,7 +123,7 @@ it('relative-scale presentation follows the guide without changing native geomet
 
 it.each(SHIP_CAMERAS)('lays out the class gallery without projected overlaps and frames it in %s', cameraName => {
   const study = createFleetStudy(), direction = new THREE.Vector3(...SHIP_CAMERA_DIRECTIONS[cameraName]);
-  study.layout('fleet', direction); expect(study.meshCount).toBe(FLEET_DESIGNS.length * 8);
+  study.layout('fleet', direction); expect(study.meshCount).toBe(86);
   const right = new THREE.Vector3(0, 1, 0).cross(direction).normalize();
   const up = direction.clone().normalize().cross(right).normalize();
   const ranges = study.entries.map(({ ship, display }) => {
@@ -139,4 +145,62 @@ it.each(SHIP_CAMERAS)('lays out the class gallery without projected overlaps and
   expect(study.entries.filter(item => item.display.visible).map(e => e.design.id)).toEqual(['wayfarer']); expect(study.entries[0].ship.layers.hull.children[0]).toBe(geometry);
   study.layout('horizon', direction); expect(study.bounds).toEqual(study.entries[0].ship.bounds);
   study.dispose(); study.dispose(); expect(study.root.children).toHaveLength(0);
+});
+
+it('contains exactly the eleven principal designs in official order, without independent strike craft', () => {
+  expect(FLEET_DESIGNS.map(d => d.id)).toEqual(['horizon', 'wayfarer', 'vanguard', 'sentinel', 'odyssey', 'aegis', 'spearhead', 'leviathan', 'atlas', 'dominion', 'stargrave']);
+});
+
+it('Stargrave exposes a large captive star through real negative spaces and has no conventional propulsion', () => {
+  const star = createStargrave(); star.root.updateMatrixWorld(true);
+  expect(star.layers.engines.children).toHaveLength(0);
+  expect(meshes(star.root).some(m => /engine|nozzle/i.test(m.name))).toBe(false);
+  expect(STELLAR_CORE_RADIUS * 2).toBeGreaterThan(star.bounds.getSize(new THREE.Vector3()).length() * 0.15);
+  const forward = new THREE.Vector3(...SHIP_CAMERA_DIRECTIONS['3/4 Front']).normalize(), right = new THREE.Vector3(0, 1, 0).cross(forward).normalize(), up = forward.clone().cross(right).normalize();
+  const ray = new THREE.Raycaster(forward.clone().multiplyScalar(30), forward.clone().negate());
+  expect((ray.intersectObject(star.root, true)[0].object as THREE.Mesh).material).toBe(star.coreMaterial);
+  let open = 0;
+  for (const radius of [3.3, 4.2, 5.1, 6]) for (let i = 0; i < 32; i++) {
+    const angle = i * Math.PI * 2 / 32;
+    ray.ray.origin.copy(forward).multiplyScalar(30).addScaledVector(right, Math.cos(angle) * radius).addScaledVector(up, Math.sin(angle) * radius);
+    if (!ray.intersectObject(star.root, true).length) open++;
+  }
+  // Sample the containment annulus, not just one ring where three projected belts cross.
+  expect(open).toBeGreaterThanOrEqual(32);
+  star.dispose();
+});
+
+it('disposes all owned Stargrave materials, including unused propulsion materials, once', () => {
+  const spy = vi.spyOn(THREE.Material.prototype, 'dispose'), star = createStargrave();
+  star.dispose(); star.dispose();
+  expect(spy).toHaveBeenCalledTimes(8); expect(new Set(spy.mock.instances).size).toBe(8); spy.mockRestore();
+});
+
+it.each(SHIP_CAMERAS)('frames the radial Stargrave geometry without clipping in %s', preset => {
+  const study = createFleetStudy(), direction = new THREE.Vector3(...SHIP_CAMERA_DIRECTIONS[preset]);
+  for (const aspect of [1.4, 1.6, 1.9]) {
+    study.layout('stargrave', direction, aspect);
+    const frame = study.framing(aspect, direction);
+    const camera = new THREE.OrthographicCamera(-frame.halfHeight * aspect, frame.halfHeight * aspect, frame.halfHeight, -frame.halfHeight, 0.1, frame.distance * 3);
+    camera.position.copy(frame.position); camera.lookAt(frame.center); camera.updateMatrixWorld();
+    const star = study.entries.find(e => e.design.id === 'stargrave')!;
+    for (const mesh of meshes(star.ship.root)) {
+      const points = mesh.geometry.getAttribute('position');
+      for (let i = 0; i < points.count; i++) {
+        const p = new THREE.Vector3().fromBufferAttribute(points, i).applyMatrix4(mesh.matrixWorld).project(camera);
+        expect(Math.abs(p.x)).toBeLessThan(0.75); expect(Math.abs(p.y)).toBeLessThan(0.75); expect(Math.abs(p.z)).toBeLessThan(1);
+      }
+    }
+  }
+  study.dispose();
+});
+
+it('compares Stargrave only with a labelled capital context in its separate category study', () => {
+  const study = createFleetStudy(); study.layout('titan', new THREE.Vector3(...SHIP_CAMERA_DIRECTIONS['3/4 Front']));
+  const visible = study.entries.filter(e => e.display.visible);
+  expect(visible.map(e => e.design.id)).toEqual(['dominion', 'stargrave']);
+  const dimensions = visible.map(e => e.ship.bounds.clone().applyMatrix4(e.display.matrixWorld).getSize(new THREE.Vector3()));
+  expect(Math.max(...dimensions[1].toArray())).toBeCloseTo(140);
+  expect(dimensions[0].z).toBeCloseTo(64);
+  study.dispose();
 });

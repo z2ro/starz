@@ -10,6 +10,7 @@ import { createSpearheadShip } from './SpearheadGeometry';
 import { createLeviathanShip } from './LeviathanGeometry';
 import { createAtlasShip } from './AtlasGeometry';
 import { createDominionShip } from './DominionGeometry';
+import { createStargrave } from './StargraveGeometry';
 
 export const FLEET_DESIGNS = [
   { id: 'horizon', name: 'Horizon', role: 'Exploration Corvette', summary: 'Casco leve · sensores · três motores', visualLength: 11, create: createPrototypeShip },
@@ -22,9 +23,14 @@ export const FLEET_DESIGNS = [
   { id: 'leviathan', name: 'Leviathan', role: 'Battleship', summary: 'Massa longitudinal · baterias pesadas · blindagem profunda', visualLength: 49, create: createLeviathanShip },
   { id: 'atlas', name: 'Atlas', role: 'Carrier', summary: 'Hangares abertos · Interceptor / Fighter / Bomber subordinados', visualLength: 51, create: createAtlasShip },
   { id: 'dominion', name: 'Dominion', role: 'Dreadnought', summary: 'Fortaleza de comando · cidadela elevada · núcleo blindado', visualLength: 64, create: createDominionShip },
+  { id: 'stargrave', name: 'Stargrave-class', role: 'Stellar Siege Titan', summary: 'Estrela cativa · contenção Dyson segmentada · sem propulsão convencional', visualLength: 140, create: createStargrave },
 ] as const;
 export type FleetDesign = typeof FLEET_DESIGNS[number]['id'];
-export type FleetSelection = FleetDesign | 'fleet' | 'scale';
+export type FleetSelection = FleetDesign | 'fleet' | 'scale' | 'titan';
+
+function sphericalBounds(ship: ReturnType<typeof createPrototypeShip>) {
+  return 'presentationSphere' in ship && ship.presentationSphere instanceof THREE.Sphere ? ship.presentationSphere : null;
+}
 
 /** Lab-only recipes; never a gameplay hull registry. One allocation per design. */
 export function createFleetStudy() {
@@ -47,9 +53,16 @@ export function createFleetStudy() {
       if (right.lengthSq() < 0.5) right.set(1, 0, 0);
       const up = forward.clone().cross(right).normalize();
       // Separate projected extents, not arbitrary world-axis slots (Side/Top must also work).
-      const extents = entries.map(({ design, ship, display }) => {
+      entries.forEach(({ design, display }) => {
+        display.visible = next === 'fleet' || (next === 'scale' && design.id !== 'stargrave') || (next === 'titan' && (design.id === 'stargrave' || design.id === 'dominion')) || next === design.id;
+        display.position.set(0, 0, 0); display.scale.setScalar(1);
+      });
+      const visibleEntries = entries.filter(e => e.display.visible);
+      const extents = visibleEntries.map(({ design, ship, display }) => {
         const size = ship.bounds.getSize(new THREE.Vector3());
-        display.scale.setScalar(next === 'fleet' ? 16 / Math.max(...size.toArray()) : next === 'scale' ? design.visualLength / size.z : 1);
+        display.scale.setScalar(next === 'fleet' ? 16 / Math.max(...size.toArray()) : next === 'scale' || next === 'titan' ? design.visualLength / (design.id === 'stargrave' ? Math.max(...size.toArray()) : size.z) : 1);
+        const sphere = sphericalBounds(ship);
+        if (sphere) return { width: sphere.radius * display.scale.x * 2, height: sphere.radius * display.scale.x * 2 };
         let min = Infinity, max = -Infinity, low = Infinity, high = -Infinity;
         for (const x of [ship.bounds.min.x, ship.bounds.max.x]) for (const y of [ship.bounds.min.y, ship.bounds.max.y]) for (const z of [ship.bounds.min.z, ship.bounds.max.z]) {
           const point = new THREE.Vector3(x, y, z).multiplyScalar(display.scale.x);
@@ -57,24 +70,22 @@ export function createFleetStudy() {
         }
         return { width: max - min, height: high - low };
       });
-      const gap = 2.5, total = extents.reduce((a, b) => a + b.width, 0) + gap * (entries.length - 1);
+      const gap = 2.5, total = extents.reduce((a, b) => a + b.width, 0) + gap * (visibleEntries.length - 1);
       const cellWidth = Math.max(...extents.map(e => e.width)) + gap, cellHeight = Math.max(...extents.map(e => e.height)) + gap + 1;
       let columns = 1, required = Infinity;
-      for (let c = 1; c <= entries.length; c++) {
-        const span = Math.max(c * cellWidth / (aspect * 0.84), Math.ceil(entries.length / c) * cellHeight / 0.56);
+      for (let c = 1; c <= visibleEntries.length; c++) {
+        const span = Math.max(c * cellWidth / (aspect * 0.84), Math.ceil(visibleEntries.length / c) * cellHeight / 0.56);
         if (span < required) { required = span; columns = c; }
       }
-      const rows = Math.ceil(entries.length / columns);
+      const rows = Math.ceil(visibleEntries.length / columns);
       let cursor = -total / 2;
       bounds.makeEmpty(); meshCount = 0;
-      entries.forEach(({ design, ship, display, meshes }, i) => {
-        display.visible = next === 'fleet' || next === 'scale' || next === design.id;
-        display.position.set(0, 0, 0);
+      visibleEntries.forEach(({ ship, display, meshes }, i) => {
         if (next === 'fleet') {
-          const row = Math.floor(i / columns), count = Math.min(columns, entries.length - row * columns);
+          const row = Math.floor(i / columns), count = Math.min(columns, visibleEntries.length - row * columns);
           display.position.copy(right).multiplyScalar((i % columns - (count - 1) / 2) * cellWidth).addScaledVector(up, ((rows - 1) / 2 - row) * cellHeight);
-        } else if (next === 'scale') display.position.copy(right).multiplyScalar(cursor + extents[i].width / 2).addScaledVector(up, extents[i].height / 2);
-        if (next === 'fleet' || next === 'scale') display.position.sub(ship.bounds.getCenter(new THREE.Vector3()).multiplyScalar(display.scale.x));
+        } else if (next === 'scale' || next === 'titan') display.position.copy(right).multiplyScalar(cursor + extents[i].width / 2).addScaledVector(up, extents[i].height / 2);
+        if (next === 'fleet' || next === 'scale' || next === 'titan') display.position.sub(ship.bounds.getCenter(new THREE.Vector3()).multiplyScalar(display.scale.x));
         cursor += extents[i].width + gap;
         display.updateMatrixWorld(true);
         if (display.visible) { bounds.union(ship.bounds.clone().applyMatrix4(display.matrixWorld)); meshCount += meshes; }
@@ -84,7 +95,12 @@ export function createFleetStudy() {
     },
     framing(aspect: number, direction: THREE.Vector3) {
       const frame = shipFraming(bounds, aspect, direction);
-      if (selection !== 'fleet' && selection !== 'scale') return frame;
+      if (selection === 'stargrave') {
+        const sphere = sphericalBounds(entries.find(e => e.design.id === 'stargrave')!.ship)!;
+        frame.halfHeight = Math.max(sphere.radius / 0.72, sphere.radius / aspect / 0.72);
+        return frame;
+      }
+      if (selection !== 'fleet' && selection !== 'scale' && selection !== 'titan') return frame;
       const forward = direction.clone().normalize(), right = new THREE.Vector3(0, 1, 0).cross(forward).normalize();
       if (right.lengthSq() < 0.5) right.set(1, 0, 0);
       const up = forward.clone().cross(right).normalize();
@@ -92,6 +108,12 @@ export function createFleetStudy() {
       // Project the real component boxes; the combined world AABB wastes space at 3/4 angles.
       entries.forEach(({ ship, display }) => {
         if (!display.visible) return;
+        const sphere = sphericalBounds(ship);
+        if (sphere) {
+          const p = sphere.center.clone().applyMatrix4(display.matrixWorld).sub(frame.center), radius = sphere.radius * display.scale.x;
+          horizontal = Math.max(horizontal, Math.abs(p.dot(right)) + radius); vertical = Math.max(vertical, Math.abs(p.dot(up)) + radius);
+          return;
+        }
         for (const x of [ship.bounds.min.x, ship.bounds.max.x]) for (const y of [ship.bounds.min.y, ship.bounds.max.y]) for (const z of [ship.bounds.min.z, ship.bounds.max.z]) {
           const p = new THREE.Vector3(x, y, z).applyMatrix4(display.matrixWorld).sub(frame.center);
           horizontal = Math.max(horizontal, Math.abs(p.dot(right))); vertical = Math.max(vertical, Math.abs(p.dot(up)));
@@ -104,7 +126,9 @@ export function createFleetStudy() {
       return entries.filter(e => e.display.visible).map(({ design, ship, display }) => {
         const center = ship.bounds.getCenter(new THREE.Vector3()).applyMatrix4(display.matrixWorld).project(camera);
         let bottom = Infinity;
-        for (const x of [ship.bounds.min.x, ship.bounds.max.x]) for (const y of [ship.bounds.min.y, ship.bounds.max.y]) for (const z of [ship.bounds.min.z, ship.bounds.max.z]) bottom = Math.min(bottom, new THREE.Vector3(x, y, z).applyMatrix4(display.matrixWorld).project(camera).y);
+        const sphere = sphericalBounds(ship);
+        if (sphere) bottom = sphere.center.clone().applyMatrix4(display.matrixWorld).addScaledVector(new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion), -sphere.radius * display.scale.x).project(camera).y;
+        else for (const x of [ship.bounds.min.x, ship.bounds.max.x]) for (const y of [ship.bounds.min.y, ship.bounds.max.y]) for (const z of [ship.bounds.min.z, ship.bounds.max.z]) bottom = Math.min(bottom, new THREE.Vector3(x, y, z).applyMatrix4(display.matrixWorld).project(camera).y);
         return { id: design.id, x: (center.x + 1) * 50, y: Math.min(95, (1 - bottom) * 50 + 1) };
       });
     },

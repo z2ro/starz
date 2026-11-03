@@ -1,5 +1,6 @@
 export const SHIP_CAMERAS = ['3/4 Front', 'Side', 'Top', 'Rear', '3/4 Rear'] as const;
 export type ShipCamera = typeof SHIP_CAMERAS[number];
+export const STELLAR_CAMERA_LABELS: Record<ShipCamera, string> = { '3/4 Front': 'Isometric A', Side: 'Axis X', Top: 'Axis Y', Rear: 'Axis Z', '3/4 Rear': 'Isometric B' };
 export type ShipLabSettings = {
   hullOnly: boolean; armor: boolean; engines: boolean; details: boolean; boundingBox: boolean;
   silhouette: boolean; paused: boolean; azimuth: number; elevation: number; intensity: number;

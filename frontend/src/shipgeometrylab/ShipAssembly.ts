@@ -15,9 +15,12 @@ export function assembleShip(builders: ShipBuilders, name: string) {
   const coreMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, emissive: '#64c9e5', emissiveIntensity: 1.6, roughness: 0.55, metalness: 0.1 });
   const windowMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, emissive: '#41899e', emissiveIntensity: 0.4, roughness: 0.35, metalness: 0.15 });
   const lightMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
+  const ownedMaterials = [hullMaterial, armorMaterial, darkMaterial, engineMaterial, coreMaterial, windowMaterial, lightMaterial];
   const layers = { hull: new THREE.Group(), armor: new THREE.Group(), engines: new THREE.Group(), details: new THREE.Group() };
   const add = (layer: keyof typeof layers, builder: GeometryBuilder, material: THREE.Material, name: string) => {
-    const mesh = new THREE.Mesh(builder.build(), material);
+    const geometry = builder.build();
+    if (!geometry.index?.count) { geometry.dispose(); return; }
+    const mesh = new THREE.Mesh(geometry, material);
     mesh.name = name;
     layers[layer].add(mesh);
   };
@@ -51,7 +54,7 @@ export function assembleShip(builders: ShipBuilders, name: string) {
     dispose() {
       if (disposed) return;
       disposed = true;
-      const materials = new Set<THREE.Material>([silhouetteMaterial]);
+      const materials = new Set<THREE.Material>([...ownedMaterials, silhouetteMaterial]);
       const geometries = new Set<THREE.BufferGeometry>();
       originalMaterials.forEach((material, mesh) => {
         geometries.add(mesh.geometry);

@@ -37,11 +37,14 @@ body:has(.ship-lab-shell) { min-width: 0; }
 .ship-lab-stats p { color: #6d8b9d; font-size: 11px; line-height: 1.5; }
 .ship-lab-error { position: absolute; inset: 50% auto auto 50%; transform: translate(-50%, -50%); color: #ebba99; padding: 20px; border: 1px solid #77513b; }
 .ship-lab-shell :focus-visible { outline: 2px solid #9bdef0; outline-offset: 3px; }
-.ship-lab-designs { display: grid; gap: 6px; }
+.ship-lab-designs { display: grid; gap: 6px; max-height: min(38vh, 300px); overflow-y: auto; scrollbar-width: thin; }
+.ship-lab-comparisons { display: grid; gap: 6px; margin-top: 10px; }
 .ship-lab-designs button { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; }
 .ship-lab-designs button span { font-size: 10px; color: #7f9baa; }
 .ship-lab-fleet-labels { position: absolute; inset: 0; pointer-events: none; }
 .ship-lab-fleet-labels button { position: absolute; transform: translateX(-50%); pointer-events: auto; border: 0; border-top: 1px solid #274555; padding: 4px 6px; background: #06111bc9; color: #b8d4e1; font: 10px ui-monospace, monospace; text-transform: uppercase; cursor: pointer; }
 .ship-lab-fleet-labels.scale-labels button { font-size: 8px; padding-inline: 2px; }
+.ship-lab-fleet-labels.scale-labels button:nth-child(even) { margin-top: 18px; }
+.ship-lab-fleet-labels small { display: block; margin-top: 3px; color: #8eafc0; font-size: 8px; }
 @media (max-width: 1000px) { .ship-lab-layout { grid-template-columns: minmax(0, 1fr) 260px; } .ship-lab-identity { left: 18px; top: 18px; } }
 @media (max-width: 720px) { .ship-lab-shell { height: auto; } .ship-lab-layout { display: block; } .ship-lab-viewport { height: 58vh; min-height: 360px; } .ship-lab-panel { margin-top: 12px; } .ship-lab-header { padding: 14px; gap: 10px; } .ship-lab-header h1 { font-size: 18px; } .ship-lab-identity h2 { font-size: 20px; } }

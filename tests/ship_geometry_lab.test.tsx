@@ -70,6 +70,20 @@ describe('isolated ship geometry lab', () => {
     view.unmount();
     expect(renderer.dispose).toHaveBeenCalledTimes(1);
   });
+  it('provides dedicated megastructure inspection without conventional-engine controls', () => {
+    render(<MemoryRouter><ShipGeometryLabView /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Stargrave-class' }));
+    expect(renderer.setSelection).toHaveBeenLastCalledWith('stargrave');
+    expect(screen.queryByLabelText('Show engines')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Dyson segments')).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('slider', { name: 'Stellar core emission' }), { target: { value: '0.8' } });
+    expect(renderer.setSettings).toHaveBeenLastCalledWith(expect.objectContaining({ engineEmission: 0.8 }));
+    fireEvent.click(screen.getByRole('button', { name: 'Axis X' })); expect(renderer.setCamera).toHaveBeenLastCalledWith('Side');
+    fireEvent.click(screen.getByRole('button', { name: 'Stargrave / Categoria' })); expect(renderer.setSelection).toHaveBeenLastCalledWith('titan');
+    expect(screen.getByText(/proporção física desconhecida/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Vanguard' })); expect(screen.getByLabelText('Show engines')).toBeInTheDocument();
+    expect(renderer.construct).toHaveBeenCalledTimes(1);
+  });
   it('handles unsupported WebGL and startup errors visibly', () => {
     vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue(null);
     const view = render(<MemoryRouter><ShipGeometryLabView /></MemoryRouter>);

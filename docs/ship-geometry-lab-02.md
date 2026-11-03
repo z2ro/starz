@@ -77,5 +77,7 @@ pertence ao responsável pelo projeto.
 
 Sem alterações em backend, gameplay, Shipyard, Planet View, registros canônicos
 ou estado visual real. Nenhuma das novas naves aparece automaticamente no jogo.
+Continuação com os onze designs: [Ship Geometry Lab 03](ship-geometry-lab-03.md).
+
 Limitações: sem escala física, interiores, UVs ou detalhes canônicos finais; o pós-pass
 de paleta é caro no SwiftShader. FPS de software não equivale a benchmark em GPU física.
