@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 from math import hypot
+from time import time
+from uuid import UUID, uuid4
+from sqlalchemy import select, func
+from sqlalchemy.orm import Session
+from .db.models import Campaign, Empire, Universe
+from . import campaign
 from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Literal
@@ -18,7 +24,7 @@ from .effects import unlocked_content
 from .universe import generate_system
 
 ROOT = Path(__file__).resolve().parent.parent
-catalog = Catalog.load(ROOT / "game_data")
+catalog = Catalog.load(ROOT / "game_data", ROOT / "campaign_data" if Settings.from_env().campaign else None)
 
 
 @asynccontextmanager
@@ -26,8 +32,16 @@ async def lifespan(app):
     settings = Settings.from_env()
     database = database_engine(settings.database_url)
     try:
-        store = Store(database, catalog, settings.universe_seed)
-        app.state.default_empire_id = store.bootstrap()
+        store = Store(database, catalog, settings.universe_seed, clock=(lambda: 0) if settings.campaign else time)
+        if settings.campaign:
+            with Session(database) as session:
+                saved = session.scalar(select(Campaign).order_by(Campaign.selected_at.desc()).limit(1))
+                saved_id = saved.empire_id if saved else None
+            app.state.default_empire_id = saved_id or store.bootstrap(now=time(), universe_name='Concordat')
+            if not saved_id:
+                store.run(app.state.default_empire_id, campaign.initialize)
+        else:
+            app.state.default_empire_id = store.bootstrap()
         app.state.store = store
         yield
     finally:
@@ -66,14 +80,14 @@ class TravelRequest(BaseModel):
     target_planet_index: int | None = Field(default=None, ge=0)
 
 
-def action(call, *, planet_id=None, colony_target=None):
+def action(call, *, planet_id=None, colony_target=None, mutating=False):
     try:
         options = {}
         if planet_id is not None:
             options['planet_id'] = planet_id
         if colony_target is not None:
             options['colony_target'] = colony_target
-        return app.state.store.run(app.state.default_empire_id, call, **options)
+        return app.state.store.run(app.state.default_empire_id, (lambda e: campaign.command(e, call)) if mutating else call, **options)
     except DataValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -158,7 +172,7 @@ def galaxy(
 def state_snapshot(engine):
     system = engine.system()
     capacities = engine.capacities()
-    return {"system": system.to_dict(), "active_planet": {"id": engine.state.planet_id, "planet_index": engine.state.planet_index, "home": engine.state.planet_id == engine.state.home_planet_id}, "planets": planet_list(engine), "stocks": {key: round(value, 2) for key, value in engine.state.stocks.items()}, "capacities": capacities, "population": {"total": engine.state.population_total, "available": capacities["available_population"], "capacity": 100 + sum(engine.catalog.get("districts", key).population_capacity * level for key, level in engine.state.districts.items())}, "districts": dict(engine.state.districts), "construction": list(engine.state.construction), "research": dict(engine.state.research), "ships": [dict(ship) for ship in engine.state.ships], "fleets": [{**fleet, "eta": max(0, round(fleet["arrival_at"] - engine.state.last_updated)) if fleet["status"] == "TRANSIT" else 0} for fleet in engine.state.fleets], "notices": engine.state.notices[:5], "travel_modes": [item.model_dump() for _, item in sorted(catalog.items['travel_modes'].items())], "unlocked_content": sorted(unlocked_content(catalog, engine.state.research['completed']))}
+    return {"campaign": campaign.snapshot(engine), "observed_at": engine.state.last_updated, "system": system.to_dict(), "active_planet": {"id": engine.state.planet_id, "planet_index": engine.state.planet_index, "home": engine.state.planet_id == engine.state.home_planet_id}, "planets": planet_list(engine), "stocks": {key: round(value, 2) for key, value in engine.state.stocks.items()}, "capacities": capacities, "population": {"total": engine.state.population_total, "available": capacities["available_population"], "capacity": 100 + sum(engine.catalog.get("districts", key).population_capacity * level for key, level in engine.state.districts.items())}, "districts": dict(engine.state.districts), "construction": list(engine.state.construction), "research": dict(engine.state.research), "ships": [dict(ship) for ship in engine.state.ships], "fleets": [{**fleet, "eta": max(0, round(fleet["arrival_at"] - engine.state.last_updated)) if fleet["status"] == "TRANSIT" else 0} for fleet in engine.state.fleets], "notices": engine.state.notices[:5], "travel_modes": [item.model_dump() for _, item in sorted(catalog.items['travel_modes'].items())], "unlocked_content": sorted(unlocked_content(catalog, engine.state.research['completed']))}
 
 
 def planet_list(engine):
@@ -171,17 +185,17 @@ def planet_list(engine):
 
 @app.post("/api/build")
 def build(request: BuildRequest):
-    return action(lambda engine: engine.build(request.id, now=engine.state.last_updated), planet_id=request.planet_id)
+    return action(lambda engine: engine.build(request.id, now=engine.state.last_updated), planet_id=request.planet_id, mutating=True)
 
 
 @app.post("/api/research")
 def research(request: ResearchRequest):
-    return action(lambda engine: engine.research(request.id, now=engine.state.last_updated))
+    return action(lambda engine: engine.research(request.id, now=engine.state.last_updated), mutating=True)
 
 
 @app.post("/api/build-ship")
 def build_ship(request: BuildShipRequest = Body(default=BuildShipRequest())):
-    return action(lambda engine: engine.build_ship(request.hull_id, request.propulsion_id, request.fuel_id, now=engine.state.last_updated), planet_id=request.planet_id)
+    return action(lambda engine: engine.build_ship(request.hull_id, request.propulsion_id, request.fuel_id, now=engine.state.last_updated), planet_id=request.planet_id, mutating=True)
 
 
 @app.post("/api/travel")
@@ -189,7 +203,7 @@ def travel(request: TravelRequest):
     if request.mission == 'COLONIZE' and request.planet_id is None:
         raise HTTPException(status_code=400, detail='COLONIZE exige planet_id como origem da missão')
     target = (request.target_x, request.target_y, request.target_planet_index) if request.mission == 'COLONIZE' and request.target_planet_index is not None else None
-    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id, mission=request.mission, target_planet_index=request.target_planet_index, planet_id=request.planet_id), planet_id=request.planet_id, colony_target=target)
+    return action(lambda engine: engine.send_fleet(request.target_x, request.target_y, request.propulsion_id, request.mode, now=engine.state.last_updated, fleet_id=request.fleet_id, ship_id=request.ship_id, mission=request.mission, target_planet_index=request.target_planet_index, planet_id=request.planet_id), planet_id=request.planet_id, colony_target=target, mutating=True)
 
 
 @app.post("/api/travel-preview")
@@ -200,3 +214,63 @@ def travel_preview(request: TravelRequest):
         catalog.get('travel_modes', request.mode)
         return {mode: engine.preview_travel(request.target_x, request.target_y, request.propulsion_id, mode, fleet_id=request.fleet_id, ship_id=request.ship_id, planet_id=request.planet_id, intra_system=request.mission == 'COLONIZE') for mode in sorted(catalog.items['travel_modes'])}
     return action(preview, planet_id=request.planet_id)
+
+
+class CampaignOrder(BaseModel):
+    action: str = Field(max_length=32)
+    planet_id: str | None = None
+    target: str | None = Field(default=None, max_length=100)
+    ship_id: str | None = None
+    ship_ids: list[str] | None = Field(default=None, max_length=12)
+    resource: str | None = None
+    amount: float | None = Field(default=None, gt=0, allow_inf_nan=False)
+    choice: str | None = None
+    x: int | None = Field(default=None, ge=-100, le=100)
+    y: int | None = Field(default=None, ge=-100, le=100)
+    planet_index: int | None = Field(default=None, ge=0)
+
+
+@app.post('/api/campaign/order')
+def campaign_order(request: CampaignOrder):
+    return action(lambda e: campaign.order(e, request.action, **request.model_dump(exclude={'action', 'planet_id'})), planet_id=None if request.action in {'end_turn', 'event'} else request.planet_id)
+
+
+class NewCampaign(BaseModel):
+    seed: str = Field(default='STARZ-CONCORDAT', min_length=1, max_length=64)
+
+
+@app.post('/api/campaign/new')
+def new_campaign(request: NewCampaign):
+    if not Settings.from_env().campaign:
+        raise HTTPException(status_code=400, detail='Use o ambiente experimental isolado.')
+    store = Store(app.state.store.database, catalog, request.seed, clock=lambda: 0)
+    empire_id = store.bootstrap(now=time(), universe_name='Concordat-' + str(uuid4()))
+    store.run(empire_id, campaign.initialize)
+    app.state.default_empire_id = empire_id
+    return {'started': True}
+
+
+@app.get('/api/campaign/saves')
+def campaign_saves():
+    if not Settings.from_env().campaign:
+        return []
+    with Session(app.state.store.database) as session:
+        rows = session.execute(select(Campaign, Universe).join(Empire, Empire.id == Campaign.empire_id).join(Universe, Universe.id == Empire.universe_id).order_by(Campaign.selected_at.desc())).all()
+        return [{'id': str(c.empire_id), 'seed': u.seed, 'turn': c.payload['turn'], 'phase': c.payload['phase'], 'active': c.empire_id == app.state.default_empire_id} for c, u in rows]
+
+
+class LoadCampaign(BaseModel):
+    empire_id: UUID
+
+
+@app.post('/api/campaign/load')
+def load_campaign(request: LoadCampaign):
+    if not Settings.from_env().campaign:
+        raise HTTPException(status_code=400, detail='Use o ambiente experimental isolado.')
+    with Session(app.state.store.database) as session, session.begin():
+        saved = session.get(Campaign, request.empire_id)
+        if saved is None:
+            raise HTTPException(status_code=404, detail='Partida inexistente.')
+        saved.selected_at = func.now()
+    app.state.default_empire_id = request.empire_id
+    return {'loaded': True}

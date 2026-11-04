@@ -1,0 +1,31 @@
+name: starz-complete-game
+services:
+  campaign-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: concordat
+      POSTGRES_USER: concordat
+      POSTGRES_PASSWORD: concordat_local_only
+    ports: ["127.0.0.1:5544:5432"]
+    volumes: ["campaign-save:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U concordat -d concordat"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  campaign-app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://concordat:concordat_local_only@campaign-db:5432/concordat
+      STARZ_CAMPAIGN: "1"
+      STARZ_UNIVERSE_SEED: STARZ-CONCORDAT
+    ports: ["127.0.0.1:8020:8000"]
+    depends_on:
+      campaign-db: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+volumes:
+  campaign-save:

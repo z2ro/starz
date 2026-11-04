@@ -1,9 +1,10 @@
 """Transactional PostgreSQL adapter for StarZ domain state."""
+from copy import deepcopy
 from datetime import datetime, timezone
 from time import time
 from uuid import UUID, uuid4
 
-from sqlalchemy import create_engine, select, text
+from sqlalchemy import create_engine, delete, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -32,11 +33,11 @@ class Store:
     def __init__(self, database, catalog: Catalog, seed: str = 'STARZ-ALPHA', clock=time):
         self.database, self.catalog, self.seed, self.clock = database, catalog, seed, clock
 
-    def bootstrap(self, now: float | None = None):
+    def bootstrap(self, now: float | None = None, universe_name: str = 'StarZ'):
         stamp = utc(self.clock() if now is None else now)
         with Session(self.database) as session, session.begin():
-            session.execute(insert(m.Universe).values(id=uuid4(), name='StarZ', seed=self.seed, created_at=stamp).on_conflict_do_nothing(index_elements=['name']))
-            universe = session.scalar(select(m.Universe).where(m.Universe.name == 'StarZ').with_for_update())
+            session.execute(insert(m.Universe).values(id=uuid4(), name=universe_name, seed=self.seed, created_at=stamp).on_conflict_do_nothing(index_elements=['name']))
+            universe = session.scalar(select(m.Universe).where(m.Universe.name == universe_name).with_for_update())
             empire = session.scalar(select(m.Empire).where(m.Empire.universe_id == universe.id, m.Empire.name == 'Local Empire').with_for_update())
             if empire is None:
                 engine = Engine.new(self.catalog, universe.seed, epoch(stamp))
@@ -95,12 +96,23 @@ class Store:
                 engine = Engine(self.catalog, state)
                 engine.advance(stamp)
             validate_state(self.catalog, state)
+            old_turn = state.campaign['turn'] if state.campaign else None
             result = call(engine)
             validate_state(self.catalog, state)
             planet = session.get(m.Planet, UUID(state.planet_id))
             if planet is None or planet.empire_id != empire.id:
                 raise DataValidationError('planeta ativo persistido inválido')
             persist(session, empire, planet, state)
+            if state.campaign and old_turn != state.campaign['turn']:
+                session.flush()
+                for owned in list(state.planets):
+                    if owned['id'] == state.planet_id:
+                        continue
+                    local = load(session, empire, planet_id=owned['id'], catalog=self.catalog)
+                    local_engine = Engine(self.catalog, local)
+                    local_engine.advance_planet(state.last_updated)
+                    local.population_total = min(100 + local.districts.get('civil_district', 0) * 80, local.population_total + max(1, local.districts.get('civil_district', 0) * 3))
+                    persist(session, empire, session.get(m.Planet, UUID(local.planet_id)), local)
             return result
 
 
@@ -159,6 +171,8 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
         colonization_claims={f'{x}:{y}:{index}': str(fleet_id) for fleet_id, x, y, index in claims},
         planet_last_updated=epoch(active.last_updated),
     )
+    campaign = session.get(m.Campaign, empire.id)
+    state.campaign = deepcopy(campaign.payload) if campaign else None
     if catalog is not None:
         research_rate = 0.0
         for planet, system in owned:
@@ -202,11 +216,23 @@ def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameSta
             session.add(m.District(planet_id=colony_row.id, district_id=district_id, level=level))
         for resource_id, amount in colony.get('initial_stocks', {}).items():
             session.add(m.PlanetStock(planet_id=colony_row.id, resource_id=resource_id, amount=amount))
+    if state.campaign is not None:
+        campaign = session.get(m.Campaign, empire.id)
+        if campaign is None:
+            session.add(m.Campaign(empire_id=empire.id, payload=deepcopy(state.campaign), created_at=stamp))
+        else:
+            campaign.payload = deepcopy(state.campaign)
     research = state.research
     session.merge(m.Research(empire_id=empire.id, active_technology_id=research['active'], remaining_work=research.get('remaining_work', 0), complete_at=utc(research['complete_at']), updated_at=stamp))
     for technology_id in research['completed']:
         if session.get(m.CompletedTechnology, (empire.id, technology_id)) is None:
             session.add(m.CompletedTechnology(empire_id=empire.id, technology_id=technology_id, completed_at=utc(research['completed_at'][technology_id])))
+    # Combat casualties remove their associations before the owned entities, atomically.
+    ship_ids = [UUID(s['id']) for s in state.ships]
+    fleet_ids = [UUID(f['id']) for f in state.fleets]
+    session.execute(delete(m.FleetShip).where(m.FleetShip.empire_id == empire.id, (m.FleetShip.ship_id.not_in(ship_ids)) | (m.FleetShip.fleet_id.not_in(fleet_ids))))
+    session.execute(delete(m.Fleet).where(m.Fleet.empire_id == empire.id, m.Fleet.id.not_in(fleet_ids)))
+    session.execute(delete(m.Ship).where(m.Ship.empire_id == empire.id, m.Ship.id.not_in(ship_ids)))
     for ship in state.ships:
         if session.get(m.Ship, UUID(ship['id'])) is None:
             session.add(m.Ship(id=UUID(ship['id']), empire_id=empire.id, hull_id=ship['hull_id'], propulsion_id=ship['propulsion_id'], fuel_id=ship['fuel_id'], crew=ship['crew'], mass=ship['mass'], ready_at=utc(ship['ready_at']), created_at=stamp, origin_planet_id=UUID(ship['origin_planet_id']) if ship.get('origin_planet_id') else None, system_x=ship.get('system_x'), system_y=ship.get('system_y')))

@@ -8,6 +8,7 @@ class Settings:
     database_url: str
     universe_seed: str
     test_database_url: str | None
+    campaign: bool = False
 
     @classmethod
     def from_env(cls):
@@ -15,4 +16,5 @@ class Settings:
             database_url=os.environ.get('DATABASE_URL', ''),
             universe_seed=os.environ.get('STARZ_UNIVERSE_SEED', 'STARZ-ALPHA'),
             test_database_url=os.environ.get('TEST_DATABASE_URL'),
+            campaign=os.environ.get('STARZ_CAMPAIGN', '0') == '1',
         )

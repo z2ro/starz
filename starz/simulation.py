@@ -40,11 +40,15 @@ class GameState:
     occupied_planets: list[str] = field(default_factory=list)
     colonization_claims: dict[str, str] = field(default_factory=dict)
     new_colonies: list[dict[str, Any]] = field(default_factory=list)
+    campaign: dict[str, Any] | None = None
     research_rate_global: float | None = None
     planet_last_updated: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        result = asdict(self)
+        if self.campaign is None:
+            result.pop('campaign')
+        return result
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> "GameState":
@@ -164,6 +168,8 @@ class Engine:
         system = generate_system(self.state.seed, x, y, self.catalog)
         if not 0 <= planet_index < len(system.planets):
             return {'eligible': False, 'reason': 'Planeta inexistente.'}
+        if self.state.campaign and any(not r['conquered'] and [x, y] in r['claims'] for r in self.state.campaign['rivals']):
+            return {'eligible': False, 'reason': 'Território soberano de outra civilização.'}
         key = self.planet_key(x, y, planet_index)
         viability = colonization_viability(system.planets[planet_index], self.colonization_rules)
         if key in self.state.occupied_planets:
@@ -347,7 +353,7 @@ class Engine:
         require_available(self.catalog, self.state, self.catalog.get('travel_modes', mode))
         return {**calculate_travel(self.catalog, origin, (target_x, target_y), ship, propulsion_id, mode, intra_system=intra_system), 'fleet_id': fleet['id'] if fleet else None, 'ship_id': ship['id']}
 
-    def send_fleet(self, target_x: int, target_y: int, propulsion_id: str, mode: str, now: float | None = None, *, fleet_id: str | None = None, ship_id: str | None = None, mission: str = 'MOVE', target_planet_index: int | None = None, planet_id: str | None = None) -> dict[str, Any]:
+    def send_fleet(self, target_x: int, target_y: int, propulsion_id: str, mode: str, now: float | None = None, *, fleet_id: str | None = None, ship_id: str | None = None, mission: str = 'MOVE', target_planet_index: int | None = None, planet_id: str | None = None, intra_system: bool = False) -> dict[str, Any]:
         self.advance(now)
         if mission not in {'MOVE', 'SURVEY', 'COLONIZE'}:
             raise DataValidationError('missão de frota inválida')
@@ -363,7 +369,7 @@ class Engine:
                 raise DataValidationError(status['reason'])
         elif target_planet_index is not None:
             raise DataValidationError('planeta alvo só é válido para colonização')
-        preview = self.preview_travel(target_x, target_y, propulsion_id, mode, fleet_id=fleet['id'] if fleet else None, ship_id=None if fleet else ship['id'], planet_id=planet_id, intra_system=mission == 'COLONIZE')
+        preview = self.preview_travel(target_x, target_y, propulsion_id, mode, fleet_id=fleet['id'] if fleet else None, ship_id=None if fleet else ship['id'], planet_id=planet_id, intra_system=mission == 'COLONIZE' or intra_system)
         fuel_stocks, source_id = self._travel_source(fleet, ship, origin, planet_id)
         reserve_mode = bool(self.state.stocks_by_planet)
         if fuel_stocks is None:
@@ -371,7 +377,7 @@ class Engine:
                 raise DataValidationError('combustível local insuficiente para a viagem')
             fleet['fuel_reserve'] -= preview['fuel_cost']
         else:
-            required = preview['fuel_cost'] * 2 if reserve_mode and fleet is None else preview['fuel_cost']
+            required = preview['fuel_cost'] * (3 if self.state.campaign else 2) if reserve_mode and (fleet is None or self.state.campaign) else preview['fuel_cost']
             if fuel_stocks.get(ship['fuel_id'], 0) < required:
                 raise DataValidationError('combustível local insuficiente para a viagem')
             fuel_stocks[ship['fuel_id']] -= required
@@ -382,8 +388,10 @@ class Engine:
             self._pay_from(source_stocks, self.colonization_rules.cost)
             self.state.population_total -= self.colonization_rules.population
         if fleet is None:
-            fleet = {'id': str(uuid4()), 'name': f'Fleet {len(self.state.fleets) + 1:02d}', 'ship_ids': [ship['id']], 'x': origin[0], 'y': origin[1], 'origin_planet_id': ship.get('origin_planet_id') or self.state.planet_id, 'fuel_reserve': preview['fuel_cost'] if reserve_mode else 0}
+            fleet = {'id': str(uuid4()), 'name': f'Fleet {len(self.state.fleets) + 1:02d}', 'ship_ids': [ship['id']], 'x': origin[0], 'y': origin[1], 'origin_planet_id': ship.get('origin_planet_id') or self.state.planet_id, 'fuel_reserve': preview['fuel_cost'] * (2 if self.state.campaign else 1) if reserve_mode else 0}
             self.state.fleets.append(fleet)
+        elif self.state.campaign and fuel_stocks is not None:
+            fleet['fuel_reserve'] += preview['fuel_cost'] * 2
         fleet.update(destination_x=target_x, destination_y=target_y, status='TRANSIT', departure_at=self.state.last_updated, arrival_at=self.state.last_updated + preview['eta_seconds'], propulsion=propulsion_id, mode=mode, fuel_cost=preview['fuel_cost'], mission=mission, target_planet_index=target_planet_index, colonization_population=self.colonization_rules.population if mission == 'COLONIZE' else None, colonization_origin_planet_id=source_id if mission == 'COLONIZE' else None)
         if mission == 'COLONIZE':
             self.state.colonization_claims[self.planet_key(target_x, target_y, target_planet_index)] = fleet['id']

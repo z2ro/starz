@@ -1,4 +1,15 @@
-# StarZ
+# StarZ — Concordat experiment
+
+Esta branch contém uma campanha single-player completa em ambiente **isolado**.
+Para jogar sem tocar nos saves/containers originais:
+
+```bash
+docker compose -f compose.experiment.yaml up -d --build --wait
+```
+
+Abra **http://localhost:8020/#/campaign**. [Regras, tutorial, saves e validação](docs/complete-game.md).
+As instruções abaixo descrevem o sandbox original; não misture os dois arquivos Compose.
+
 
 StarZ é uma fundação jogável de estratégia espacial persistente: um sistema inicial, economia curta, pesquisa, estaleiro e viagem com regimes de propulsão. A interface organiza esse slice como um command center com HUD global, navegação por áreas e mapa estelar interativo.
 

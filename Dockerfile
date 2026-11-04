@@ -14,6 +14,7 @@ COPY pyproject.toml alembic.ini ./
 COPY starz ./starz
 COPY migrations ./migrations
 COPY game_data ./game_data
+COPY campaign_data ./campaign_data
 COPY --from=frontend /build/frontend ./frontend
 RUN useradd --uid 10001 --create-home starz
 USER starz

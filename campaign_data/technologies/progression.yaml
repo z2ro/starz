@@ -1,0 +1,120 @@
+- id: orbital_engineering
+  name: Engenharia orbital
+  description: Libera o estaleiro orbital e a primeira cadeia de construção espacial.
+  category: orbital_engineering
+  duration: 45
+  cost:
+    components: 12
+    refined_alloy: 20
+  unlocks:
+  - orbital_shipyard
+- id: nuclear_propulsion
+  name: Propulsão nuclear
+  description: Libera um regime de viagem mais rápido e mais quente.
+  category: propulsion
+  duration: 75
+  cost:
+    components: 20
+    refined_alloy: 30
+  requires:
+  - orbital_engineering
+  unlocks:
+  - nuclear_drive
+  - fusion_fuel
+- id: industrial_automation
+  name: Automação industrial
+  description: 'Desbloqueia a manufatura: 2 ligas por lote viram 6 componentes. Exige
+    energia e trabalhadores.'
+  category: campaign
+  duration: 120
+  cost:
+    refined_alloy: 35
+    components: 12
+  requires: []
+  unlocks:
+  - manufacturing
+- id: diplomatic_charter
+  name: Carta interestelar
+  description: Habilita alianças (relação 60 e 40 componentes). Cada emissário passa
+    de +10 para +25 de relação.
+  category: campaign
+  duration: 180
+  cost:
+    refined_alloy: 40
+    components: 20
+  requires:
+  - orbital_engineering
+  unlocks: []
+- id: survey_network
+  name: Rede científica
+  description: 'Desbloqueia Odyssey: +2 descobertas em novos levantamentos e análises
+    locais de 20 voláteis e 8 componentes.'
+  category: campaign
+  duration: 240
+  cost:
+    refined_alloy: 65
+    components: 30
+  requires:
+  - orbital_engineering
+  unlocks:
+  - odyssey_hull
+- id: naval_doctrine
+  name: Doutrina naval
+  description: Aumenta poder de combate em 15%, libera fragatas e destróieres e baterias
+    de defesa (+12 por nível).
+  category: campaign
+  duration: 240
+  cost:
+    refined_alloy: 60
+    components: 25
+  requires:
+  - orbital_engineering
+  unlocks:
+  - vanguard_hull
+  - sentinel_hull
+  - orbital_battery
+- id: capital_architecture
+  name: Arquitetura capital
+  description: 'Desbloqueia Aegis e Spearhead: plataformas de linha e ofensivas com
+    maior poder militar.'
+  category: campaign
+  duration: 480
+  cost:
+    refined_alloy: 120
+    components: 60
+  requires:
+  - naval_doctrine
+  - nuclear_propulsion
+  - industrial_automation
+  unlocks:
+  - aegis_hull
+  - spearhead_hull
+- id: carrier_operations
+  name: Operações embarcadas
+  description: Desbloqueia Leviathan e Atlas. Cada ala embarcada contribui +5 de poder;
+    Atlas também transporta carga.
+  category: campaign
+  duration: 600
+  cost:
+    refined_alloy: 180
+    components: 90
+  requires:
+  - capital_architecture
+  unlocks:
+  - atlas_hull
+  - leviathan_hull
+- id: stellar_containment
+  name: Contenção estelar
+  description: Desbloqueia Dominion e permite iniciar a contenção Stargrave após pacificar
+    o setor, estabelecer três mundos, transportar carga e preservar três descobertas.
+  category: campaign
+  duration: 900
+  cost:
+    refined_alloy: 220
+    components: 120
+  requires:
+  - carrier_operations
+  - survey_network
+  - diplomatic_charter
+  unlocks:
+  - dominion_hull

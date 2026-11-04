@@ -73,6 +73,10 @@ class Hull(Content):
     crew: int = Field(ge=0)
     duration: float = Field(gt=0)
     compatible_propulsion: list[str] = Field(min_length=1)
+    combat_power: NonNegative = 0
+    cargo_capacity: NonNegative = 0
+    science_bonus: NonNegative = 0
+    carrier_capacity: int = Field(default=0, ge=0)
 
 
 class Archetype(Content):
@@ -179,15 +183,19 @@ class Catalog:
         self.sources = sources
 
     @classmethod
-    def load(cls, root: str | Path) -> "Catalog":
+    def load(cls, root: str | Path, overlay: str | Path | None = None) -> "Catalog":
         root = Path(root)
         items: dict[str, dict[str, Content]] = {kind: {} for kind in KINDS}
         sources: dict[str, str] = {}
         errors: list[str] = []
         if not root.is_dir():
             raise DataValidationError(f"diretório inexistente: {root}")
-        for path in sorted(root.rglob("*.yaml")):
-            kind = path.relative_to(root).parts[0]
+        override_root = Path(overlay) if overlay is not None else None
+        overridden: set[str] = set()
+        paths = sorted(root.rglob("*.yaml")) + (sorted(override_root.rglob("*.yaml")) if override_root else [])
+        for path in paths:
+            override = override_root is not None and path.is_relative_to(override_root)
+            kind = path.relative_to(override_root if override else root).parts[0]
             if kind not in KINDS:
                 errors.append(f"{path}: diretório de conteúdo desconhecido")
                 continue
@@ -198,11 +206,13 @@ class Catalog:
                     raise ValueError("arquivo deve conter um mapa ou lista de mapas")
                 for entry in entries:
                     item = KINDS[kind].model_validate(entry)
-                    if item.id in sources:
+                    if item.id in sources and (not override or item.id in overridden):
                         errors.append(f"ID duplicado: {item.id} ({sources[item.id]} e {path})")
                     else:
                         items[kind][item.id] = item
                         sources[item.id] = str(path)
+                        if override:
+                            overridden.add(item.id)
             except (OSError, yaml.YAMLError, ValidationError, ValueError) as exc:
                 errors.append(f"{path}: {exc}")
         catalog = cls(items, sources)

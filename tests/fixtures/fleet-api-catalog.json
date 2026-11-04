@@ -235,7 +235,11 @@
       "compatible_propulsion": [
         "chemical_drive",
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     },
     {
       "id": "wayfarer_hull",
@@ -258,7 +262,11 @@
       "compatible_propulsion": [
         "chemical_drive",
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     },
     {
       "id": "vanguard_hull",
@@ -281,7 +289,11 @@
       "compatible_propulsion": [
         "chemical_drive",
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     },
     {
       "id": "sentinel_hull",
@@ -303,7 +315,11 @@
       "duration": 150.0,
       "compatible_propulsion": [
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     },
     {
       "id": "odyssey_hull",
@@ -325,7 +341,11 @@
       "duration": 180.0,
       "compatible_propulsion": [
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     },
     {
       "id": "aegis_hull",
@@ -347,7 +367,11 @@
       "duration": 240.0,
       "compatible_propulsion": [
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     },
     {
       "id": "spearhead_hull",
@@ -369,7 +393,11 @@
       "duration": 330.0,
       "compatible_propulsion": [
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     },
     {
       "id": "leviathan_hull",
@@ -391,7 +419,11 @@
       "duration": 480.0,
       "compatible_propulsion": [
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     },
     {
       "id": "atlas_hull",
@@ -413,7 +445,11 @@
       "duration": 540.0,
       "compatible_propulsion": [
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     },
     {
       "id": "dominion_hull",
@@ -435,7 +471,11 @@
       "duration": 720.0,
       "compatible_propulsion": [
         "nuclear_drive"
-      ]
+      ],
+      "combat_power": 0,
+      "cargo_capacity": 0,
+      "science_bonus": 0,
+      "carrier_capacity": 0
     }
   ],
   "propulsion": [

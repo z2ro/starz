@@ -1,7 +1,8 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, ForeignKeyConstraint, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -187,3 +188,11 @@ class SystemKnowledge(Base):
     system_y: Mapped[int] = mapped_column(primary_key=True)
     knowledge_level: Mapped[str] = mapped_column(default='SURVEYED', server_default='SURVEYED')
     surveyed_at: Mapped[datetime]
+
+
+class Campaign(Base):
+    __tablename__ = 'campaign'
+    empire_id: Mapped[UUID] = mapped_column(ForeignKey('empire.id'), primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSONB)
+    selected_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime]
