@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './queryClient';
+import { SessionGate } from '../universe/SessionGate';
 import { AppRouter } from './router';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error?: Error }> {
@@ -10,4 +11,4 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error?: Error }
   render() { return this.state.error ? <div className="fatal"><b>Interface indisponível</b><p>{this.state.error.message}</p><button onClick={() => window.location.reload()}>Recarregar</button></div> : this.props.children; }
 }
 
-export function App() { return <ErrorBoundary><QueryClientProvider client={queryClient}><AppRouter /></QueryClientProvider></ErrorBoundary>; }
+export function App() { return <ErrorBoundary><QueryClientProvider client={queryClient}><SessionGate><AppRouter /></SessionGate></QueryClientProvider></ErrorBoundary>; }

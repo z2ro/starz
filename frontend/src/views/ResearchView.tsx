@@ -1,3 +1,4 @@
+import { LevelResearch } from '../universe/LevelResearch';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { cost, fmt, label, remaining } from '../app/format';
@@ -30,6 +31,7 @@ export function ResearchView() {
   useEffect(() => { if (selected && selected.id !== selectedId) setSelectedId(selected.id); }, [selectedId, selected?.id]);
   const completed = state.research.completed.length;
 
+  if (state.persistent) return <LevelResearch />;
   if (!catalog.technologies.length) return <div className="research-command"><header className="research-command-header"><div><span className="eyebrow">SCIENCE DIRECTORATE</span><h1>Pesquisa</h1></div></header><EmptyState title="Nenhuma tecnologia catalogada" icon="research">O catálogo atual não contém programas científicos.</EmptyState></div>;
 
   return <div className="research-command">

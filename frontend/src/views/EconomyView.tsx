@@ -16,7 +16,8 @@ const rate = (value: number) => value > 0 ? `+${fmt(value, 2)}/min nom.` : '—'
 const flowEntries = (catalog: ShellContext['catalog'], values: Record<string, number>, level: number) => Object.entries(values).map(([id, amount]) => ({ id, name: label(catalog, id), value: amount * level }));
 
 export function EconomyView() {
-  const { catalog, state } = useOutletContext<ShellContext>();
+  const { catalog: sourceCatalog, state } = useOutletContext<ShellContext>();
+  const catalog = state.economic_districts ? { ...sourceCatalog, districts: state.economic_districts } : sourceCatalog;
   const navigate = useNavigate();
   const localResources = [...catalog.resources, ...catalog.fuels].filter(item => item.id in state.stocks);
   const economicDistricts = catalog.districts.filter(district => (state.districts[district.id] ?? 0) > 0 && (Object.keys(district.processing).length > 0 || Object.keys(district.production).length > 0));

@@ -1,5 +1,7 @@
+import { UniverseView } from '../universe/UniverseView';
+import type { ShellContext } from '../components/shell/AppShell';
 import { CampaignView } from '../campaign/CampaignView';
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useOutletContext } from 'react-router-dom';
 import { AppShell } from '../components/shell/AppShell';
 import { OverviewView } from '../views/OverviewView';
 import { PlanetView } from '../views/PlanetView';
@@ -22,6 +24,7 @@ export function AppRouter() {
     <Route path="/ship-geometry-lab" element={<Suspense fallback={<div>Carregando Ship Geometry Lab…</div>}><ShipGeometryLabView /></Suspense>} />
     <Route path="/planet-lab" element={<Suspense fallback={<div className="planet-lab-loading">Carregando Planet Lab…</div>}><PlanetLabView /></Suspense>} />
     <Route element={<AppShell />}>
+      <Route path="/universe" element={<UniverseView />} />
       <Route path="/campaign" element={<CampaignView />} />
       <Route path="/overview" element={<OverviewView />} />
       <Route path="/planet" element={<PlanetView />} />
@@ -30,7 +33,9 @@ export function AppRouter() {
       <Route path="/shipyard" element={<ShipyardView />} />
       <Route path="/fleets" element={<FleetsView />} />
       <Route path="/galaxy" element={<GalaxyView />} />
-      <Route path="*" element={<Navigate to="/campaign" replace />} />
+      <Route path="*" element={<Landing />} />
     </Route>
   </Routes></HashRouter>;
 }
+
+function Landing(){const {state}=useOutletContext<ShellContext>();return <Navigate to={state.persistent?"/universe":state.campaign?"/campaign":"/overview"} replace/>;}

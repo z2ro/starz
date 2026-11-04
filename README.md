@@ -1,3 +1,16 @@
+## Universo persistente (experimento atual)
+
+Contas independentes, mundo compartilhado, progresso offline e pesquisa por níveis:
+
+```bash
+git switch experiment/persistent-universe
+docker compose -f compose.persistent.yaml up -d --build --wait
+```
+
+Abra **http://localhost:8030/#/universe**. Para dois jogadores, use perfis de navegador
+separados. Banco/volume próprios; não substitui os saves originais ou de Concordat.
+[Regras, fórmulas, segurança, comandos e limitações](docs/persistent-universe.md).
+
 # StarZ — Concordat experiment
 
 Esta branch contém uma campanha single-player completa em ambiente **isolado**.

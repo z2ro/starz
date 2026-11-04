@@ -12,7 +12,7 @@ export function strategicResources(catalog: Catalog, state: State): Content[] {
   const stocked = [...catalog.resources, ...catalog.fuels].filter(item => item.id in state.stocks);
   return ['natural', 'material', 'component', 'fuel'].map(category => stocked.find(item => item.category === category)).filter((item): item is Content => !!item);
 }
-export const nominalRate = (catalog: Catalog, state: State, resourceId: string) => catalog.districts.reduce((total, district) => total + (state.districts[district.id] ?? 0) * (district.production[resourceId] ?? 0), 0);
+export const nominalRate = (catalog: Catalog, state: State, resourceId: string) => (state.economic_districts ?? catalog.districts).reduce((total, district) => total + (state.districts[district.id] ?? 0) * (district.production[resourceId] ?? 0), 0);
 export const districtImpact = (catalog: Catalog, district: District, state: State) => {
   const parts: string[] = [];
   if (district.energy_generation) parts.push(`+${fmt(district.energy_generation)} energia`);
