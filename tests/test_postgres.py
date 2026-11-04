@@ -509,3 +509,28 @@ class PostgresTests(unittest.TestCase):
         with ThreadPoolExecutor(2) as pool:
             results = list(pool.map(claim, (self.empire_id, second_id)))
         self.assertCountEqual(results, ['success', 'rejected'])
+
+    def test_complete_conventional_catalog_build_persistence_and_locality(self):
+        def prepare(e):
+            e.state.research['completed'] = ['orbital_engineering', 'nuclear_propulsion']
+            e.state.research['completed_at'] = {'orbital_engineering': 900, 'nuclear_propulsion': 990}
+            e.state.districts.update(orbital_shipyard=10, civil_district=20, solar_field=30)
+            e.state.population_total = 1000
+            e.state.stocks.update(refined_alloy=100000, components=100000, ion_fuel=100000, fusion_fuel=100000)
+        self.store.run(self.empire_id, prepare, now=1000)
+        built = []
+        for hull in self.catalog.items['ships'].values():
+            propulsion = hull.compatible_propulsion[0]
+            fuel = self.catalog.get('propulsion', propulsion).compatible_fuels[0]
+            ship = self.store.run(self.empire_id, lambda e, h=hull, p=propulsion, f=fuel: e.build_ship(h.id, p, f, now=1000), now=1000)
+            built.append(ship)
+        self.restart()
+        state = self.snapshot()
+        self.assertEqual({s['hull_id'] for s in state['ships']}, set(self.catalog.items['ships']))
+        self.assertEqual(len({s['id'] for s in state['ships']}), 10)
+        self.assertTrue(all(s['origin_planet_id'] == str(state['planet_id']) for s in state['ships']))
+        ship = built[-1]
+        fleet = self.store.run(self.empire_id, lambda e: e.send_fleet(e.state.system_x + 1, e.state.system_y, ship['propulsion_id'], 'NORMAL', now=ship['ready_at'], ship_id=ship['id']), now=ship['ready_at'])
+        self.store.run(self.empire_id, lambda e: None, now=fleet['arrival_at'])
+        self.restart()
+        self.assertEqual(self.snapshot()['fleets'][0]['status'], 'ARRIVED')

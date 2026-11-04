@@ -1,0 +1,535 @@
+{
+  "resources": [
+    {
+      "id": "raw_ore",
+      "name": "Ferrita bruta",
+      "description": "Minério extraído da crosta.",
+      "category": "natural",
+      "cost": {},
+      "requires": [],
+      "stock": true
+    },
+    {
+      "id": "volatiles",
+      "name": "Voláteis",
+      "description": "Gases e compostos úteis para processos industriais.",
+      "category": "natural",
+      "cost": {},
+      "requires": [],
+      "stock": true
+    },
+    {
+      "id": "refined_alloy",
+      "name": "Liga refinada",
+      "description": "Material estrutural processado.",
+      "category": "material",
+      "cost": {},
+      "requires": [],
+      "stock": true
+    },
+    {
+      "id": "components",
+      "name": "Componentes",
+      "description": "Peças de precisão para naves e infraestrutura.",
+      "category": "component",
+      "cost": {},
+      "requires": [],
+      "stock": true
+    }
+  ],
+  "districts": [
+    {
+      "id": "ore_extractor",
+      "name": "Extrator de ferrita",
+      "description": "Extrai matéria-prima da superfície.",
+      "category": "Mining",
+      "cost": {
+        "refined_alloy": 18.0,
+        "components": 4.0
+      },
+      "requires": [],
+      "duration": 20.0,
+      "workforce": 4,
+      "energy_generation": 0,
+      "energy_consumption": 2.0,
+      "production": {
+        "raw_ore": 2.0
+      },
+      "processing": {},
+      "research_rate": 0,
+      "population_capacity": 0,
+      "industrial_capacity": 0,
+      "construction_slots": 0,
+      "shipyard_slots": 0
+    },
+    {
+      "id": "solar_field",
+      "name": "Campo solar",
+      "description": "Gera capacidade energética em órbita baixa.",
+      "category": "Energy",
+      "cost": {
+        "refined_alloy": 15.0,
+        "components": 3.0
+      },
+      "requires": [],
+      "duration": 18.0,
+      "workforce": 2,
+      "energy_generation": 8.0,
+      "energy_consumption": 0,
+      "production": {},
+      "processing": {},
+      "research_rate": 0,
+      "population_capacity": 0,
+      "industrial_capacity": 0,
+      "construction_slots": 0,
+      "shipyard_slots": 0
+    },
+    {
+      "id": "processor",
+      "name": "Processador de materiais",
+      "description": "Converte ferrita e voláteis em ligas utilizáveis.",
+      "category": "Industrial",
+      "cost": {
+        "refined_alloy": 22.0,
+        "components": 6.0
+      },
+      "requires": [],
+      "duration": 28.0,
+      "workforce": 6,
+      "energy_generation": 0,
+      "energy_consumption": 4.0,
+      "production": {
+        "refined_alloy": 1.0,
+        "components": 0.25
+      },
+      "processing": {
+        "raw_ore": 1.5,
+        "volatiles": 0.5
+      },
+      "research_rate": 0,
+      "population_capacity": 0,
+      "industrial_capacity": 2.0,
+      "construction_slots": 0,
+      "shipyard_slots": 0
+    },
+    {
+      "id": "research_lab",
+      "name": "Laboratório de pesquisa",
+      "description": "Sustenta pesquisa aplicada sem microgerenciar cientistas.",
+      "category": "Research",
+      "cost": {
+        "refined_alloy": 25.0,
+        "components": 8.0
+      },
+      "requires": [],
+      "duration": 35.0,
+      "workforce": 5,
+      "energy_generation": 0,
+      "energy_consumption": 3.0,
+      "production": {},
+      "processing": {},
+      "research_rate": 1.0,
+      "population_capacity": 0,
+      "industrial_capacity": 0,
+      "construction_slots": 0,
+      "shipyard_slots": 0
+    },
+    {
+      "id": "civil_district",
+      "name": "Distrito civil",
+      "description": "Habitação, serviços e suporte populacional agregados.",
+      "category": "Civil",
+      "cost": {
+        "refined_alloy": 20.0,
+        "components": 4.0
+      },
+      "requires": [],
+      "duration": 25.0,
+      "workforce": 3,
+      "energy_generation": 0,
+      "energy_consumption": 2.0,
+      "production": {},
+      "processing": {},
+      "research_rate": 0,
+      "population_capacity": 80,
+      "industrial_capacity": 0,
+      "construction_slots": 1,
+      "shipyard_slots": 0
+    },
+    {
+      "id": "orbital_shipyard",
+      "name": "Estaleiro orbital",
+      "description": "Estrutura especial para montar naves na órbita do planeta.",
+      "category": "Logistics",
+      "cost": {
+        "refined_alloy": 50.0,
+        "components": 20.0
+      },
+      "requires": [],
+      "duration": 60.0,
+      "workforce": 10,
+      "energy_generation": 0,
+      "energy_consumption": 6.0,
+      "production": {},
+      "processing": {},
+      "research_rate": 0,
+      "population_capacity": 0,
+      "industrial_capacity": 0,
+      "construction_slots": 0,
+      "shipyard_slots": 1
+    }
+  ],
+  "technologies": [
+    {
+      "id": "orbital_engineering",
+      "name": "Engenharia orbital",
+      "description": "Libera o estaleiro orbital e a primeira cadeia de construção espacial.",
+      "category": "orbital_engineering",
+      "cost": {
+        "components": 12.0,
+        "refined_alloy": 20.0
+      },
+      "requires": [],
+      "duration": 45.0,
+      "unlocks": [
+        "orbital_shipyard"
+      ]
+    },
+    {
+      "id": "nuclear_propulsion",
+      "name": "Propulsão nuclear",
+      "description": "Libera um regime de viagem mais rápido e mais quente.",
+      "category": "propulsion",
+      "cost": {
+        "components": 20.0,
+        "refined_alloy": 30.0
+      },
+      "requires": [
+        "orbital_engineering"
+      ],
+      "duration": 75.0,
+      "unlocks": [
+        "nuclear_drive",
+        "fusion_fuel"
+      ]
+    }
+  ],
+  "ships": [
+    {
+      "id": "scout_hull",
+      "name": "Horizon",
+      "description": "Corveta leve projetada para reconhecimento e levantamento de sistemas.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 16.0,
+        "components": 8.0
+      },
+      "requires": [
+        "orbital_shipyard"
+      ],
+      "classification": "corvette",
+      "role": "exploration",
+      "mass": 10.0,
+      "crew": 3,
+      "duration": 30.0,
+      "compatible_propulsion": [
+        "chemical_drive",
+        "nuclear_drive"
+      ]
+    },
+    {
+      "id": "wayfarer_hull",
+      "name": "Wayfarer",
+      "description": "Plataforma naval freighter. Balanceamento provisório; sem habilidades especiais de gameplay.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 36.0,
+        "components": 18.0
+      },
+      "requires": [
+        "orbital_shipyard",
+        "orbital_engineering"
+      ],
+      "classification": "freighter",
+      "role": "logistics",
+      "mass": 24.0,
+      "crew": 8,
+      "duration": 60.0,
+      "compatible_propulsion": [
+        "chemical_drive",
+        "nuclear_drive"
+      ]
+    },
+    {
+      "id": "vanguard_hull",
+      "name": "Vanguard",
+      "description": "Plataforma naval frigate. Balanceamento provisório; sem habilidades especiais de gameplay.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 54.0,
+        "components": 28.0
+      },
+      "requires": [
+        "orbital_shipyard",
+        "orbital_engineering"
+      ],
+      "classification": "frigate",
+      "role": "escort",
+      "mass": 32.0,
+      "crew": 10,
+      "duration": 90.0,
+      "compatible_propulsion": [
+        "chemical_drive",
+        "nuclear_drive"
+      ]
+    },
+    {
+      "id": "sentinel_hull",
+      "name": "Sentinel",
+      "description": "Plataforma naval destroyer. Balanceamento provisório; sem habilidades especiais de gameplay.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 90.0,
+        "components": 48.0
+      },
+      "requires": [
+        "orbital_shipyard",
+        "nuclear_propulsion"
+      ],
+      "classification": "destroyer",
+      "role": "defense",
+      "mass": 52.0,
+      "crew": 16,
+      "duration": 150.0,
+      "compatible_propulsion": [
+        "nuclear_drive"
+      ]
+    },
+    {
+      "id": "odyssey_hull",
+      "name": "Odyssey",
+      "description": "Plataforma naval science cruiser. Balanceamento provisório; sem habilidades especiais de gameplay.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 110.0,
+        "components": 70.0
+      },
+      "requires": [
+        "orbital_shipyard",
+        "nuclear_propulsion"
+      ],
+      "classification": "science_cruiser",
+      "role": "science",
+      "mass": 65.0,
+      "crew": 12,
+      "duration": 180.0,
+      "compatible_propulsion": [
+        "nuclear_drive"
+      ]
+    },
+    {
+      "id": "aegis_hull",
+      "name": "Aegis",
+      "description": "Plataforma naval cruiser. Balanceamento provisório; sem habilidades especiais de gameplay.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 160.0,
+        "components": 90.0
+      },
+      "requires": [
+        "orbital_shipyard",
+        "nuclear_propulsion"
+      ],
+      "classification": "cruiser",
+      "role": "line_combat",
+      "mass": 85.0,
+      "crew": 24,
+      "duration": 240.0,
+      "compatible_propulsion": [
+        "nuclear_drive"
+      ]
+    },
+    {
+      "id": "spearhead_hull",
+      "name": "Spearhead",
+      "description": "Plataforma naval battlecruiser. Balanceamento provisório; sem habilidades especiais de gameplay.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 230.0,
+        "components": 130.0
+      },
+      "requires": [
+        "orbital_shipyard",
+        "nuclear_propulsion"
+      ],
+      "classification": "battlecruiser",
+      "role": "power_projection",
+      "mass": 120.0,
+      "crew": 32,
+      "duration": 330.0,
+      "compatible_propulsion": [
+        "nuclear_drive"
+      ]
+    },
+    {
+      "id": "leviathan_hull",
+      "name": "Leviathan",
+      "description": "Plataforma naval battleship. Balanceamento provisório; sem habilidades especiais de gameplay.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 360.0,
+        "components": 210.0
+      },
+      "requires": [
+        "orbital_shipyard",
+        "nuclear_propulsion"
+      ],
+      "classification": "battleship",
+      "role": "capital",
+      "mass": 190.0,
+      "crew": 48,
+      "duration": 480.0,
+      "compatible_propulsion": [
+        "nuclear_drive"
+      ]
+    },
+    {
+      "id": "atlas_hull",
+      "name": "Atlas",
+      "description": "Plataforma naval carrier. Balanceamento provisório; sem habilidades especiais de gameplay.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 400.0,
+        "components": 260.0
+      },
+      "requires": [
+        "orbital_shipyard",
+        "nuclear_propulsion"
+      ],
+      "classification": "carrier",
+      "role": "carrier_operations",
+      "mass": 210.0,
+      "crew": 60,
+      "duration": 540.0,
+      "compatible_propulsion": [
+        "nuclear_drive"
+      ]
+    },
+    {
+      "id": "dominion_hull",
+      "name": "Dominion",
+      "description": "Plataforma naval dreadnought. Balanceamento provisório; sem habilidades especiais de gameplay.",
+      "category": "hull",
+      "cost": {
+        "refined_alloy": 620.0,
+        "components": 400.0
+      },
+      "requires": [
+        "orbital_shipyard",
+        "nuclear_propulsion"
+      ],
+      "classification": "dreadnought",
+      "role": "command",
+      "mass": 320.0,
+      "crew": 90,
+      "duration": 720.0,
+      "compatible_propulsion": [
+        "nuclear_drive"
+      ]
+    }
+  ],
+  "propulsion": [
+    {
+      "id": "chemical_drive",
+      "name": "Propulsor químico",
+      "description": "Robusto, barato e lento.",
+      "category": "chemical",
+      "cost": {},
+      "requires": [],
+      "compatible_fuels": [
+        "ion_fuel"
+      ],
+      "speed_factor": 1.0,
+      "fuel_efficiency": 1.0,
+      "thermal_load": 1.0,
+      "signature": 1.0
+    },
+    {
+      "id": "nuclear_drive",
+      "name": "Propulsor nuclear",
+      "description": "Maior velocidade e alcance com calor operacional superior.",
+      "category": "nuclear",
+      "cost": {},
+      "requires": [
+        "nuclear_propulsion"
+      ],
+      "compatible_fuels": [
+        "fusion_fuel"
+      ],
+      "speed_factor": 1.7,
+      "fuel_efficiency": 1.35,
+      "thermal_load": 1.8,
+      "signature": 1.5
+    }
+  ],
+  "fuels": [
+    {
+      "id": "ion_fuel",
+      "name": "Combustível iônico",
+      "description": "Denso o bastante para viagens econômicas de curto alcance.",
+      "category": "fuel",
+      "cost": {},
+      "requires": [],
+      "energy_density": 1.0,
+      "storage_factor": 1.0
+    },
+    {
+      "id": "fusion_fuel",
+      "name": "Combustível de fusão",
+      "description": "Mais denso e caro, reservado ao motor nuclear.",
+      "category": "fuel",
+      "cost": {},
+      "requires": [],
+      "energy_density": 2.4,
+      "storage_factor": 1.4
+    }
+  ],
+  "travel_modes": [
+    {
+      "id": "ECONOMY",
+      "name": "Economy",
+      "description": "Menor consumo, maior duração.",
+      "category": "travel",
+      "cost": {},
+      "requires": [],
+      "travel_time_modifier": 1.55,
+      "fuel_modifier": 0.65,
+      "thermal_modifier": 0.8,
+      "signature_modifier": 0.8
+    },
+    {
+      "id": "NORMAL",
+      "name": "Normal",
+      "description": "Operação nominal.",
+      "category": "travel",
+      "cost": {},
+      "requires": [],
+      "travel_time_modifier": 1.0,
+      "fuel_modifier": 1.0,
+      "thermal_modifier": 1.0,
+      "signature_modifier": 1.0
+    },
+    {
+      "id": "FORCED",
+      "name": "Forced",
+      "description": "Menor duração, maior consumo e assinatura.",
+      "category": "travel",
+      "cost": {},
+      "requires": [],
+      "travel_time_modifier": 0.62,
+      "fuel_modifier": 2.2,
+      "thermal_modifier": 1.8,
+      "signature_modifier": 1.8
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+# Novas classes: balanceamento PROVISÓRIO. Horizon preservada.
 - id: scout_hull
   name: Horizon
   classification: corvette
@@ -6,7 +7,176 @@
   category: hull
   mass: 10
   crew: 3
-  cost: {refined_alloy: 16, components: 8}
+  cost:
+    refined_alloy: 16
+    components: 8
   duration: 30
-  compatible_propulsion: [chemical_drive, nuclear_drive]
-  requires: [orbital_shipyard]
+  compatible_propulsion:
+  - chemical_drive
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+- id: wayfarer_hull
+  name: Wayfarer
+  classification: freighter
+  role: logistics
+  description: Plataforma naval freighter. Balanceamento provisório; sem habilidades
+    especiais de gameplay.
+  category: hull
+  mass: 24
+  crew: 8
+  cost:
+    refined_alloy: 36
+    components: 18
+  duration: 60
+  compatible_propulsion:
+  - chemical_drive
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - orbital_engineering
+- id: vanguard_hull
+  name: Vanguard
+  classification: frigate
+  role: escort
+  description: Plataforma naval frigate. Balanceamento provisório; sem habilidades
+    especiais de gameplay.
+  category: hull
+  mass: 32
+  crew: 10
+  cost:
+    refined_alloy: 54
+    components: 28
+  duration: 90
+  compatible_propulsion:
+  - chemical_drive
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - orbital_engineering
+- id: sentinel_hull
+  name: Sentinel
+  classification: destroyer
+  role: defense
+  description: Plataforma naval destroyer. Balanceamento provisório; sem habilidades
+    especiais de gameplay.
+  category: hull
+  mass: 52
+  crew: 16
+  cost:
+    refined_alloy: 90
+    components: 48
+  duration: 150
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+- id: odyssey_hull
+  name: Odyssey
+  classification: science_cruiser
+  role: science
+  description: Plataforma naval science cruiser. Balanceamento provisório; sem habilidades
+    especiais de gameplay.
+  category: hull
+  mass: 65
+  crew: 12
+  cost:
+    refined_alloy: 110
+    components: 70
+  duration: 180
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+- id: aegis_hull
+  name: Aegis
+  classification: cruiser
+  role: line_combat
+  description: Plataforma naval cruiser. Balanceamento provisório; sem habilidades
+    especiais de gameplay.
+  category: hull
+  mass: 85
+  crew: 24
+  cost:
+    refined_alloy: 160
+    components: 90
+  duration: 240
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+- id: spearhead_hull
+  name: Spearhead
+  classification: battlecruiser
+  role: power_projection
+  description: Plataforma naval battlecruiser. Balanceamento provisório; sem habilidades
+    especiais de gameplay.
+  category: hull
+  mass: 120
+  crew: 32
+  cost:
+    refined_alloy: 230
+    components: 130
+  duration: 330
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+- id: leviathan_hull
+  name: Leviathan
+  classification: battleship
+  role: capital
+  description: Plataforma naval battleship. Balanceamento provisório; sem habilidades
+    especiais de gameplay.
+  category: hull
+  mass: 190
+  crew: 48
+  cost:
+    refined_alloy: 360
+    components: 210
+  duration: 480
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+- id: atlas_hull
+  name: Atlas
+  classification: carrier
+  role: carrier_operations
+  description: Plataforma naval carrier. Balanceamento provisório; sem habilidades
+    especiais de gameplay.
+  category: hull
+  mass: 210
+  crew: 60
+  cost:
+    refined_alloy: 400
+    components: 260
+  duration: 540
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+- id: dominion_hull
+  name: Dominion
+  classification: dreadnought
+  role: command
+  description: Plataforma naval dreadnought. Balanceamento provisório; sem habilidades
+    especiais de gameplay.
+  category: hull
+  mass: 320
+  crew: 90
+  cost:
+    refined_alloy: 620
+    components: 400
+  duration: 720
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
