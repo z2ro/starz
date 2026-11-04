@@ -32,23 +32,28 @@ function sphericalBounds(ship: ReturnType<typeof createPrototypeShip>) {
   return 'presentationSphere' in ship && ship.presentationSphere instanceof THREE.Sphere ? ship.presentationSphere : null;
 }
 
-/** Lab-only recipes; never a gameplay hull registry. One allocation per design. */
-export function createFleetStudy() {
+/** Approved visual recipes, never gameplay rules. One allocation per inspected design. */
+export function createFleetStudy(initial?: readonly FleetDesign[]) {
   const root = new THREE.Group();
-  const entries = FLEET_DESIGNS.map(design => {
+  const createEntry = (design: typeof FLEET_DESIGNS[number]) => {
     const ship = design.create(), display = new THREE.Group();
     display.add(ship.root); root.add(display);
     let meshes = 0; ship.root.traverse(object => { if (object instanceof THREE.Mesh) meshes++; });
     return { design, ship, display, meshes };
-  });
+  };
+  const entries = FLEET_DESIGNS.filter(d => !initial || initial.includes(d.id)).map(createEntry);
   const bounds = new THREE.Box3();
-  let selection: FleetSelection = 'horizon', meshCount = 0;
+  let selection: FleetSelection = initial?.[0] ?? 'horizon', meshCount = 0;
   return {
     root, entries, bounds,
     get meshCount() { return meshCount; },
     get selection() { return selection; },
     layout(next: FleetSelection, direction: THREE.Vector3, aspect = 1.6) {
       selection = next;
+      for (const design of FLEET_DESIGNS) {
+        const needed = next === design.id || next === 'fleet' || (next === 'scale' && design.id !== 'stargrave') || (next === 'titan' && ['stargrave', 'dominion'].includes(design.id));
+        if (needed && !entries.some(entry => entry.design.id === design.id)) entries.push(createEntry(design));
+      }
       const forward = direction.clone().normalize(), right = new THREE.Vector3(0, 1, 0).cross(forward).normalize();
       if (right.lengthSq() < 0.5) right.set(1, 0, 0);
       const up = forward.clone().cross(right).normalize();

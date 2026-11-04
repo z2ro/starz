@@ -1,3 +1,4 @@
+import { modelForDescriptor } from '../visual/ShipDesignRegistry';
 import type { SpaceSceneDescriptor, Decision } from '../visual-state/types';
 import { DEFAULT_PLANET_LAB_SETTINGS } from '../planetlab/planetLabTypes';
 
@@ -12,7 +13,7 @@ export function geographicKey(descriptor: SpaceSceneDescriptor | null) {
 }
 
 export function representativeShip(descriptor: SpaceSceneDescriptor | null) {
-  return descriptor?.ships.entities.find(ship => ship.visible && ship.presence === 'LOCAL_SYSTEM' && ship.design === 'horizon-prototype') ?? null;
+  return descriptor?.ships.entities.find(ship => ship.visible && ship.presence === 'LOCAL_SYSTEM' && modelForDescriptor(ship.design) !== null) ?? null;
 }
 
 export const LIVE_PRESENTATION_DIAGNOSTICS: Decision[] = [

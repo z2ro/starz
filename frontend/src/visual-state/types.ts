@@ -1,3 +1,4 @@
+import type { ProceduralShipDesign } from '../visual/ShipDesignRegistry';
 import type { Catalog, Fleet, Planet, Ship, State } from '../types/game';
 import type { PlanetFamily, PlanetGenerationParameters } from '../planetlab/planetLabTypes';
 
@@ -18,7 +19,7 @@ export type VisualShipDescriptor = {
   id: string; hullId: string | null; fleetId: string | null; quantity: 1;
   presence: 'LOCAL_SYSTEM' | 'REMOTE_SYSTEM' | 'TRANSIT' | 'UNKNOWN';
   context: 'SYSTEM_ONLY' | 'ORIGIN_PLANET' | 'UNKNOWN';
-  design: 'horizon-prototype' | 'UNKNOWN_DESIGN'; visible: boolean; reason: string;
+  design: ProceduralShipDesign | 'UNKNOWN_DESIGN'; visible: boolean; reason: string;
 };
 export type SpaceSceneDescriptor = {
   version: 1;

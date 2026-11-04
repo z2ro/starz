@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import * as planets from '../frontend/src/planetlab/PlanetModel';
-import * as vessels from '../frontend/src/shipgeometrylab/ShipGeometry';
+import { FLEET_DESIGNS } from '../frontend/src/shipgeometrylab/FleetStudy';
 import * as lights from '../frontend/src/spacescenelab/NightLights';
 import { createVisualDescriptor } from '../frontend/src/visual-state/VisualStateAdapter';
 import { createLiveSceneModel } from '../frontend/src/space-scene-live/LiveSceneModel';
@@ -30,7 +30,7 @@ it('uses exact adapter generation values and stable geography across population 
 });
 
 it('does not create fictional ships or lights for empty, unready, transit or incomplete snapshots', () => {
-  const shipFactory = vi.spyOn(vessels, 'createPrototypeShip'), cityFactory = vi.spyOn(lights, 'createNightLights');
+  const shipFactory = vi.spyOn(FLEET_DESIGNS[0], 'create'), cityFactory = vi.spyOn(lights, 'createNightLights');
   const model = createLiveSceneModel();
   model.setDescriptor(adapt(emptySnapshot())); expect(model.cities).toBeNull(); expect(model.ship).toBeNull();
   model.setDescriptor(adapt(transitSnapshot())); expect(model.ship).toBeNull();
@@ -41,7 +41,7 @@ it('does not create fictional ships or lights for empty, unready, transit or inc
 });
 
 it('creates one identified compatible representative only for proved local presence, no orbit', () => {
-  const factory = vi.spyOn(vessels, 'createPrototypeShip'), model = createLiveSceneModel(), state = localFleetSnapshot();
+  const factory = vi.spyOn(FLEET_DESIGNS[0], 'create'), model = createLiveSceneModel(), state = localFleetSnapshot();
   model.setDescriptor(adapt(state)); const ship = model.ship!;
   const display = ship.root.parent!;
   expect(display.userData.shipId).toBe(state.fleets![0].ship_ids![0]);
@@ -80,4 +80,23 @@ it('updates atmosphere and city uniforms in place, pauses rotation and deduplica
   model.root.traverse(object => { if (object instanceof THREE.Mesh || object instanceof THREE.Points) { resources.add(object.geometry); for (const m of Array.isArray(object.material) ? object.material : [object.material]) { resources.add(m); Object.values(m).forEach(value => { if (value instanceof THREE.Texture) resources.add(value); }); } } });
   const spies = [...resources].map(resource => { const spy = vi.fn(); resource.addEventListener('dispose', spy); return spy; });
   model.dispose(); model.dispose(); spies.forEach(spy => expect(spy).toHaveBeenCalledTimes(1));
+});
+
+it('selects each real conventional hull, caches geometry and preserves continents across class/population changes', async () => {
+  const { default: catalog } = await import('./fixtures/fleet-api-catalog.json');
+  const model = createLiveSceneModel(), source = localFleetSnapshot();
+  const seen = new Map<string, ReturnType<typeof createLiveSceneModel>['ship']>();
+  for (const hull of catalog.ships) {
+    const snapshot = { ...source, ships: source.ships!.map(ship => ({ ...ship, hull_id: hull.id })) };
+    model.setDescriptor(createVisualDescriptor(snapshot, catalog));
+    expect(model.ship!.root.name.toLowerCase()).toContain(hull.name.toLowerCase()); seen.set(hull.id, model.ship);
+  }
+  const geometry = model.planet!.surface.geometry;
+  const disposals: ReturnType<typeof vi.fn>[] = [];
+  for (const hull of catalog.ships) {
+    model.setDescriptor(createVisualDescriptor({ ...source, population: { total: 0 }, ships: source.ships!.map(ship => ({ ...ship, hull_id: hull.id })) }, catalog));
+    expect(model.ship).toBe(seen.get(hull.id)); expect(model.planet!.surface.geometry).toBe(geometry); expect(model.generationCount).toBe(1);
+    model.ship!.root.traverse(object => { if (object instanceof THREE.Mesh) { const spy = vi.fn(); object.geometry.addEventListener('dispose', spy); disposals.push(spy); } });
+  }
+  model.dispose(); model.dispose(); disposals.forEach(spy => expect(spy).toHaveBeenCalledTimes(1));
 });

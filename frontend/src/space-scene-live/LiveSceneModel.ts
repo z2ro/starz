@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { createLabPlanet, disposeLabObject } from '../planetlab/PlanetModel';
 import { createNightLights } from '../spacescenelab/NightLights';
-import { createPrototypeShip } from '../shipgeometrylab/ShipGeometry';
+import { FLEET_DESIGNS } from '../shipgeometrylab/FleetStudy';
+import { modelForDescriptor, type ShipDesignId } from '../visual/ShipDesignRegistry';
 import { presentationScale } from '../spacescenelab/orbit';
 import type { SpaceSceneDescriptor } from '../visual-state/types';
 import { geographicKey, liveGeneration, representativeShip } from './livePresentation';
@@ -12,7 +13,9 @@ export function createLiveSceneModel() {
   const shipDisplay = new THREE.Group(); root.add(shipDisplay);
   let planet: ReturnType<typeof createLabPlanet> | null = null;
   let cities: ReturnType<typeof createNightLights> | null = null;
-  let ship: ReturnType<typeof createPrototypeShip> | null = null;
+  type ProceduralShip = ReturnType<typeof FLEET_DESIGNS[number]['create']>;
+  let ship: ProceduralShip | null = null;
+  const shipCache = new Map<ShipDesignId, ProceduralShip>();
   let key: string | null = null, descriptor: SpaceSceneDescriptor | null = null, disposed = false, visualTime = 0;
   let generationCount = 0;
   const sun = new THREE.Vector3();
@@ -42,12 +45,18 @@ export function createLiveSceneModel() {
         cities.material.uniforms.uSun.value.copy(sun);
       }
       const selected = representativeShip(next);
-      if (selected && !ship) {
-        ship = createPrototypeShip();
+      const design = selected ? modelForDescriptor(selected.design) : null;
+      ship = design ? shipCache.get(design) ?? null : null;
+      if (design && !ship) {
+        ship = FLEET_DESIGNS.find(item => item.id === design)!.create();
+        shipCache.set(design, ship);
         ship.root.position.copy(ship.bounds.getCenter(new THREE.Vector3())).negate();
         ship.root.traverse(object => { if (object instanceof THREE.Mesh) { object.castShadow = true; object.receiveShadow = true; } });
         ship.coreMaterial.emissiveIntensity = 0;
-        shipDisplay.add(ship.root);
+      }
+      if (shipDisplay.children[0] !== ship?.root) {
+        shipDisplay.clear();
+        if (ship) shipDisplay.add(ship.root);
       }
       shipDisplay.visible = selected !== null;
       shipDisplay.userData.shipId = selected?.id ?? null;
@@ -74,7 +83,7 @@ export function createLiveSceneModel() {
     dispose() {
       if (disposed) return; disposed = true;
       if (planet) disposeLabObject(planet.root);
-      ship?.dispose(); root.clear();
+      shipCache.forEach(item => item.dispose()); shipCache.clear(); root.clear();
     },
   };
 }

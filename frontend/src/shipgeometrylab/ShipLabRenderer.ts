@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { createFleetStudy, type FleetSelection } from './FleetStudy';
+import { createFleetStudy, type FleetDesign, type FleetSelection } from './FleetStudy';
 import { SHIP_CAMERA_DIRECTIONS } from './shipCamera';
 import { ShipPixelPipeline } from './ShipPixelPipeline';
 import type { ShipCamera, ShipLabSettings, ShipLabStats } from './shipLabTypes';
@@ -9,7 +9,7 @@ export class ShipLabRenderer {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 200);
-  private fleet = createFleetStudy();
+  private fleet: ReturnType<typeof createFleetStudy>;
   private pipeline = new ShipPixelPipeline();
   private controls: OrbitControls;
   private observer: ResizeObserver;
@@ -23,8 +23,9 @@ export class ShipLabRenderer {
   private disposed = false;
   private meshCount = 0;
 
-  constructor(private host: HTMLElement, private settings: ShipLabSettings, private onStats: (stats: ShipLabStats) => void) {
+  constructor(private host: HTMLElement, private settings: ShipLabSettings, private onStats: (stats: ShipLabStats) => void, initialDesign?: FleetDesign) {
     this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+    this.fleet = createFleetStudy(initialDesign ? [initialDesign] : undefined);
     this.renderer.setPixelRatio(1);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;

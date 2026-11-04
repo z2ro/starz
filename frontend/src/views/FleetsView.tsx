@@ -1,10 +1,24 @@
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Panel } from '../components/ui/Panel';
 import { Badge } from '../components/ui/Badge';
 import { duration, label } from '../app/format';
+import { ShipPreview } from '../components/ships/ShipPreview';
 import type { ShellContext } from '../components/shell/AppShell';
 
 export function FleetsView() {
   const { catalog, state } = useOutletContext<ShellContext>();
-  return <><header className="page-header"><div><div className="eyebrow">ORBITAL OPERATIONS</div><h1>Frotas</h1><p>Posição operacional, missão e tempo estimado.</p></div></header><div className="fleet-list">{state.fleets.length ? state.fleets.map(fleet => <Panel title={fleet.name} eyebrow={fleet.status === 'ARRIVED' ? 'READY' : 'TRANSIT'} key={fleet.id}><div className="metric-line"><span>Status</span><Badge tone={fleet.status === 'ARRIVED' ? 'good' : 'blue'}>{fleet.status}</Badge></div><div className="metric-line"><span>Posição</span><b>{fleet.x}:{fleet.y}</b></div><div className="metric-line"><span>Missão</span><b>{fleet.mission}</b></div><div className="metric-line"><span>Propulsão</span><b>{label(catalog, fleet.propulsion)}</b></div><div className="metric-line"><span>ETA</span><b>{fleet.status === 'TRANSIT' ? duration(fleet.eta) : 'Chegada'}</b></div><small>{fleet.ship_ids.length} nave(s) · modo {fleet.mode}</small></Panel>) : <Panel title="Nenhuma frota"><p>Construa uma nave no Estaleiro para criar sua primeira frota.</p></Panel>}</div></>;
+  const [selectedId, select] = useState('');
+  const ships = [...new Map(state.ships.map(ship => [ship.id, ship])).values()];
+  const selected = ships.find(ship => ship.id === selectedId) ?? ships[0];
+  const attached = new Set(state.fleets.flatMap(fleet => fleet.ship_ids));
+  const row = (id: string) => {
+    const ship = ships.find(item => item.id === id);
+    return <button className="naval-ship-row" key={id} disabled={!ship} aria-pressed={selected?.id === id} onClick={() => select(id)}>{ship ? label(catalog, ship.hull_id) : 'Nave não disponível neste snapshot'}<small> · ID {id}</small></button>;
+  };
+  return <><header className="page-header"><div><div className="eyebrow">ORBITAL OPERATIONS</div><h1>Frotas</h1><p>Posição operacional, missão e tempo estimado. O preview é uma inspeção do modelo, sem formação espacial.</p></div></header><div className="naval-fleets"><div className="fleet-list">{state.fleets.map(fleet => <Panel title={fleet.name} eyebrow={fleet.status === 'ARRIVED' ? 'READY' : 'TRANSIT'} key={fleet.id}><div className="metric-line"><span>Status</span><Badge tone={fleet.status === 'ARRIVED' ? 'good' : 'blue'}>{fleet.status}</Badge></div><div className="metric-line"><span>Posição</span><b>{fleet.x}:{fleet.y}</b></div><div className="metric-line"><span>Missão</span><b>{fleet.mission}</b></div><div className="metric-line"><span>Propulsão</span><b>{label(catalog, fleet.propulsion)}</b></div><div className="metric-line"><span>ETA</span><b>{fleet.status === 'TRANSIT' ? duration(fleet.eta) : 'Chegada'}</b></div><small>{fleet.ship_ids.length} nave(s) · modo {fleet.mode}</small>{fleet.status === 'TRANSIT' && <p>Destino {fleet.destination_x}:{fleet.destination_y}</p>}{[...new Set(fleet.ship_ids)].map(row)}</Panel>)}
+      {ships.some(ship => !attached.has(ship.id)) && <Panel title="Naves sem frota" eyebrow="INVENTORY"><p>Inventário real; não implica presença no sistema selecionado.</p>{ships.filter(ship => !attached.has(ship.id)).map(ship => row(ship.id))}</Panel>}
+      {!ships.length && !state.fleets.length && <Panel title="Nenhuma frota"><p>Construa uma nave no Estaleiro para criar sua primeira frota.</p></Panel>}</div>
+      <div><ShipPreview hull={catalog.ships.find(item => item.id === selected?.hull_id)} />{selected && <p>Inspecionando ID {selected.id} · {label(catalog, selected.propulsion_id)} · {label(catalog, selected.fuel_id)}</p>}</div>
+    </div></>;
 }

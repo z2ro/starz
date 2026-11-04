@@ -1,3 +1,4 @@
+import { designForHull } from '../visual/ShipDesignRegistry';
 import { count, finite, text } from './planetVisualMapping';
 import type { Decision, SpaceSceneDescriptor, VisualCatalogInput, VisualShipDescriptor, VisualStateInput } from './types';
 
@@ -17,7 +18,7 @@ export function deriveShipPresence(state: VisualStateInput, catalog: VisualCatal
     const fleets = (state.fleets ?? []).filter(fleet => fleet.ship_ids?.includes(id));
     const hulls = catalog.ships?.filter(hull => hull.id === ship.hull_id) ?? [];
     const hull = hulls.length === 1 ? hulls[0] : undefined;
-    const recognized = hull?.id === 'scout_hull' && hull.classification === 'corvette' && hull.role === 'exploration';
+    const design = designForHull(hull), recognized = design !== null;
     let presence: VisualShipDescriptor['presence'] = 'UNKNOWN', context: VisualShipDescriptor['context'] = 'UNKNOWN';
     let reason = 'Missing fleet inventory, coordinates, or unambiguous association';
     if (!conflicting && coverage === 'KNOWN' && coordinatesKnown && fleets.length <= 1) {
@@ -38,9 +39,9 @@ export function deriveShipPresence(state: VisualStateInput, catalog: VisualCatal
     else if (fleets.length > 1) reason = 'Ship linked more than once; ambiguous fleet assignment';
     if (finite(observedAt) && finite(ship.ready_at) && ship.ready_at > observedAt && presence === 'LOCAL_SYSTEM') { presence = 'UNKNOWN'; context = 'UNKNOWN'; reason = 'Inconsistent snapshot: local ship is not ready at observedAt'; }
     const visible = presence === 'LOCAL_SYSTEM' && recognized && !conflicting;
-    entities.push({ id, hullId: !conflicting && text(ship.hull_id) ? ship.hull_id : null, fleetId: fleets.length === 1 && text(fleets[0].id) ? fleets[0].id : null, quantity: 1, presence, context, design: recognized && !conflicting ? 'horizon-prototype' : 'UNKNOWN_DESIGN', visible, reason });
+    entities.push({ id, hullId: !conflicting && text(ship.hull_id) ? ship.hull_id : null, fleetId: fleets.length === 1 && text(fleets[0].id) ? fleets[0].id : null, quantity: 1, presence, context, design: recognized && !conflicting ? `${design}-prototype` as const : 'UNKNOWN_DESIGN', visible, reason });
     diagnostics.push({ field: `ships.${id}.presence`, sources: ['state.ships', 'state.fleets', 'state.system.x/y', 'observedAt'], status: presence === 'UNKNOWN' ? 'UNKNOWN' : 'GROUNDED', rule: reason, result: presence });
-    diagnostics.push({ field: `ships.${id}.design`, sources: ['state.ships.hull_id', 'catalog.ships.id/classification/role'], status: recognized && !conflicting ? 'HEURISTIC' : 'UNKNOWN', rule: 'only scout_hull + corvette + exploration -> experimental horizon-prototype; never substitute another hull', result: entities[entities.length - 1].design });
+    diagnostics.push({ field: `ships.${id}.design`, sources: ['state.ships.hull_id', 'catalog.ships.id/classification/role'], status: recognized && !conflicting ? 'HEURISTIC' : 'UNKNOWN', rule: 'explicit hull ID + classification + role -> approved procedural design; no substitution', result: entities[entities.length - 1].design });
     diagnostics.push({ field: `ships.${id}.visible`, sources: [`ships.${id}.presence`, `ships.${id}.design`], status: visible ? 'HEURISTIC' : presence === 'UNKNOWN' || !recognized ? 'UNKNOWN' : 'GROUNDED', rule: 'eligible for system-context presentation only; no claim of a persistent planet orbit', result: visible });
   }
   const knownIds = new Set(groups.keys());

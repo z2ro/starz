@@ -204,3 +204,12 @@ it('compares Stargrave only with a labelled capital context in its separate cate
   expect(dimensions[0].z).toBeCloseTo(64);
   study.dispose();
 });
+
+it('allocates gameplay previews on demand and reuses an inspected design', () => {
+  const study = createFleetStudy(['wayfarer']), direction = new THREE.Vector3(...SHIP_CAMERA_DIRECTIONS.Side);
+  expect(study.entries.map(e => e.design.id)).toEqual(['wayfarer']);
+  study.layout('atlas', direction); const atlas = study.entries.find(e => e.design.id === 'atlas')!.ship;
+  study.layout('wayfarer', direction); study.layout('atlas', direction);
+  expect(study.entries).toHaveLength(2); expect(study.entries.find(e => e.design.id === 'atlas')!.ship).toBe(atlas);
+  expect(study.entries.some(e => e.design.id === 'stargrave')).toBe(false); study.dispose();
+});
