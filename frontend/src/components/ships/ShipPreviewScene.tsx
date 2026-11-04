@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ShipLabRenderer } from '../../shipgeometrylab/ShipLabRenderer';
-import { DEFAULT_SHIP_SETTINGS, type ShipCamera } from '../../shipgeometrylab/shipLabTypes';
+import { DEFAULT_SHIP_SETTINGS, STELLAR_CAMERA_LABELS, type ShipCamera } from '../../shipgeometrylab/shipLabTypes';
 import type { ShipDesignId } from '../../visual/ShipDesignRegistry';
 
 export default function ShipPreviewScene({ design }: { design: ShipDesignId }) {
@@ -12,11 +12,11 @@ export default function ShipPreviewScene({ design }: { design: ShipDesignId }) {
     let canvas: HTMLCanvasElement | null = null;
     const lost = (event: Event) => { event.preventDefault(); fail(); };
     try {
-      renderer.current = new ShipLabRenderer(host.current!, { ...DEFAULT_SHIP_SETTINGS, paused: true, engineEmission: 0 }, () => undefined, latest.current);
+      renderer.current = new ShipLabRenderer(host.current!, { ...DEFAULT_SHIP_SETTINGS, paused: true, engineEmission: latest.current === 'stargrave' ? 1.6 : 0 }, () => undefined, latest.current);
       renderer.current.start(); renderer.current.setSelection(latest.current);
       canvas = host.current!.querySelector('canvas'); canvas?.addEventListener('webglcontextlost', lost);
     } catch { fail(); }
     return () => { canvas?.removeEventListener('webglcontextlost', lost); renderer.current?.dispose(); renderer.current = null; };
   }, []);
-  return <><div className="naval-canvas" ref={host}>{error && <p role="status">{error}</p>}</div><div className="naval-angles">{(['3/4 Front', 'Side', 'Rear', 'Top'] as ShipCamera[]).map(preset => <button key={preset} onClick={() => renderer.current?.setCamera(preset)}>{preset}</button>)}</div></>;
+  return <><div className="naval-canvas" ref={host}>{error && <p role="status">{error}</p>}</div><div className="naval-angles">{(['3/4 Front', 'Side', 'Rear', 'Top'] as ShipCamera[]).map(preset => <button key={preset} onClick={() => renderer.current?.setCamera(preset)}>{design === 'stargrave' ? STELLAR_CAMERA_LABELS[preset] : preset}</button>)}</div></>;
 }

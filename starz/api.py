@@ -7,6 +7,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from .db.models import Campaign, Empire, Universe
 from . import campaign
+from .simulation import Engine
 from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Literal
@@ -137,11 +138,13 @@ def galaxy_snapshot(engine, center: tuple[int, int], radius: int):
             item = {'id': f'{x}:{y}', 'x': x, 'y': y, 'distance': round(hypot(x - center[0], y - center[1]), 2), 'home': (x, y) == home, 'knowledge_level': level}
             if level == 'SURVEYED':
                 system = generate_system(engine.state.seed, x, y, engine.catalog)
+                sovereign = next((r['name'] for r in engine.state.campaign['rivals'] if not r['conquered'] and [x, y] in r['claims']), None) if engine.state.campaign else None
+                item['civilization'] = sovereign
                 planets = []
                 owned = {(item['x'], item['y'], item['planet_index']): item for item in engine.state.planets}
                 for index, planet in enumerate(system.planets):
                     status = engine.colonization_status(x, y, index)
-                    owner = 'OWNED' if (x, y, index) in owned else ('OCCUPIED' if engine.planet_key(x, y, index) in engine.state.occupied_planets else 'UNCLAIMED')
+                    owner = 'OWNED' if (x, y, index) in owned else ('OCCUPIED' if sovereign or engine.planet_key(x, y, index) in engine.state.occupied_planets else 'UNCLAIMED')
                     planets.append({
                         'planet_index': index, 'name': planet.name, 'gravity': planet.gravity,
                         'temperature': planet.temperature, 'water': planet.water, 'radiation': planet.radiation,
@@ -243,6 +246,10 @@ class NewCampaign(BaseModel):
 def new_campaign(request: NewCampaign):
     if not Settings.from_env().campaign:
         raise HTTPException(status_code=400, detail='Use o ambiente experimental isolado.')
+    try:
+        campaign.initialize(Engine.new(catalog, request.seed, now=0))
+    except DataValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     store = Store(app.state.store.database, catalog, request.seed, clock=lambda: 0)
     empire_id = store.bootstrap(now=time(), universe_name='Concordat-' + str(uuid4()))
     store.run(empire_id, campaign.initialize)

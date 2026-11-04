@@ -43,7 +43,7 @@ export function SpaceSceneLiveView() {
   const error = catalogQuery.error ?? stateQuery.error;
   const mismatch = !!stateQuery.data && selectedId !== undefined && stateQuery.data.active_planet?.id !== selectedId;
   const accepted = !error && !mismatch && !!catalogQuery.data && !!stateQuery.data;
-  const descriptor = useMemo(() => accepted ? createVisualDescriptor(stateQuery.data!, catalogQuery.data!) : null, [accepted, stateQuery.data, catalogQuery.data]);
+  const descriptor = useMemo(() => accepted ? createVisualDescriptor(stateQuery.data!, catalogQuery.data!, { observedAt: stateQuery.data?.observed_at }) : null, [accepted, stateQuery.data, catalogQuery.data]);
   useEffect(() => {
     if (accepted && stateQuery.data?.planets) setRoster(stateQuery.data.planets.map(({ id, name }) => ({ id, name })));
   }, [accepted, stateQuery.data]);

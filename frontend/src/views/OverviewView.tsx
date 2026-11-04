@@ -17,7 +17,7 @@ export function OverviewView() {
   const imperialPopulation = worlds.reduce((total, world) => total + world.population_total, 0);
   const arrived = state.fleets.filter(fleet => fleet.status === 'ARRIVED').length;
   const transit = state.fleets.filter(fleet => fleet.status === 'TRANSIT').length;
-  const assembling = state.ships.filter(ship => ship.ready_at > Date.now() / 1000).length;
+  const assembling = state.ships.filter(ship => ship.ready_at > (state.observed_at ?? Date.now() / 1000)).length;
   const activeOperations = state.construction.length + (state.research.active ? 1 : 0) + transit + assembling;
   const selectedWorldId = activePlanetId ?? state.active_planet?.id;
   const actions: StrategicAction[] = [];

@@ -1,6 +1,5 @@
 """Concordat campaign rules. No ORM, HTTP, wall clock or rendering dependencies."""
 from copy import deepcopy
-import hashlib
 import math
 from .data import DataValidationError
 from .universe import generate_system, colonization_viability
@@ -30,7 +29,7 @@ def initialize(e):
     hx, hy = e.state.system_x, e.state.system_y
     rivals = [dict(id='helion', name='Liga Helion', x=hx + 1, y=hy, relation=10, contacted=False, allied=False, conquered=False, strength=14., treasury=10., industry=2, worlds=1, claims=[[hx + 1, hy]], last_action='Observando as fronteiras'), dict(id='obsidian', name='Pacto Obsidian', x=hx, y=hy + 1, relation=-10, contacted=False, allied=False, conquered=False, strength=22., treasury=15., industry=3, worlds=1, claims=[[hx, hy + 1]], last_action='Fortificando a capital')]
     targets, seen = [], {(hx, hy), *((r['x'], r['y']) for r in rivals)}
-    for radius in range(1, 9):
+    for radius in range(1, 3):
         for dx in range(-radius, radius + 1):
             for dy in range(-radius, radius + 1):
                 x, y = hx + dx, hy + dy
@@ -46,7 +45,7 @@ def initialize(e):
                 break
         if len(targets) == 3:
             break
-    require(len(targets) >= 2, 'seed sem dois alvos coloniais alcançáveis')
+    require(len(targets) >= 2, 'Esta seed não oferece dois alvos coloniais próximos; escolha outra seed.')
     e.state.campaign = dict(version=1, turn=0, orders=4, phase='PLAYING', integrity=100, discoveries=0, reports=[], deliveries=0, health={}, jobs=[], rivals=rivals, targets=targets, event=None, project=0, project_started=False, outcome=None, log=[])
     log(e.state.campaign, 'Concordat: estabeleça três mundos, pacifique as duas potências e contenha Stargrave antes do turno 60. Comece por um processador e um poço de voláteis.')
     return e.state.campaign
@@ -214,9 +213,7 @@ def order(e, action, *, target=None, ship_id=None, ship_ids=None, resource=None,
     if action in {'dispatch', 'survey', 'colonize'}:
         ship = vessel(e, ship_id)
         require(isinstance(x, int) and isinstance(y, int) and abs(x) <= 100 and abs(y) <= 100, 'coordenadas inválidas')
-        if action == 'survey': require(hull(e, ship).role in {'exploration', 'science'}, 'levantamento exige exploração ou ciência')
-        if action == 'colonize': require(hull(e, ship).role in {'exploration', 'logistics'}, 'colonização exige exploração ou logística')
-        result = dispatch(e, ship, x, y, 'SURVEY' if action == 'survey' else 'COLONIZE' if action == 'colonize' else 'MOVE', planet_index)
+        result = dispatch(e, ship, x, y, 'SURVEY' if action == 'survey' else 'COLONIZE' if action == 'colonize' else 'MOVE', planet_index if action == 'colonize' else None)
     elif action == 'cargo':
         ship = vessel(e, ship_id)
         dest = next((p for p in e.state.planets if p['id'] == target), None)
@@ -259,7 +256,7 @@ def order(e, action, *, target=None, ship_id=None, ship_ids=None, resource=None,
     elif action == 'decommission':
         district = e.catalog.get('districts', target)
         level = e.state.districts.get(target, 0)
-        require(level > (1 if target in {'civil_district', 'solar_field', 'ore_extractor'} else 0), 'mantenha a infraestrutura básica de recuperação')
+        require(level > (1 if target in {'civil_district', 'solar_field', 'ore_extractor', 'processor', 'volatile_well', 'fuel_refinery'} else 0), 'mantenha a infraestrutura básica de recuperação')
         e.state.districts[target] -= 1
         for resource_id, value in district.cost.items():
             e.state.stocks[resource_id] = e.state.stocks.get(resource_id, 0) + value / 2

@@ -1,3 +1,4 @@
+import { CampaignView } from '../campaign/CampaignView';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '../components/shell/AppShell';
 import { OverviewView } from '../views/OverviewView';
@@ -21,6 +22,7 @@ export function AppRouter() {
     <Route path="/ship-geometry-lab" element={<Suspense fallback={<div>Carregando Ship Geometry Lab…</div>}><ShipGeometryLabView /></Suspense>} />
     <Route path="/planet-lab" element={<Suspense fallback={<div className="planet-lab-loading">Carregando Planet Lab…</div>}><PlanetLabView /></Suspense>} />
     <Route element={<AppShell />}>
+      <Route path="/campaign" element={<CampaignView />} />
       <Route path="/overview" element={<OverviewView />} />
       <Route path="/planet" element={<PlanetView />} />
       <Route path="/economy" element={<EconomyView />} />
@@ -28,7 +30,7 @@ export function AppRouter() {
       <Route path="/shipyard" element={<ShipyardView />} />
       <Route path="/fleets" element={<FleetsView />} />
       <Route path="/galaxy" element={<GalaxyView />} />
-      <Route path="*" element={<Navigate to="/overview" replace />} />
+      <Route path="*" element={<Navigate to="/campaign" replace />} />
     </Route>
   </Routes></HashRouter>;
 }

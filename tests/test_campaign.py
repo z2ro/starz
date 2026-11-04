@@ -88,8 +88,40 @@ class CampaignRules(unittest.TestCase):
 
     def test_decommission_recovers_materials_without_destroying_lifeline(self):
         e = fresh(); before = e.state.stocks['refined_alloy']
-        e.state.districts['processor'] = 1
-        campaign.order(e, 'decommission', target='processor')
-        self.assertEqual(e.state.districts['processor'], 0)
-        self.assertEqual(e.state.stocks['refined_alloy'], before + 11)
+        e.state.districts['manufacturing'] = 1
+        campaign.order(e, 'decommission', target='manufacturing')
+        self.assertEqual(e.state.districts['manufacturing'], 0)
+        self.assertEqual(e.state.stocks['refined_alloy'], before + 22.5)
         with self.assertRaises(DataValidationError): campaign.order(e, 'decommission', target='civil_district')
+
+    def test_rival_sovereignty_preserves_physical_viability_and_blocks_settlement(self):
+        from starz.api import galaxy_snapshot
+        e = fresh(); r = e.state.campaign['rivals'][0]
+        e.state.system_knowledge[f"{r['x']}:{r['y']}"] = e.state.last_updated
+        result = e.colonization_status(r['x'], r['y'], 0)
+        self.assertFalse(result['eligible']); self.assertIn(result['viability'], ['VIABLE', 'HOSTILE', 'UNINHABITABLE'])
+        system = next(s for s in galaxy_snapshot(e, (e.state.system_x, e.state.system_y), 2)['systems'] if (s['x'], s['y']) == (r['x'], r['y']))
+        self.assertEqual(system['civilization'], r['name'])
+        self.assertTrue(all(p['ownership'] == 'OCCUPIED' for p in system['planets']))
+
+    def test_military_hull_cannot_bypass_survey_roles_via_legacy_travel(self):
+        e = fresh(); e.state.districts['orbital_shipyard'] = 1
+        e.state.research['completed'] = list(e.catalog.items['technologies'])
+        e.state.stocks.update(refined_alloy=1000, components=1000, ion_fuel=1000)
+        ship = e.build_ship('vanguard_hull', now=e.state.last_updated); e.advance(ship['ready_at'])
+        with self.assertRaisesRegex(DataValidationError, 'função naval'):
+            e.send_fleet(e.state.system_x + 1, e.state.system_y, 'chemical_drive', 'NORMAL', now=e.state.last_updated, ship_id=ship['id'], mission='SURVEY')
+        self.assertFalse(e.state.fleets)
+
+    def test_power_shortage_does_not_block_building_a_generator(self):
+        e = fresh(); e.state.districts['research_lab'] = 8
+        self.assertLess(e.capacities()['energy_generation'], e.capacities()['energy_consumption'])
+        e.build('solar_field', now=e.state.last_updated)
+        self.assertEqual(e.state.construction[0]['id'], 'solar_field')
+
+    def test_survey_payload_does_not_become_a_colonization_mission(self):
+        e = fresh(); e.state.districts['orbital_shipyard'] = 1
+        ship = e.build_ship(now=e.state.last_updated); e.advance(ship['ready_at'])
+        result = campaign.order(e, 'survey', ship_id=ship['id'], x=e.state.system_x + 1, y=e.state.system_y, planet_index=0)
+        self.assertEqual(result['mission'], 'SURVEY')
+        self.assertIsNone(result['target_planet_index'])

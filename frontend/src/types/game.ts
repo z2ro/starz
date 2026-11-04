@@ -1,15 +1,17 @@
+import type { Campaign } from '../campaign/types';
 export type Content = { id: string; name: string; description: string; category: string; cost: Record<string, number>; requires: string[] };
 export type District = Content & { duration: number; workforce: number; energy_generation: number; energy_consumption: number; production: Record<string, number>; processing: Record<string, number>; research_rate: number; population_capacity: number; industrial_capacity: number; construction_slots: number; shipyard_slots: number };
 export type Technology = Content & { duration: number; unlocks: string[] };
-export type Hull = Content & { classification: string; role: string; mass: number; crew: number; duration: number; compatible_propulsion: string[] };
+export type Hull = Content & { classification: string; role: string; mass: number; crew: number; duration: number; compatible_propulsion: string[]; combat_power?: number; cargo_capacity?: number; science_bonus?: number; carrier_capacity?: number };
 export type Propulsion = Content & { compatible_fuels: string[]; speed_factor: number; fuel_efficiency: number; thermal_load: number; signature: number };
 export type Fuel = Content & { energy_density: number; storage_factor: number };
 export type TravelMode = Content & { travel_time_modifier: number; fuel_modifier: number; thermal_modifier: number; signature_modifier: number };
 export type Catalog = { resources: Content[]; districts: District[]; technologies: Technology[]; ships: Hull[]; propulsion: Propulsion[]; fuels: Fuel[]; travel_modes: TravelMode[] };
 export type Planet = { name: string; mass: number; radius: number; gravity: number; orbital_distance: number; temperature: number; atmosphere: string; radiation: number; magnetic_field: number; water: number; geological_activity: number; mineral_profile: Record<string, number>; usable_surface: number };
-export type Fleet = { id: string; name: string; status: 'ARRIVED' | 'TRANSIT'; mission: 'MOVE' | 'SURVEY' | 'COLONIZE'; target_planet_index?: number | null; x: number; y: number; destination_x: number; destination_y: number; ship_ids: string[]; eta: number; propulsion: string; mode: string; fuel_cost: number; departure_at: number; arrival_at: number };
-export type Ship = { id: string; hull_id: string; propulsion_id: string; fuel_id: string; crew: number; mass: number; ready_at: number };
+export type Fleet = { id: string; name: string; status: 'ARRIVED' | 'TRANSIT'; mission: 'MOVE' | 'SURVEY' | 'COLONIZE'; target_planet_index?: number | null; x: number; y: number; destination_x: number; destination_y: number; ship_ids: string[]; eta: number; propulsion: string; mode: string; fuel_cost: number; fuel_reserve?: number; departure_at: number; arrival_at: number };
+export type Ship = { id: string; hull_id: string; propulsion_id: string; fuel_id: string; crew: number; mass: number; ready_at: number; origin_planet_id?: string | null; system_x?: number | null; system_y?: number | null };
 export type State = {
+  campaign?: Campaign | null; observed_at?: number;
   system: { name: string; x: number; y: number; star: { stellar_class: string; mass: number; luminosity: number; age: number; activity: number }; planet: Planet };
   stocks: Record<string, number>;
   capacities: Record<string, number> & { energy_generation: number; energy_consumption: number; energy_coverage: number; industrial_capacity: number; construction_slots: number; construction_slots_available: number; shipyard_slots: number; shipyard_slots_available: number; effective_research_rate: number; workforce_supply: number; workforce_demand: number; workforce_coverage: number; crew_committed: number };
@@ -26,9 +28,9 @@ export type State = {
   unlocked_content: string[];
 };
 export type GalaxyPlanet = { planet_index: number; name: string; gravity: number; temperature: number; water: number; radiation: number; viability: 'VIABLE' | 'HOSTILE' | 'UNINHABITABLE'; ownership: 'OWNED' | 'OCCUPIED' | 'UNCLAIMED'; colonization: { eligible: boolean; reason: string | null; population: number; cost: Record<string, number> } };
-export type GalaxySystem = { id: string; name?: string; x: number; y: number; distance: number; home: boolean; knowledge_level: 'UNKNOWN' | 'SURVEYED'; star?: { stellar_class: string; luminosity: number; activity: number }; planet?: { name: string; gravity: number; temperature: number; water: number; radiation: number }; planets?: GalaxyPlanet[] };
+export type GalaxySystem = { civilization?: string | null; id: string; name?: string; x: number; y: number; distance: number; home: boolean; knowledge_level: 'UNKNOWN' | 'SURVEYED'; star?: { stellar_class: string; luminosity: number; activity: number }; planet?: { name: string; gravity: number; temperature: number; water: number; radiation: number }; planets?: GalaxyPlanet[] };
 export type Galaxy = { center: number[]; home: number[]; radius: number; systems: GalaxySystem[] };
 export type TravelPreview = { origin: number[]; destination: number[]; distance: number; eta_seconds: number; fuel_cost: number; heat: number; signature: number };
 export type View = 'overview' | 'planet' | 'economy' | 'research' | 'shipyard' | 'fleets' | 'galaxy';
 export type PlanetTab = 'overview' | 'districts' | 'orbit' | 'data';
-export type ActionName = 'build' | 'research' | 'build-ship' | 'travel-preview' | 'travel';
+export type ActionName = 'build' | 'research' | 'build-ship' | 'travel-preview' | 'travel' | 'campaign/order' | 'campaign/new' | 'campaign/load';

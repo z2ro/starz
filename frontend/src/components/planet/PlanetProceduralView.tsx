@@ -12,7 +12,7 @@ function loadRenderer() {
 export function PlanetProceduralView({ state, catalog, snapshotReady, onReady, onFailure }: {
   state: State; catalog: Catalog; snapshotReady: boolean; onReady: () => void; onFailure: (message: string) => void;
 }) {
-  const descriptor = useMemo(() => snapshotReady ? createVisualDescriptor(state, catalog) : null, [state, catalog, snapshotReady]);
+  const descriptor = useMemo(() => snapshotReady ? createVisualDescriptor(state, catalog, { observedAt: state.observed_at }) : null, [state, catalog, snapshotReady]);
   const latest = useRef(descriptor), host = useRef<HTMLDivElement>(null), renderer = useRef<LiveSceneRenderer | null>(null);
   const callbacks = useRef({ onReady, onFailure }); callbacks.current = { onReady, onFailure };
   const fail = (error: unknown) => { renderer.current?.dispose(); renderer.current = null; callbacks.current.onFailure(error instanceof Error ? error.message : 'Visualização procedural indisponível.'); };

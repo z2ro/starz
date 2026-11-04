@@ -9,7 +9,8 @@ export function useGameMutation(planetId?: string | null) {
     mutationFn: ({ action, body }: { action: ActionName; body: Record<string, unknown> }) => apiRequest<Record<string, TravelPreview> | Record<string, unknown>>(`/api/${action}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
     onSuccess: (_result, variables) => {
       if (variables.action !== 'travel-preview') void queryClient.invalidateQueries({ queryKey: queryKeys.state(planetId) });
-      if (variables.action === 'travel') void queryClient.invalidateQueries({ queryKey: ['galaxy'] });
+      if (variables.action === 'campaign/order') void queryClient.invalidateQueries({ queryKey: ['state'] });
+      if (variables.action === 'travel' || variables.action === 'campaign/order') void queryClient.invalidateQueries({ queryKey: ['galaxy'] });
     },
   });
 }

@@ -168,10 +168,10 @@ class Engine:
         system = generate_system(self.state.seed, x, y, self.catalog)
         if not 0 <= planet_index < len(system.planets):
             return {'eligible': False, 'reason': 'Planeta inexistente.'}
-        if self.state.campaign and any(not r['conquered'] and [x, y] in r['claims'] for r in self.state.campaign['rivals']):
-            return {'eligible': False, 'reason': 'Território soberano de outra civilização.'}
         key = self.planet_key(x, y, planet_index)
         viability = colonization_viability(system.planets[planet_index], self.colonization_rules)
+        if self.state.campaign and any(not r['conquered'] and [x, y] in r['claims'] for r in self.state.campaign['rivals']):
+            return {'eligible': False, 'reason': 'Território soberano de outra civilização.', 'viability': viability}
         if key in self.state.occupied_planets:
             return {'eligible': False, 'reason': 'Planeta já colonizado.', 'viability': viability}
         if key in self.state.colonization_claims:
@@ -266,7 +266,7 @@ class Engine:
         capacities = self.capacities()
         if capacities["available_population"] < district.workforce:
             raise DataValidationError("população disponível insuficiente")
-        if capacities["energy_generation"] - capacities["energy_consumption"] < district.energy_consumption:
+        if district.energy_consumption > 0 and capacities["energy_generation"] - capacities["energy_consumption"] < district.energy_consumption:
             raise DataValidationError("capacidade energética insuficiente")
         if capacities['construction_slots_available'] < 1:
             raise DataValidationError('slots de construção ocupados ou indisponíveis')
@@ -358,6 +358,10 @@ class Engine:
         if mission not in {'MOVE', 'SURVEY', 'COLONIZE'}:
             raise DataValidationError('missão de frota inválida')
         fleet, ship, origin = self._travel_subject(fleet_id, ship_id)
+        if self.state.campaign:
+            allowed = {'SURVEY': {'exploration', 'science'}, 'COLONIZE': {'exploration', 'logistics'}}
+            if mission in allowed and self.catalog.get('ships', ship['hull_id']).role not in allowed[mission]:
+                raise DataValidationError('função naval incompatível com a missão')
         if mission == 'COLONIZE':
             if fleet is None or target_planet_index is None:
                 raise DataValidationError('colonização exige uma frota e planeta alvo')

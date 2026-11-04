@@ -27,7 +27,8 @@ docker compose -f compose.experiment.yaml up -d --wait  # retoma a última selec
 
 **Não use `down -v`** se quiser preservar os saves experimentais. Nenhum comando de
 reset é necessário. Nova campanha cria outro universo; o seletor de partidas permite
-retomar uma anterior. A seleção persiste no banco. Não há autenticação/multiplayer.
+retomar uma anterior. A seleção persiste no banco. Existe um save ativo por servidor;
+carregar outra partida muda o contexto de todas as abas. Não há autenticação/multiplayer.
 
 ## Como jogar
 
@@ -142,6 +143,7 @@ Validação focada, sem benchmark de GPU ou matrizes de screenshots:
 npm ci
 npm run typecheck
 npm run build
+.venv/bin/python scripts/validate_game_data.py --campaign
 .venv/bin/python -m unittest tests.test_campaign -v
 npx vitest run tests/campaign_view.test.tsx tests/planet_procedural.test.tsx tests/fleet_gameplay.test.tsx tests/ship_preview.test.tsx
 # Schema descartável SOMENTE no banco experimental:
@@ -166,3 +168,24 @@ multiplayer, autenticação ou hospedagem pública. Rivais usam simulação estr
 abstrata, não a mesma microeconomia local do jogador. O frontend ainda apresenta o
 aviso conhecido de bundle >500 kB. GPU física e balanceamento de longo prazo não foram
 avaliados. A aprovação artística final permanece humana.
+
+Em uma árvore usada por um servidor antigo, não sobrescreva seu `frontend/dist`: use
+o build Docker isolado acima ou outro checkout para compilar a experiência.
+
+## Resultado da entrega
+
+- Typecheck e build Docker passaram; os dois serviços experimentais ficaram healthy.
+- 46 itens de conteúdo validados; 11 testes de regras, 1 teste SQL/migração e 27 testes
+  React focados passaram. `alembic check` não encontrou diferenças pendentes.
+- O smoke HTTP do build final repetiu vitória no turno 48 e derrota no turno 32,
+  com carregamento da vitória persistida, sem injetar estado ou recursos.
+- Chromium/SwiftShader verificou os finais salvos, uma construção real, o avanço
+  de turno, canvas estável e a página em 1920×1080 e 390×844. O overflow mobile do
+  HUD foi corrigido na origem; nenhuma aprovação artística foi automatizada.
+- Capturas: `tmp/complete-game-qa/campaign-opening.png`, `campaign-first-order.png`,
+  `campaign-victory.png`, `campaign-defeat.png`, `campaign-stargrave.png` e
+  `campaign-mobile.png`. `browser.json` e `commands.json` contêm a evidência local.
+- A aplicação experimental fica pronta com um save novo no turno zero; os saves
+  de vitória/derrota permanecem disponíveis para inspeção. A branch de origem,
+  os stashes, o banco e os serviços antigos foram preservados; o frontend compilado
+  do host foi restaurado a partir do commit de origem. O experimento roda no Docker.
