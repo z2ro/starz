@@ -11,6 +11,7 @@ from .universe import StarSystem, colonization_viability, find_spawn_system, gen
 from .effects import require_available
 from .travel import preview_travel as calculate_travel
 from .economy import produce
+from .progression import effect, research_quote, building_quote
 
 
 @dataclass
@@ -41,6 +42,7 @@ class GameState:
     colonization_claims: dict[str, str] = field(default_factory=dict)
     new_colonies: list[dict[str, Any]] = field(default_factory=list)
     campaign: dict[str, Any] | None = None
+    universe: dict[str, Any] | None = None
     research_rate_global: float | None = None
     planet_last_updated: float | None = None
 
@@ -48,6 +50,8 @@ class GameState:
         result = asdict(self)
         if self.campaign is None:
             result.pop('campaign')
+        if self.universe is None:
+            result.pop('universe')
         return result
 
     @classmethod
@@ -118,7 +122,11 @@ class Engine:
         research = self.state.research
         if research["active"] and research['remaining_work'] <= 0:
             research.setdefault('completed_at', {})[research['active']] = now
-            research["completed"].append(research["active"])
+            if self.state.universe is not None:
+                levels = self.state.universe.setdefault('levels', {})
+                levels[research['active']] = levels.get(research['active'], 0) + 1
+            if research['active'] not in research['completed']:
+                research['completed'].append(research['active'])
             self.state.notices.insert(0, f"Pesquisa concluída: {research['active']}.")
             research["active"] = None
             research["complete_at"] = None
@@ -172,6 +180,8 @@ class Engine:
         viability = colonization_viability(system.planets[planet_index], self.colonization_rules)
         if self.state.campaign and any(not r['conquered'] and [x, y] in r['claims'] for r in self.state.campaign['rivals']):
             return {'eligible': False, 'reason': 'Território soberano de outra civilização.', 'viability': viability}
+        if self.state.universe is not None and len(self.state.planets) + sum(f['status'] == 'TRANSIT' and f.get('mission') == 'COLONIZE' for f in self.state.fleets) >= 1 + int(effect(self.catalog, self.state, 'colonies')):
+            return {'eligible': False, 'reason': 'Astrofísica insuficiente: limite de colônias.', 'viability': viability}
         if key in self.state.occupied_planets:
             return {'eligible': False, 'reason': 'Planeta já colonizado.', 'viability': viability}
         if key in self.state.colonization_claims:
@@ -224,6 +234,9 @@ class Engine:
             shipyard_slots += district.shipyard_slots * level
             population_demand += district.workforce * level
             research_rate += district.research_rate * level
+        generation *= 1 + effect(self.catalog, self.state, 'energy')
+        population_demand /= 1 + effect(self.catalog, self.state, 'workforce')
+        research_rate *= 1 + effect(self.catalog, self.state, 'research')
         active_planet = self.state.planet_id
         crew = sum(
             ship["crew"] for ship in self.state.ships
@@ -257,7 +270,25 @@ class Engine:
         if elapsed <= 0:
             return
         factor = min(capacities['energy_coverage'], capacities['workforce_coverage'])
-        produce(self.catalog, self.state.stocks, self.state.districts, elapsed, factor)
+        if self.state.universe is None:
+            produce(self.catalog, self.state.stocks, self.state.districts, elapsed, factor)
+        else:
+            produce(self.economic_catalog(), self.state.stocks, self.state.districts, elapsed, factor)
+            limit = 100000 * 1.7 ** (effect(self.catalog, self.state, 'storage') * 4)
+            for key in self.state.stocks:
+                self.state.stocks[key] = min(limit, self.state.stocks[key])
+
+    def economic_catalog(self):
+        if self.state.universe is None: return self.catalog
+        changed = dict(self.catalog.items)
+        changed['districts'] = {}
+        for key, district in self.catalog.items['districts'].items():
+            n = self.state.districts.get(key, 0)
+            scale = 1.08 ** max(0, n - 1)
+            efficiency = 1 + effect(self.catalog, self.state, 'processing' if district.processing else 'mining')
+            outputs = {r: v * scale * efficiency * (1 + effect(self.catalog, self.state, 'components' if r == 'components' else 'alloy') if r in {'components', 'refined_alloy'} else 1) for r, v in district.production.items()}
+            changed['districts'][key] = district.model_copy(update={'production': outputs, 'processing': {r: v * scale for r, v in district.processing.items()}, 'energy_generation': district.energy_generation * (1 + effect(self.catalog, self.state, 'energy')), 'workforce': district.workforce / (1 + effect(self.catalog, self.state, 'workforce')), 'research_rate': district.research_rate * (1 + effect(self.catalog, self.state, 'research'))})
+        return Catalog(changed, self.catalog.sources)
 
     def build(self, district_id: str, now: float | None = None) -> dict[str, Any]:
         self.advance(now)
@@ -270,8 +301,9 @@ class Engine:
             raise DataValidationError("capacidade energética insuficiente")
         if capacities['construction_slots_available'] < 1:
             raise DataValidationError('slots de construção ocupados ou indisponíveis')
-        self._pay(district.cost)
-        complete_at = self.state.last_updated + district.duration
+        quote = building_quote(self.catalog, self.state, district_id) if self.state.universe is not None else {'cost': district.cost, 'duration': district.duration}
+        self._pay(quote['cost'])
+        complete_at = self.state.last_updated + quote['duration']
         self.state.construction.append({"id": district_id, "complete_at": complete_at, "job_id": str(uuid4()), "started_at": self.state.last_updated})
         return {"id": district_id, "complete_at": complete_at}
 
@@ -280,15 +312,18 @@ class Engine:
         technology: Technology = self.catalog.get("technologies", technology_id)  # type: ignore[assignment]
         if self.state.research["active"]:
             raise DataValidationError("já existe pesquisa em andamento")
-        if technology_id in self.state.research["completed"]:
+        if self.state.universe is None and technology_id in self.state.research["completed"]:
             raise DataValidationError("pesquisa já concluída")
         require_available(self.catalog, self.state, technology)
         if self.capacities()["research_rate"] <= 0:
             raise DataValidationError("nenhuma capacidade de pesquisa")
-        self._pay(technology.cost)
-        self.state.research.update(active=technology_id, remaining_work=technology.duration)
+        quote = research_quote(self.catalog, self.state, technology_id) if self.state.universe is not None else {'cost': technology.cost, 'work': technology.duration, 'requirements': []}
+        if quote['requirements']:
+            raise DataValidationError('; '.join(quote['requirements']))
+        self._pay(quote['cost'])
+        self.state.research.update(active=technology_id, remaining_work=quote['work'])
         self._research_eta()
-        return {'id': technology_id, 'complete_at': self.state.research['complete_at'], 'remaining_work': technology.duration}
+        return {'id': technology_id, 'complete_at': self.state.research['complete_at'], 'remaining_work': quote['work']}
 
     def build_ship(self, hull_id: str = "scout_hull", propulsion_id: str = "chemical_drive", fuel_id: str = "ion_fuel", now: float | None = None) -> dict[str, Any]:
         self.advance(now)
@@ -310,7 +345,7 @@ class Engine:
         ship = {
             "id": str(uuid4()), "hull_id": hull_id, "propulsion_id": propulsion_id,
             "fuel_id": fuel_id, "crew": hull.crew, "mass": hull.mass,
-            "ready_at": self.state.last_updated + hull.duration,
+            "ready_at": self.state.last_updated + hull.duration / (1 + effect(self.catalog, self.state, 'ship_speed')),
             "origin_planet_id": self.state.planet_id,
             "system_x": self.state.system_x, "system_y": self.state.system_y,
         }

@@ -196,3 +196,36 @@ class Campaign(Base):
     payload: Mapped[dict] = mapped_column(JSONB)
     selected_at: Mapped[datetime] = mapped_column(server_default=func.now())
     created_at: Mapped[datetime]
+
+
+class PlayerAccount(Base):
+    __tablename__ = 'player_account'
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    username: Mapped[str] = mapped_column(unique=True)
+    password_hash: Mapped[str]
+    empire_id: Mapped[UUID] = mapped_column(ForeignKey('empire.id'), unique=True)
+    created_at: Mapped[datetime]
+
+
+class PlayerSession(Base):
+    __tablename__ = 'player_session'
+    token_hash: Mapped[str] = mapped_column(primary_key=True)
+    account_id: Mapped[UUID] = mapped_column(ForeignKey('player_account.id'), index=True)
+    expires_at: Mapped[datetime]
+
+
+class EmpireProgress(Base):
+    __tablename__ = 'empire_progress'
+    empire_id: Mapped[UUID] = mapped_column(ForeignKey('empire.id'), primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSONB)
+
+
+class UniverseOrder(Base):
+    __tablename__ = 'universe_order'
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    universe_id: Mapped[UUID] = mapped_column(ForeignKey('universe.id'), index=True)
+    empire_id: Mapped[UUID] = mapped_column(ForeignKey('empire.id'), index=True)
+    kind: Mapped[str]
+    payload: Mapped[dict] = mapped_column(JSONB)
+    due_at: Mapped[datetime | None] = mapped_column(index=True)
+    resolved: Mapped[bool] = mapped_column(default=False)

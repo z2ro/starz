@@ -44,6 +44,11 @@ class Propulsion(Content):
 class Technology(Content):
     duration: float = Field(gt=0)
     unlocks: list[str] = Field(default_factory=list)
+    level_cost_growth: float = Field(default=1.7, ge=1, le=3)
+    level_work_growth: float = Field(default=1.55, ge=1, le=3)
+    level_requires: dict[str, int] = Field(default_factory=dict)
+    infrastructure: dict[str, int] = Field(default_factory=dict)
+    effects: dict[str, NonNegative] = Field(default_factory=dict)
 
 
 class District(Content):
@@ -236,6 +241,12 @@ class Catalog:
                     if ref not in self.items['technologies'] and ref not in self.items['districts']:
                         errors.append(f"{item.id}: referência desconhecida: {ref}")
                 if isinstance(item, Technology):
+                    for ref, level in item.level_requires.items():
+                        if ref not in self.items['technologies'] or level < 1:
+                            errors.append(f'{item.id}: requisito de nível inválido: {ref}')
+                    for ref, level in item.infrastructure.items():
+                        if ref not in self.items['districts'] or level < 1:
+                            errors.append(f'{item.id}: infraestrutura inválida: {ref}')
                     for ref in item.unlocks:
                         if ref not in unlockable:
                             errors.append(f"{item.id}: unlock inválido: {ref}")

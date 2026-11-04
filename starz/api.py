@@ -12,7 +12,14 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Literal
 
-from fastapi import Body, FastAPI, HTTPException, Query
+from fastapi import Body, FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
+from .persistent.security import current_empire, COOKIE, token_hash
+from .persistent.service import PersistentStore
+from .persistent.routes import router as persistent_router
+from .db.models import PlayerSession, PlayerAccount
+import asyncio
+import logging
 from sqlalchemy import text
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -22,17 +29,34 @@ from .data import Catalog, DataValidationError
 from .db.store import Store, database_engine
 from .settings import Settings
 from .effects import unlocked_content
+from .progression import building_quote, research_quote, effect
 from .universe import generate_system
 
 ROOT = Path(__file__).resolve().parent.parent
-catalog = Catalog.load(ROOT / "game_data", ROOT / "campaign_data" if Settings.from_env().campaign else None)
+settings_at_import = Settings.from_env()
+catalog = Catalog.load(ROOT / 'game_data', ROOT / 'persistent_data' if settings_at_import.persistent else ROOT / 'campaign_data' if settings_at_import.campaign else None)
 
 
 @asynccontextmanager
 async def lifespan(app):
     settings = Settings.from_env()
     database = database_engine(settings.database_url)
+    task = None
     try:
+        app.state.persistent = settings.persistent
+        if settings.persistent:
+            store = PersistentStore(database, catalog, settings.universe_seed)
+            app.state.store = store
+            async def heartbeat():
+                while True:
+                    try:
+                        await asyncio.to_thread(store.tick)
+                    except Exception:
+                        logging.exception('Persistent universe heartbeat failed')
+                    await asyncio.sleep(2)
+            task = asyncio.create_task(heartbeat())
+            yield
+            return
         store = Store(database, catalog, settings.universe_seed, clock=(lambda: 0) if settings.campaign else time)
         if settings.campaign:
             with Session(database) as session:
@@ -46,10 +70,48 @@ async def lifespan(app):
         app.state.store = store
         yield
     finally:
+        if task:
+            task.cancel()
+            try: await task
+            except asyncio.CancelledError: pass
         database.dispose()
 
 
 app = FastAPI(title="StarZ", version="0.1.0", lifespan=lifespan)
+app.include_router(persistent_router)
+
+
+@app.middleware('http')
+async def account_context(request: Request, call_next):
+    if not getattr(app.state, 'persistent', False) or not request.url.path.startswith('/api/'):
+        return await call_next(request)
+    path = request.url.path
+    if request.method not in {'GET','HEAD','OPTIONS'}:
+        origin = request.headers.get('origin')
+        if request.headers.get('x-starz-request') != '1' or (origin and origin != f'{request.url.scheme}://{request.headers.get("host")}'):
+            return JSONResponse({'detail':'Origem ou proteção CSRF inválida.'},status_code=403)
+    if path.startswith('/api/campaign/'):
+        return JSONResponse({'detail':'Concordat está disponível apenas no ambiente opcional separado.'},status_code=404)
+    public = {'/api/config','/api/catalog','/api/auth/login','/api/auth/register'}
+    if path in public:
+        return await call_next(request)
+    with Session(app.state.store.database) as session:
+        account = session.scalar(select(PlayerAccount).join(PlayerSession).where(PlayerSession.token_hash == token_hash(request.cookies.get(COOKIE,'')), PlayerSession.expires_at > func.now()))
+        empire_id = account.empire_id if account else None
+    if empire_id is None:
+        return JSONResponse({'detail':'Entre na sua conta para acessar o império.'},status_code=401)
+    token = current_empire.set(empire_id)
+    try:
+        return await call_next(request)
+    finally:
+        current_empire.reset(token)
+
+
+@app.get('/api/config')
+def game_config():
+    return {'persistent':getattr(app.state,'persistent',False)}
+
+
 app.mount("/static", StaticFiles(directory=ROOT / "frontend" / "dist", check_dir=False), name="static")
 
 
@@ -60,6 +122,7 @@ class BuildRequest(BaseModel):
 
 class ResearchRequest(BaseModel):
     id: str
+    planet_id: str | None = None
 
 
 class BuildShipRequest(BaseModel):
@@ -88,7 +151,7 @@ def action(call, *, planet_id=None, colony_target=None, mutating=False):
             options['planet_id'] = planet_id
         if colony_target is not None:
             options['colony_target'] = colony_target
-        return app.state.store.run(app.state.default_empire_id, (lambda e: campaign.command(e, call)) if mutating else call, **options)
+        return app.state.store.run(current_empire.get() if getattr(app.state, 'persistent', False) else app.state.default_empire_id, (lambda e: campaign.command(e, call)) if mutating else call, **options)
     except DataValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -175,7 +238,7 @@ def galaxy(
 def state_snapshot(engine):
     system = engine.system()
     capacities = engine.capacities()
-    return {"campaign": campaign.snapshot(engine), "observed_at": engine.state.last_updated, "system": system.to_dict(), "active_planet": {"id": engine.state.planet_id, "planet_index": engine.state.planet_index, "home": engine.state.planet_id == engine.state.home_planet_id}, "planets": planet_list(engine), "stocks": {key: round(value, 2) for key, value in engine.state.stocks.items()}, "capacities": capacities, "population": {"total": engine.state.population_total, "available": capacities["available_population"], "capacity": 100 + sum(engine.catalog.get("districts", key).population_capacity * level for key, level in engine.state.districts.items())}, "districts": dict(engine.state.districts), "construction": list(engine.state.construction), "research": dict(engine.state.research), "ships": [dict(ship) for ship in engine.state.ships], "fleets": [{**fleet, "eta": max(0, round(fleet["arrival_at"] - engine.state.last_updated)) if fleet["status"] == "TRANSIT" else 0} for fleet in engine.state.fleets], "notices": engine.state.notices[:5], "travel_modes": [item.model_dump() for _, item in sorted(catalog.items['travel_modes'].items())], "unlocked_content": sorted(unlocked_content(catalog, engine.state.research['completed']))}
+    return {"economic_districts": [d.model_dump() for d in engine.economic_catalog().items['districts'].values()] if engine.state.universe is not None else None, "building_quotes": {k: building_quote(engine.catalog, engine.state, k) for k in engine.catalog.items['districts'] if engine.state.districts.get(k, 0) < 50} if engine.state.universe is not None else {}, "research_work": research_quote(engine.catalog, engine.state, engine.state.research['active'])['work'] if engine.state.universe is not None and engine.state.research['active'] else None, "persistent": engine.state.universe is not None, "empire_levels": (engine.state.universe or {}).get("levels", {}), "campaign": campaign.snapshot(engine), "observed_at": engine.state.last_updated, "system": system.to_dict(), "active_planet": {"id": engine.state.planet_id, "planet_index": engine.state.planet_index, "home": engine.state.planet_id == engine.state.home_planet_id}, "planets": planet_list(engine), "stocks": {key: round(value, 2) for key, value in engine.state.stocks.items()}, "capacities": capacities, "population": {"total": engine.state.population_total, "available": capacities["available_population"], "capacity": (100 + sum(engine.catalog.get("districts", key).population_capacity * level for key, level in engine.state.districts.items())) * (1 + effect(engine.catalog, engine.state, "population"))}, "districts": dict(engine.state.districts), "construction": list(engine.state.construction), "research": dict(engine.state.research), "ships": [dict(ship) for ship in engine.state.ships], "fleets": [{**fleet, "eta": max(0, round(fleet["arrival_at"] - engine.state.last_updated)) if fleet["status"] == "TRANSIT" else 0} for fleet in engine.state.fleets], "notices": engine.state.notices[:5], "travel_modes": [item.model_dump() for _, item in sorted(catalog.items['travel_modes'].items())], "unlocked_content": sorted(unlocked_content(catalog, engine.state.research['completed']))}
 
 
 def planet_list(engine):
@@ -193,7 +256,7 @@ def build(request: BuildRequest):
 
 @app.post("/api/research")
 def research(request: ResearchRequest):
-    return action(lambda engine: engine.research(request.id, now=engine.state.last_updated), mutating=True)
+    return action(lambda engine: engine.research(request.id, now=engine.state.last_updated), planet_id=request.planet_id, mutating=True)
 
 
 @app.post("/api/build-ship")
@@ -203,6 +266,8 @@ def build_ship(request: BuildShipRequest = Body(default=BuildShipRequest())):
 
 @app.post("/api/travel")
 def travel(request: TravelRequest):
+    if getattr(app.state, 'persistent', False):
+        raise HTTPException(400, 'Use o console Universo para missões multi-nave.')
     if request.mission == 'COLONIZE' and request.planet_id is None:
         raise HTTPException(status_code=400, detail='COLONIZE exige planet_id como origem da missão')
     target = (request.target_x, request.target_y, request.target_planet_index) if request.mission == 'COLONIZE' and request.target_planet_index is not None else None
@@ -211,6 +276,8 @@ def travel(request: TravelRequest):
 
 @app.post("/api/travel-preview")
 def travel_preview(request: TravelRequest):
+    if getattr(app.state, 'persistent', False):
+        raise HTTPException(400, 'As missões multi-nave usam o console Universo.')
     if request.mission == 'COLONIZE' and request.planet_id is None:
         raise HTTPException(status_code=400, detail='COLONIZE exige planet_id como origem da missão')
     def preview(engine):

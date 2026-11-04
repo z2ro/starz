@@ -9,6 +9,7 @@ class Settings:
     universe_seed: str
     test_database_url: str | None
     campaign: bool = False
+    persistent: bool = False
 
     @classmethod
     def from_env(cls):
@@ -17,4 +18,5 @@ class Settings:
             universe_seed=os.environ.get('STARZ_UNIVERSE_SEED', 'STARZ-ALPHA'),
             test_database_url=os.environ.get('TEST_DATABASE_URL'),
             campaign=os.environ.get('STARZ_CAMPAIGN', '0') == '1',
+            persistent=os.environ.get('STARZ_PERSISTENT', '0') == '1',
         )

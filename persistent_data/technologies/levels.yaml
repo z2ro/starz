@@ -1,0 +1,617 @@
+- id: energy_engineering
+  name: Engenharia energética
+  description: 'Geração energética × (1 + soma dos bônus energéticos). Bônus por nível:
+    0.08.'
+  category: energy
+  cost:
+    refined_alloy: 20
+    components: 8
+  duration: 60
+  requires: []
+  level_requires: {}
+  infrastructure: {}
+  effects:
+    energy: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: extraction
+  name: Extração mineral
+  description: 'Produção dos extratores × (1 + bônus de mineração), respeitando energia
+    e trabalhadores. Bônus por nível: 0.08.'
+  category: industry
+  cost:
+    refined_alloy: 25
+    components: 11
+  duration: 80
+  requires: []
+  level_requires: {}
+  infrastructure: {}
+  effects:
+    mining: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: industrial_automation
+  name: Automação industrial
+  description: 'Aumenta os outputs do processamento; os inputs continuam sendo consumidos.
+    Bônus por nível: 0.06.'
+  category: industry
+  duration: 100
+  cost:
+    refined_alloy: 30
+    components: 14
+  requires:
+  - extraction
+  unlocks:
+  - manufacturing
+  level_requires:
+    extraction: 2
+  infrastructure: {}
+  effects:
+    processing: 0.06
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+- id: advanced_manufacturing
+  name: Manufatura avançada
+  description: 'Multiplica a produção real de componentes após automação. Bônus por
+    nível: 0.06.'
+  category: industry
+  cost:
+    refined_alloy: 35
+    components: 17
+  duration: 120
+  requires:
+  - industrial_automation
+  level_requires:
+    industrial_automation: 2
+  infrastructure:
+    processor: 2
+  effects:
+    components: 0.06
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: computing
+  name: Computação de frotas
+  description: 'Acrescenta um slot operacional de frota em trânsito por nível. Bônus
+    por nível: 1.'
+  category: expansion
+  cost:
+    refined_alloy: 40
+    components: 8
+  duration: 140
+  requires: []
+  level_requires: {}
+  infrastructure: {}
+  effects:
+    fleet_slots: 1
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: sensor_array
+  name: Sensores de longo alcance
+  description: 'Aumenta a força dos levantamentos de espionagem junto com Inteligência.
+    Bônus por nível: 0.1.'
+  category: expansion
+  cost:
+    refined_alloy: 20
+    components: 11
+  duration: 60
+  requires:
+  - computing
+  level_requires:
+    computing: 1
+  infrastructure: {}
+  effects:
+    sensors: 0.1
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: intelligence
+  name: Inteligência e espionagem
+  description: 'Aumenta a força de espionagem contra a contrainteligência do alvo.
+    Bônus por nível: 0.15.'
+  category: expansion
+  cost:
+    refined_alloy: 25
+    components: 14
+  duration: 80
+  requires:
+  - sensor_array
+  level_requires:
+    sensor_array: 2
+  infrastructure: {}
+  effects:
+    espionage: 0.15
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: counter_intelligence
+  name: Contrainteligência
+  description: 'Eleva a proteção que bloqueia relatórios inimigos de estoques e distritos.
+    Bônus por nível: 0.15.'
+  category: expansion
+  cost:
+    refined_alloy: 30
+    components: 17
+  duration: 100
+  requires:
+  - computing
+  level_requires:
+    computing: 2
+  infrastructure: {}
+  effects:
+    counter_intelligence: 0.15
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: nuclear_propulsion
+  name: Propulsão nuclear
+  description: 'Reduz a duração real das viagens: tempo base / (1 + soma dos bônus
+    de velocidade). Bônus por nível: 0.08.'
+  category: expansion
+  duration: 120
+  cost:
+    refined_alloy: 35
+    components: 8
+  requires:
+  - orbital_engineering
+  unlocks:
+  - nuclear_drive
+  - fusion_fuel
+  level_requires:
+    orbital_engineering: 2
+  infrastructure: {}
+  effects:
+    speed: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+- id: navigation
+  name: Navegação interestelar
+  description: 'Reduz a duração real das viagens: tempo base / (1 + soma dos bônus
+    de velocidade). Bônus por nível: 0.04.'
+  category: expansion
+  cost:
+    refined_alloy: 40
+    components: 11
+  duration: 140
+  requires:
+  - computing
+  level_requires:
+    computing: 2
+  infrastructure: {}
+  effects:
+    speed: 0.04
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: weapons
+  name: Sistemas de armas
+  description: 'Aumenta poder estratégico dos hulls em combates contra frotas reais.
+    Bônus por nível: 0.08.'
+  category: military
+  cost:
+    refined_alloy: 20
+    components: 14
+  duration: 60
+  requires:
+  - naval_doctrine
+  level_requires:
+    naval_doctrine: 1
+  infrastructure: {}
+  effects:
+    weapons: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: shields
+  name: Escudos energéticos
+  description: 'Contribui ao multiplicador estratégico de naves e fortalece baterias
+    defensivas. Bônus por nível: 0.07.'
+  category: military
+  cost:
+    refined_alloy: 25
+    components: 17
+  duration: 80
+  requires:
+  - energy_engineering
+  level_requires:
+    energy_engineering: 3
+  infrastructure:
+    research_lab: 2
+  effects:
+    shields: 0.07
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: armor
+  name: Blindagem estrutural
+  description: 'Contribui ao multiplicador de sobrevivência e poder estratégico de
+    combate. Bônus por nível: 0.08.'
+  category: military
+  cost:
+    refined_alloy: 30
+    components: 8
+  duration: 100
+  requires:
+  - metallurgy
+  level_requires:
+    metallurgy: 2
+  infrastructure: {}
+  effects:
+    armor: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: logistics
+  name: Logística de carga
+  description: 'Amplia capacidade real de transporte, saque e coleta das naves. Bônus
+    por nível: 0.1.'
+  category: expansion
+  cost:
+    refined_alloy: 35
+    components: 11
+  duration: 120
+  requires: []
+  level_requires: {}
+  infrastructure: {}
+  effects:
+    cargo: 0.1
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: fuel_efficiency
+  name: Economia de combustível
+  description: 'Reduz combustível efetivamente pago: custo base / (1 + soma das eficiências).
+    Bônus por nível: 0.06.'
+  category: expansion
+  cost:
+    refined_alloy: 40
+    components: 14
+  duration: 140
+  requires:
+  - logistics
+  level_requires:
+    logistics: 2
+  infrastructure: {}
+  effects:
+    fuel: 0.06
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: astrophysics
+  name: Astrofísica colonial
+  description: 'Acrescenta um mundo ao limite de planetas possuídos ou em colonização.
+    Bônus por nível: 1.'
+  category: expansion
+  cost:
+    refined_alloy: 20
+    components: 17
+  duration: 60
+  requires:
+  - orbital_engineering
+  level_requires:
+    orbital_engineering: 1
+  infrastructure: {}
+  effects:
+    colonies: 1
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: infrastructure
+  name: Infraestrutura automatizada
+  description: 'Reduz a demanda de trabalhadores por estrutura, liberando produção
+    limitada por workforce. Bônus por nível: 0.05.'
+  category: industry
+  cost:
+    refined_alloy: 25
+    components: 8
+  duration: 80
+  requires:
+  - industrial_automation
+  level_requires:
+    industrial_automation: 1
+  infrastructure: {}
+  effects:
+    workforce: 0.05
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: survey_network
+  name: Rede científica
+  description: 'Aumenta throughput real dos laboratórios do império, mantendo limites
+    de energia e workforce. Bônus por nível: 0.08.'
+  category: science
+  duration: 100
+  cost:
+    refined_alloy: 30
+    components: 11
+  requires:
+  - sensor_array
+  unlocks:
+  - odyssey_hull
+  level_requires:
+    sensor_array: 2
+  infrastructure: {}
+  effects:
+    research: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+- id: science_infrastructure
+  name: Infraestrutura científica
+  description: 'Aumenta throughput real dos laboratórios do império, mantendo limites
+    de energia e workforce. Bônus por nível: 0.08.'
+  category: science
+  cost:
+    refined_alloy: 35
+    components: 14
+  duration: 120
+  requires:
+  - survey_network
+  level_requires:
+    survey_network: 2
+  infrastructure:
+    research_lab: 3
+  effects:
+    research: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: orbital_engineering
+  name: Engenharia orbital
+  description: 'Reduz o timestamp de conclusão de montagem: duração / (1 + bônus orbital).
+    Bônus por nível: 0.05.'
+  category: expansion
+  duration: 140
+  cost:
+    refined_alloy: 40
+    components: 17
+  unlocks:
+  - orbital_shipyard
+  requires: []
+  level_requires: {}
+  infrastructure: {}
+  effects:
+    ship_speed: 0.05
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+- id: capital_architecture
+  name: Arquitetura capital
+  description: 'Multiplica a contribuição das baterias do planeta ao combate defensivo.
+    Bônus por nível: 0.06.'
+  category: military
+  duration: 60
+  cost:
+    refined_alloy: 20
+    components: 8
+  requires:
+  - naval_doctrine
+  - nuclear_propulsion
+  unlocks:
+  - aegis_hull
+  - spearhead_hull
+  level_requires:
+    naval_doctrine: 3
+    nuclear_propulsion: 2
+  infrastructure:
+    orbital_shipyard: 2
+  effects:
+    defense: 0.06
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+- id: carrier_operations
+  name: Operações embarcadas
+  description: 'Amplia o poder das alas abstratas dos carriers em combate estratégico.
+    Bônus por nível: 0.08.'
+  category: military
+  duration: 80
+  cost:
+    refined_alloy: 25
+    components: 11
+  requires:
+  - capital_architecture
+  unlocks:
+  - atlas_hull
+  - leviathan_hull
+  level_requires:
+    capital_architecture: 2
+  infrastructure:
+    orbital_shipyard: 3
+  effects:
+    carrier: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+- id: stellar_containment
+  name: Contenção estelar
+  description: 'Geração energética × (1 + soma dos bônus energéticos). Bônus por nível:
+    0.06.'
+  category: energy
+  duration: 100
+  cost:
+    refined_alloy: 30
+    components: 14
+  requires:
+  - carrier_operations
+  - science_infrastructure
+  unlocks:
+  - dominion_hull
+  level_requires:
+    carrier_operations: 3
+    science_infrastructure: 3
+  infrastructure:
+    research_lab: 4
+  effects:
+    energy: 0.06
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+- id: diplomatic_charter
+  name: Carta interestelar
+  description: 'Reduz o combustível consumido por missões de transporte. Bônus por
+    nível: 0.04.'
+  category: expansion
+  duration: 120
+  cost:
+    refined_alloy: 35
+    components: 17
+  requires:
+  - computing
+  unlocks: []
+  level_requires:
+    computing: 1
+  infrastructure: {}
+  effects:
+    transport: 0.04
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+- id: construction_engineering
+  name: Engenharia de construção
+  description: 'Reduz duração de construção sem alterar o preço progressivo de cada
+    nível. Bônus por nível: 0.06.'
+  category: industry
+  cost:
+    refined_alloy: 40
+    components: 8
+  duration: 140
+  requires: []
+  level_requires: {}
+  infrastructure: {}
+  effects:
+    build_speed: 0.06
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: metallurgy
+  name: Metalurgia
+  description: 'Multiplica a produção real de ligas após automação. Bônus por nível:
+    0.06.'
+  category: industry
+  cost:
+    refined_alloy: 20
+    components: 11
+  duration: 60
+  requires:
+  - extraction
+  level_requires:
+    extraction: 1
+  infrastructure: {}
+  effects:
+    alloy: 0.06
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: habitation
+  name: Habitação planetária
+  description: 'Amplia o teto populacional de habitação; acolhimento continua exigindo
+    recursos. Bônus por nível: 0.1.'
+  category: expansion
+  cost:
+    refined_alloy: 25
+    components: 14
+  duration: 80
+  requires: []
+  level_requires: {}
+  infrastructure: {}
+  effects:
+    population: 0.1
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: naval_doctrine
+  name: Doutrina naval
+  description: 'Aumenta poder estratégico dos hulls em combates contra frotas reais.
+    Bônus por nível: 0.05.'
+  category: military
+  duration: 100
+  cost:
+    refined_alloy: 30
+    components: 17
+  requires:
+  - orbital_engineering
+  unlocks:
+  - vanguard_hull
+  - sentinel_hull
+  - orbital_battery
+  level_requires:
+    orbital_engineering: 1
+  infrastructure: {}
+  effects:
+    weapons: 0.05
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+- id: expedition_science
+  name: Ciência de expedições
+  description: 'Aumenta coleta por expedição, limitada à carga disponível das naves
+    científicas. Bônus por nível: 0.1.'
+  category: expansion
+  cost:
+    refined_alloy: 35
+    components: 8
+  duration: 120
+  requires:
+  - survey_network
+  level_requires:
+    survey_network: 1
+  infrastructure: {}
+  effects:
+    expedition: 0.1
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: storage
+  name: Armazenamento modular
+  description: 'Capacidade por recurso = 100.000 × 1,7^nível de Armazenamento. Bônus
+    por nível: 0.25.'
+  category: expansion
+  cost:
+    refined_alloy: 40
+    components: 11
+  duration: 140
+  requires:
+  - logistics
+  level_requires:
+    logistics: 1
+  infrastructure: {}
+  effects:
+    storage: 0.25
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: maintenance
+  name: Manutenção naval
+  description: 'Reduz combustível efetivamente pago: custo base / (1 + soma das eficiências).
+    Bônus por nível: 0.08.'
+  category: expansion
+  cost:
+    refined_alloy: 20
+    components: 14
+  duration: 60
+  requires:
+  - industrial_automation
+  level_requires:
+    industrial_automation: 1
+  infrastructure: {}
+  effects:
+    fuel: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []
+- id: recruitment
+  name: Apoio populacional
+  description: 'Reduz o custo de voláteis para acolher habitantes; mantém custo de
+    componentes. Bônus por nível: 0.08.'
+  category: expansion
+  cost:
+    refined_alloy: 25
+    components: 17
+  duration: 80
+  requires:
+  - habitation
+  level_requires:
+    habitation: 1
+  infrastructure: {}
+  effects:
+    recruitment: 0.08
+  level_cost_growth: 1.7
+  level_work_growth: 1.55
+  unlocks: []

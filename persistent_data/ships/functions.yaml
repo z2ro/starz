@@ -1,0 +1,219 @@
+- id: scout_hull
+  name: Horizon
+  classification: corvette
+  role: exploration
+  description: Corveta leve projetada para reconhecimento e levantamento de sistemas.
+    Atributos de gameplay declarados nos atributos.
+  category: hull
+  mass: 10
+  crew: 3
+  cost:
+    refined_alloy: 16
+    components: 8
+  duration: 30
+  compatible_propulsion:
+  - chemical_drive
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  combat_power: 2
+  cargo_capacity: 0
+  science_bonus: 0
+  carrier_capacity: 0
+- id: wayfarer_hull
+  name: Wayfarer
+  classification: freighter
+  role: logistics
+  description: Plataforma naval freighter. Atributos de gameplay declarados nos
+    atributos.
+  category: hull
+  mass: 24
+  crew: 8
+  cost:
+    refined_alloy: 36
+    components: 18
+  duration: 60
+  compatible_propulsion:
+  - chemical_drive
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - orbital_engineering
+  combat_power: 1
+  cargo_capacity: 180
+  science_bonus: 0
+  carrier_capacity: 0
+- id: vanguard_hull
+  name: Vanguard
+  classification: frigate
+  role: escort
+  description: Plataforma naval frigate. Atributos de gameplay declarados nos atributos.
+  category: hull
+  mass: 32
+  crew: 10
+  cost:
+    refined_alloy: 54
+    components: 28
+  duration: 90
+  compatible_propulsion:
+  - chemical_drive
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - orbital_engineering
+  combat_power: 18
+  cargo_capacity: 0
+  science_bonus: 0
+  carrier_capacity: 0
+- id: sentinel_hull
+  name: Sentinel
+  classification: destroyer
+  role: defense
+  description: Plataforma naval destroyer. Atributos de gameplay declarados nos
+    atributos.
+  category: hull
+  mass: 52
+  crew: 16
+  cost:
+    refined_alloy: 90
+    components: 48
+  duration: 150
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+  combat_power: 28
+  cargo_capacity: 0
+  science_bonus: 0
+  carrier_capacity: 0
+- id: odyssey_hull
+  name: Odyssey
+  classification: science_cruiser
+  role: science
+  description: Plataforma naval science cruiser. Capacidades de campanha declaradas
+    nos atributos.
+  category: hull
+  mass: 65
+  crew: 12
+  cost:
+    refined_alloy: 110
+    components: 70
+  duration: 180
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+  combat_power: 4
+  cargo_capacity: 30
+  science_bonus: 2
+  carrier_capacity: 0
+- id: aegis_hull
+  name: Aegis
+  classification: cruiser
+  role: line_combat
+  description: Plataforma naval cruiser. Atributos de gameplay declarados nos atributos.
+  category: hull
+  mass: 85
+  crew: 24
+  cost:
+    refined_alloy: 160
+    components: 90
+  duration: 240
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+  combat_power: 42
+  cargo_capacity: 0
+  science_bonus: 0
+  carrier_capacity: 0
+- id: spearhead_hull
+  name: Spearhead
+  classification: battlecruiser
+  role: power_projection
+  description: Plataforma naval battlecruiser. Capacidades de campanha declaradas
+    nos atributos.
+  category: hull
+  mass: 120
+  crew: 32
+  cost:
+    refined_alloy: 230
+    components: 130
+  duration: 330
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+  combat_power: 64
+  cargo_capacity: 0
+  science_bonus: 0
+  carrier_capacity: 0
+- id: leviathan_hull
+  name: Leviathan
+  classification: battleship
+  role: capital
+  description: Plataforma naval battleship. Atributos de gameplay declarados nos
+    atributos.
+  category: hull
+  mass: 190
+  crew: 48
+  cost:
+    refined_alloy: 360
+    components: 210
+  duration: 480
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+  combat_power: 100
+  cargo_capacity: 0
+  science_bonus: 0
+  carrier_capacity: 0
+- id: atlas_hull
+  name: Atlas
+  classification: carrier
+  role: carrier_operations
+  description: Plataforma naval carrier. Atributos de gameplay declarados nos atributos.
+  category: hull
+  mass: 210
+  crew: 60
+  cost:
+    refined_alloy: 400
+    components: 260
+  duration: 540
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+  combat_power: 45
+  cargo_capacity: 100
+  science_bonus: 0
+  carrier_capacity: 10
+- id: dominion_hull
+  name: Dominion
+  classification: dreadnought
+  role: command
+  description: Plataforma naval dreadnought. Atributos de gameplay declarados nos
+    atributos.
+  category: hull
+  mass: 320
+  crew: 90
+  cost:
+    refined_alloy: 620
+    components: 400
+  duration: 720
+  compatible_propulsion:
+  - nuclear_drive
+  requires:
+  - orbital_shipyard
+  - nuclear_propulsion
+  combat_power: 150
+  cargo_capacity: 0
+  science_bonus: 0
+  carrier_capacity: 0

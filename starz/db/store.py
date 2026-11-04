@@ -173,6 +173,12 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
     )
     campaign = session.get(m.Campaign, empire.id)
     state.campaign = deepcopy(campaign.payload) if campaign else None
+    progress = session.get(m.EmpireProgress, empire.id)
+    state.universe = deepcopy(progress.payload) if progress else None
+    if progress:
+        missions = {row.payload.get('fleet_id'): row.payload.get('mission') for row in rows(m.UniverseOrder) if row.kind == 'mission' and not row.resolved}
+        for fleet in state.fleets:
+            fleet['operation'] = missions.get(fleet['id'], fleet['mission'])
     if catalog is not None:
         research_rate = 0.0
         for planet, system in owned:
@@ -180,7 +186,7 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
             context = GameState(
                 seed=universe.seed, system_x=system.x, system_y=system.y,
                 stocks=stocks_by_planet[str(planet.id)], population_total=planet.population_total,
-                districts=districts, ships=state.ships, planet_id=str(planet.id),
+                districts=districts, ships=state.ships, planet_id=str(planet.id), universe=state.universe,
                 last_updated=epoch(planet.last_updated),
             )
             research_rate += Engine(catalog, context).capacities()['effective_research_rate']
@@ -222,6 +228,8 @@ def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameSta
             session.add(m.Campaign(empire_id=empire.id, payload=deepcopy(state.campaign), created_at=stamp))
         else:
             campaign.payload = deepcopy(state.campaign)
+    if state.universe is not None:
+        session.merge(m.EmpireProgress(empire_id=empire.id, payload=deepcopy(state.universe)))
     research = state.research
     session.merge(m.Research(empire_id=empire.id, active_technology_id=research['active'], remaining_work=research.get('remaining_work', 0), complete_at=utc(research['complete_at']), updated_at=stamp))
     for technology_id in research['completed']:
@@ -237,6 +245,8 @@ def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameSta
         if session.get(m.Ship, UUID(ship['id'])) is None:
             session.add(m.Ship(id=UUID(ship['id']), empire_id=empire.id, hull_id=ship['hull_id'], propulsion_id=ship['propulsion_id'], fuel_id=ship['fuel_id'], crew=ship['crew'], mass=ship['mass'], ready_at=utc(ship['ready_at']), created_at=stamp, origin_planet_id=UUID(ship['origin_planet_id']) if ship.get('origin_planet_id') else None, system_x=ship.get('system_x'), system_y=ship.get('system_y')))
     session.flush()
+    if state.universe is not None:
+        session.execute(delete(m.FleetShip).where(m.FleetShip.empire_id == empire.id))
     for fleet in state.fleets:
         session.merge(m.Fleet(id=UUID(fleet['id']), empire_id=empire.id, name=fleet['name'], x=fleet['x'], y=fleet['y'], destination_x=fleet['destination_x'], destination_y=fleet['destination_y'], status=fleet['status'], mission=fleet.get('mission', 'MOVE'), target_planet_index=fleet.get('target_planet_index'), colonization_population=fleet.get('colonization_population'), colonization_origin_planet_id=UUID(fleet['colonization_origin_planet_id']) if fleet.get('colonization_origin_planet_id') else None, fuel_reserve=fleet.get('fuel_reserve', 0), departure_at=utc(fleet['departure_at']), arrival_at=utc(fleet['arrival_at']), propulsion_id=fleet['propulsion'], mode=fleet['mode'], fuel_cost=fleet['fuel_cost']))
         session.flush()
