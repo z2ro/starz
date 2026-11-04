@@ -1,7 +1,7 @@
 import type { Campaign } from '../campaign/types';
 export type Content = { id: string; name: string; description: string; category: string; cost: Record<string, number>; requires: string[] };
 export type District = Content & { duration: number; workforce: number; energy_generation: number; energy_consumption: number; production: Record<string, number>; processing: Record<string, number>; research_rate: number; population_capacity: number; industrial_capacity: number; construction_slots: number; shipyard_slots: number };
-export type Technology = Content & { duration: number; unlocks: string[] };
+export type Technology = Content & { duration: number; unlocks: string[]; effects?: Record<string,number>; level_requires?: Record<string,number>; infrastructure?: Record<string,number> };
 export type Hull = Content & { classification: string; role: string; mass: number; crew: number; duration: number; compatible_propulsion: string[]; combat_power?: number; cargo_capacity?: number; science_bonus?: number; carrier_capacity?: number };
 export type Propulsion = Content & { compatible_fuels: string[]; speed_factor: number; fuel_efficiency: number; thermal_load: number; signature: number };
 export type Fuel = Content & { energy_density: number; storage_factor: number };

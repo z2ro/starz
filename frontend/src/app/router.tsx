@@ -1,3 +1,5 @@
+import { DevelopmentView } from '../universe/DevelopmentView';
+import { OperationsView } from '../universe/OperationsView';
 import { UniverseView } from '../universe/UniverseView';
 import type { ShellContext } from '../components/shell/AppShell';
 import { CampaignView } from '../campaign/CampaignView';
@@ -24,6 +26,9 @@ export function AppRouter() {
     <Route path="/ship-geometry-lab" element={<Suspense fallback={<div>Carregando Ship Geometry Lab…</div>}><ShipGeometryLabView /></Suspense>} />
     <Route path="/planet-lab" element={<Suspense fallback={<div className="planet-lab-loading">Carregando Planet Lab…</div>}><PlanetLabView /></Suspense>} />
     <Route element={<AppShell />}>
+      <Route path="/development" element={<DevelopmentView />} />
+      <Route path="/missions" element={<OperationsView />} />
+      <Route path="/relations" element={<OperationsView />} />
       <Route path="/universe" element={<UniverseView />} />
       <Route path="/campaign" element={<CampaignView />} />
       <Route path="/overview" element={<OverviewView />} />
