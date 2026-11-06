@@ -2,6 +2,12 @@ import { createContext } from 'react';
 export const PixelTheme = createContext(false);
 // Filled shapes on an integer 16px grid; labels belong to the surrounding control.
 const shapes = {
+  cannon: ['M2 12h12v3H2zM5 9h6v3H5zM6 5h5v4H6zM8 1h3v5H8z','M7 6h3v2H7zM4 13h8v1H4z'],
+  missile: ['M7 1h2v2h2v7h2v4h-3v-2H6v2H3v-4h2V3h2zM7 13h2v3H7z','M7 4h2v3H7z'],
+  railgun: ['M1 12h14v3H1zM5 8h7v4H5zM7 1h2v8H7zM11 1h2v8h-2z','M6 10h5v1H6zM3 13h10v1H3z'],
+  shield: ['M2 2l6-1 6 1v7l-2 3-4 3-4-3-2-3z','M4 4h2v5l2 2v2l-4-3zM8 3h4v2H8z'],
+  platform: ['M5 1h6v4h4v6h-4v4H5v-4H1V5h4z','M6 6h4v4H6zM2 7h2v2H2zM12 7h2v2h-2z'],
+  intercept: ['M1 1h5v2H3v3H1zM10 1h5v5h-2V3h-3zM1 10h2v3h3v2H1zM13 10h2v5h-5v-2h3zM7 5h2v6H7z','M5 7h6v2H5z'],
   command: ['M2 3h12v9H2zM5 12h6v2H5z', 'M4 5h3v2H4zM9 5h3v1H9zM9 8h3v1H9zM4 9h3v1H4z'],
   planet: ['M5 1h6v2h2v2h2v6h-2v2h-2v2H5v-2H3v-2H1V5h2V3h2z', 'M5 3h3v2h2v3H7v2H5V7H3V5h2zM9 11h4v2H9z'],
   build: ['M2 6h3V3h3v4l4-2v3h2v7H2z', 'M4 10h2v2H4zM8 10h2v2H8zM12 10h1v2h-1zM3 1h4v1H3z'],

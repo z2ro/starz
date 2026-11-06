@@ -1,0 +1,31 @@
+name: starz-warfare-2
+services:
+  universe-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: warfare
+      POSTGRES_USER: warfare
+      POSTGRES_PASSWORD: warfare_local_only
+    ports: ["127.0.0.1:5548:5432"]
+    volumes: ["warfare-save:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warfare -d warfare"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  universe-app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://warfare:warfare_local_only@universe-db:5432/warfare
+      STARZ_PERSISTENT: "1"
+      STARZ_UNIVERSE_SEED: STARZ-WARFARE-2
+    ports: ["127.0.0.1:8033:8000"]
+    depends_on:
+      universe-db: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+volumes:
+  warfare-save:

@@ -67,7 +67,7 @@ def apply_hits(hits,targets,pool):
 
 def resolve_battle(attacker,ships,defender,planet_id):
     a=fleet_units(attacker,ships);d=fleet_units(defender,local_defenders(defender,planet_id))+defense_units(defender)
-    ammo=deepcopy(defender.state.defenses['ammunition']);before=deepcopy(d);attacking_before=deepcopy(a);rounds=[]
+    ammo=deepcopy(defender.state.defenses['ammunition']);ammo_before=deepcopy(ammo);before=deepcopy(d);attacking_before=deepcopy(a);rounds=[]
     for turn in range(1,7):
         if not a or not d:break
         ahits=plans(a,d,{});dhits=plans(d,a,ammo)
@@ -92,12 +92,13 @@ def resolve_battle(attacker,ships,defender,planet_id):
         for r,n in sorted(defender.state.stocks.items()):
             take=min(n*.25,capacity);defender.state.stocks[r]-=take;capacity-=take
             if take:loot[r]=take
-    return {'kind':'fleet','planet_id':planet_id,'at':attacker.state.last_updated,'attacking_fleet_before':attacking_before,'defending_fleet_before':[u for u in before if u['kind']=='ship'],'attacking_fleet_after':a,'defending_fleet_after':[u for u in d if u['kind']=='ship'],'outcome':'attacker' if won else 'defender' if not a and d else 'draw','rounds':rounds,'attacker_losses':sorted(lost_a),'defender_losses':sorted(lost_d),'defenses_before':[{k:u[k] for k in ('id','type','hp')} for u in before if u['kind']=='defense'],'defenses_after':deepcopy(defender.state.defenses['units']),'ammunition_after':ammo,'loot':loot}
+    return {'kind':'fleet','planet_id':planet_id,'at':attacker.state.last_updated,'attacking_fleet_before':attacking_before,'defending_fleet_before':[u for u in before if u['kind']=='ship'],'attacking_fleet_after':a,'defending_fleet_after':[u for u in d if u['kind']=='ship'],'outcome':'attacker' if won else 'defender' if not a and d else 'draw','rounds':rounds,'attacker_losses':sorted(lost_a),'defender_losses':sorted(lost_d),'defenses_before':[{k:u[k] for k in ('id','type','hp')} for u in before if u['kind']=='defense'],'defenses_after':deepcopy(defender.state.defenses['units']),'ammunition_before':ammo_before,'ammunition_consumed':{k:v-ammo.get(k,0) for k,v in ammo_before.items()},'ammunition_after':ammo,'technology':{'attacker':technology_snapshot(attacker,combat_effect_keys(attacker,attacking_before)),'defender':technology_snapshot(defender,combat_effect_keys(defender,before))},'economic_losses':{'attacker':loss_cost(attacker,attacking_before,a),'defender':loss_cost(defender,before,d)},'loot':loot}
 
 
 def resolve_missiles(attacker,defender,count,target_type=None):
     c,s=defender.catalog,defender.state;cap=defender.capacities();factor=min(cap['energy_coverage'],cap['workforce_coverage'])
     interceptors=sum(c.get('defenses',u['type']).intercept_capacity for u in s.defenses['units']);ammo=s.defenses['ammunition'];intercepted=min(count,ammo.get('interceptor_missile',0),int(interceptors*factor));ammo['interceptor_missile']=ammo.get('interceptor_missile',0)-intercepted
+    ammo_before=deepcopy(ammo);ammo_before['interceptor_missile']=ammo.get('interceptor_missile',0)+intercepted
     units=defense_units(defender);before=deepcopy(s.defenses['units']);shield=damage=0;infrastructure=0
     for _ in range(count-intercepted):
         alive=[u for u in units if u['hp']>0];power=c.get('defenses','strategic_missile').damage*(1+effect(attacker.catalog,attacker.state,'weapons'))
@@ -114,4 +115,32 @@ def resolve_missiles(attacker,defender,count,target_type=None):
         if id=='civil_district':continue
         while infrastructure>=200 and s.districts[id]>0:
             s.districts[id]-=1;infrastructure-=200;lost_buildings[id]=lost_buildings.get(id,0)+1
-    return {'kind':'missile','planet_id':s.planet_id,'at':s.last_updated,'incoming':count,'intercepted':intercepted,'shield_absorbed':shield,'hull_damage':damage,'defenses_before':before,'defenses_after':deepcopy(s.defenses['units']),'infrastructure_losses':lost_buildings,'ammunition_after':deepcopy(ammo),'outcome':'resolved','loot':{}}
+    return {'kind':'missile','planet_id':s.planet_id,'at':s.last_updated,'incoming':count,'intercepted':intercepted,'shield_absorbed':shield,'hull_damage':damage,'defenses_before':before,'defenses_after':deepcopy(s.defenses['units']),'infrastructure_losses':lost_buildings,'ammunition_before':ammo_before,'ammunition_consumed':{'interceptor_missile':intercepted},'technology':{'attacker':technology_snapshot(attacker,{'weapons'}),'defender':technology_snapshot(defender,{'armor','shields'})},'ammunition_after':deepcopy(ammo),'outcome':'resolved','loot':{}}
+
+
+def combat_effect_keys(engine,units):
+    keys={'armor'} if units else set()
+    if any(u['damage']>0 for u in units):keys.add('weapons')
+    if any(u.get('shield',0)>0 or u.get('pool_initial',0)>0 for u in units):keys.add('shields')
+    if any(u['kind']=='defense' and u['damage']>0 for u in units):keys.add('defense')
+    if any(u['kind']=='ship' and engine.catalog.get('ships',u['type']).carrier_capacity for u in units):keys.add('carrier')
+    return keys
+
+
+def technology_snapshot(engine,keys):
+    from ..progression import level,technology_effects
+    result={}
+    for tech in engine.catalog.items['technologies'].values():
+        value=level(engine.state,tech.id)
+        bonuses={key:n for key,n in technology_effects(tech,value).items() if key in keys and n}
+        if bonuses:result[tech.id]={'level':value,'bonus':sum(bonuses.values()),'effects':bonuses}
+    return result
+
+
+def loss_cost(engine,before,after):
+    survivors={u['id'] for u in after};cost={}
+    for unit in before:
+        if unit['id'] in survivors:continue
+        item=engine.catalog.get('ships' if unit['kind']=='ship' else 'defenses',unit['type'])
+        for r,n in item.cost.items():cost[r]=cost.get(r,0)+n
+    return cost

@@ -167,3 +167,5 @@ planeta automaticamente. Ainda não existem transporte, migração, terraformaç
 dedicado ou reembolso/cancelamento colonial.
 
 Pesquisa com planejamento e defesa planetária: [mecânicas e ambiente isolado](docs/planetary-defense.md).
+
+Operações e inteligência: [Fleet Combat 2.0](docs/fleet-intelligence-2.md). Regra de layout permanente: [fullscreen workspaces](docs/ux/fullscreen-workspaces.md).

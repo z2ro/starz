@@ -155,7 +155,7 @@ Experimento local, não pronto para exposição pública. Sem recuperação de s
 verificação de e-mail, sessões por dispositivo na UI ou rate limiter distribuído.
 Credenciais Compose são somente de desenvolvimento. Um universo por instalação;
 sem chat, alianças multilaterais, ranking, guildas, mercado automático ou conquista
-territorial. Reservas não se abastecem sozinhas. Não há cancelamento/recall em trânsito.
+territorial. Reservas não se abastecem sozinhas. Recall e retorno são condicionados ao estado real e à reserva; colonização comprometida e retorno já iniciado não aceitam recall.
 
 Não há NPC neste universo por padrão. A IA estratégica anterior continua no cenário
 Concordat opcional; ela não é apresentada como jogador humano. Carriers usam alas
@@ -224,3 +224,5 @@ Research 2.0 mantém os 32 IDs e acrescenta projetos de tier, capacidade por dom
 Não houve auditoria de segurança de produção, teste de carga, balanceamento de
 meses ou campanha militar manual completa pelo browser. Esses trabalhos continuam
 necessários antes de qualquer exposição pública.
+
+Operações, reconhecimento e relatórios privados evoluíram em [Fleet Combat & Intelligence 2.0](fleet-intelligence-2.md).

@@ -34,7 +34,7 @@ it('groups navigation and exposes planet selection without issuing an order',()=
 it('retains the exact selected destination and planet index in the colonization form',()=>{
  const s=planetSnapshot();s.persistent=true;
  render(<MemoryRouter initialEntries={['/missions?mission=COLONIZE&x=3&y=-2&planet_index=4']}><Routes><Route element={<Outlet context={{state:s,catalog,activePlanetId:s.active_planet?.id,execute:vi.fn(),setFeedback:vi.fn()}}/>}><Route path="/missions" element={<OperationsView/>}/></Route></Routes></MemoryRouter>);
- expect(screen.getByLabelText('Missão')).toHaveValue('COLONIZE');expect(screen.getByLabelText('Coordenada X')).toHaveValue(3);expect(screen.getByLabelText('Coordenada Y')).toHaveValue(-2);expect(screen.getByLabelText('Índice')).toHaveValue(4);expect(screen.getByRole('button',{name:/Confirmar envio/})).toBeDisabled();
+ expect(screen.getByLabelText('Missão')).toHaveValue('COLONIZE');expect(screen.getByLabelText('Coordenada X')).toHaveValue(3);expect(screen.getByLabelText('Coordenada Y')).toHaveValue(-2);expect(screen.getByLabelText('Índice')).toHaveValue(4);fireEvent.click(screen.getByRole('tab',{name:'3 · Lançamento'}));expect(screen.getByRole('button',{name:/Confirmar envio/})).toBeDisabled();
 });
 it('blocks an offer that cannot be reserved from local stock',()=>{
  const s=planetSnapshot();s.persistent=true;s.stocks.raw_ore=10;
@@ -46,7 +46,7 @@ it('blocks an offer that cannot be reserved from local stock',()=>{
 it('keeps the arrived fleet selected when opening its mission planner',()=>{
  const s=planetSnapshot();s.persistent=true;s.ships=[{id:'ready',hull_id:'scout_hull',propulsion_id:'chemical_drive',fuel_id:'ion_fuel',crew:3,mass:2,ready_at:0}];s.fleets=[{...s.fleets[0],id:'selected-fleet',status:'ARRIVED',ship_ids:['ready'],x:0,y:0}];
  render(<MemoryRouter initialEntries={['/missions?fleet=selected-fleet&x=2&y=0']}><Routes><Route element={<Outlet context={{state:s,catalog,activePlanetId:s.active_planet?.id,execute:vi.fn(),setFeedback:vi.fn()}}/>}><Route path="/missions" element={<OperationsView/>}/></Route></Routes></MemoryRouter>);
- expect(screen.getByRole('checkbox')).toBeChecked();expect(screen.getByRole('button',{name:'Calcular missão'})).toBeEnabled();expect(screen.getByRole('button',{name:/Confirmar envio/})).toBeDisabled();
+ expect(screen.getByRole('checkbox')).toBeChecked();fireEvent.click(screen.getByRole('tab',{name:'3 · Lançamento'}));expect(screen.getByRole('button',{name:'Calcular missão'})).toBeEnabled();expect(screen.getByRole('button',{name:/Confirmar envio/})).toBeDisabled();
 });
 vi.mock('../frontend/src/api/queries',()=>({useGalaxyQuery:()=>({isPending:false,data:{radius:2,home:[0,0],center:[0,0],systems:[{id:'home',name:'Sistema natal',x:0,y:0,distance:0,home:true,knowledge_level:'SURVEYED',planets:[{planet_index:1,name:'Mundo livre',gravity:1,temperature:290,water:50,radiation:0,viability:'VIABLE',ownership:'UNCLAIMED',colonization:{eligible:true,reason:null,population:20,cost:{}}}]}]}})}));
 it('exposes surveyed home-system planets and retains their index in the mission link',()=>{

@@ -1,0 +1,61 @@
+/* Persistent game contract: the document never scrolls; workspaces own overflow. */
+html:has(.pixel-game),body:has(.pixel-game),#app:has(.pixel-game){height:100%;max-height:100%;overflow:hidden}
+.pixel-game.app-root{height:100dvh;min-height:0;overflow:hidden}
+.pixel-game>.shell-snapshot-content{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.pixel-game .px-masthead,.pixel-game .px-resources,.pixel-game .px-resource-toggle{flex-shrink:0}
+.pixel-game .px-layout{flex:1;min-height:0;display:grid;overflow:hidden}
+.pixel-game .px-nav{min-height:0;overflow:auto;overscroll-behavior:contain}
+.pixel-game .px-page{display:flex;flex-direction:column;min-height:0;min-width:0;height:100%;overflow:hidden;box-sizing:border-box;position:relative}
+.px-view{flex:1 1 0;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:0 4px 12px}
+.px-view>*{min-width:0;max-width:100%;box-sizing:border-box}
+.pixel-game [hidden]{display:none!important}
+.pixel-game .viewport-operations{flex:none;padding:0 0 6px;font:13px system-ui;z-index:8}
+.viewport-operations>summary{min-height:30px;cursor:pointer;display:list-item}
+.viewport-operations>div{position:absolute;top:44px;left:12px;right:12px;max-height:55vh;overflow:auto;background:#101d29;border:2px solid #758c99;padding:12px;box-shadow:4px 4px #030914}
+.viewport-return:empty{display:none}.viewport-return{flex:none;max-height:110px;overflow:auto}.viewport-return .ux-return{padding:8px;margin:0}.viewport-return ul{margin:4px 0}
+.workspace-dialog{color:#eee9d5;background:#101d29;border:3px solid #758c99;padding:12px;width:min(850px,calc(100vw - 24px));height:calc(100dvh - 32px);box-sizing:border-box;overflow:hidden}
+.workspace-dialog[open]{display:flex;flex-direction:column}.workspace-dialog::backdrop{background:#020814cc}.workspace-dialog>header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex:none}.workspace-dialog>div{overflow:auto;min-height:0;flex:1}.workspace-dialog button{min-height:44px}.workspace-dialog .px-panel{margin-top:12px}
+.viewport-panel-tabs{display:none}.pixel-game .px-mobile-dock{position:static;transform:none;flex:none;height:56px;min-height:56px;padding:2px;box-sizing:border-box}
+.pixel-game .strategy-world{min-height:0;height:clamp(320px,calc(100dvh - 285px),650px);padding:20px}
+.pixel-game .strategy-world-scene{min-height:0}.pixel-game .strategy-world-dossier{overflow:auto;min-height:0}.pixel-game .strategy-worlds{padding:6px 0}.pixel-game .strategy-world-dossier dl>div{padding:6px 0}
+.pixel-game .ux-choice-layout,.pixel-game .naval-command,.pixel-game .research-workspace,.pixel-game .galaxy-layout,.pixel-game .naval-fleets,.pixel-game .defense-workspace{min-height:0;align-items:start}
+.pixel-game .ux-choice-list,.pixel-game .naval-catalog,.pixel-game .research-map-scroll{max-height:calc(100dvh - 350px);min-height:140px;overflow:auto;overscroll-behavior:contain}
+.pixel-game .ux-inspector,.pixel-game .naval-inspector,.pixel-game .system-detail{max-height:calc(100dvh - 310px);overflow:auto;min-height:0;box-sizing:border-box;overscroll-behavior:contain}
+.pixel-game .ux-inspector>button:last-of-type,.pixel-game .naval-inspector .action.primary,.pixel-game .px-mission-confirm>.button{position:sticky;bottom:0;z-index:2;box-shadow:0 -8px 0 #101d29,2px 2px 0 #030914}
+.defense-overview{display:flex;gap:12px;flex-wrap:wrap;padding:8px 0}.defense-overview span{font:13px system-ui}.defense-overview b{color:#86d4d5}
+.pixel-game .defense-command>header p,.pixel-game .ux-operations>header p{margin:6px 0}.pixel-game .defense-catalog>section{padding:6px 0}.pixel-game .defense-catalog button{min-height:60px}.pixel-game .defense-workspace{grid-template-columns:minmax(220px,.8fr) minmax(0,1.2fr)}
+.pixel-game .px-mission-planner{display:block!important}.px-mission-planner fieldset{min-width:0}.pixel-game .px-mission-ships .universe-vessels{max-height:none;overflow:visible}.pixel-game .px-mission-confirm{max-width:800px}.pixel-game .px-mission-planner>.tabs{position:sticky;top:0;background:#091321;z-index:3;padding:6px 0}.pixel-game .px-mission-ships>button{position:sticky;bottom:0}
+.pixel-game .research-map-scroll{touch-action:pan-x pan-y}.workspace-zoom{display:flex;align-items:center;gap:6px}.intel-field h3{font:600 14px system-ui}.intel-field{padding:8px 0!important}.intel-field ul{margin:6px 0}
+@media(max-width:700px){
+ .pixel-game .px-layout{display:flex;flex-direction:column}.pixel-game .px-nav{flex:none;overflow:visible;padding:4px 12px}.pixel-game .px-nav[data-open=true] .px-nav-links{position:absolute;top:0;left:0;right:0;bottom:0;max-height:none;overflow:auto;background:#101d29;padding:54px 12px 12px;z-index:30;box-sizing:border-box}.pixel-game .px-nav-toggle{position:relative;z-index:31}.pixel-game .px-nav .px-nav-toggle{min-height:36px}
+ .pixel-game .px-page{flex:1;min-height:0;height:auto;padding:4px 10px}.pixel-game .px-page header h1{font-size:18px;margin:4px 0}.pixel-game .px-page header p{font-size:13px;margin:6px 0}.viewport-panel-tabs{display:block;flex:none}.viewport-panel-tabs .tabs{display:flex;gap:4px;overflow-x:auto;margin:4px 0}.viewport-panel-tabs button{flex:1;padding:6px;min-height:40px;font-size:12px}.px-view{padding-bottom:8px}
+ .pixel-game .ux-choice-layout,.pixel-game .research-workspace,.pixel-game .naval-command,.pixel-game .naval-fleets,.pixel-game .galaxy-layout{display:block}
+ .pixel-game .ux-choice-list,.pixel-game .naval-catalog,.pixel-game .research-map-scroll,.pixel-game .ux-inspector,.pixel-game .naval-inspector,.pixel-game .system-detail{max-height:none;min-height:0;overflow:visible}
+ .pixel-game .research-map-scroll{overflow:auto;max-height:calc(100dvh - 420px);min-height:180px}.pixel-game .strategy-world{height:auto;min-height:440px;padding:12px}.pixel-game .strategy-world-scene{height:240px;right:0}.pixel-game .strategy-world-identity{height:190px}.pixel-game .strategy-world-dossier{overflow:visible}.pixel-game .strategy-world-modes{margin:0 0 8px}.pixel-game .strategy-world-dossier dl>div{padding:5px 0}
+ .px-page-research .px-view[data-panel=main] .research-inspector,.px-page-research .px-view[data-panel=detail] .research-map-scroll{display:none}
+ .px-page-development .px-view[data-panel=main] :is(.ux-inspector,.ux-recruit),.px-page-development .px-view[data-panel=detail] :is(.ux-choice-list,.ux-recruit),.px-page-development .px-view[data-panel=population] :is(.ux-choice-layout,.universe-tabs){display:none}
+ .px-page-shipyard .px-view[data-panel=main] :is(.strategy-ship-stage,.naval-inspector),.px-page-shipyard .px-view[data-panel=stage] :is(.naval-catalog,.naval-inspector),.px-page-shipyard .px-view[data-panel=detail] :is(.naval-catalog,.strategy-ship-stage){display:none}
+ .px-page-fleets .px-view[data-panel=main] .naval-fleets>div:last-child:not(.fleet-list),.px-page-fleets .px-view[data-panel=detail] .naval-fleets>.fleet-list{display:none}
+ .px-page-galaxy .px-view[data-panel=main] .system-detail,.px-page-galaxy .px-view[data-panel=detail] .galaxy-map-scroll{display:none}
+ .px-page-economy .px-view[data-panel=main] :is(.industrial-flow-network,.economy-capacity-strip,.economy-detail-layout),.px-page-economy .px-view[data-panel=flow] :is(.economy-resource-strip,.economy-capacity-strip,.economy-detail-layout),.px-page-economy .px-view[data-panel=detail] :is(.economy-resource-strip,.industrial-flow-network){display:none}
+ .pixel-game .defense-workspace{display:block}.pixel-game .defense-workspace .ux-inspector{overflow:visible;max-height:none}.pixel-game .defense-overview{gap:8px}.pixel-game .defense-overview span{font-size:12px}.pixel-game .tabs{flex-wrap:wrap}.pixel-game .defense-command .tabs button{flex:1;padding:6px;min-width:70px}
+ .viewport-operations>summary{min-height:26px}.viewport-return{max-height:70px}.pixel-game .toast{max-width:calc(100vw - 24px);max-height:25dvh;overflow:auto;bottom:60px;box-sizing:border-box}
+}
+
+.pixel-game .map-viewport{display:flex;flex-direction:column;max-height:calc(100dvh - 355px);min-height:160px;overflow:hidden;padding:0}.map-pan{min-height:0;overflow:auto;overscroll-behavior:contain;flex:1;max-height:100%;touch-action:pan-x pan-y}.map-pan:focus-visible{outline:2px solid #eee9d5;outline-offset:-3px}.map-canvas{width:max-content;min-width:100%}.workspace-zoom{flex:none;background:#101d29;padding:4px}.pixel-game .workspace-zoom button{min-height:32px;padding:4px 10px}.pixel-game .star-map{width:max(600px,100%);min-height:400px;max-height:none;height:auto}.pixel-game .galaxy-layout{grid-template-columns:minmax(0,1fr) minmax(260px,.55fr)}
+@media(max-width:700px){.pixel-game .map-viewport{max-height:calc(100dvh - 400px);min-height:180px}.workspace-zoom small{font-size:11px}.pixel-game.app-root{min-width:0;width:100%}}
+
+.pixel-game .defense-catalog{overflow:auto;overscroll-behavior:contain}.defense-mobile-tabs{display:none}
+@media(max-width:700px){.defense-mobile-tabs{display:block}.defense-command [data-mobile-panel=models] .ux-inspector,.defense-command [data-mobile-panel=detail] .defense-catalog{display:none}.px-page-universe .px-view[data-panel=main] .strategy-world-dossier,.px-page-universe .px-view[data-panel=detail] :is(.strategy-world-scene,.strategy-world-identity,.strategy-world-modes){display:none}.px-page-universe .px-view[data-panel=detail] .strategy-world{min-height:0}.px-page-universe .px-view[data-panel=main] .strategy-world{min-height:260px}.pixel-game .defense-catalog{max-height:none;overflow:visible}}
+html:has(.universe-login),body:has(.universe-login),#app:has(.universe-login),html:has(.fatal),body:has(.fatal),#app:has(.fatal){height:100%;overflow:hidden}
+.universe-login,.fatal{height:100dvh;min-height:0;overflow:auto;box-sizing:border-box}
+.pixel-game .naval-canvas{height:clamp(150px,30dvh,380px)}
+@media(max-width:700px){.pixel-game .ux-development .ux-choice-list,.pixel-game .naval-catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.pixel-game .ux-development .ux-choice-list button,.pixel-game .naval-catalog button{width:100%;min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}}
+
+.pixel-game.app-root{padding-bottom:0}
+.mobile-sector-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mobile-sector-links .strategy-nav-group>a{min-height:44px}
+@media(max-width:700px){.pixel-game .px-mobile-dock{height:auto;min-height:56px;padding-bottom:max(2px,env(safe-area-inset-bottom))}.pixel-game .px-mobile-dock a{min-height:48px}}
+
+.px-view{overflow-anchor:none}.defense-context>summary{font:13px/1.5 system-ui;cursor:pointer;min-height:32px}
+.pixel-game .ux-inspector>button:last-of-type{width:100%;background:#294151;box-shadow:0 -10px 0 #101d29,0 8px 0 #101d29}
+@media(max-width:700px){.pixel-game .defense-command>.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}.pixel-game .defense-command>.tabs button{min-width:0;min-height:52px;padding:4px;font-size:12px}}

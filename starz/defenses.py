@@ -1,4 +1,5 @@
 """Planet-owned structures and paid manufacturing queues; no fleet entities."""
+import re
 from copy import deepcopy
 from math import ceil, isfinite
 from uuid import uuid4, uuid5, NAMESPACE_URL
@@ -71,7 +72,17 @@ def defense_quote(engine,id,count=1,repair=None):
         if capacities['available_population']<workers:requirements.append('Trabalhadores livres insuficientes para a instalação e as filas.')
         if len(s.defenses['units'])+sum(j['count'] for j in s.defenses['queue'] if c.get('defenses',j['type']).kind=='structure' and not j.get('repair'))+count>1000:requirements.append('Limite operacional: 1000 estruturas por planeta.')
     if item.kind=='ammunition' and s.defenses['ammunition'].get(id,0)+sum(j['count'] for j in s.defenses['queue'] if j['type']==id)+count>10000:requirements.append('Depósito de munição cheio (10000 por tipo).')
-    return {'id':id,'count':count,'unit_cost':{r:v*factor for r,v in item.cost.items()},'work_rate':1+effect(c,s,'build_speed'),'cost':{r:ceil(v*count*factor) for r,v in item.cost.items()},'duration':max(1,ceil(item.duration*count*factor/(1+effect(c,s,'build_speed')))),'requirements':requirements}
+    links=[]
+    for ref in set(item.requires)|set(item.level_requires):
+        if ref in c.items['technologies'] and level(s,ref)<item.level_requires.get(ref,1):links.append({'label':c.get('technologies',ref).name,'path':'/research?tech='+ref})
+        elif ref in c.items['districts'] and s.districts.get(ref,0)<1:links.append({'label':c.get('districts',ref).name,'path':'/development?building='+ref})
+    if industrial<item.industrial_requirement:links.append({'label':'Ampliar indústria','path':'/development?building=processor'})
+    if any('energia' in r for r in requirements):links.append({'label':'Ampliar energia','path':'/development?building=solar_field'})
+    if any('Trabalhadores' in r for r in requirements):links.append({'label':'Gerenciar população','path':'/development?section=population'})
+    for entries in c.items.values():
+        for content in sorted(entries.values(),key=lambda d:-len(d.id)):
+            requirements=[re.sub(r'(?<![a-z0-9_])'+re.escape(content.id)+r'(?![a-z0-9_])',content.name,r) for r in requirements]
+    return {'links':links,'id':id,'count':count,'unit_cost' :{r:v*factor for r,v in item.cost.items()},'work_rate':1+effect(c,s,'build_speed'),'cost':{r:ceil(v*count*factor) for r,v in item.cost.items()},'duration':max(1,ceil(item.duration*count*factor/(1+effect(c,s,'build_speed')))),'requirements':requirements}
 
 
 def build_defense(engine,id,count=1,repair=None):

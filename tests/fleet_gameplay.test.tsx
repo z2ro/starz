@@ -1,3 +1,4 @@
+import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
 import { afterEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
@@ -14,7 +15,7 @@ afterEach(cleanup);
 const catalog = captured as Catalog;
 function ready() { const state = homeworld(); state.districts.orbital_shipyard = 1; state.capacities.shipyard_slots_available = 1; state.research.completed = ['orbital_engineering', 'nuclear_propulsion']; state.unlocked_content = ['nuclear_drive', 'fusion_fuel']; state.stocks = { refined_alloy: 10000, components: 10000, ion_fuel: 10000, fusion_fuel: 10000 }; state.population.available = 1000; return state; }
 const execute = vi.fn(async () => ({}));
-function view(element: React.ReactNode, state = ready()) { return render(<MemoryRouter><Routes><Route element={<Outlet context={{ catalog, state, execute, busy: false }} />}><Route path="/" element={element} /></Route></Routes></MemoryRouter>); }
+function view(element: React.ReactNode, state = ready()) { return render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><Routes><Route element={<Outlet context={{ catalog, state, execute, busy: false }} />}><Route path="/" element={element} /></Route></Routes></MemoryRouter></QueryClientProvider>); }
 it('maps exactly eleven visual designs and ten gameplay hulls without Stargrave or substitution', () => {
   expect(SHIP_DESIGNS).toHaveLength(11); expect(catalog.ships).toHaveLength(10);
   for (const hull of catalog.ships) { expect(designForHull(hull)).not.toBeNull(); expect(designForHull({ ...hull, role: 'wrong' })).toBeNull(); }

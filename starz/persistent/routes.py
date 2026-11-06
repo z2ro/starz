@@ -96,7 +96,7 @@ class Mission(BaseModel):
     model_config={'extra':'forbid'}
     planet_id: UUID | None = None
     ship_ids:list[str]=Field(min_length=1,max_length=100)
-    mission:Literal['MOVE','SURVEY','COLONIZE','TRANSPORT','ATTACK','ESPIONAGE','EXPEDITION']
+    mission:Literal['MOVE','SURVEY','COLONIZE','TRANSPORT','ATTACK','ESPIONAGE','EXPEDITION','RECON','REINFORCE']
     target_planet_id:UUID | None=None
     x:int=Field(default=0,ge=-100,le=100)
     y:int=Field(default=0,ge=-100,le=100)
@@ -204,3 +204,12 @@ class ResearchPlan(BaseModel):
 def research_plan(body:ResearchPlan,request:Request):
     from .research_planning import plan_research
     return perform(request,lambda session,empire,e:plan_research(e,body.id,body.level),body.planet_id)
+
+
+class FleetRecall(BaseModel):
+    planet_id: UUID | None = None
+    fleet_id: UUID
+
+@router.post('/api/universe/recall')
+def recall(body:FleetRecall,request:Request):
+    return perform(request,lambda session,empire,e:request.app.state.store.recall(session,empire,e,str(body.fleet_id)),body.planet_id)
