@@ -4,11 +4,11 @@ export type District = Content & { duration: number; workforce: number; energy_g
 export type ResearchDomain = 'civil' | 'military' | 'fundamental';
 export type ResearchJob = {active:string|null;remaining_work:number;complete_at:number|null;total_work?:number};
 export type Technology = Content & { future_unlocks?:string[]; domain?:ResearchDomain; tier?:number; kind?:'repeatable'|'breakthrough'; advances_tier?:number|null; milestones?:Record<string,Record<string,number>>; duration: number; unlocks: string[]; effects?: Record<string,number>; level_requires?: Record<string,number>; infrastructure?: Record<string,number> };
-export type Hull = Content & { classification: string; role: string; mass: number; crew: number; duration: number; compatible_propulsion: string[]; combat_power?: number; cargo_capacity?: number; science_bonus?: number; carrier_capacity?: number };
+export type Hull = Content & {hull_points?:number;weapon_damage?:number;shield_points?:number;combat_class?:string; classification: string; role: string; mass: number; crew: number; duration: number; compatible_propulsion: string[]; combat_power?: number; cargo_capacity?: number; science_bonus?: number; carrier_capacity?: number };
 export type Propulsion = Content & { compatible_fuels: string[]; speed_factor: number; fuel_efficiency: number; thermal_load: number; signature: number };
 export type Fuel = Content & { energy_density: number; storage_factor: number };
 export type TravelMode = Content & { travel_time_modifier: number; fuel_modifier: number; thermal_modifier: number; signature_modifier: number };
-export type Catalog = { resources: Content[]; districts: District[]; technologies: Technology[]; ships: Hull[]; propulsion: Propulsion[]; fuels: Fuel[]; travel_modes: TravelMode[] };
+export type Catalog = {defenses?:import('../universe/defenseTypes').DefenseDesign[]; resources: Content[]; districts: District[]; technologies: Technology[]; ships: Hull[]; propulsion: Propulsion[]; fuels: Fuel[]; travel_modes: TravelMode[] };
 export type Planet = { name: string; mass: number; radius: number; gravity: number; orbital_distance: number; temperature: number; atmosphere: string; radiation: number; magnetic_field: number; water: number; geological_activity: number; mineral_profile: Record<string, number>; usable_surface: number };
 export type Fleet = { operation?: string; id: string; name: string; status: 'ARRIVED' | 'TRANSIT'; mission: 'MOVE' | 'SURVEY' | 'COLONIZE'; target_planet_index?: number | null; x: number; y: number; destination_x: number; destination_y: number; ship_ids: string[]; eta: number; propulsion: string; mode: string; fuel_cost: number; fuel_reserve?: number; departure_at: number; arrival_at: number };
 export type Ship = { id: string; hull_id: string; propulsion_id: string; fuel_id: string; crew: number; mass: number; ready_at: number; origin_planet_id?: string | null; system_x?: number | null; system_y?: number | null };
@@ -22,6 +22,8 @@ export type State = {
   districts: Record<string, number>;
   construction: Array<{ id: string; started_at: number; complete_at: number }>;
   science?: Record<ResearchDomain,{capacity:number;specialized:number;rate:number}>;
+  ship_health?:Record<string,number>;
+  defenses?:import('../universe/defenseTypes').DefenseInventory;
   research_domains?: Record<ResearchDomain,ResearchJob>;
   research: { active: string | null; complete_at: number | null; completed: string[]; remaining_work: number };
   active_planet?: { id: string | null; planet_index: number; home: boolean };

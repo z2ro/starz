@@ -79,6 +79,11 @@ class District(Content):
 
 
 class Hull(Content):
+    hull_points: Positive = 100
+    weapon_damage: NonNegative = 5
+    shield_points: NonNegative = 0
+    combat_class: Literal["light", "medium", "capital"] = "light"
+    weapon_modifiers: dict[Literal["light", "medium", "capital"], Positive] = Field(default_factory=dict)
     classification: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     role: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     mass: float = Field(gt=0)
@@ -89,6 +94,23 @@ class Hull(Content):
     cargo_capacity: NonNegative = 0
     science_bonus: NonNegative = 0
     carrier_capacity: int = Field(default=0, ge=0)
+
+
+class Defense(Content):
+    kind: Literal['structure', 'ammunition'] = 'structure'
+    duration: Positive
+    industrial_requirement: int = Field(default=1, ge=1, le=50)
+    level_requires: dict[str, int] = Field(default_factory=dict)
+    hull_points: Positive = 100
+    damage: NonNegative = 0
+    shield: NonNegative = 0
+    energy_consumption: NonNegative = 0
+    workforce: int = Field(default=0, ge=0)
+    modifiers: dict[Literal['light', 'medium', 'capital'], Positive] = Field(default_factory=dict)
+    ammunition: str | None = None
+    missile_range: NonNegative = 0
+    intercept_capacity: int = Field(default=0,ge=0,le=100)
+    shield_regen: NonNegative = 0
 
 
 class Archetype(Content):
@@ -182,6 +204,7 @@ KINDS: dict[str, type[Content]] = {
     "technologies": Technology,
     "districts": District,
     "ships": Hull,
+    "defenses": Defense,
     "stars": StarArchetype,
     "planets": PlanetArchetype,
     "travel_modes": TravelMode,
@@ -238,7 +261,7 @@ class Catalog:
     def _reference_errors(self) -> list[str]:
         errors: list[str] = []
         resources = set(self.items["resources"])
-        unlockable = set().union(*(self.items[kind] for kind in ('technologies', 'districts', 'ships', 'fuels', 'propulsion', 'travel_modes')))
+        unlockable = set().union(*(self.items[kind] for kind in ('technologies', 'districts', 'ships', 'fuels', 'propulsion', 'travel_modes', 'defenses')))
         for kind, entries in self.items.items():
             for item in entries.values():
                 for resource_id in item.cost:
@@ -247,6 +270,12 @@ class Catalog:
                 for ref in item.requires:
                     if ref not in self.items['technologies'] and ref not in self.items['districts']:
                         errors.append(f"{item.id}: referência desconhecida: {ref}")
+                if isinstance(item, Defense):
+                    for ref, required in item.level_requires.items():
+                        if ref not in self.items['technologies'] or not 1 <= required <= 50:
+                            errors.append(f'{item.id}: requisito tecnológico inválido: {ref}')
+                    if item.ammunition and (item.ammunition not in self.items['defenses'] or self.items['defenses'][item.ammunition].kind != 'ammunition'):
+                        errors.append(f'{item.id}: munição inválida')
                 if isinstance(item, Technology):
                     if item.advances_tier and (item.kind != "breakthrough" or item.advances_tier != item.tier):
                         errors.append(f"{item.id}: avanço de tier inválido")
@@ -300,6 +329,8 @@ class Catalog:
 
     def _technology_cycles(self) -> list[str]:
         graph = {item.id: list(item.requires) for entries in self.items.values() for item in entries.values()}
+        for defense in self.items['defenses'].values():
+            graph[defense.id].extend(defense.level_requires)
         for technology in self.items['technologies'].values():
             graph[technology.id].extend(technology.level_requires)
             graph[technology.id].extend(technology.infrastructure)

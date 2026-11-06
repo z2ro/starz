@@ -11,7 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 export function DevelopmentView(){
  const {state,catalog,activePlanetId,execute,busy,setFeedback}=useOutletContext<ShellContext>();const q=useUniverse(activePlanetId);const [params]=useSearchParams();const [id,select]=useState(params.get('building')??'ore_extractor');const [filter,setFilter]=useState('all');const [recruiting,setRecruiting]=useState(false);const client=useQueryClient();
  useEffect(()=>{if(params.get('section')==='population')document.getElementById('population')?.scrollIntoView?.({block:'start'});},[params.get('section')]);
- const visible=catalog.districts.filter(d=>filter==='all'||(filter==='production'?Object.keys(d.production).length>0:filter==='capacity'?d.energy_generation>0||d.population_capacity>0:d.research_rate>0||d.shipyard_slots>0||d.category==='Defense'));
+ const visible=catalog.districts.filter(d=>(!state.persistent||d.id!=='orbital_battery')&&(filter==='all'||(filter==='production'?Object.keys(d.production).length>0:filter==='capacity'?d.energy_generation>0||d.population_capacity>0:d.research_rate>0||d.shipyard_slots>0||d.category==='Defense')));
  const d=visible.find(d=>d.id===id)??visible[0];const quote=q.data?.buildings.find(b=>b.id===d?.id);
  const choices=useRef<HTMLElement>(null);
  useEffect(()=>{const list=choices.current;const selected=list?.querySelector<HTMLElement>('[aria-pressed="true"]');if(list&&selected&&list.scrollWidth>list.clientWidth)list.scrollLeft+=selected.getBoundingClientRect().left-list.getBoundingClientRect().left;},[d?.id]);

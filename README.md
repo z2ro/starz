@@ -165,3 +165,5 @@ entidades imperiais. Viagens usam o planeta explicitamente selecionado no sistem
 frota ou, sem fonte local, apenas a `fuel_reserve` já embarcada; não escolhem outro
 planeta automaticamente. Ainda não existem transporte, migração, terraformação, Colony Ship
 dedicado ou reembolso/cancelamento colonial.
+
+Pesquisa com planejamento e defesa planetária: [mecânicas e ambiente isolado](docs/planetary-defense.md).

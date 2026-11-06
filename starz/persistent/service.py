@@ -18,6 +18,8 @@ from ..db.store import Store, load, persist, utc, epoch, _planet_summary, valida
 from ..simulation import Engine
 from ..universe import generate_system, colonization_viability
 from ..progression import effect, level, research_quote, building_quote
+from ..defenses import defense_quote
+from .combat import resolve_battle, resolve_missiles, local_defenders
 from ..travel import preview_travel
 
 
@@ -103,7 +105,9 @@ class PersistentStore(Store):
             while True:
                 e = Engine(self.catalog, load(session, empire, catalog=self.catalog))
                 cursor = e.state.last_updated
-                boundaries = [epoch(t) for t in session.scalars(select(m.Construction.complete_at).join(m.Planet).where(m.Planet.empire_id == empire.id))]
+                defense_payloads=session.scalars(select(m.PlanetDefenseState.payload).join(m.Planet).where(m.Planet.empire_id==empire.id)).all()
+                boundaries = [j['complete_at'] for payload in defense_payloads for j in payload.get('queue',[])]
+                boundaries += [epoch(t) for t in session.scalars(select(m.Construction.complete_at).join(m.Planet).where(m.Planet.empire_id == empire.id))]
                 if e.state.research['complete_at'] is not None: boundaries.append(e.state.research['complete_at'])
                 boundaries.extend(f['arrival_at'] for f in e.state.fleets if f['status'] == 'TRANSIT')
                 boundary = min([max(stamp, cursor), *(t for t in boundaries if cursor < t <= stamp)])
@@ -263,7 +267,8 @@ class PersistentStore(Store):
         fid=str(uuid4());now=s.last_updated
         f={'id':fid,'name':f'{mission} · {len(ids)} naves','ship_ids':ids,'x':origin[0],'y':origin[1],'destination_x':tx,'destination_y':ty,'status':'TRANSIT','mission':'SURVEY' if mission=='SURVEY' else 'COLONIZE' if mission=='COLONIZE' else 'MOVE','target_planet_index':data.get('planet_index') if mission=='COLONIZE' else None,'colonization_population':e.colonization_rules.population if mission=='COLONIZE' else None,'colonization_origin_planet_id':s.planet_id if mission=='COLONIZE' else None,'origin_planet_id':s.planet_id,'fuel_reserve':reserve,'departure_at':now,'arrival_at':now+duration,'propulsion':ships[0]['propulsion_id'],'mode':'NORMAL','fuel_cost':fuel}
         s.fleets.append(f)
-        session.add(m.UniverseOrder(universe_id=empire.universe_id,empire_id=empire.id,kind='mission',payload={'fleet_id':fid,'mission':mission,'target':str(target.id) if target else None,'cargo':cargo,'origin':list(origin),'duration':duration,'fuel':fuel},due_at=utc(now+duration),resolved=False))
+        s.universe.setdefault('fleet_planets',{})[fid]=None
+        session.add(m.UniverseOrder(universe_id=empire.universe_id,empire_id=empire.id,kind='mission',payload={'fleet_id':fid,'mission':mission,'target':str(target.id) if target else None,'cargo':cargo,'origin':list(origin),'origin_planet':source['id'] if source else None,'duration':duration,'fuel':fuel},due_at=utc(now+duration),resolved=False))
         return f
 
     def resolve(self, session, order, engines):
@@ -278,6 +283,17 @@ class PersistentStore(Store):
                 self.save(session,planet.empire_id,local);session.flush()
                 engines[str(planet.empire_id)]=Engine(self.catalog,load(session,session.get(m.Empire,planet.empire_id),catalog=self.catalog))
             return
+        if order.kind=='strategic_missile':
+            target=session.get(m.Planet,UUID(p['target']))
+            if target and target.empire_id and self.relation(session,order.empire_id,target.empire_id)['status']=='war':
+                local=Engine(self.catalog,load(session,session.get(m.Empire,target.empire_id),planet_id=target.id,catalog=self.catalog))
+                battle=resolve_missiles(e,local,p['count'],p.get('target_type'))
+                battle.update(attacker=str(order.empire_id),defender=str(target.empire_id),planet_name=local.system().planet.name,coordinates=[local.state.system_x,local.state.system_y,local.state.planet_index])
+                self.battle_report(e,battle);self.battle_report(local,battle)
+                self.save(session,target.empire_id,local);session.flush()
+                engines[str(target.empire_id)]=Engine(self.catalog,load(session,session.get(m.Empire,target.empire_id),catalog=self.catalog))
+            else:self.report(e,'Mísseis autodestruídos: destino sem guerra ativa. Munição lançada não é devolvida.')
+            self.save(session,order.empire_id,e);return
         if order.kind!='mission':return
         fleet=next((f for f in e.state.fleets if f['id']==p['fleet_id']),None)
         if not fleet:return
@@ -286,6 +302,8 @@ class PersistentStore(Store):
         target_engine=None
         if target:
             target_engine=Engine(self.catalog,load(session,session.get(m.Empire,target.empire_id),planet_id=target.id,catalog=self.catalog))
+        if mission=='MOVE':e.state.universe.setdefault('fleet_planets',{})[fleet['id']]=str(target.id) if target and target.empire_id==order.empire_id else None
+        if mission=='RETURN':e.state.universe.setdefault('fleet_planets',{})[fleet['id']]=p.get('origin_planet')
         if mission=='TRANSPORT' and target:
             for r,n in p['cargo'].items():target_engine.state.stocks[r]=target_engine.state.stocks.get(r,0)+n
             self.report(target_engine, f'Carga recebida: {p["cargo"]}.')
@@ -298,27 +316,10 @@ class PersistentStore(Store):
         elif mission=='ATTACK' and target:
             # A peace accepted during transit prevents combat; vessels return intact.
             if self.relation(session,order.empire_id,target.empire_id)['status']=='war':
-                defenders=[s for s in target_engine.state.ships if not busy(target_engine,s) and locate(target_engine,s)==(fleet['x'],fleet['y'])]
-                attack=power(e,ships);defense=power(target_engine,defenders,True)
-                attack_loss=min(1,defense/max(1,attack)*.65); defense_loss=min(1,attack/max(1,defense)*.65)
-                lost_a={s['id'] for s in sorted(ships,key=lambda x:x['id'])[:min(len(ships),int(len(ships)*attack_loss))]}
-                lost_d={s['id'] for s in sorted(defenders,key=lambda x:x['id'])[:min(len(defenders),ceil(len(defenders)*defense_loss))]}
-                if defense>=attack and ships:lost_a.add(sorted(ships,key=lambda x:x['id'])[0]['id'])
-                for eng,lost in ((e,lost_a),(target_engine,lost_d)):
-                    eng.state.ships=[s for s in eng.state.ships if s['id'] not in lost]
-                    for f in eng.state.fleets:f['ship_ids']=[id for id in f['ship_ids'] if id not in lost]
-                    eng.state.fleets=[f for f in eng.state.fleets if f['ship_ids']]
-                if attack>defense:
-                    cargo=sum(self.catalog.get('ships',s['hull_id']).cargo_capacity for s in ships if s['id'] not in lost_a)*(1+effect(self.catalog,e.state,'cargo'))
-                    loot={}
-                    for r,n in sorted(target_engine.state.stocks.items()):
-                        take=min(n*.25,cargo);target_engine.state.stocks[r]-=take;cargo-=take
-                        if take:loot[r]=take
-                    p=deepcopy(p);p['cargo']=loot
-                    batteries=target_engine.state.districts.get('orbital_battery',0)
-                    target_engine.state.districts['orbital_battery']=max(0,batteries-1)
-                msg=f'Batalha: ataque {attack:.1f}, defesa {defense:.1f}; baixas atacante {len(lost_a)}, defensor {len(lost_d)}. Saque retorna fisicamente.'
-                self.report(e,msg);self.report(target_engine,msg)
+                battle=resolve_battle(e,ships,target_engine,str(target.id))
+                battle.update(attacker=str(order.empire_id),defender=str(target.empire_id),planet_name=target_engine.system().planet.name,coordinates=[target_engine.state.system_x,target_engine.state.system_y,target_engine.state.planet_index])
+                self.battle_report(e,battle);self.battle_report(target_engine,battle)
+                p=deepcopy(p);p['cargo']=battle['loot']
         elif mission=='EXPEDITION':
             reward=ceil(20*(1+effect(self.catalog,e.state,'expedition'))*(1+sum(self.catalog.get('ships',s['hull_id']).science_bonus for s in ships)))
             capacity=sum(self.catalog.get('ships',s['hull_id']).cargo_capacity for s in ships)*(1+effect(self.catalog,e.state,'cargo'))
@@ -326,7 +327,7 @@ class PersistentStore(Store):
             p=deepcopy(p);p['cargo']={'raw_ore':reward,'volatiles':reward/2}
             self.report(e,'Expedição coletou amostras; entrega no retorno.')
         elif mission=='RETURN':
-            destination=next((world for world in e.state.planets if [world['x'],world['y']]==p['origin']),None)
+            destination=next((world for world in e.state.planets if world['id']==p['origin_planet']),None) if p.get('origin_planet') else next((world for world in e.state.planets if [world['x'],world['y']]==p['origin']),None)
             if destination:
                 stocks=e.state.stocks_by_planet[destination['id']]
                 for r,n in p.get('cargo',{}).items():stocks[r]=stocks.get(r,0)+n
@@ -378,4 +379,29 @@ class PersistentStore(Store):
                 planets.append({'id':str(planet.id),'x':star.x,'y':star.y,'index':planet.planet_index,'home':planet.id==other.home_planet_id})
             players.append({'id':str(other.id),'name':other.name,'self':other.id==empire.id,'planets':planets,'relation':self.relation(session,empire.id,other.id)})
         orders=session.scalars(select(m.UniverseOrder).where(m.UniverseOrder.universe_id==empire.universe_id)).all()
-        return {'empire_id':str(empire.id),'name':empire.name,'players':players,'research':[research_quote(self.catalog,e.state,t) for t in self.catalog.items['technologies']], 'buildings':[building_quote(self.catalog,e.state,t) for t in self.catalog.items['districts'] if e.state.districts.get(t,0)<50], 'reports':e.state.universe.get('reports',[]),'fleet_limit':2+int(effect(self.catalog,e.state,'fleet_slots')),'colony_limit':1+int(effect(self.catalog,e.state,'colonies')),'market':[{'id':str(o.id),'owner':str(o.empire_id),**o.payload} for o in orders if o.kind=='market' and o.payload['status']=='open'], 'missions':[{'id':str(o.id),'due_at':epoch(o.due_at),**o.payload} for o in orders if o.kind=='mission' and o.empire_id==empire.id and not o.resolved]}
+        return {'empire_id':str(empire.id),'name':empire.name,'players':players,'defenses':self.defense_details(session,empire,e),'battles':e.state.universe.get('battles',[]),'research':[research_quote(self.catalog,e.state,t) for t in self.catalog.items['technologies']], 'buildings':[building_quote(self.catalog,e.state,t) for t in self.catalog.items['districts'] if e.state.districts.get(t,0)<50], 'reports':e.state.universe.get('reports',[]),'fleet_limit':2+int(effect(self.catalog,e.state,'fleet_slots')),'colony_limit':1+int(effect(self.catalog,e.state,'colonies')),'market':[{'id':str(o.id),'owner':str(o.empire_id),**o.payload} for o in orders if o.kind=='market' and o.payload['status']=='open'], 'missions':[{'id':str(o.id),'due_at':epoch(o.due_at),**o.payload} for o in orders if o.kind=='mission' and o.empire_id==empire.id and not o.resolved]}
+
+
+    def battle_report(self,engine,battle):
+        engine.state.universe['battles']=[battle,*engine.state.universe.get('battles',[])][:30]
+        self.report(engine,f"Batalha no planeta {battle['planet_id']}: {battle['outcome']}; tipo {battle['kind']}. Consulte o relatório detalhado.")
+
+    def defense_details(self,session,empire,e):
+        return {'ships':[{'id':s['id'],'hull_id':s['hull_id'],'hp':e.state.universe.get('ship_health',{}).get(s['id'],self.catalog.get('ships',s['hull_id']).hull_points)} for s in local_defenders(e,e.state.planet_id)],'inventory':e.state.defenses,'options':[defense_quote(e,d.id) for d in self.catalog.items['defenses'].values()], 'repairs':[{**defense_quote(e,u['type'],repair=u['id']),'unit_id':u['id']} for u in e.state.defenses['units'] if u['hp']<self.catalog.get('defenses',u['type']).hull_points], 'operational':min(e.capacities()['energy_coverage'],e.capacities()['workforce_coverage']), 'battles':[b for b in e.state.universe.get('battles',[]) if b['planet_id']==e.state.planet_id], 'strikes':[{'id':str(o.id),'due_at':epoch(o.due_at),**o.payload} for o in session.scalars(select(m.UniverseOrder).where(m.UniverseOrder.universe_id==empire.universe_id,m.UniverseOrder.kind=='strategic_missile',m.UniverseOrder.resolved==False)) if o.payload['target']==e.state.planet_id or o.payload['origin_planet']==e.state.planet_id]}
+
+    def launch_missiles(self,session,empire,e,target_id,count,target_type=None):
+        target=session.get(m.Planet,UUID(target_id))
+        require(target is not None and target.empire_id is not None and target.empire_id!=empire.id,'Destino precisa pertencer a outro império.')
+        star=session.get(m.StarSystem,target.system_id)
+        require(star.universe_id==empire.universe_id,'Destino fora do universo.')
+        require(self.relation(session,empire.id,target.empire_id)['status']=='war','Lançamento exige guerra declarada.')
+        if target_type:require(self.catalog.get('defenses',target_type).kind=='structure','Alvo defensivo inválido.')
+        require(any(u['type']=='orbital_missile_battery' for u in e.state.defenses['units']),'Construa uma bateria orbital de mísseis.')
+        cap=e.capacities();require(min(cap['energy_coverage'],cap['workforce_coverage'])>=.5,'Bateria exige ao menos 50% de energia e trabalhadores.')
+        distance=((star.x-e.state.system_x)**2+(star.y-e.state.system_y)**2)**.5
+        require(distance<=max(self.catalog.get('defenses',u['type']).missile_range for u in e.state.defenses['units'] if u['type']=='orbital_missile_battery')*(1+effect(self.catalog,e.state,'sensors')),'Destino fora do alcance dos sensores e mísseis.')
+        require(1<=count<=50 and e.state.defenses['ammunition'].get('strategic_missile',0)>=count,'Mísseis estratégicos insuficientes (salva de 1 a 50).')
+        e.state.defenses['ammunition']['strategic_missile']-=count
+        arrival=e.state.last_updated+max(30,ceil(distance*45/(1+effect(self.catalog,e.state,'speed'))))
+        row=m.UniverseOrder(universe_id=empire.universe_id,empire_id=empire.id,kind='strategic_missile',payload={'target':str(target.id),'origin_planet':e.state.planet_id,'count':count,'target_type':target_type},due_at=utc(arrival),resolved=False)
+        session.add(row);session.flush();return {'id':str(row.id),'arrival_at':arrival,'count':count}

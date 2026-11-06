@@ -14,7 +14,8 @@
     energy_efficiency: 0.02
   level_cost_growth: 1.7
   level_work_growth: 1.55
-  unlocks: []
+  unlocks:
+  - planetary_shield
   domain: fundamental
   tier: 1
   kind: repeatable
@@ -23,6 +24,7 @@
       energy: 0.08
     5:
       energy: 0.16
+  future_unlocks: []
 - id: extraction
   name: Extração mineral
   description: 'Produção dos extratores × (1 + bônus de mineração), respeitando energia
@@ -48,6 +50,7 @@
       mining: 0.08
     5:
       mining: 0.16
+  future_unlocks: []
 - id: industrial_automation
   name: Automação industrial
   description: 'Aumenta os outputs do processamento; os inputs continuam sendo consumidos.
@@ -71,6 +74,7 @@
   domain: civil
   tier: 2
   kind: repeatable
+  future_unlocks: []
 - id: advanced_manufacturing
   name: Manufatura avançada
   description: 'Multiplica a produção real de componentes após automação. Bônus por
@@ -94,6 +98,7 @@
   domain: civil
   tier: 3
   kind: repeatable
+  future_unlocks: []
 - id: computing
   name: Computação de frotas
   description: 'Acrescenta um slot operacional de frota em trânsito por nível. Bônus
@@ -110,10 +115,12 @@
     fleet_slots: 1
   level_cost_growth: 1.7
   level_work_growth: 1.55
-  unlocks: []
+  unlocks:
+  - missile_interceptor
   domain: fundamental
   tier: 1
   kind: repeatable
+  future_unlocks: []
 - id: sensor_array
   name: Sensores de longo alcance
   description: 'Aumenta a força dos levantamentos de espionagem junto com Inteligência.
@@ -132,10 +139,13 @@
     sensors: 0.1
   level_cost_growth: 1.7
   level_work_growth: 1.55
-  unlocks: []
+  unlocks:
+  - orbital_missile_battery
+  - strategic_missile
   domain: fundamental
   tier: 2
   kind: repeatable
+  future_unlocks: []
 - id: intelligence
   name: Inteligência e espionagem
   description: 'Aumenta a força de espionagem contra a contrainteligência do alvo.
@@ -158,6 +168,7 @@
   domain: fundamental
   tier: 3
   kind: repeatable
+  future_unlocks: []
 - id: counter_intelligence
   name: Contrainteligência
   description: 'Eleva a proteção que bloqueia relatórios inimigos de estoques e distritos.
@@ -180,6 +191,7 @@
   domain: fundamental
   tier: 3
   kind: repeatable
+  future_unlocks: []
 - id: nuclear_propulsion
   name: Propulsão nuclear
   description: 'Reduz a duração real das viagens: tempo base / (1 + soma dos bônus
@@ -211,6 +223,7 @@
   domain: fundamental
   tier: 2
   kind: repeatable
+  future_unlocks: []
 - id: navigation
   name: Navegação interestelar
   description: 'Reduz a duração real das viagens: tempo base / (1 + soma dos bônus
@@ -233,6 +246,7 @@
   domain: fundamental
   tier: 2
   kind: repeatable
+  future_unlocks: []
 - id: weapons
   name: Sistemas de armas
   description: 'Aumenta poder estratégico dos hulls em combates contra frotas reais.
@@ -251,7 +265,9 @@
     weapons: 0.08
   level_cost_growth: 1.7
   level_work_growth: 1.55
-  unlocks: []
+  unlocks:
+  - orbital_missile_battery
+  - heavy_em_cannon
   domain: military
   tier: 1
   kind: repeatable
@@ -260,8 +276,7 @@
       weapons: 0.08
     5:
       weapons: 0.16
-  future_unlocks:
-  - missile_defense
+  future_unlocks: []
 - id: shields
   name: Escudos energéticos
   description: 'Contribui ao multiplicador estratégico de naves e fortalece baterias
@@ -281,12 +296,13 @@
     shields: 0.07
   level_cost_growth: 1.7
   level_work_growth: 1.55
-  unlocks: []
+  unlocks:
+  - planetary_shield
+  - missile_interceptor
   domain: military
   tier: 3
   kind: repeatable
-  future_unlocks:
-  - planetary_shields
+  future_unlocks: []
 - id: armor
   name: Blindagem estrutural
   description: 'Contribui ao multiplicador de sobrevivência e poder estratégico de
@@ -309,6 +325,7 @@
   domain: military
   tier: 2
   kind: repeatable
+  future_unlocks: []
 - id: logistics
   name: Logística de carga
   description: 'Amplia capacidade real de transporte, saque e coleta das naves. Bônus
@@ -334,6 +351,7 @@
       cargo: 0.1
     5:
       cargo: 0.2
+  future_unlocks: []
 - id: fuel_efficiency
   name: Economia de combustível
   description: 'Reduz combustível efetivamente pago: custo base / (1 + soma das eficiências).
@@ -356,6 +374,7 @@
   domain: civil
   tier: 2
   kind: repeatable
+  future_unlocks: []
 - id: astrophysics
   name: Astrofísica colonial
   description: 'Acrescenta um mundo ao limite de planetas possuídos ou em colonização.
@@ -378,6 +397,7 @@
   domain: civil
   tier: 3
   kind: repeatable
+  future_unlocks: []
 - id: infrastructure
   name: Infraestrutura automatizada
   description: 'Reduz a demanda de trabalhadores por estrutura, liberando produção
@@ -400,6 +420,7 @@
   domain: civil
   tier: 3
   kind: repeatable
+  future_unlocks: []
 - id: survey_network
   name: Rede científica
   description: 'Aumenta throughput real dos laboratórios do império, mantendo limites
@@ -423,6 +444,7 @@
   domain: fundamental
   tier: 3
   kind: repeatable
+  future_unlocks: []
 - id: science_infrastructure
   name: Infraestrutura científica
   description: 'Aumenta throughput real dos laboratórios do império, mantendo limites
@@ -446,6 +468,7 @@
   domain: fundamental
   tier: 4
   kind: repeatable
+  future_unlocks: []
 - id: orbital_engineering
   name: Engenharia orbital
   description: 'Reduz o timestamp de conclusão de montagem: duração / (1 + bônus orbital).
@@ -469,6 +492,7 @@
   domain: fundamental
   tier: 1
   kind: repeatable
+  future_unlocks: []
 - id: capital_architecture
   name: Arquitetura capital
   description: 'Multiplica a contribuição das baterias do planeta ao combate defensivo.
@@ -484,6 +508,7 @@
   unlocks:
   - aegis_hull
   - spearhead_hull
+  - orbital_platform
   level_requires:
     naval_doctrine: 3
     nuclear_propulsion: 2
@@ -496,8 +521,7 @@
   domain: military
   tier: 4
   kind: repeatable
-  future_unlocks:
-  - orbital_platforms
+  future_unlocks: []
 - id: carrier_operations
   name: Operações embarcadas
   description: 'Amplia o poder das alas abstratas dos carriers em combate estratégico.
@@ -523,6 +547,7 @@
   domain: military
   tier: 5
   kind: repeatable
+  future_unlocks: []
 - id: stellar_containment
   name: Contenção estelar
   description: 'Geração energética × (1 + soma dos bônus energéticos). Bônus por nível:
@@ -573,6 +598,7 @@
   domain: civil
   tier: 4
   kind: repeatable
+  future_unlocks: []
 - id: construction_engineering
   name: Engenharia de construção
   description: 'Reduz duração de construção sem alterar o preço progressivo de cada
@@ -593,6 +619,7 @@
   domain: civil
   tier: 1
   kind: repeatable
+  future_unlocks: []
 - id: metallurgy
   name: Metalurgia
   description: 'Multiplica a produção real de ligas após automação. Bônus por nível:
@@ -611,10 +638,12 @@
     alloy: 0.06
   level_cost_growth: 1.7
   level_work_growth: 1.55
-  unlocks: []
+  unlocks:
+  - heavy_em_cannon
   domain: fundamental
   tier: 2
   kind: repeatable
+  future_unlocks: []
 - id: habitation
   name: Habitação planetária
   description: 'Amplia o teto populacional de habitação; acolhimento continua exigindo
@@ -635,6 +664,7 @@
   domain: civil
   tier: 1
   kind: repeatable
+  future_unlocks: []
 - id: naval_doctrine
   name: Doutrina naval
   description: 'Aumenta poder estratégico dos hulls em combates contra frotas reais.
@@ -649,7 +679,7 @@
   unlocks:
   - vanguard_hull
   - sentinel_hull
-  - orbital_battery
+  - point_defense
   level_requires:
     orbital_engineering: 1
   infrastructure: {}
@@ -660,6 +690,7 @@
   domain: military
   tier: 1
   kind: repeatable
+  future_unlocks: []
 - id: expedition_science
   name: Ciência de expedições
   description: 'Aumenta coleta por expedição, limitada à carga disponível das naves
@@ -682,6 +713,7 @@
   domain: fundamental
   tier: 4
   kind: repeatable
+  future_unlocks: []
 - id: storage
   name: Armazenamento modular
   description: 'Capacidade por recurso = 100.000 × 1,7^nível de Armazenamento. Bônus
@@ -704,6 +736,7 @@
   domain: civil
   tier: 2
   kind: repeatable
+  future_unlocks: []
 - id: maintenance
   name: Manutenção naval
   description: 'Reduz combustível efetivamente pago: custo base / (1 + soma das eficiências).
@@ -726,6 +759,7 @@
   domain: civil
   tier: 5
   kind: repeatable
+  future_unlocks: []
 - id: recruitment
   name: Apoio populacional
   description: 'Reduz o custo de voláteis para acolher habitantes; mantém custo de
@@ -748,6 +782,7 @@
   domain: civil
   tier: 3
   kind: repeatable
+  future_unlocks: []
 - id: civil_tier_2
   name: Avanço Civil 2
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -766,6 +801,7 @@
   duration: 120
   effects: {}
   unlocks: []
+  future_unlocks: []
 - id: civil_tier_3
   name: Avanço Civil 3
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -785,6 +821,7 @@
   duration: 360
   effects: {}
   unlocks: []
+  future_unlocks: []
 - id: civil_tier_4
   name: Avanço Civil 4
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -805,6 +842,7 @@
   duration: 1080
   effects: {}
   unlocks: []
+  future_unlocks: []
 - id: civil_tier_5
   name: Avanço Civil 5
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -825,6 +863,7 @@
   duration: 3240
   effects: {}
   unlocks: []
+  future_unlocks: []
 - id: military_tier_2
   name: Avanço Militar 2
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -845,6 +884,10 @@
   unlocks:
   - vanguard_hull
   - sentinel_hull
+  - orbital_missile_battery
+  - anti_ship_missile
+  - strategic_missile
+  future_unlocks: []
 - id: military_tier_3
   name: Avanço Militar 3
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -865,6 +908,11 @@
   effects: {}
   unlocks:
   - aegis_hull
+  - heavy_em_cannon
+  - planetary_shield
+  - missile_interceptor
+  - interceptor_missile
+  future_unlocks: []
 - id: military_tier_4
   name: Avanço Militar 4
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -887,6 +935,8 @@
   unlocks:
   - spearhead_hull
   - leviathan_hull
+  - orbital_platform
+  future_unlocks: []
 - id: military_tier_5
   name: Avanço Militar 5
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -909,6 +959,7 @@
   unlocks:
   - atlas_hull
   - dominion_hull
+  future_unlocks: []
 - id: fundamental_tier_2
   name: Avanço Fundamental 2
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -927,6 +978,7 @@
   duration: 120
   effects: {}
   unlocks: []
+  future_unlocks: []
 - id: fundamental_tier_3
   name: Avanço Fundamental 3
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -947,6 +999,7 @@
   effects: {}
   unlocks:
   - odyssey_hull
+  future_unlocks: []
 - id: fundamental_tier_4
   name: Avanço Fundamental 4
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -967,6 +1020,7 @@
   duration: 1080
   effects: {}
   unlocks: []
+  future_unlocks: []
 - id: fundamental_tier_5
   name: Avanço Fundamental 5
   description: 'Projeto científico único: habilita o próximo patamar deste domínio.'
@@ -987,3 +1041,4 @@
   duration: 3240
   effects: {}
   unlocks: []
+  future_unlocks: []

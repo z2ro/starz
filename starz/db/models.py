@@ -229,3 +229,9 @@ class UniverseOrder(Base):
     payload: Mapped[dict] = mapped_column(JSONB)
     due_at: Mapped[datetime | None] = mapped_column(index=True)
     resolved: Mapped[bool] = mapped_column(default=False)
+
+
+class PlanetDefenseState(Base):
+    __tablename__ = 'planet_defense_state'
+    planet_id: Mapped[UUID] = mapped_column(ForeignKey('planet_state.id'), primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSONB)

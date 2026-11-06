@@ -6,6 +6,8 @@ import {planetSnapshot} from './fixtures/planetIntegration';
 import catalogFixture from './fixtures/fleet-api-catalog.json';
 import type {Catalog,Technology} from '../frontend/src/types/game';
 import type {Upgrade} from '../frontend/src/universe/types';
+const api=vi.hoisted(()=>vi.fn());
+vi.mock('../frontend/src/api/client',()=>({apiRequest:api}));
 const data=vi.hoisted(()=>({research:[] as Upgrade[]}));
 vi.mock('../frontend/src/universe/useUniverse',()=>({useUniverse:()=>({data,isFetching:false})}));
 afterEach(cleanup);
@@ -17,3 +19,8 @@ function mount(){const state=planetSnapshot();state.persistent=true;state.stocks
 it('allows another domain while fundamental research is active and preserves the endpoint payload',()=>{const execute=mount();expect(screen.getByRole('button',{name:'Pesquisar Engenharia energética nível 1'})).toBeDisabled();fireEvent.click(screen.getByRole('navigation',{name:'Domínio científico'}).querySelector('button')!);fireEvent.click(screen.getByRole('button',{name:'Pesquisar Extração mineral nível 1'}));expect(execute).toHaveBeenCalledWith('research',{id:'extraction',planet_id:'local'});});
 it('keeps advanced projects inspectable with capacity blockers and all five tiers',()=>{mount();fireEvent.click(screen.getByRole('navigation',{name:'Domínio científico'}).querySelector('button')!);fireEvent.click(screen.getByRole('button',{name:/Avanço Civil 2.*Bloqueado/}));expect(screen.getByText('Capacidade civil: 1/3')).toBeTruthy();expect(screen.getByRole('button',{name:'Pesquisar Avanço Civil 2 nível 1'})).toBeDisabled();expect(screen.getByText('V · Transcendência')).toBeTruthy();});
 it('includes true cross-domain, level and tier prerequisites without duplicates',()=>{expect(researchDependencies({...technologies[1],tier:3,requires:['computing'],level_requires:{computing:2}})).toEqual(['computing','civil_tier_3']);});
+
+it('calculates a read-only plan without dispatching research or spending',async()=>{
+ api.mockResolvedValue({target:'energy_engineering',level:1,steps:[{id:'energy_engineering',domain:'fundamental',level:1,work:60,in_progress:false,requirements:[],cost:{components:2}}],infrastructure:[],capacity:[],cost:{components:2},note:'Somente planejamento'});
+ const execute=mount();fireEvent.click(screen.getByRole('button',{name:'Planejar pesquisa'}));expect(await screen.findByText('Somente planejamento')).toBeTruthy();expect(execute).not.toHaveBeenCalled();expect(api).toHaveBeenCalledWith('/api/universe/research-plan',expect.objectContaining({method:'POST'}));
+});

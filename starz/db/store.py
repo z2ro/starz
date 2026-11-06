@@ -156,6 +156,7 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
     active_stocks = stocks_by_planet.setdefault(str(active.id), {})
     state = GameState(
         seed=universe.seed, system_x=active_system.x, system_y=active_system.y, population_total=active.population_total, last_updated=epoch(empire.last_updated),
+        defenses=deepcopy(session.get(m.PlanetDefenseState,active.id).payload) if session.get(m.PlanetDefenseState,active.id) else {},
         stocks=active_stocks,
         stocks_by_planet=stocks_by_planet,
         districts={row.district_id: row.level for row in session.scalars(select(m.District).where(m.District.planet_id == active.id))},
@@ -189,6 +190,7 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
             context = GameState(
                 seed=universe.seed, system_x=system.x, system_y=system.y,
                 stocks=stocks_by_planet[str(planet.id)], population_total=planet.population_total,
+                defenses=deepcopy(session.get(m.PlanetDefenseState,planet.id).payload) if session.get(m.PlanetDefenseState,planet.id) else {},
                 districts=districts, ships=state.ships, planet_id=str(planet.id), universe=state.universe,
                 last_updated=epoch(planet.last_updated),
             )
@@ -202,6 +204,7 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
 
 
 def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameState):
+    if state.universe is not None: session.merge(m.PlanetDefenseState(planet_id=planet.id,payload=deepcopy(state.defenses)))
     stamp = utc(state.last_updated)
     empire.last_updated, planet.population_total, planet.last_updated = stamp, state.population_total, stamp
     state.stocks_by_planet[str(planet.id)] = state.stocks
@@ -271,6 +274,8 @@ def persist(session: Session, empire: m.Empire, planet: m.Planet, state: GameSta
 
 
 def validate_state(catalog: Catalog, state: GameState):
+    from ..defenses import validate_defenses
+    validate_defenses(catalog,state)
     for resource_id in {key for stocks in [state.stocks, *state.stocks_by_planet.values()] for key in stocks}:
         catalog.get('fuels' if resource_id in catalog.items['fuels'] else 'resources', resource_id)
     for district_id in state.districts:

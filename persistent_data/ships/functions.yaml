@@ -20,6 +20,11 @@
   cargo_capacity: 0
   science_bonus: 0
   carrier_capacity: 0
+  hull_points: 90
+  weapon_damage: 5
+  shield_points: 10
+  combat_class: light
+  weapon_modifiers: {}
 - id: wayfarer_hull
   name: Wayfarer
   classification: freighter
@@ -42,6 +47,11 @@
   cargo_capacity: 180
   science_bonus: 0
   carrier_capacity: 0
+  hull_points: 150
+  weapon_damage: 3
+  shield_points: 10
+  combat_class: medium
+  weapon_modifiers: {}
 - id: vanguard_hull
   name: Vanguard
   classification: frigate
@@ -65,6 +75,14 @@
   cargo_capacity: 0
   science_bonus: 0
   carrier_capacity: 0
+  hull_points: 180
+  weapon_damage: 24
+  shield_points: 25
+  combat_class: light
+  weapon_modifiers:
+    light: 1.5
+    medium: 1
+    capital: 0.7
 - id: sentinel_hull
   name: Sentinel
   classification: destroyer
@@ -87,6 +105,14 @@
   cargo_capacity: 0
   science_bonus: 0
   carrier_capacity: 0
+  hull_points: 280
+  weapon_damage: 38
+  shield_points: 45
+  combat_class: medium
+  weapon_modifiers:
+    light: 1.5
+    medium: 1
+    capital: 0.7
 - id: odyssey_hull
   name: Odyssey
   classification: science_cruiser
@@ -110,6 +136,11 @@
   cargo_capacity: 30
   science_bonus: 2
   carrier_capacity: 0
+  hull_points: 210
+  weapon_damage: 9
+  shield_points: 60
+  combat_class: medium
+  weapon_modifiers: {}
 - id: aegis_hull
   name: Aegis
   classification: cruiser
@@ -132,6 +163,11 @@
   cargo_capacity: 0
   science_bonus: 0
   carrier_capacity: 0
+  hull_points: 420
+  weapon_damage: 55
+  shield_points: 90
+  combat_class: medium
+  weapon_modifiers: {}
 - id: spearhead_hull
   name: Spearhead
   classification: battlecruiser
@@ -155,6 +191,14 @@
   cargo_capacity: 0
   science_bonus: 0
   carrier_capacity: 0
+  hull_points: 580
+  weapon_damage: 90
+  shield_points: 110
+  combat_class: capital
+  weapon_modifiers:
+    light: 0.6
+    medium: 1
+    capital: 1.5
 - id: leviathan_hull
   name: Leviathan
   classification: battleship
@@ -177,6 +221,14 @@
   cargo_capacity: 0
   science_bonus: 0
   carrier_capacity: 0
+  hull_points: 1000
+  weapon_damage: 140
+  shield_points: 180
+  combat_class: capital
+  weapon_modifiers:
+    light: 0.6
+    medium: 1
+    capital: 1.5
 - id: atlas_hull
   name: Atlas
   classification: carrier
@@ -199,6 +251,11 @@
   cargo_capacity: 100
   science_bonus: 0
   carrier_capacity: 10
+  hull_points: 700
+  weapon_damage: 35
+  shield_points: 150
+  combat_class: capital
+  weapon_modifiers: {}
 - id: dominion_hull
   name: Dominion
   classification: dreadnought
@@ -222,3 +279,11 @@
   cargo_capacity: 0
   science_bonus: 0
   carrier_capacity: 0
+  hull_points: 1400
+  weapon_damage: 175
+  shield_points: 240
+  combat_class: capital
+  weapon_modifiers:
+    light: 0.6
+    medium: 1
+    capital: 1.5

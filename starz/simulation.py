@@ -9,6 +9,7 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 from .data import Catalog, DataValidationError, District, Hull, Propulsion, Technology
 from .universe import StarSystem, colonization_viability, find_spawn_system, generate_system
 from .effects import require_available
+from .defenses import ensure_defenses, complete_defenses, regenerate_shields, build_defense
 from .travel import preview_travel as calculate_travel
 from .economy import produce
 from .progression import effect, research_quote, building_quote, migrate_research, grant_legacy_tiers, DOMAINS
@@ -43,6 +44,7 @@ class GameState:
     new_colonies: list[dict[str, Any]] = field(default_factory=list)
     campaign: dict[str, Any] | None = None
     universe: dict[str, Any] | None = None
+    defenses: dict = field(default_factory=dict)
     science_global: dict | None = None
     research_rate_global: float | None = None
     planet_last_updated: float | None = None
@@ -64,6 +66,7 @@ class Engine:
     def __init__(self, catalog: Catalog, state: GameState):
         self.catalog = catalog
         self.state = state
+        if state.universe is not None: ensure_defenses(catalog,state)
 
     @classmethod
     def new(cls, catalog: Catalog, seed: str = "STARZ-ALPHA", now: float | None = None) -> "Engine":
@@ -76,6 +79,7 @@ class Engine:
         return replace(generate_system(self.state.seed, self.state.system_x, self.state.system_y, self.catalog), selected_planet_index=self.state.planet_index)
 
     def advance(self, now: float | None = None) -> None:
+        ensure_defenses(self.catalog,self.state)
         now = time.time() if now is None else now
         if not math.isfinite(now) or now < self.state.last_updated:
             raise DataValidationError('timestamp inválido ou anterior ao estado')
@@ -85,7 +89,7 @@ class Engine:
         self._complete_events(cursor)
         self._research_eta()
         while cursor < now:
-            boundaries = [item['complete_at'] for item in self.state.construction]
+            boundaries = [item['complete_at'] for item in self.state.construction] + [j['complete_at'] for j in self.state.defenses.get('queue',[])]
             boundaries.extend(job['complete_at'] for job in self.research_jobs() if job['active'] and job['complete_at'] is not None)
             boundaries.extend(f['arrival_at'] for f in self.state.fleets if f['status'] == 'TRANSIT')
             boundary = min([now, *(stamp for stamp in boundaries if cursor < stamp <= now)])
@@ -106,7 +110,7 @@ class Engine:
             raise DataValidationError('timestamp inválido ou anterior ao planeta')
         self._complete_construction(cursor)
         while cursor < now:
-            boundary = min([now, *(job['complete_at'] for job in self.state.construction if cursor < job['complete_at'] <= now)])
+            boundary = min([now, *(job['complete_at'] for job in [*self.state.construction,*self.state.defenses.get('queue',[])] if cursor < job['complete_at'] <= now)])
             self._produce(boundary - cursor)
             cursor = boundary
             self._complete_construction(cursor)
@@ -162,9 +166,13 @@ class Engine:
                     self._found_colony(fleet)
 
     def _complete_construction(self, now: float) -> None:
+        complete_defenses(self.catalog,self.state,now)
         finished = sorted((item for item in self.state.construction if item["complete_at"] <= now), key=lambda item: (item['complete_at'], item['id']))
         for item in finished:
-            self.state.districts[item["id"]] = self.state.districts.get(item["id"], 0) + 1
+            if item['id']=='orbital_battery' and self.state.universe is not None:
+                self.state.defenses['units'].append({'id':item['job_id'],'type':'point_defense','hp':self.catalog.get('defenses','point_defense').hull_points,'charge':0})
+            else:
+                self.state.districts[item["id"]] = self.state.districts.get(item["id"], 0) + 1
             self.state.notices.insert(0, f"Construção concluída: {item['id']}.")
         self.state.construction = [item for item in self.state.construction if item["complete_at"] > now]
 
@@ -254,6 +262,11 @@ class Engine:
             shipyard_slots += district.shipyard_slots * level
             population_demand += district.workforce * level
             research_rate += district.research_rate * level
+        if self.state.universe is not None:
+            for unit in self.state.defenses.get('units',[]):
+                item=self.catalog.get('defenses',unit['type'])
+                consumption+=item.energy_consumption
+                population_demand+=item.workforce
         generation *= 1 + effect(self.catalog, self.state, 'energy')
         population_demand /= 1 + effect(self.catalog, self.state, 'workforce')
         research_rate *= 1 + effect(self.catalog, self.state, 'research')
@@ -276,7 +289,7 @@ class Engine:
             'energy_coverage': energy_coverage,
             'industrial_capacity': industrial, 'population_total': self.state.population_total,
             'construction_slots': construction_slots,
-            'construction_slots_available': max(0, construction_slots - len(self.state.construction)),
+            'construction_slots_available': max(0, construction_slots - len(self.state.construction) - len(self.state.defenses.get('queue',[]))),
             'shipyard_slots': shipyard_slots,
             'shipyard_slots_available': max(0, shipyard_slots - shipyard_occupied),
             'crew_committed': crew, 'workforce_supply': supply,
@@ -291,6 +304,8 @@ class Engine:
         if elapsed <= 0:
             return
         factor = min(capacities['energy_coverage'], capacities['workforce_coverage'])
+        regenerate_shields(self.catalog,self.state,elapsed,factor)
+        self._repair_docked_ships(elapsed,factor)
         if self.state.universe is None:
             produce(self.catalog, self.state.stocks, self.state.districts, elapsed, factor)
         else:
@@ -298,6 +313,17 @@ class Engine:
             limit = 100000 * 1.7 ** (effect(self.catalog, self.state, 'storage') * 4)
             for key in self.state.stocks:
                 self.state.stocks[key] = min(limit, self.state.stocks[key])
+
+    def _repair_docked_ships(self,seconds,factor):
+        if self.state.universe is None or self.state.districts.get('orbital_shipyard',0)<1:return
+        from .persistent.combat import local_defenders
+        health=self.state.universe.setdefault('ship_health',{})
+        budget=seconds*2*self.state.districts['orbital_shipyard']*factor
+        for ship in sorted(local_defenders(self,self.state.planet_id),key=lambda s:s['id']):
+            if ship['id'] not in health:continue
+            maximum=self.catalog.get('ships',ship['hull_id']).hull_points
+            repair=min(budget,max(0,maximum-health[ship['id']]))
+            health[ship['id']]+=repair;budget-=repair
 
     def economic_catalog(self):
         if self.state.universe is None: return self.catalog
@@ -313,6 +339,7 @@ class Engine:
 
     def build(self, district_id: str, now: float | None = None) -> dict[str, Any]:
         self.advance(now)
+        if district_id=='orbital_battery' and self.state.universe is not None:return build_defense(self,'point_defense')
         district: District = self.catalog.get("districts", district_id)  # type: ignore[assignment]
         require_available(self.catalog, self.state, district)
         capacities = self.capacities()

@@ -10,6 +10,7 @@ def level(state, key):
 
 
 DOMAINS = ('civil', 'military', 'fundamental')
+DOMAIN_LABELS = {'civil':'Civil','military':'Militar','fundamental':'Fundamental'}
 TIER_CAPACITY = (1, 3, 6, 10, 15)
 
 
@@ -73,11 +74,11 @@ def research_quote(catalog, state, key):
     science = state.science_global or {}
     capacity = science.get(tech.domain, {}).get('capacity', state.districts.get('research_lab', 0) + state.districts.get(f'{tech.domain}_lab', 0))
     if capacity < TIER_CAPACITY[tech.tier - 1]:
-        reasons.append(f'Capacidade {tech.domain}: {capacity:g}/{TIER_CAPACITY[tech.tier - 1]}')
+        reasons.append(f'Capacidade científica {DOMAIN_LABELS[tech.domain]}: {capacity:g}/{TIER_CAPACITY[tech.tier - 1]}')
     if tech.tier > 1 and not tech.advances_tier and level(state, f'{tech.domain}_tier_{tech.tier}') < 1:
-        reasons.append(f'Concluir avanço {tech.domain} tier {tech.tier}')
+        reasons.append(f'Concluir avanço {DOMAIN_LABELS[tech.domain]} tier {tech.tier}')
     if tech.tier > 1 and science.get(tech.domain, {}).get('specialized', state.districts.get(f'{tech.domain}_lab', 0)) < 1:
-        reasons.append(f'Construir instalação especializada: {tech.domain}')
+        reasons.append(f'Construir instalação especializada: {DOMAIN_LABELS[tech.domain]}')
     costs = {r: ceil(v * tech.level_cost_growth ** current) for r, v in tech.cost.items()}
     work = ceil(tech.duration * tech.level_work_growth ** current)
     return {'id': key, 'level': current, 'next_level': target, 'cost': costs, 'work': work, 'requirements': reasons, 'domain': tech.domain, 'tier': tech.tier, 'kind': tech.kind, 'max_level': 1 if tech.kind == 'breakthrough' else 50, 'milestones': tech.milestones, 'effects': {k: {'current': technology_effects(tech,current).get(k,0), 'next': technology_effects(tech,target).get(k,0)} for k in set(technology_effects(tech,current)) | set(technology_effects(tech,target))}, 'cost_growth': tech.level_cost_growth, 'work_growth': tech.level_work_growth}

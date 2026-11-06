@@ -167,3 +167,40 @@ def recruit(body:Recruit,request:Request):
         e.state.population_total+=body.amount
         return {'population':e.state.population_total}
     return perform(request,command,body.planet_id)
+
+
+class DefenseBuild(BaseModel):
+    planet_id: UUID | None = None
+    id: str = Field(pattern=r'^[a-z][a-z0-9_]*$')
+    count: int = Field(default=1,ge=1,le=50,strict=True)
+    repair: UUID | None = None
+
+
+@router.post('/api/universe/defense')
+def defense_build(body:DefenseBuild,request:Request):
+    from ..defenses import build_defense
+    return perform(request,lambda session,empire,e:build_defense(e,body.id,body.count,str(body.repair) if body.repair else None),body.planet_id)
+
+
+class MissileLaunch(BaseModel):
+    planet_id: UUID | None = None
+    target: UUID
+    count: int = Field(ge=1,le=50,strict=True)
+    target_type: str | None = Field(default=None,pattern=r'^[a-z][a-z0-9_]*$')
+
+
+@router.post('/api/universe/missiles')
+def missile_launch(body:MissileLaunch,request:Request):
+    return perform(request,lambda session,empire,e:request.app.state.store.launch_missiles(session,empire,e,str(body.target),body.count,body.target_type),body.planet_id)
+
+
+class ResearchPlan(BaseModel):
+    planet_id: UUID | None = None
+    id: str = Field(pattern=r'^[a-z][a-z0-9_]*$')
+    level: int | None = Field(default=None,ge=1,le=50,strict=True)
+
+
+@router.post('/api/universe/research-plan')
+def research_plan(body:ResearchPlan,request:Request):
+    from .research_planning import plan_research
+    return perform(request,lambda session,empire,e:plan_research(e,body.id,body.level),body.planet_id)

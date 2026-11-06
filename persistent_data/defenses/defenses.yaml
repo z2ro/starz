@@ -1,0 +1,181 @@
+- id: point_defense
+  name: Canhão de defesa pontual
+  description: Canhão barato contra naves leves; pouco eficiente contra capitais.
+    Incorpora as antigas baterias defensivas.
+  category: Defense
+  kind: structure
+  duration: 30
+  cost:
+    refined_alloy: 18
+    components: 6
+  requires:
+  - naval_doctrine
+  level_requires: {}
+  hull_points: 100
+  damage: 12
+  industrial_requirement: 1
+  energy_consumption: 1
+  workforce: 1
+  modifiers:
+    light: 2
+    medium: 1
+    capital: 0.3
+- id: orbital_missile_battery
+  name: Bateria orbital de mísseis
+  description: Consome um míssil antinavio por rodada. Também permite lançar mísseis
+    estratégicos armazenados; não atira sem munição.
+  category: Defense
+  kind: structure
+  duration: 70
+  cost:
+    refined_alloy: 50
+    components: 18
+  requires:
+  - military_tier_2
+  - sensor_array
+  level_requires:
+    weapons: 2
+  hull_points: 160
+  damage: 32
+  industrial_requirement: 2
+  energy_consumption: 2
+  workforce: 2
+  ammunition: anti_ship_missile
+  missile_range: 12
+  modifiers:
+    light: 0.7
+    medium: 1.4
+    capital: 1.2
+- id: heavy_em_cannon
+  name: Canhão eletromagnético pesado
+  description: Artilharia pesada contra capitais, vulnerável a enxames de naves leves.
+  category: Defense
+  kind: structure
+  duration: 120
+  cost:
+    refined_alloy: 100
+    components: 35
+  requires:
+  - military_tier_3
+  - metallurgy
+  level_requires:
+    weapons: 3
+  hull_points: 300
+  damage: 70
+  industrial_requirement: 4
+  energy_consumption: 5
+  workforce: 3
+  modifiers:
+    light: 0.3
+    medium: 1
+    capital: 2
+- id: planetary_shield
+  name: Gerador de escudo planetário
+  description: Carga compartilhada protege unidades e infraestrutura contra dano.
+    Regenera 1 ponto/s com energia e trabalhadores; não possui armas.
+  category: Defense
+  kind: structure
+  duration: 150
+  cost:
+    refined_alloy: 90
+    components: 45
+  requires:
+  - military_tier_3
+  level_requires:
+    shields: 2
+    energy_engineering: 2
+  hull_points: 200
+  damage: 0
+  industrial_requirement: 4
+  energy_consumption: 8
+  workforce: 3
+  shield: 350
+  shield_regen: 1
+- id: orbital_platform
+  name: Plataforma orbital de defesa
+  description: Instalação resistente de uso geral. Alto custo industrial, energético
+    e de trabalhadores.
+  category: Defense
+  kind: structure
+  duration: 240
+  cost:
+    refined_alloy: 200
+    components: 90
+  requires:
+  - military_tier_4
+  level_requires:
+    capital_architecture: 2
+  hull_points: 600
+  damage: 85
+  industrial_requirement: 8
+  energy_consumption: 9
+  workforce: 6
+  modifiers:
+    light: 1
+    medium: 1.3
+    capital: 1.3
+- id: missile_interceptor
+  name: Sistema de interceptação de mísseis
+  description: Interceta até dois mísseis estratégicos por sistema e salva, consumindo
+    munição real. Não combate frotas.
+  category: Defense
+  kind: structure
+  duration: 90
+  cost:
+    refined_alloy: 65
+    components: 25
+  requires:
+  - military_tier_3
+  level_requires:
+    computing: 2
+    shields: 1
+  hull_points: 130
+  damage: 0
+  industrial_requirement: 3
+  energy_consumption: 3
+  workforce: 2
+  ammunition: interceptor_missile
+  intercept_capacity: 2
+- id: anti_ship_missile
+  name: Míssil antinavio
+  description: Munição consumível fabricada localmente.
+  category: Ammunition
+  kind: ammunition
+  duration: 8
+  cost:
+    refined_alloy: 2
+    components: 1
+    volatiles: 1
+  requires:
+  - military_tier_2
+  industrial_requirement: 2
+  damage: 0
+- id: interceptor_missile
+  name: Míssil interceptor
+  description: Munição consumível fabricada localmente.
+  category: Ammunition
+  kind: ammunition
+  duration: 10
+  cost:
+    refined_alloy: 3
+    components: 1
+    volatiles: 2
+  requires:
+  - military_tier_3
+  industrial_requirement: 2
+  damage: 0
+- id: strategic_missile
+  name: Míssil estratégico
+  description: Munição consumível fabricada localmente.
+  category: Ammunition
+  kind: ammunition
+  duration: 20
+  cost:
+    refined_alloy: 6
+    components: 2
+    volatiles: 5
+  requires:
+  - military_tier_2
+  - sensor_array
+  industrial_requirement: 2
+  damage: 100

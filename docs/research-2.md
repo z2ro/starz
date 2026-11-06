@@ -41,8 +41,8 @@ Existing explicit per-technology `infrastructure` requirements remain local to t
 | build_speed, ship_speed | Building / ship assembly duration ÷ (1 + bonus) |
 | fleet_slots | + operational fleet slots |
 | speed | Actual mission travel time ÷ (1 + bonus) |
-| weapons, armor, shields | Combat power multiplier `1 + weapons + armor/2 + shields/2` |
-| defense | Existing battery contribution; no new defense system |
+| weapons, armor, shields | Persistent combat: outgoing damage, hull mitigation and shield capacity; see [Planetary Defense](planetary-defense.md) |
+| defense | Actual planetary weapon damage multiplier |
 | carrier | Existing carrier wing power contribution |
 | cargo, fuel, transport | Real cargo capacity / launch fuel, with transport-specific fuel bonus |
 | sensors, espionage, counter_intelligence | Real intelligence report strength / opposition |
@@ -57,7 +57,7 @@ Extraction, weapons, energy and logistics have additional cumulative milestones 
 
 Buildings retain real prerequisites, including automation → manufacturing and engineering → shipyard. Advanced hulls explicitly require advancement projects: Vanguard/Sentinel Military II; Odyssey Fundamental III; Aegis Military III; Spearhead/Leviathan Military IV; Atlas/Dominion Military V, plus their existing technology/facility requirements. `unlocks` is generated from these explicit relations and shown as consequences; all required conditions still apply. Horizon and Wayfarer retain the early opening.
 
-Typed `future_unlocks` reserve four names: planetary_shields, missile_defense, orbital_platforms, stellar_megastructures. They are labeled unimplemented contracts, never build buttons or current gameplay capabilities. Existing battery mechanics are preserved. Stargrave is not added as a conventional hull or assigned fuel/engines.
+Planetary shields, missile defense and orbital platforms now have real catalog entries and technology prerequisites; see [Research UX 2.1 and Planetary Defense 1.0](planetary-defense.md). `stellar_megastructures` remains a labeled future contract. Legacy battery saves migrate once into the dedicated defense inventory. Stargrave is not added as a conventional hull or assigned fuel/engines.
 
 ## Persistence, migration and concurrency
 
@@ -128,7 +128,7 @@ All costs below are level-zero alloy/components. Work is base work, not fixed se
 
 ## Limits
 
-No pending research backlog, physical server scaling benchmark, new defense mechanics, megastructure construction or cancellation. Capacity/cost pacing and milestone strength remain provisional. Browser validation is Chromium emulation, not physical mobile devices. Existing saves retain their levels, so established empires can legitimately hold tiers that new empires must develop.
+No pending research backlog, physical server scaling benchmark, megastructure construction or cancellation. Capacity/cost pacing and milestone strength remain provisional. Browser validation is Chromium emulation, not physical mobile devices. Existing saves retain their levels, so established empires can legitimately hold tiers that new empires must develop.
 
 ## Release verification
 

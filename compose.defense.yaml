@@ -1,0 +1,31 @@
+name: starz-defense-1
+services:
+  universe-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: defense
+      POSTGRES_USER: defense
+      POSTGRES_PASSWORD: defense_local_only
+    ports: ["127.0.0.1:5547:5432"]
+    volumes: ["defense-save:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U defense -d defense"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  universe-app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://defense:defense_local_only@universe-db:5432/defense
+      STARZ_PERSISTENT: "1"
+      STARZ_UNIVERSE_SEED: STARZ-DEFENSE-1
+    ports: ["127.0.0.1:8032:8000"]
+    depends_on:
+      universe-db: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+volumes:
+  defense-save:

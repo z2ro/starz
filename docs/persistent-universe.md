@@ -89,16 +89,13 @@ combustível e carga. As reservas de retorno são físicas e persistidas.
   (Odyssey). Coleta mineral/voláteis limitada à capacidade, com bônus científico,
   e só credita recursos ao retornar. Não usa loot aleatório nem artefatos de campanha.
 - **ATTACK:** exige guerra declarada e alvo humano real. Paz/aliança aceita durante
-  trânsito impede combate. Defendem naves prontas estacionadas no sistema e baterias
-  do planeta. Não existem formações ou posições táticas inventadas.
+  trânsito impede combate. Defendem naves prontas associadas ao planeta e suas defesas locais. Não existem formações ou posições táticas inventadas.
 
-Poder = soma de poder dos hulls + alas abstratas dos carriers, com bônus de armas,
-blindagem e escudos. Cada nível de bateria fornece 12 de poder, modificado por defesa
-/escudos. Baixas determinísticas proporcionais à relação de força removem naves e
-associações SQL de verdade. Uma derrota perde pelo menos uma atacante. Vitória pode
-remover um nível defensivo e saquear até 25% de cada estoque, limitado à carga
-sobrevivente. O saque só entra no estoque ao retorno. Não captura planetas nem
-elimina permanentemente uma conta. É combate estratégico agregado, não combate 3D.
+O combate atual usa unidades reais e até seis salvas simultâneas, com dano por classe,
+escudos, blindagem, munição e HP persistente. Defendem apenas naves comprovadamente
+locais e as estruturas do planeta alvo. Saque continua limitado ao estoque/carga e
+é entregue no retorno. [Planetary Defense 1.0](planetary-defense.md) documenta as
+seis categorias, mísseis estratégicos, fórmulas, reparos e migração das baterias antigas.
 
 Diplomacia permite declarar guerra, propor aliança/paz e aceitar a proposta da outra
 parte. Nenhuma dessas operações pode agir como outro império. O mercado usa escrow:
