@@ -38,8 +38,9 @@
     components: 3
   industrial_capacity: 2
 - id: research_lab
-  name: Laboratório de pesquisa
-  description: Sustenta pesquisa aplicada sem microgerenciar cientistas.
+  name: Centro de Pesquisa Planetário
+  description: 'Capacidade científica geral: 1 por nível em cada domínio; trabalho
+    repartido em três domínios.'
   category: Research
   cost:
     refined_alloy: 25
@@ -127,3 +128,48 @@
   energy_consumption: 4
   requires:
   - naval_doctrine
+- id: civil_lab
+  name: Laboratório de Engenharia Civil
+  description: Acrescenta 1 capacidade e 1,5 trabalho/s por nível ao domínio civil,
+    antes de energia, trabalhadores e bônus.
+  category: Research
+  science_domain: civil
+  cost:
+    refined_alloy: 35
+    components: 12
+  duration: 45
+  workforce: 6
+  energy_consumption: 4
+  research_rate: 1.5
+  requires:
+  - research_lab
+- id: military_lab
+  name: Complexo de Pesquisa Militar
+  description: Acrescenta 1 capacidade e 1,5 trabalho/s por nível ao domínio military,
+    antes de energia, trabalhadores e bônus.
+  category: Research
+  science_domain: military
+  cost:
+    refined_alloy: 35
+    components: 12
+  duration: 45
+  workforce: 6
+  energy_consumption: 4
+  research_rate: 1.5
+  requires:
+  - research_lab
+- id: fundamental_lab
+  name: Instituto de Ciência Fundamental
+  description: Acrescenta 1 capacidade e 1,5 trabalho/s por nível ao domínio fundamental,
+    antes de energia, trabalhadores e bônus.
+  category: Research
+  science_domain: fundamental
+  cost:
+    refined_alloy: 35
+    components: 12
+  duration: 45
+  workforce: 6
+  energy_consumption: 4
+  research_rate: 1.5
+  requires:
+  - research_lab

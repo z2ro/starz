@@ -45,7 +45,7 @@ Wayfarer para frete e Odyssey para expedições científicas com carga. As dez c
 convencionais são construíveis através dos desbloqueios; Stargrave continua um design
 experimental, não um casco convencional.
 
-- **Pesquisa:** uma linha ativa por império, paga com estoques do planeta escolhido;
+- **Pesquisa:** um programa ativo por domínio (Civil, Militar e Fundamental), pago com estoques do planeta escolhido;
   trabalho compartilhado pelos laboratórios de suas colônias. Níveis persistidos
   separadamente da lista de primeiros desbloqueios.
 - **Construção:** custo base × `1,6^nívelAtual`; duração base × `1,4^nívelAtual` /
@@ -166,6 +166,9 @@ abstratas; não há strike craft independentes. Expedições são uma coleta sim
 sem gerador de eventos próprio. Balanceamento de longo prazo ainda é provisório.
 
 ## Linhas de pesquisa
+
+Research 2.0 mantém os 32 IDs e acrescenta projetos de tier, capacidade por domínio e marcos de nível. A tabela abaixo registra bônus-base; o catálogo completo e as fórmulas atuais estão em [Research 2.0](research-2.md).
+
 
 | Linha | Efeito por nível |
 |---|---|

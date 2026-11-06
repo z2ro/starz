@@ -180,6 +180,9 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
         for fleet in state.fleets:
             fleet['operation'] = missions.get(fleet['id'], fleet['mission'])
     if catalog is not None:
+        from ..progression import migrate_research, DOMAINS
+        migrate_research(catalog, state)
+        science = {d: {"capacity": 0, "specialized": 0, "rate": 0} for d in DOMAINS}
         research_rate = 0.0
         for planet, system in owned:
             districts = {row.district_id: row.level for row in session.scalars(select(m.District).where(m.District.planet_id == planet.id))}
@@ -189,8 +192,12 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
                 districts=districts, ships=state.ships, planet_id=str(planet.id), universe=state.universe,
                 last_updated=epoch(planet.last_updated),
             )
-            research_rate += Engine(catalog, context).capacities()['effective_research_rate']
+            local_engine = Engine(catalog, context)
+            research_rate += local_engine.capacities()['effective_research_rate']
+            for domain, values in (local_engine.science() if progress else {}).items():
+                for key, value in values.items(): science[domain][key] += value
         state.research_rate_global = research_rate
+        state.science_global = science if progress else None
     return state
 
 
@@ -273,6 +280,12 @@ def validate_state(catalog: Catalog, state: GameState):
     for colony in state.new_colonies:
         for district_id in colony['districts']:
             catalog.get('districts', district_id)
+    from math import isfinite
+    for domain, job in (state.universe or {}).get('research_domains', {}).items():
+        if domain not in ('civil','military','fundamental') or not isfinite(job['remaining_work']) or job['remaining_work'] < 0:
+            raise DataValidationError('Estado científico inválido')
+        if job['active'] and catalog.get('technologies', job['active']).domain != domain:
+            raise DataValidationError('Domínio científico incompatível')
     for technology_id in [*state.research['completed'], *([state.research['active']] if state.research['active'] else [])]:
         catalog.get('technologies', technology_id)
     ships, attached = {ship['id']: ship for ship in state.ships}, set()

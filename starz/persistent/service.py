@@ -107,13 +107,18 @@ class PersistentStore(Store):
                 if e.state.research['complete_at'] is not None: boundaries.append(e.state.research['complete_at'])
                 boundaries.extend(f['arrival_at'] for f in e.state.fleets if f['status'] == 'TRANSIT')
                 boundary = min([max(stamp, cursor), *(t for t in boundaries if cursor < t <= stamp)])
+                previous_levels = deepcopy(e.state.universe.get('levels', {}))
                 e.advance(boundary)
                 persist(session, empire, session.get(m.Planet, empire.home_planet_id), e.state)
                 session.flush()
                 for planet in list(e.state.planets):
                     if planet['id'] == str(empire.home_planet_id): continue
                     local = Engine(self.catalog, load(session, empire, planet_id=planet['id'], catalog=self.catalog))
+                    current_levels = local.state.universe['levels']
+                    # Research finishing at the boundary must not improve past colony production.
+                    local.state.universe['levels'] = previous_levels
                     local.advance_planet(boundary)
+                    local.state.universe['levels'] = current_levels
                     persist(session, empire, session.get(m.Planet, UUID(planet['id'])), local.state)
                     session.flush()
                 if boundary >= stamp: break

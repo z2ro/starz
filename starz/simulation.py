@@ -11,7 +11,7 @@ from .universe import StarSystem, colonization_viability, find_spawn_system, gen
 from .effects import require_available
 from .travel import preview_travel as calculate_travel
 from .economy import produce
-from .progression import effect, research_quote, building_quote
+from .progression import effect, research_quote, building_quote, migrate_research, grant_legacy_tiers, DOMAINS
 
 
 @dataclass
@@ -43,6 +43,7 @@ class GameState:
     new_colonies: list[dict[str, Any]] = field(default_factory=list)
     campaign: dict[str, Any] | None = None
     universe: dict[str, Any] | None = None
+    science_global: dict | None = None
     research_rate_global: float | None = None
     planet_last_updated: float | None = None
 
@@ -79,20 +80,20 @@ class Engine:
         if not math.isfinite(now) or now < self.state.last_updated:
             raise DataValidationError('timestamp inválido ou anterior ao estado')
         cursor = self.state.last_updated
+        migrate_research(self.catalog, self.state)
         research = self.state.research
         self._complete_events(cursor)
         self._research_eta()
         while cursor < now:
             boundaries = [item['complete_at'] for item in self.state.construction]
-            if self.state.research['active'] and self.state.research['complete_at'] is not None:
-                boundaries.append(self.state.research['complete_at'])
+            boundaries.extend(job['complete_at'] for job in self.research_jobs() if job['active'] and job['complete_at'] is not None)
             boundaries.extend(f['arrival_at'] for f in self.state.fleets if f['status'] == 'TRANSIT')
             boundary = min([now, *(stamp for stamp in boundaries if cursor < stamp <= now)])
             self._produce(boundary - cursor)
-            if research['active']:
-                research['remaining_work'] = max(0, research['remaining_work'] - self.capacities()['effective_research_rate'] * (boundary - cursor))
-                if research['complete_at'] is not None and boundary >= research['complete_at']:
-                    research['remaining_work'] = 0
+            for job in self.research_jobs():
+                if job['active']:
+                    job['remaining_work'] = max(0, job['remaining_work'] - self.research_rate(job) * (boundary - cursor))
+                    if job['complete_at'] is not None and boundary >= job['complete_at']: job['remaining_work'] = 0
             cursor = boundary
             self.state.last_updated = cursor
             self.state.planet_last_updated = cursor
@@ -112,25 +113,44 @@ class Engine:
         self.state.planet_last_updated = now
         self.state.last_updated = now
 
+    def science(self):
+        if self.state.science_global is not None: return self.state.science_global
+        c = self.capacities()
+        factor = min(c['energy_coverage'], c['workforce_coverage']) * (1 + effect(self.catalog, self.state, 'research'))
+        general = self.state.districts.get('research_lab', 0)
+        return {domain: {'capacity': general + self.state.districts.get(f'{domain}_lab', 0), 'specialized': self.state.districts.get(f'{domain}_lab', 0), 'rate': (general * self.catalog.get('districts', 'research_lab').research_rate / 3 + self.state.districts.get(f'{domain}_lab', 0) * (self.catalog.items['districts'][f'{domain}_lab'].research_rate if f'{domain}_lab' in self.catalog.items['districts'] else 0)) * factor} for domain in DOMAINS}
+
+    def research_jobs(self):
+        return list(self.state.universe['research_domains'].values()) if self.state.universe is not None and 'research_domains' in self.state.universe else [self.state.research]
+
+    def research_rate(self, job):
+        if self.state.universe is None or job.get('legacy_rate'): return self.capacities()['effective_research_rate']
+        return self.science()[self.catalog.get('technologies', job['active']).domain]['rate']
+
     def _research_eta(self) -> None:
-        research = self.state.research
-        rate = self.capacities()['effective_research_rate']
-        research['complete_at'] = self.state.last_updated + research['remaining_work'] / rate if research['active'] and rate > 0 else None
+        for job in self.research_jobs():
+            rate = self.research_rate(job) if job['active'] else 0
+            job['complete_at'] = self.state.last_updated + job['remaining_work'] / rate if job['active'] and rate > 0 else None
+        if self.state.universe is not None and 'research_domains' in self.state.universe:
+            active = sorted((job for job in self.research_jobs() if job['active']), key=lambda job: job['complete_at'] if job['complete_at'] is not None else float('inf'))
+            self.state.research.update({key: active[0][key] if active else (0 if key == 'remaining_work' else None) for key in ('active','remaining_work','complete_at')})
 
     def _complete_events(self, now: float) -> None:
         self._complete_construction(now)
-        research = self.state.research
-        if research["active"] and research['remaining_work'] <= 0:
-            research.setdefault('completed_at', {})[research['active']] = now
-            if self.state.universe is not None:
-                levels = self.state.universe.setdefault('levels', {})
-                levels[research['active']] = levels.get(research['active'], 0) + 1
-            if research['active'] not in research['completed']:
-                research['completed'].append(research['active'])
-            self.state.notices.insert(0, f"Pesquisa concluída: {research['active']}.")
-            research["active"] = None
-            research["complete_at"] = None
-            research['remaining_work'] = 0
+        for research in self.research_jobs():
+            if research["active"] and research['remaining_work'] <= 0:
+                self.state.research.setdefault('completed_at', {})[research['active']] = now
+                if self.state.universe is not None:
+                    levels = self.state.universe.setdefault('levels', {})
+                    levels[research['active']] = levels.get(research['active'], 0) + 1
+                if research['active'] not in self.state.research['completed']:
+                    self.state.research['completed'].append(research['active'])
+                if self.state.universe is not None and research.get('legacy_rate'):
+                    grant_legacy_tiers(self.state, self.catalog.get('technologies', research['active']), now)
+                self.state.notices.insert(0, f"Pesquisa concluída: {research['active']}.")
+                research["active"] = None
+                research["complete_at"] = None
+                research['remaining_work'] = 0
         for fleet in sorted(self.state.fleets, key=lambda item: item['id']):
             if fleet["status"] == "TRANSIT" and fleet["arrival_at"] <= now:
                 fleet["x"], fleet["y"] = fleet["destination_x"], fleet["destination_y"]
@@ -242,6 +262,7 @@ class Engine:
             ship["crew"] for ship in self.state.ships
             if ship.get("origin_planet_id") in (None, active_planet)
         )
+        consumption /= 1 + effect(self.catalog, self.state, 'energy_efficiency')
         supply = max(0, self.state.population_total - crew)
         energy_coverage = 1.0 if consumption <= 0 else min(1.0, generation / consumption)
         workforce_coverage = 1.0 if population_demand <= 0 else min(1.0, supply / population_demand)
@@ -287,7 +308,7 @@ class Engine:
             scale = 1.08 ** max(0, n - 1)
             efficiency = 1 + effect(self.catalog, self.state, 'processing' if district.processing else 'mining')
             outputs = {r: v * scale * efficiency * (1 + effect(self.catalog, self.state, 'components' if r == 'components' else 'alloy') if r in {'components', 'refined_alloy'} else 1) for r, v in district.production.items()}
-            changed['districts'][key] = district.model_copy(update={'production': outputs, 'processing': {r: v * scale for r, v in district.processing.items()}, 'energy_generation': district.energy_generation * (1 + effect(self.catalog, self.state, 'energy')), 'workforce': district.workforce / (1 + effect(self.catalog, self.state, 'workforce')), 'research_rate': district.research_rate * (1 + effect(self.catalog, self.state, 'research'))})
+            changed['districts'][key] = district.model_copy(update={'production': outputs, 'processing': {r: v * scale for r, v in district.processing.items()}, 'energy_generation': district.energy_generation * (1 + effect(self.catalog, self.state, 'energy')), 'energy_consumption': district.energy_consumption / (1 + effect(self.catalog, self.state, 'energy_efficiency')), 'workforce': district.workforce / (1 + effect(self.catalog, self.state, 'workforce')), 'research_rate': district.research_rate * (1 + effect(self.catalog, self.state, 'research'))})
         return Catalog(changed, self.catalog.sources)
 
     def build(self, district_id: str, now: float | None = None) -> dict[str, Any]:
@@ -310,20 +331,22 @@ class Engine:
     def research(self, technology_id: str, now: float | None = None) -> dict[str, Any]:
         self.advance(now)
         technology: Technology = self.catalog.get("technologies", technology_id)  # type: ignore[assignment]
-        if self.state.research["active"]:
-            raise DataValidationError("já existe pesquisa em andamento")
+        migrate_research(self.catalog, self.state)
+        job = self.state.universe["research_domains"][technology.domain] if self.state.universe is not None else self.state.research
+        if job["active"]:
+            raise DataValidationError("já existe pesquisa em andamento neste domínio")
         if self.state.universe is None and technology_id in self.state.research["completed"]:
             raise DataValidationError("pesquisa já concluída")
         require_available(self.catalog, self.state, technology)
-        if self.capacities()["research_rate"] <= 0:
+        if (self.science()[technology.domain]["rate"] if self.state.universe is not None else self.capacities()["research_rate"]) <= 0:
             raise DataValidationError("nenhuma capacidade de pesquisa")
         quote = research_quote(self.catalog, self.state, technology_id) if self.state.universe is not None else {'cost': technology.cost, 'work': technology.duration, 'requirements': []}
         if quote['requirements']:
             raise DataValidationError('; '.join(quote['requirements']))
         self._pay(quote['cost'])
-        self.state.research.update(active=technology_id, remaining_work=quote['work'])
+        job.update(active=technology_id, remaining_work=quote['work'], total_work=quote['work'], legacy_rate=False)
         self._research_eta()
-        return {'id': technology_id, 'complete_at': self.state.research['complete_at'], 'remaining_work': quote['work']}
+        return {'id': technology_id, 'domain': technology.domain, 'complete_at': job['complete_at'], 'remaining_work': quote['work']}
 
     def build_ship(self, hull_id: str = "scout_hull", propulsion_id: str = "chemical_drive", fuel_id: str = "ion_fuel", now: float | None = None) -> dict[str, Any]:
         self.advance(now)

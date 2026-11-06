@@ -1,7 +1,9 @@
 import type { Campaign } from '../campaign/types';
 export type Content = { id: string; name: string; description: string; category: string; cost: Record<string, number>; requires: string[] };
 export type District = Content & { duration: number; workforce: number; energy_generation: number; energy_consumption: number; production: Record<string, number>; processing: Record<string, number>; research_rate: number; population_capacity: number; industrial_capacity: number; construction_slots: number; shipyard_slots: number };
-export type Technology = Content & { duration: number; unlocks: string[]; effects?: Record<string,number>; level_requires?: Record<string,number>; infrastructure?: Record<string,number> };
+export type ResearchDomain = 'civil' | 'military' | 'fundamental';
+export type ResearchJob = {active:string|null;remaining_work:number;complete_at:number|null;total_work?:number};
+export type Technology = Content & { future_unlocks?:string[]; domain?:ResearchDomain; tier?:number; kind?:'repeatable'|'breakthrough'; advances_tier?:number|null; milestones?:Record<string,Record<string,number>>; duration: number; unlocks: string[]; effects?: Record<string,number>; level_requires?: Record<string,number>; infrastructure?: Record<string,number> };
 export type Hull = Content & { classification: string; role: string; mass: number; crew: number; duration: number; compatible_propulsion: string[]; combat_power?: number; cargo_capacity?: number; science_bonus?: number; carrier_capacity?: number };
 export type Propulsion = Content & { compatible_fuels: string[]; speed_factor: number; fuel_efficiency: number; thermal_load: number; signature: number };
 export type Fuel = Content & { energy_density: number; storage_factor: number };
@@ -19,6 +21,8 @@ export type State = {
   population: { total: number; available: number; capacity: number };
   districts: Record<string, number>;
   construction: Array<{ id: string; started_at: number; complete_at: number }>;
+  science?: Record<ResearchDomain,{capacity:number;specialized:number;rate:number}>;
+  research_domains?: Record<ResearchDomain,ResearchJob>;
   research: { active: string | null; complete_at: number | null; completed: string[]; remaining_work: number };
   active_planet?: { id: string | null; planet_index: number; home: boolean };
   planets?: Array<{ id: string; name: string; x: number; y: number; planet_index: number; population_total: number; home: boolean; stocks?: Record<string, number> }>;

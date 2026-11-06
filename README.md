@@ -1,5 +1,7 @@
 ## Universo persistente (experimento atual)
 
+Research 2.0: [catálogo, infraestrutura e migração](docs/research-2.md). Ambiente isolado: `docker compose -f compose.research.yaml up -d --build --wait`, porta 8031.
+
 Contas independentes, mundo compartilhado, progresso offline e pesquisa por níveis:
 
 ```bash

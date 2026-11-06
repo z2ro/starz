@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
@@ -42,6 +42,12 @@ class Propulsion(Content):
 
 
 class Technology(Content):
+    domain: Literal["civil", "military", "fundamental"] = "fundamental"
+    tier: int = Field(default=1, ge=1, le=5)
+    kind: Literal["repeatable", "breakthrough"] = "repeatable"
+    future_unlocks: list[Literal["planetary_shields", "missile_defense", "orbital_platforms", "stellar_megastructures"]] = Field(default_factory=list)
+    advances_tier: int | None = Field(default=None, ge=2, le=5)
+    milestones: dict[int, dict[str, NonNegative]] = Field(default_factory=dict)
     duration: float = Field(gt=0)
     unlocks: list[str] = Field(default_factory=list)
     level_cost_growth: float = Field(default=1.7, ge=1, le=3)
@@ -52,6 +58,7 @@ class Technology(Content):
 
 
 class District(Content):
+    science_domain: Literal["civil", "military", "fundamental"] | None = None
     duration: float = Field(gt=0)
     workforce: int = Field(ge=0)
     energy_generation: float = Field(default=0, ge=0)
@@ -241,11 +248,20 @@ class Catalog:
                     if ref not in self.items['technologies'] and ref not in self.items['districts']:
                         errors.append(f"{item.id}: referência desconhecida: {ref}")
                 if isinstance(item, Technology):
+                    if item.advances_tier and (item.kind != "breakthrough" or item.advances_tier != item.tier):
+                        errors.append(f"{item.id}: avanço de tier inválido")
+                    if item.advances_tier and (item.id != f'{item.domain}_tier_{item.tier}' or (item.tier > 2 and f'{item.domain}_tier_{item.tier-1}' not in item.requires)):
+                        errors.append(f"{item.id}: cadeia de avanço inválida")
+                    from .progression import EFFECTS
+                    if set(item.effects) - EFFECTS or any(set(v) - EFFECTS for v in item.milestones.values()):
+                        errors.append(f"{item.id}: efeito desconhecido")
+                    if any(n < 1 or n > 50 for n in item.milestones):
+                        errors.append(f"{item.id}: milestone inválido")
                     for ref, level in item.level_requires.items():
-                        if ref not in self.items['technologies'] or level < 1:
+                        if ref not in self.items['technologies'] or not 1 <= level <= 50:
                             errors.append(f'{item.id}: requisito de nível inválido: {ref}')
                     for ref, level in item.infrastructure.items():
-                        if ref not in self.items['districts'] or level < 1:
+                        if ref not in self.items['districts'] or not 1 <= level <= 50:
                             errors.append(f'{item.id}: infraestrutura inválida: {ref}')
                     for ref in item.unlocks:
                         if ref not in unlockable:
@@ -285,6 +301,12 @@ class Catalog:
     def _technology_cycles(self) -> list[str]:
         graph = {item.id: list(item.requires) for entries in self.items.values() for item in entries.values()}
         for technology in self.items['technologies'].values():
+            graph[technology.id].extend(technology.level_requires)
+            graph[technology.id].extend(technology.infrastructure)
+            if technology.tier > 1 and not technology.advances_tier:
+                gate = f'{technology.domain}_tier_{technology.tier}'
+                if gate in graph: graph[technology.id].append(gate)
+                else: errors.append(f'{technology.id}: avanço de tier ausente')
             for target in technology.unlocks:
                 if target in graph:
                     graph[target].append(technology.id)

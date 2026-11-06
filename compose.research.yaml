@@ -1,0 +1,31 @@
+name: starz-research-2
+services:
+  universe-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: research
+      POSTGRES_USER: research
+      POSTGRES_PASSWORD: research_local_only
+    ports: ["127.0.0.1:5546:5432"]
+    volumes: ["research-save:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U research -d research"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  universe-app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://research:research_local_only@universe-db:5432/research
+      STARZ_PERSISTENT: "1"
+      STARZ_UNIVERSE_SEED: STARZ-RESEARCH-2
+    ports: ["127.0.0.1:8031:8000"]
+    depends_on:
+      universe-db: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+volumes:
+  research-save:

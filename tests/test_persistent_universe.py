@@ -18,8 +18,8 @@ from starz.progression import research_quote,effect,building_quote,EFFECTS
 class ProgressionRules(unittest.TestCase):
     def test_content_effects_and_password(self):
         c=Catalog.load('game_data','persistent_data')
-        self.assertEqual(len(c.items['technologies']),32)
-        self.assertTrue(all(set(t.effects)<=EFFECTS and t.effects for t in c.items['technologies'].values()))
+        self.assertEqual(sum(t.kind=='repeatable' for t in c.items['technologies'].values()),32)
+        self.assertTrue(all(set(t.effects)<=EFFECTS and (t.effects or t.kind=='breakthrough') for t in c.items['technologies'].values()))
         encoded=password_hash('twelve-good-characters')
         self.assertTrue(verify_password('twelve-good-characters',encoded))
         self.assertFalse(verify_password('wrong-password',encoded))
@@ -75,10 +75,10 @@ class SharedUniverse(unittest.TestCase):
         ore=sa['stocks']['raw_ore'];now[0]+=60
         self.assertGreater(snapshot(aid)['stocks']['raw_ore'],ore)
         store.run(aid,lambda e:e.research('computing',now=e.state.last_updated))
-        now[0]+=300
+        now[0]+=1000
         self.assertEqual(snapshot(aid)['universe']['levels']['computing'],1)
         q1=store.run(aid,lambda e:research_quote(e.catalog,e.state,'computing'))
-        store.run(aid,lambda e:e.research('computing',now=e.state.last_updated));now[0]+=300
+        store.run(aid,lambda e:e.research('computing',now=e.state.last_updated));now[0]+=1000
         self.assertEqual(snapshot(aid)['universe']['levels']['computing'],2)
         self.assertEqual(store.run(aid,lambda e:effect(e.catalog,e.state,'fleet_slots')),2)
         self.assertGreater(store.run(aid,lambda e:research_quote(e.catalog,e.state,'computing'))['cost']['components'],q1['cost']['components'])
@@ -156,3 +156,48 @@ class SharedUniverse(unittest.TestCase):
         colonies=snapshot(aid)['planets'];self.assertEqual(len(colonies),2)
         with self.assertRaises(DataValidationError):store.run(bid,lambda e:None,planet_id=next(p['id'] for p in colonies if not p['home']))
         self.assertEqual(snapshot(aid)['campaign'] if 'campaign' in snapshot(aid) else None,None)
+        # A completion boundary cannot apply new mining bonuses to earlier colony output.
+        colony_id=next(p['id'] for p in colonies if not p['home'])
+        def clean_colony(e):
+            e.state.districts.update(ore_extractor=1,solar_field=10)
+            e.state.population_total=100
+            e.state.stocks['raw_ore']=0
+        store.run(aid,clean_colony,planet_id=colony_id)
+        start_at=now[0]
+        store.run(aid,lambda e:e.research('extraction',now=e.state.last_updated))
+        end=store.run(aid,lambda e:e.state.universe['research_domains']['civil']['complete_at'])
+        now[0]=end;store.tick()
+        ore=store.run(aid,lambda e:e.state.stocks['raw_ore'],planet_id=colony_id)
+        self.assertAlmostEqual(ore,12*(end-start_at)/60,places=4)
+
+
+    def test_domain_concurrency_offline_and_owned_persistence(self):
+        now=[20000.0];store=PersistentStore(self.db,self.catalog,clock=lambda:now[0])
+        with Session(self.db) as session,session.begin():
+            a=store.create_player(session,'science-a');b=store.create_player(session,'science-b');aid,bid=a.id,b.id;bp=str(b.home_planet_id)
+        def start(id):
+            try:store.run(aid,lambda e:e.research(id,now=e.state.last_updated));return True
+            except DataValidationError:return False
+        with ThreadPoolExecutor(2) as pool:results=list(pool.map(start,['energy_engineering','computing']))
+        self.assertEqual(sum(results),1)
+        self.assertTrue(start('extraction'));self.assertTrue(start('naval_doctrine'))
+        a=store.run(aid,lambda e:e.state.to_dict());self.assertEqual(sum(bool(j['active']) for j in a['universe']['research_domains'].values()),3)
+        self.assertEqual(store.run(bid,lambda e:e.state.universe['levels']),{'orbital_engineering':1})
+        with self.assertRaises(DataValidationError):store.run(aid,lambda e:e.research('logistics',now=e.state.last_updated),planet_id=bp)
+        now[0]+=2000;store.tick();done=store.run(aid,lambda e:e.state.to_dict());levels=done['universe']['levels'];self.assertEqual(levels['extraction'],1);self.assertEqual(levels['naval_doctrine'],1)
+        store.tick();self.assertEqual(store.run(aid,lambda e:e.state.universe['levels']),levels)
+
+    def test_legacy_relational_research_is_promoted_without_losing_paid_work(self):
+        now=[50000.0];store=PersistentStore(self.db,self.catalog,clock=lambda:now[0])
+        with Session(self.db) as session,session.begin():
+            empire=store.create_player(session,'legacy-science');aid=empire.id
+        def legacy(e):
+            e.state.universe.pop('research_domains',None)
+            e.state.research.update(active='energy_engineering',remaining_work=17,complete_at=now[0]+17)
+        store.run(aid,legacy)
+        with Session(self.db) as session:
+            e=load(session,session.get(m.Empire,aid),catalog=self.catalog)
+            self.assertEqual(e.universe['research_domains']['fundamental']['remaining_work'],17)
+            self.assertTrue(e.universe['research_domains']['fundamental']['legacy_rate'])
+        now[0]+=17;store.tick()
+        self.assertEqual(store.run(aid,lambda e:e.state.universe['levels']['energy_engineering']),1)
