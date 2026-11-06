@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { PlanetProceduralView } from '../components/planet/PlanetProceduralView';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { fmt, label } from '../app/format';
 import { HomeworldBadge } from '../components/planet/HomeworldBadge';
@@ -11,7 +13,8 @@ import type { IconName } from '../visual/IconRegistry';
 type StrategicAction = { title: string; detail: string; to: string; icon: IconName; tone?: 'warning' | 'research' | 'active' };
 
 export function OverviewView() {
-  const { catalog, state, activePlanetId, setActivePlanetId } = useOutletContext<ShellContext>();
+  const [visualFailed,setVisualFailed]=useState(false);
+  const { catalog, state, activePlanetId, setActivePlanetId, snapshotReady=true } = useOutletContext<ShellContext>();
   const navigate = useNavigate();
   const worlds = state.planets ?? [];
   const imperialPopulation = worlds.reduce((total, world) => total + world.population_total, 0);
@@ -37,7 +40,7 @@ export function OverviewView() {
 
     <div className="overview-command-main">
       <section className="overview-editorial" aria-label="Contexto do planeta atual">
-        <img src="/static/planet-command-hero.png" alt="" />
+        <img src="/static/planet-command-hero.png" alt="" />{state.persistent&&!visualFailed&&<PlanetProceduralView state={state} catalog={catalog} snapshotReady={snapshotReady} onReady={()=>undefined} onFailure={()=>setVisualFailed(true)}/>}
         <div className="overview-editorial-shade" aria-hidden="true" />
         <div className="overview-editorial-content"><span className="eyebrow">CONTEXTO ATUAL</span><div><Icon name="planetActive" className="ui-icon" /><strong>{state.system.planet.name}</strong>{state.active_planet?.home && <HomeworldBadge />}</div><p>{state.system.name} · setor {state.system.x}:{state.system.y} · planeta {(state.active_planet?.planet_index ?? 0) + 1}</p><button className="button button-ghost" onClick={() => navigate('/planet')}>Gerenciar planeta →</button></div>
       </section>

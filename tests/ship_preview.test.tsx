@@ -7,7 +7,7 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 it('retains one renderer through model changes and releases it on unmount', () => {
   const view = render(<Scene design="horizon" />); view.rerender(<Scene design="atlas" />);
   expect(renderer.construct).toHaveBeenCalledTimes(1); expect(renderer.setSelection).toHaveBeenLastCalledWith('atlas');
-  fireEvent.click(screen.getByRole('button', { name: 'Rear' })); expect(renderer.setCamera).toHaveBeenLastCalledWith('Rear');
+  fireEvent.click(screen.getByRole('button', { name: 'Popa' })); expect(renderer.setCamera).toHaveBeenLastCalledWith('Rear');
   view.unmount(); expect(renderer.dispose).toHaveBeenCalledTimes(1);
 });
 it('degrades explicitly when WebGL cannot initialize', () => {

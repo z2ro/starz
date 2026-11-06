@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PixelCommand } from '../pixel-command/PixelCommand';
 import { Link,useOutletContext } from 'react-router-dom';
 import { fmt,nominalRate,label } from '../app/format';
 import type { ShellContext } from '../components/shell/AppShell';
@@ -11,6 +12,10 @@ import { apiRequest } from '../api/client';
 import './universe.css';
 import './experience.css';
 export function UniverseView(){
+ const {state}=useOutletContext<ShellContext>();
+ return state.persistent ? <PixelCommand/> : <CurrentUniverseView/>;
+}
+function CurrentUniverseView(){
  const {state,catalog,activePlanetId,setActivePlanetId,snapshotReady}=useOutletContext<ShellContext>();const q=useUniverse(activePlanetId);const [failed,setFailed]=useState(false);
  const shortage=state.capacities.energy_coverage<1||state.capacities.workforce_coverage<1;
  const recommendation=shortage?{title:'Recupere a capacidade do planeta',text:'Energia ou trabalhadores estão limitando a produção. Amplie campos solares ou habitação e acolha habitantes.',path:'/development',cta:'Resolver capacidade'}:!state.research.active?{title:'Seu laboratório pode trabalhar',text:'Engenharia energética melhora a geração dos campos solares. Inicie uma pesquisa enquanto suas instalações produzem.',path:'/research?tech=energy_engineering',cta:'Escolher pesquisa'}:!state.ships.length?{title:'Prepare sua primeira exploração',text:'A Horizon pode revelar recursos e mundos de outros sistemas. Seu estaleiro já está disponível.',path:'/shipyard',cta:'Construir exploradora'}:{title:'Seu próximo destino está no mapa',text:'Explore um sistema desconhecido ou planeje um transporte entre seus mundos.',path:'/galaxy',cta:'Escolher destino'};

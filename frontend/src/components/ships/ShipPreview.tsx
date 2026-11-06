@@ -6,7 +6,7 @@ const Scene = lazy(() => import('./ShipPreviewScene').catch(() => ({ default: ()
 export function ShipPreview({ hull }: { hull?: Hull }) {
   const design = designForHull(hull);
   return <section className="naval-preview" aria-label={`Preview de ${hull?.name ?? 'modelo desconhecido'}`}>
-    <div className="eyebrow">SHIP COMMAND · PIXEL</div><h2>{hull?.name ?? 'Modelo desconhecido'}</h2>
+    <div className="eyebrow">PROJETO NAVAL · PIXEL</div><h2>{hull?.name ?? 'Modelo desconhecido'}</h2>
     {design ? <Suspense fallback={<p role="status">Carregando modelo…</p>}><Scene design={design} /></Suspense> : <p>Modelo procedural não disponível para este casco.</p>}
     <small>Inspeção do design · sem posição, formação ou escala física de gameplay.</small>
   </section>;

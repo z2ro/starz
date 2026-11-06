@@ -1,3 +1,4 @@
+import { PixelShell } from '../../pixel-command/PixelShell';
 import { SessionExperience } from '../../universe/SessionExperience';
 import '../../universe/experience.css';
 import { CampaignStrip } from '../../campaign/CampaignStrip';
@@ -22,6 +23,7 @@ export function AppShell() {
   const stateQuery = useStateQuery(activePlanetId);
   const mutation = useGameMutation(activePlanetId);
   const isPlanet = location.pathname === '/planet';
+
   const retained = useRef<{ catalog: Catalog; state: State } | null>(null);
   const queryError = catalogQuery.error ?? stateQuery.error;
   const snapshotReady = !queryError && !!catalogQuery.data && !!stateQuery.data && (!activePlanetId || stateQuery.data.active_planet?.id === activePlanetId);
@@ -36,5 +38,11 @@ export function AppShell() {
   if (!catalog || !state) return <div className="boot"><div className="brand"><span>STAR</span><b>Z</b></div><div className="boot-orbit" /><p>Sincronizando centro de comando…</p></div>;
   const context: ShellContext = { catalog, state, activePlanetId: activePlanetId ?? state.active_planet?.id ?? undefined, snapshotReady, setActivePlanetId: id => { setActivePlanetId(id); navigate('/planet'); }, execute, busy: mutation.isPending, feedback, setFeedback };
   const blocked = isPlanet && !snapshotReady;
+  if (state.persistent) return <div className="app-root pixel-command pixel-game" aria-busy={mutation.isPending || blocked}>
+    <div className="shell-snapshot-content" inert={blocked}><PixelShell state={state} catalog={catalog} planetId={context.activePlanetId}><Outlet context={context}/></PixelShell></div>
+    {blocked && <div className="planet-snapshot-cover" role={queryError?'alert':'status'}><p>{queryError?'Não foi possível sincronizar o planeta.':'Sincronizando planeta selecionado…'}</p>{queryError&&<button onClick={()=>{void catalogQuery.refetch();void stateQuery.refetch();}}>Tentar novamente</button>}{!queryError&&!stateQuery.isPending&&<button onClick={()=>void stateQuery.refetch()}>Recarregar planeta</button>}</div>}
+    {feedback&&<div className={`toast ${feedback.kind}`} role={feedback.kind==='error'?'alert':'status'}><span>{feedback.message}</span><button aria-label="Fechar" onClick={()=>setFeedback(undefined)}>×</button></div>}
+    {mutation.isPending&&<div className="loading-line"/>}
+  </div>;
   return <div className={`app-root ${state.persistent ? 'persistent-experience' : ''}`} aria-busy={mutation.isPending || blocked}><div className="shell-snapshot-content" inert={blocked}>{state.persistent && <div className="universe-session-link"><a href="#/universe">CENTRO DE COMANDO</a><a href="#/universe?guide=1">Guia de início</a></div>}<TopHud catalog={catalog} state={state} noticeOpen={noticeOpen} settingsOpen={settingsOpen} onNotice={() => { setNoticeOpen(value => !value); setSettingsOpen(false); }} onSettings={() => { setSettingsOpen(value => !value); setNoticeOpen(false); }} />{state.campaign && <CampaignStrip campaign={state.campaign} busy={mutation.isPending} end={() => { void execute('campaign/order', { action: 'end_turn' }).catch(() => undefined); }} />}<div className={`app-shell ${isPlanet ? 'planet-shell' : ''} ${state.persistent ? 'persistent-layout' : ''}`}><Sidebar state={state} /><main className={`main-content ${isPlanet ? 'main-content-planet' : ''}`}>{state.persistent && !isPlanet && <SessionExperience state={state} catalog={catalog} planetId={context.activePlanetId}/>}<Outlet context={context} /></main>{!isPlanet && !state.persistent && <ContextPanel catalog={catalog} state={state} />}</div></div>{blocked && <div className="planet-snapshot-cover" role={queryError ? 'alert' : 'status'}><p>{queryError ? 'Não foi possível sincronizar o planeta.' : 'Sincronizando planeta selecionado…'}</p>{queryError && <button className="button button-secondary" onClick={() => { void catalogQuery.refetch(); void stateQuery.refetch(); }}>Tentar novamente</button>}{!queryError && !stateQuery.isPending && <button className="button button-secondary" onClick={() => { void stateQuery.refetch(); }}>Recarregar planeta</button>}</div>}{feedback && <div className={`toast ${feedback.kind}`} role="status"><i>{feedback.kind === 'success' ? '✓' : '!'}</i><span>{feedback.message}</span><button onClick={() => setFeedback(undefined)} aria-label="Fechar">×</button></div>}{mutation.isPending && <div className="loading-line" />}</div>;
 }

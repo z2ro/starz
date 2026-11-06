@@ -27,7 +27,7 @@ export function PlanetInspector({ catalog, state, tab, onTab, onNavigate }: { ca
   ];
   const development = [
     { label: 'População', value: `${fmt(state.population.total)} / ${fmt(state.population.capacity)}`, progress: ratio(state.population.total, state.population.capacity), tone: 'positive' as const },
-    { label: 'Workforce', value: `${fmt(state.capacities.workforce_supply)} / ${fmt(state.capacities.workforce_demand)}`, progress: state.capacities.workforce_coverage * 100, tone: 'active' as const },
+    { label: 'Trabalhadores', value: `${fmt(state.capacities.workforce_supply)} / ${fmt(state.capacities.workforce_demand)}`, progress: state.capacities.workforce_coverage * 100, tone: 'active' as const },
     { label: 'Energia', value: `${fmt(state.capacities.energy_generation)} / ${fmt(state.capacities.energy_consumption)}`, progress: state.capacities.energy_coverage * 100, tone: state.capacities.energy_coverage < 1 ? 'warning' as const : 'positive' as const },
     { label: 'Capacidade industrial', value: fmt(state.capacities.industrial_capacity), progress: undefined, tone: 'default' as const },
     { label: 'Slots de construção', value: `${fmt(state.capacities.construction_slots - state.capacities.construction_slots_available)} / ${fmt(state.capacities.construction_slots)}`, progress: ratio(state.capacities.construction_slots - state.capacities.construction_slots_available, state.capacities.construction_slots), tone: 'active' as const },

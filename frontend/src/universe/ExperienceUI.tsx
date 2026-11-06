@@ -1,9 +1,11 @@
+import { Icon } from '../components/ui/Icon';
+import { resourceIcon } from '../visual/IconRegistry';
 import { Link } from 'react-router-dom';
 import { duration, fmt, label } from '../app/format';
 import type { Catalog, State } from '../types/game';
 import { Progress } from '../components/ui/Progress';
 import { shortage, missionNames } from './experience';
-export function Costs({catalog,state,values}:{catalog:Catalog;state:State;values:Record<string,number>}){return <ul className="ux-costs" aria-label="Custo no planeta atual">{Object.entries(values).map(([r,n])=><li key={r} className={(state.stocks[r]??0)<n?'ux-missing':''}><span>{label(catalog,r)}</span><strong>{fmt(n,1)}</strong><small>{(state.stocks[r]??0)<n?`Faltam ${fmt(n-(state.stocks[r]??0),1)}`:`${fmt(state.stocks[r]??0,1)} disponíveis`}</small></li>)}</ul>;}
+export function Costs({catalog,state,values}:{catalog:Catalog;state:State;values:Record<string,number>}){return <ul className="ux-costs" aria-label="Custo no planeta atual">{Object.entries(values).map(([r,n])=><li key={r} className={(state.stocks[r]??0)<n?'ux-missing':''}><Icon name={resourceIcon(r)??'economy'}/><span>{label(catalog,r)}</span><strong>{fmt(n,1)}</strong><small>{(state.stocks[r]??0)<n?`Faltam ${fmt(n-(state.stocks[r]??0),1)}`:`${fmt(state.stocks[r]??0,1)} disponíveis`}</small></li>)}</ul>;}
 export function CostBlock({catalog,state,values}:{catalog:Catalog;state:State;values:Record<string,number>}){const missing=shortage(state.stocks,values);return missing.length?<p className="ux-warning">Recursos insuficientes: {missing.map(r=>`${label(catalog,r.id)} (${fmt(r.missing,1)} faltando)`).join(' · ')}. <Link to="/development">Ampliar produção</Link></p>:null;}
 export function Activities({catalog,state}:{catalog:Catalog;state:State}){
  const now=state.observed_at??Date.now()/1000;

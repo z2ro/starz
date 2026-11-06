@@ -18,5 +18,5 @@ export default function ShipPreviewScene({ design }: { design: ShipDesignId }) {
     } catch { fail(); }
     return () => { canvas?.removeEventListener('webglcontextlost', lost); renderer.current?.dispose(); renderer.current = null; };
   }, []);
-  return <><div className="naval-canvas" ref={host}>{error && <p role="status">{error}</p>}</div><div className="naval-angles">{(['3/4 Front', 'Side', 'Rear', 'Top'] as ShipCamera[]).map(preset => <button key={preset} onClick={() => renderer.current?.setCamera(preset)}>{design === 'stargrave' ? STELLAR_CAMERA_LABELS[preset] : preset}</button>)}</div></>;
+  return <><div className="naval-canvas" ref={host}>{error && <p role="status">{error}</p>}</div><div className="naval-angles">{(['3/4 Front', 'Side', 'Rear', 'Top'] as ShipCamera[]).map(preset => <button key={preset} onClick={() => renderer.current?.setCamera(preset)}>{design === 'stargrave' ? STELLAR_CAMERA_LABELS[preset] : ({'3/4 Front':'Proa 3/4',Side:'Lateral',Rear:'Popa',Top:'Superior'} as Partial<Record<ShipCamera,string>>)[preset]}</button>)}</div></>;
 }
