@@ -11,7 +11,7 @@ import catalog from './fixtures/fleet-api-catalog.json';
 vi.mock('../frontend/src/components/planet/PlanetProceduralView',()=>({PlanetProceduralView:()=>null}));
 vi.mock('../frontend/src/universe/useUniverse',()=>({useUniverse:()=>({data:{empire_id:'strategy-test',name:'Teste',colony_limit:2}})}));
 vi.mock('@tanstack/react-query',()=>({useQuery:()=>({data:{empire_id:'strategy-test',players:[],missions:[],market:[],reports:[],fleet_limit:2}}),useQueryClient:()=>({invalidateQueries:vi.fn()})}));
-afterEach(()=>{cleanup();localStorage.clear();});
+afterEach(()=>{cleanup();localStorage.clear();sessionStorage.clear();});
 it('orders real activities by completion and never invents an assembly progress',()=>{
  const s=planetSnapshot();s.observed_at=100;s.research.active=null;s.fleets=[];s.construction=[{id:'ore_extractor',started_at:50,complete_at:200}];s.ships=[{id:'ship',hull_id:'scout_hull',propulsion_id:'chemical_drive',fuel_id:'ion_fuel',crew:3,mass:2,ready_at:150}];
  const jobs=activityJobs(catalog,s);expect(jobs.map(j=>j.end)).toEqual([150,200]);expect(jobs[0].progress).toBeUndefined();
@@ -52,5 +52,11 @@ vi.mock('../frontend/src/api/queries',()=>({useGalaxyQuery:()=>({isPending:false
 it('exposes surveyed home-system planets and retains their index in the mission link',()=>{
  const s=planetSnapshot();s.persistent=true;
  render(<MemoryRouter><Routes><Route element={<Outlet context={{state:s,catalog,execute:vi.fn()}}/>}><Route path="/" element={<GalaxyView/>}/></Route></Routes></MemoryRouter>);
- fireEvent.click(screen.getByRole('button',{name:/Mundo livre/}));expect(screen.getByRole('link',{name:'Planejar missão para 0:0'})).toHaveAttribute('href','#/missions?x=0&y=0&mission=COLONIZE&planet_index=1');
+ fireEvent.click(screen.getByRole('button',{name:/Mundo livre/}));expect(screen.getByRole('link',{name:'Planejar missão para 0:0'})).toHaveAttribute('href','#/fleets?plan=1&x=0&y=0&mission=COLONIZE&planet_index=1');
+});
+it('restores a mission draft while explicit galaxy coordinates replace its target',()=>{
+ const s=planetSnapshot();s.persistent=true;const id=s.active_planet!.id;
+ sessionStorage.setItem(`starz.mission.${id}`,JSON.stringify({ids:[],mission:'TRANSPORT',target:'old-target',x:5,y:6,index:2,resource:'components',amount:7}));
+ render(<MemoryRouter initialEntries={['/fleets?plan=1&x=3&y=4']}><Routes><Route element={<Outlet context={{state:s,catalog,activePlanetId:id,execute:vi.fn(),setFeedback:vi.fn()}}/>}><Route path="/fleets" element={<OperationsView/>}/></Route></Routes></MemoryRouter>);
+ expect(screen.getByLabelText('Missão')).toHaveValue('TRANSPORT');expect(screen.getByLabelText('Coordenada X')).toHaveValue(3);expect(screen.getByLabelText('Coordenada Y')).toHaveValue(4);expect(screen.getByLabelText('Planeta de destino')).toHaveValue('');expect(screen.getByLabelText('Recurso')).toHaveValue('components');expect(screen.getByLabelText('Quantidade')).toHaveValue(7);
 });

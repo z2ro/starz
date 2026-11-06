@@ -26,7 +26,7 @@ afterEach(cleanup);
 describe('Industrial Command Network', () => {
   it('renders only local stock with nominal production and local capacities', () => {
     renderEconomy();
-    expect(screen.getByText('Economia local')).toBeInTheDocument();
+    expect(screen.getByText('Produção')).toBeInTheDocument();
     expect(screen.getAllByText('Ferrita bruta').length).toBeGreaterThan(0);
     expect(screen.getAllByText('+4/min nom.').length).toBeGreaterThan(0);
     expect(screen.getByText('Geração')).toBeInTheDocument();

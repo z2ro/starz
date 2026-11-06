@@ -33,5 +33,5 @@ export function ShipyardView() {
       {state.population.available < hull.crew && <p>Tripulação disponível insuficiente.</p>}
       {state.capacities.shipyard_slots_available < 1 && <p>Nenhum slot disponível neste planeta.</p>}
       <button className="action primary" disabled={busy || !snapshotReady || !config.valid} onClick={() => { if (config.valid && config.propulsion && config.fuel) void execute('build-ship', { planet_id: state.active_planet?.id, hull_id: hull.id, propulsion_id: config.propulsion.id, fuel_id: config.fuel.id }).catch(() => undefined); }}>Construir nave</button>
-    </>}</Panel></div>{state.persistent&&<><p>Após a montagem, a nave estará disponível para selecionar em uma missão. <Link className="button" to="/galaxy">Escolher destino no mapa</Link> · <Link to="/missions">Planejar missão</Link></p></>}</>;
+    </>}</Panel></div>{state.persistent&&<><p>Após a montagem, a nave estará disponível para selecionar em uma missão. <Link className="button" to="/galaxy">Escolher destino no mapa</Link> · <Link to="/fleets?plan=1">Planejar missão</Link></p></>}</>;
 }

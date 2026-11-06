@@ -21,7 +21,7 @@ export function PixelCommand() {
  : !state.ships.length?{title:'Prepare a primeira exploradora',text:'Uma Horizon permite explorar os sistemas vizinhos.',path:'/shipyard',cta:'Abrir estaleiro'}
  : {title:'Novos destinos à vista',text:'Compare os sistemas conhecidos e planeje sua próxima missão.',path:'/galaxy',cta:'Explorar mapa'};
  return <div className="strategy-command">
- <header className="strategy-command-title"><h1>Centro de comando</h1><span>{q.data?.name??'Império'} · {state.planets?.length??1} mundo(s)</span></header>
+ <header className="strategy-command-title"><h1>Visão geral</h1><span>{q.data?.name??'Império'} · {state.planets?.length??1} mundo(s)</span></header>
  <section className="strategy-world" aria-label="Planeta atual">
  <div className="strategy-world-scene"><img src={planetArtworkFor(p).path} className="px-fallback" alt=""/>{!failed&&!imageMode&&<PlanetProceduralView state={state} catalog={catalog} snapshotReady={snapshotReady??true} onReady={()=>undefined} onFailure={()=>setFailed(true)}/>}</div>
  <header className="strategy-world-identity"><span className="px-kicker">{state.active_planet?.home?'MUNDO NATAL':'COLÔNIA'} · {state.system.x}:{state.system.y}</span><h2>{p.name}</h2><span>{state.system.name} · planeta {(state.active_planet?.planet_index??0)+1}</span></header>
@@ -34,7 +34,7 @@ export function PixelCommand() {
  <div><dt>Estaleiro</dt><dd>{c.shipyard_slots_available} / {c.shipyard_slots}<small> vagas livres</small></dd></div>
  </dl><div className="strategy-physical"><span>{fmt(p.temperature)} K</span><span>{fmt(p.gravity,2)} g</span><span>{fmt(p.water,1)}% água</span></div>
  <nav aria-label="Ordens rápidas"><Link className="px-button px-primary" to="/development"><PixelIcon name="build"/>Instalações</Link><Link to="/research"><PixelIcon name="research"/>Pesquisa</Link><Link to="/shipyard"><PixelIcon name="ship"/>Estaleiro</Link><Link to="/galaxy"><PixelIcon name="map"/>Exploração</Link></nav>
- <Link to="/planet" className="strategy-admin">Administrar planeta e consultar características →</Link>
+ <Link to="/development?section=population" className="strategy-admin">Gerenciar população e trabalhadores →</Link>
  </div><div className="strategy-world-modes"><button aria-pressed={!imageMode&&!failed} disabled={failed} onClick={()=>setImageMode(false)}>Procedural</button><button aria-pressed={imageMode||failed} onClick={()=>setImageMode(true)}>Imagem</button></div>
  </section>{failed&&<p role="status">Visualização procedural indisponível. Imagem de referência ativa.</p>}
  <div className="strategy-worlds"><span>Mundos do império <b>{state.planets?.length??1} / {q.data?.colony_limit??'—'}</b></span>{state.planets?.map(world=><button key={world.id} aria-pressed={world.id===state.active_planet?.id} onClick={()=>setActivePlanetId(world.id)}><PixelIcon name="planet"/><span>{world.name}<small>{world.x}:{world.y} · {fmt(world.population_total)} habitantes</small></span></button>)}<Link to="/overview">Administrar colônias →</Link></div>

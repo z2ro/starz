@@ -37,7 +37,7 @@ export function AppShell() {
   };
   if (queryError && (!isPlanet || !catalog || !state)) return <div className="fatal"><b>Centro de comando indisponível</b><p>{queryError.message}</p><button onClick={() => { void catalogQuery.refetch(); void stateQuery.refetch(); }}>Tentar novamente</button></div>;
   if (!catalog || !state) return <div className="boot"><div className="brand"><span>STAR</span><b>Z</b></div><div className="boot-orbit" /><p>Sincronizando centro de comando…</p></div>;
-  const context: ShellContext = { catalog, state, activePlanetId: activePlanetId ?? state.active_planet?.id ?? undefined, snapshotReady, setActivePlanetId: id => { setActivePlanetId(id); navigate('/planet'); }, execute, busy: mutation.isPending, feedback, setFeedback };
+  const context: ShellContext = { catalog, state, activePlanetId: activePlanetId ?? state.active_planet?.id ?? undefined, snapshotReady, setActivePlanetId: id => { setActivePlanetId(id); navigate(state.persistent?'/universe':'/planet'); }, execute, busy: mutation.isPending, feedback, setFeedback };
   const blocked = (isPlanet || state.persistent) && !snapshotReady;
   if (state.persistent) return <div className="app-root pixel-command pixel-game" aria-busy={mutation.isPending || blocked}>
     <div className="shell-snapshot-content" inert={blocked}><PixelShell state={state} catalog={catalog} planetId={context.activePlanetId} onPlanet={setActivePlanetId}><Outlet context={context}/></PixelShell></div>

@@ -22,11 +22,11 @@ export function OverviewView() {
   const selectedWorldId = activePlanetId ?? state.active_planet?.id;
   const actions: StrategicAction[] = [];
   if (!state.research.active) actions.push({ title: 'Pesquisa inativa', detail: 'Nenhum programa científico está em andamento.', to: '/research', icon: 'research', tone: 'research' });
-  if (state.capacities.construction_slots_available > 0) actions.push({ title: 'Capacidade de construção disponível', detail: `${fmt(state.capacities.construction_slots_available)} slot(s) livre(s) no planeta atual.`, to: '/planet', icon: 'operations', tone: 'active' });
+  if (state.capacities.construction_slots_available > 0) actions.push({ title: 'Capacidade de construção disponível', detail: `${fmt(state.capacities.construction_slots_available)} slot(s) livre(s) no planeta atual.`, to: state.persistent?'/development':'/planet', icon: 'operations', tone: 'active' });
   if (state.capacities.shipyard_slots_available > 0) actions.push({ title: 'Estaleiro disponível', detail: `${fmt(state.capacities.shipyard_slots_available)} slot(s) de montagem livre(s).`, to: '/shipyard', icon: 'shipyard', tone: 'active' });
   if (transit > 0) actions.push({ title: 'Movimento em andamento', detail: `${fmt(transit)} frota(s) em trânsito.`, to: '/fleets', icon: 'fleets', tone: 'warning' });
   else if (arrived > 0) actions.push({ title: 'Frota disponível para ordens', detail: `${fmt(arrived)} frota(s) estacionada(s).`, to: '/fleets', icon: 'fleets', tone: 'active' });
-  if (actions.length < 4 && worlds.length > 1) actions.push({ title: 'Gerenciar mundos', detail: `${fmt(worlds.length)} mundos sob controle imperial.`, to: '/planet', icon: 'planetActive', tone: 'active' });
+  if (actions.length < 4 && worlds.length > 1) actions.push({ title: 'Gerenciar mundos', detail: `${fmt(worlds.length)} mundos sob controle imperial.`, to: state.persistent?'/universe':'/planet', icon: 'planetActive', tone: 'active' });
   const visibleActions = actions.slice(0, 4);
 
   const worldRoster = (<section className="overview-worlds" aria-label="Mundos imperiais">

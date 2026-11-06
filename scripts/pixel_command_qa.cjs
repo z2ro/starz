@@ -10,7 +10,7 @@ const fs=require('node:fs');const path=require('node:path');const assert=require
  try {
  const context=await browser.newContext({storageState:process.env.STARZ_QA_STORAGE,viewport:{width:1440,height:900}});
  const page=await context.newPage();const errors=[],mutations=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.method()==='POST')mutations.push(r.url());});
- await page.goto(base+'/#/universe');await page.getByRole('heading',{name:'Centro de comando',exact:true}).waitFor();await page.locator('.strategy-world-scene canvas').waitFor();await page.evaluate(()=>document.fonts.ready);
+ await page.goto(base+'/#/universe');await page.getByRole('heading',{name:'Visão geral',level:1,exact:true}).waitFor();await page.locator('.strategy-world-scene canvas').waitFor();await page.evaluate(()=>document.fonts.ready);
  const layouts=[];
  for(const [width,height] of [[1920,1080],[1440,900],[1366,768],[390,844]]){
  await page.setViewportSize({width,height});await page.waitForTimeout(600);
@@ -28,7 +28,7 @@ const fs=require('node:fs');const path=require('node:path');const assert=require
  await page.getByRole('button',{name:'Ajuda',exact:true}).focus();await page.keyboard.press('Enter');assert(await page.getByRole('region',{name:'Ajuda de comando'}).isVisible());await page.getByRole('button',{name:'Fechar ajuda'}).click();
  for(const link of await page.getByRole('navigation',{name:'Ordens rápidas'}).getByRole('link').all())assert(['/development','/research','/shipyard','/galaxy'].includes((await link.getAttribute('href')).replace('#','')));
  await page.getByRole('navigation',{name:'Ordens rápidas'}).getByRole('link',{name:/Pesquisa/}).click();await page.getByRole('heading',{name:'Avançar tecnologias'}).waitFor();assert.equal(await page.locator('.pixel-command').count(),1);
- await page.goto(base+'/#/universe');await page.getByRole('heading',{name:'Centro de comando',exact:true}).waitFor();assert.equal(await page.locator('.pixel-command').count(),1);
+ await page.goto(base+'/#/universe');await page.getByRole('heading',{name:'Visão geral',level:1,exact:true}).waitFor();assert.equal(await page.locator('.pixel-command').count(),1);
  assert.equal(errors.length,0,errors.join('\n'));assert.equal(mutations.length,0,'Preview QA must not issue game orders');
  fs.writeFileSync(path.join(out,'qa.json'),JSON.stringify({layouts,errors,mutations,help:true,keyboard:true,records:true,imageProcedural:true,nominalExplanation:true,realNavigation:true,sharedPixelShell:true},null,2));
  console.log('PASS pixel direction browser QA');

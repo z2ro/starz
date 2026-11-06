@@ -3,14 +3,14 @@ import { OperationsView } from '../universe/OperationsView';
 import { UniverseView } from '../universe/UniverseView';
 import type { ShellContext } from '../components/shell/AppShell';
 import { CampaignView } from '../campaign/CampaignView';
-import { HashRouter, Navigate, Route, Routes, useOutletContext } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useOutletContext, useLocation } from 'react-router-dom';
 import { AppShell } from '../components/shell/AppShell';
 import { OverviewView } from '../views/OverviewView';
 import { PlanetView } from '../views/PlanetView';
 import { EconomyView } from '../views/EconomyView';
 import { ResearchView } from '../views/ResearchView';
 import { ShipyardView } from '../views/ShipyardView';
-import { FleetsView } from '../views/FleetsView';
+import { FleetWorkspace } from '../views/FleetsView';
 import { GalaxyView } from '../views/GalaxyView';
 import { lazy, Suspense } from 'react';
 
@@ -27,7 +27,7 @@ export function AppRouter() {
     <Route path="/planet-lab" element={<Suspense fallback={<div className="planet-lab-loading">Carregando Planet Lab…</div>}><PlanetLabView /></Suspense>} />
     <Route element={<AppShell />}>
       <Route path="/development" element={<DevelopmentView />} />
-      <Route path="/missions" element={<OperationsView />} />
+      <Route path="/missions" element={<MissionAlias />} />
       <Route path="/relations" element={<OperationsView />} />
       <Route path="/universe" element={<UniverseView />} />
       <Route path="/campaign" element={<CampaignView />} />
@@ -36,7 +36,7 @@ export function AppRouter() {
       <Route path="/economy" element={<EconomyView />} />
       <Route path="/research" element={<ResearchView />} />
       <Route path="/shipyard" element={<ShipyardView />} />
-      <Route path="/fleets" element={<FleetsView />} />
+      <Route path="/fleets" element={<FleetWorkspace />} />
       <Route path="/galaxy" element={<GalaxyView />} />
       <Route path="*" element={<Landing />} />
     </Route>
@@ -44,3 +44,5 @@ export function AppRouter() {
 }
 
 function Landing(){const {state}=useOutletContext<ShellContext>();return <Navigate to={state.persistent?"/universe":state.campaign?"/campaign":"/overview"} replace/>;}
+
+function MissionAlias(){const location=useLocation();const params=new URLSearchParams(location.search);params.set("plan","1");return <Navigate replace to={`/fleets?${params}`}/>;}
