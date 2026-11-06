@@ -10,21 +10,21 @@ const fs=require('node:fs');const path=require('node:path');const assert=require
  try {
  const context=await browser.newContext({storageState:process.env.STARZ_QA_STORAGE,viewport:{width:1440,height:900}});
  const page=await context.newPage();const errors=[],mutations=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.method()==='POST')mutations.push(r.url());});
- await page.goto(base+'/#/universe');await page.getByRole('heading',{name:'Centro de comando',exact:true}).waitFor();await page.locator('.px-viewport canvas').waitFor();await page.evaluate(()=>document.fonts.ready);
+ await page.goto(base+'/#/universe');await page.getByRole('heading',{name:'Centro de comando',exact:true}).waitFor();await page.locator('.strategy-world-scene canvas').waitFor();await page.evaluate(()=>document.fonts.ready);
  const layouts=[];
  for(const [width,height] of [[1920,1080],[1440,900],[1366,768],[390,844]]){
  await page.setViewportSize({width,height});await page.waitForTimeout(600);
- const layout=await page.evaluate(()=>({width:innerWidth,page:document.documentElement.scrollWidth,font:document.fonts.check('16px Silkscreen'),planet:document.querySelector('.px-viewport').getBoundingClientRect().toJSON()}));
+ const layout=await page.evaluate(()=>({width:innerWidth,page:document.documentElement.scrollWidth,font:document.fonts.check('16px Silkscreen'),planet:document.querySelector('.strategy-world-scene').getBoundingClientRect().toJSON()}));
  assert(layout.page<=width,JSON.stringify(layout));assert(layout.font);layouts.push(layout);
  await page.screenshot({path:path.join(out,`${width}-command.png`),fullPage:true});
  }
  await page.getByRole('button',{name:'Ajuda',exact:true}).click();await page.getByRole('region',{name:'Ajuda de comando'}).waitFor();
  await page.screenshot({path:path.join(out,'390-help.png'),fullPage:true});
  await page.getByRole('button',{name:'Fechar ajuda'}).click();assert.equal(await page.getByRole('region',{name:'Ajuda de comando'}).count(),0);
- await page.getByRole('button',{name:'Imagem',exact:true}).click();assert.equal(await page.locator('.px-viewport canvas').count(),0);
- await page.getByRole('button',{name:'Procedural',exact:true}).click();await page.locator('.px-viewport canvas').waitFor();
+ await page.getByRole('button',{name:'Imagem',exact:true}).click();assert.equal(await page.locator('.strategy-world-scene canvas').count(),0);
+ await page.getByRole('button',{name:'Procedural',exact:true}).click();await page.locator('.strategy-world-scene canvas').waitFor();
  await page.getByRole('button',{name:/Registros/}).click();await page.getByRole('region',{name:'Registros recentes'}).waitFor();await page.getByRole('button',{name:/Registros/}).click();
- await page.getByText('Como ler as taxas?',{exact:true}).click();assert(await page.getByText(/Produção nominal declarada pelas instalações/).isVisible());
+ await page.getByRole('button',{name:/Produção e detalhes/}).click();assert(await page.getByText(/Taxas nominais das instalações/).isVisible());
  await page.getByRole('button',{name:'Ajuda',exact:true}).focus();await page.keyboard.press('Enter');assert(await page.getByRole('region',{name:'Ajuda de comando'}).isVisible());await page.getByRole('button',{name:'Fechar ajuda'}).click();
  for(const link of await page.getByRole('navigation',{name:'Ordens rápidas'}).getByRole('link').all())assert(['/development','/research','/shipyard','/galaxy'].includes((await link.getAttribute('href')).replace('#','')));
  await page.getByRole('navigation',{name:'Ordens rápidas'}).getByRole('link',{name:/Pesquisa/}).click();await page.getByRole('heading',{name:'Avançar tecnologias'}).waitFor();assert.equal(await page.locator('.pixel-command').count(),1);

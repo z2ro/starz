@@ -27,5 +27,5 @@ it('distinguishes market from diplomacy and closes mobile navigation after navig
 it('discloses all local stocks without changing their values',()=>{
  render(<MemoryRouter><PixelShell state={planetSnapshot()} catalog={rawCatalog}>Setor</PixelShell></MemoryRouter>);
  const stocks=screen.getByRole('region',{name:/Estoque local/});const before=stocks.textContent;
- fireEvent.click(screen.getByRole('button',{name:/Ver todos os estoques/}));expect(stocks).toHaveAttribute('data-expanded','true');expect(stocks.textContent).toBe(before);
+ fireEvent.click(screen.getByRole('button',{name:/Produção e detalhes dos recursos/}));expect(stocks).toHaveAttribute('data-expanded','true');expect(stocks.textContent).toBe(before);
 });

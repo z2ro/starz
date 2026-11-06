@@ -1,5 +1,3 @@
-import { useState } from 'react';
-import { PlanetProceduralView } from '../components/planet/PlanetProceduralView';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { fmt, label } from '../app/format';
 import { HomeworldBadge } from '../components/planet/HomeworldBadge';
@@ -13,8 +11,7 @@ import type { IconName } from '../visual/IconRegistry';
 type StrategicAction = { title: string; detail: string; to: string; icon: IconName; tone?: 'warning' | 'research' | 'active' };
 
 export function OverviewView() {
-  const [visualFailed,setVisualFailed]=useState(false);
-  const { catalog, state, activePlanetId, setActivePlanetId, snapshotReady=true } = useOutletContext<ShellContext>();
+  const { catalog, state, activePlanetId, setActivePlanetId } = useOutletContext<ShellContext>();
   const navigate = useNavigate();
   const worlds = state.planets ?? [];
   const imperialPopulation = worlds.reduce((total, world) => total + world.population_total, 0);
@@ -32,18 +29,27 @@ export function OverviewView() {
   if (actions.length < 4 && worlds.length > 1) actions.push({ title: 'Gerenciar mundos', detail: `${fmt(worlds.length)} mundos sob controle imperial.`, to: '/planet', icon: 'planetActive', tone: 'active' });
   const visibleActions = actions.slice(0, 4);
 
-  return <div className="overview-command">
+  const worldRoster = (<section className="overview-worlds" aria-label="Mundos imperiais">
+        <SectionHeader title="Mundos imperiais" eyebrow="COLÔNIAS E MUNDO NATAL" count={worlds.length} />
+        {worlds.length ? <div className="world-roster">{worlds.map(world => {
+          const selected = world.id === selectedWorldId;
+          return <button className={`world-row ${selected ? 'selected' : ''}`} type="button" key={world.id} onClick={() => setActivePlanetId(world.id)} aria-pressed={selected} aria-label={`Selecionar planeta ${world.name}`}><span className="world-row-icon"><Icon name={selected ? 'planetActive' : 'planet'} className="ui-icon" /></span><span className="world-row-name"><strong>{world.name}</strong><small>{world.x}:{world.y} · planeta {world.planet_index + 1}</small></span><span className="world-row-population"><span>POPULAÇÃO</span><strong>{fmt(world.population_total)}</strong></span>{world.home && <HomeworldBadge />}<span className="world-row-chevron" aria-hidden="true">→</span></button>;
+        })}</div> : <EmptyState title="Sem mundos materializados" icon="planet">Os mundos sob controle aparecerão aqui.</EmptyState>}
+      </section>);
+
+  return <div className={`overview-command ${state.persistent?'strategy-colonies':''}`}>
     <header className="overview-command-header">
       <div><span className="eyebrow">COMANDO IMPERIAL</span><h1>Estado do império</h1><p>{state.system.name} · {state.system.x}:{state.system.y} · {fmt(worlds.length)} mundo{worlds.length === 1 ? '' : 's'} controlado{worlds.length === 1 ? '' : 's'}</p></div>
       <div className="overview-command-context"><Icon name="planetActive" className="ui-icon" /><span>PLANETA ATUAL</span><strong>{state.system.planet.name}</strong></div>
     </header>
 
+    {state.persistent&&worldRoster}
     <div className="overview-command-main">
-      <section className="overview-editorial" aria-label="Contexto do planeta atual">
-        <img src="/static/planet-command-hero.png" alt="" />{state.persistent&&!visualFailed&&<PlanetProceduralView state={state} catalog={catalog} snapshotReady={snapshotReady} onReady={()=>undefined} onFailure={()=>setVisualFailed(true)}/>}
+      {!state.persistent&&<section className="overview-editorial" aria-label="Contexto do planeta atual">
+        <img src="/static/planet-command-hero.png" alt="" />
         <div className="overview-editorial-shade" aria-hidden="true" />
         <div className="overview-editorial-content"><span className="eyebrow">CONTEXTO ATUAL</span><div><Icon name="planetActive" className="ui-icon" /><strong>{state.system.planet.name}</strong>{state.active_planet?.home && <HomeworldBadge />}</div><p>{state.system.name} · setor {state.system.x}:{state.system.y} · planeta {(state.active_planet?.planet_index ?? 0) + 1}</p><button className="button button-ghost" onClick={() => navigate('/planet')}>Gerenciar planeta →</button></div>
-      </section>
+      </section>}
 
       <section className="empire-summary" aria-label="Resumo imperial">
         <SectionHeader title="Resumo imperial" eyebrow="ESTADO ATUAL" />
@@ -53,24 +59,18 @@ export function OverviewView() {
     </div>
 
     <div className="overview-command-secondary">
-      <section className="overview-worlds" aria-label="Mundos imperiais">
-        <SectionHeader title="Mundos imperiais" eyebrow="WORLD ROSTER" count={worlds.length} />
-        {worlds.length ? <div className="world-roster">{worlds.map(world => {
-          const selected = world.id === selectedWorldId;
-          return <button className={`world-row ${selected ? 'selected' : ''}`} type="button" key={world.id} onClick={() => setActivePlanetId(world.id)} aria-pressed={selected} aria-label={`Selecionar planeta ${world.name}`}><span className="world-row-icon"><Icon name={selected ? 'planetActive' : 'planet'} className="ui-icon" /></span><span className="world-row-name"><strong>{world.name}</strong><small>{world.x}:{world.y} · planeta {world.planet_index + 1}</small></span><span className="world-row-population"><span>POPULAÇÃO</span><strong>{fmt(world.population_total)}</strong></span>{world.home && <HomeworldBadge />}<span className="world-row-chevron" aria-hidden="true">→</span></button>;
-        })}</div> : <EmptyState title="Sem mundos materializados" icon="planet">Os mundos sob controle aparecerão aqui.</EmptyState>}
-      </section>
+      {!state.persistent&&worldRoster}
 
       <div className="overview-side-stack">
         <section className="overview-actions" aria-label="Ações estratégicas">
           <SectionHeader title="Ações estratégicas" eyebrow="PRÓXIMOS FLUXOS" count={visibleActions.length} />
           {visibleActions.length ? <div>{visibleActions.map(action => <button type="button" className={`strategic-action tone-${action.tone ?? 'default'}`} key={action.title} onClick={() => navigate(action.to)}><Icon name={action.icon} className="ui-icon" /><span><strong>{action.title}</strong><small>{action.detail}</small></span><i aria-hidden="true">→</i></button>)}</div> : <EmptyState title="Sem ação pendente" icon="operations">Não há fluxo operacional disponível neste contexto.</EmptyState>}
         </section>
-        <section className="overview-operations" aria-label="Resumo de operações">
+        {!state.persistent&&<section className="overview-operations" aria-label="Resumo de operações">
           <SectionHeader title="Operações em andamento" eyebrow="ATIVIDADE" count={activeOperations} />
           {activeOperations ? <div className="overview-operation-list">{state.construction.length > 0 && <span>{fmt(state.construction.length)} construção(ões)</span>}{state.research.active && <span>1 pesquisa ativa</span>}{transit > 0 && <span>{fmt(transit)} em trânsito</span>}{assembling > 0 && <span>{fmt(assembling)} nave(s) em montagem</span>}</div> : <EmptyState title="Operações estáveis" icon="operations">Detalhes temporais permanecem no painel operacional.</EmptyState>}
           {activeOperations > 0 && <p className="overview-operation-note">Detalhes temporais no painel operacional.</p>}
-        </section>
+        </section>}
       </div>
     </div>
   </div>;

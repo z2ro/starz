@@ -43,7 +43,7 @@ it('uses real construction progress and routes orders to existing gameplay',()=>
 });
 it('recommends capacity repair from the real shortage and exposes actual notices',()=>{
  const s=planetSnapshot();s.capacities.energy_coverage=.5;s.notices=['Carga entregue.'];mount(s);
- expect(screen.getByText('Restabeleça a produção')).toBeTruthy();
+ expect(screen.getByText(/Restabeleça a produção/)).toBeTruthy();
  fireEvent.click(screen.getByRole('button',{name:/Registros/}));
  expect(within(screen.getByRole('region',{name:'Registros recentes'})).getByText('Carga entregue.')).toBeTruthy();
 });

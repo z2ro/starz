@@ -1,4 +1,4 @@
-import { Costs, CostBlock, Activities } from '../universe/ExperienceUI';
+import { Costs, CostBlock } from '../universe/ExperienceUI';
 import { useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Panel } from '../components/ui/Panel';
@@ -16,8 +16,8 @@ export function ShipyardView() {
   const visibleHulls = state.persistent ? [...catalog.ships].sort((a,b)=>Number(meetsRequirements(catalog,state,b))-Number(meetsRequirements(catalog,state,a))) : catalog.ships;
   const allowed = hull && meetsRequirements(catalog, state, hull);
   return <><header className="page-header"><div><div className="eyebrow">ESTALEIRO ORBITAL · {state.system.planet.name}</div><h1>Estaleiro</h1><p>Slots totais {state.capacities.shipyard_slots} · disponíveis {state.capacities.shipyard_slots_available}</p><small>{state.campaign || state.persistent ? 'Poder militar, carga, ciência e alas têm efeitos reais no jogo. Construa uma Horizon para começar a explorar.' : 'Novas classes: balanceamento provisório. Funções militares não incluem simulação de combate.'}</small></div></header>
-    <div className="naval-command"><section className="naval-catalog" aria-label="Catálogo naval">{visibleHulls.map(item => <button key={item.id} aria-pressed={item.id === hull?.id} onClick={() => { setHull(item.id); setPropulsion(''); setFuel(''); }}><strong>{item.name}</strong><small>{hullRole(item)}</small><small>{meetsRequirements(catalog, state, item) ? 'DISPONÍVEL' : 'BLOQUEADA'}</small></button>)}<Link to="/ship-geometry-lab">Galeria experimental · Stargrave não construível</Link></section>
-    <ShipPreview hull={hull} />
+    <div className="naval-command"><section className="naval-catalog" aria-label="Catálogo naval">{visibleHulls.map(item => <button key={item.id} aria-pressed={item.id === hull?.id} onClick={() => { setHull(item.id); setPropulsion(''); setFuel(''); }}><strong>{item.name}</strong><small>{hullRole(item)}</small><small>{meetsRequirements(catalog, state, item) ? 'DISPONÍVEL' : 'BLOQUEADA'}</small><span className="strategy-hull-cost">{duration(item.duration/assemblyRate)} · {item.crew} tripulantes<small>{state.ships.filter(s=>s.hull_id===item.id).length} no inventário</small></span></button>)}<Link to="/ship-geometry-lab">Galeria experimental · Stargrave não construível</Link></section>
+    <div className="strategy-ship-stage"><ShipPreview hull={hull} /><details className="strategy-ship-comparison"><summary>Comparar classes · atributos-base</summary><div className="strategy-comparison-scroll"><table><thead><tr><th>Modelo</th><th>Tripulação</th><th>Carga</th><th>Poder</th><th>Montagem</th></tr></thead><tbody>{visibleHulls.map(item=><tr key={item.id}><th>{item.name}</th><td>{item.crew}</td><td>{item.cargo_capacity}</td><td>{item.combat_power}</td><td>{duration(item.duration/assemblyRate)}</td></tr>)}</tbody></table></div></details></div>
     <Panel title={hull?.name ?? 'Nenhum modelo disponível'} eyebrow="CONFIGURAÇÃO NAVAL" className="naval-inspector">{hull && <>
       <p>{hullRole(hull)}</p><p>{hull.description}</p>
       <p className="ux-ship-summary">Tripulação: {fmt(hull.crew)} · Montagem: {duration(hull.duration/assemblyRate)}</p><details className="ux-naval-specs" open={!state.persistent}><summary>Especificações técnicas e função</summary><div className="metric-line"><span>Massa</span><b>{fmt(hull.mass)}</b></div><div className="metric-line"><span>Tripulação</span><b>{fmt(hull.crew)}</b></div><div className="metric-line"><span>Construção</span><b>{duration(hull.duration/assemblyRate)}</b></div>
@@ -33,5 +33,5 @@ export function ShipyardView() {
       {state.population.available < hull.crew && <p>Tripulação disponível insuficiente.</p>}
       {state.capacities.shipyard_slots_available < 1 && <p>Nenhum slot disponível neste planeta.</p>}
       <button className="action primary" disabled={busy || !snapshotReady || !config.valid} onClick={() => { if (config.valid && config.propulsion && config.fuel) void execute('build-ship', { planet_id: state.active_planet?.id, hull_id: hull.id, propulsion_id: config.propulsion.id, fuel_id: config.fuel.id }).catch(() => undefined); }}>Construir nave</button>
-    </>}</Panel></div>{state.persistent&&<><p>Após a montagem, a nave estará disponível para selecionar em uma missão. <Link className="button" to="/galaxy">Escolher destino no mapa</Link> · <Link to="/missions">Planejar missão</Link></p><Activities state={state} catalog={catalog}/></>}</>;
+    </>}</Panel></div>{state.persistent&&<><p>Após a montagem, a nave estará disponível para selecionar em uma missão. <Link className="button" to="/galaxy">Escolher destino no mapa</Link> · <Link to="/missions">Planejar missão</Link></p></>}</>;
 }
