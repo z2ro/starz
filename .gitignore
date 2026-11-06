@@ -10,3 +10,6 @@ state.json.tmp
 .env.*
 !.env.example
 *.egg-info/
+
+# Sanitized local visual QA captures/reports; never commit browser profiles or sessions.
+qa-artifacts/

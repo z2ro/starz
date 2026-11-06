@@ -4,7 +4,10 @@
     "typecheck": "tsc --noEmit",
     "dev": "vite --config vite.config.ts",
     "build": "npm run typecheck && vite build --config vite.config.ts",
-    "test": "vitest run --config vitest.config.ts && node tests/planet_visual.test.cjs && node tests/asset_registry.test.cjs && node tests/asset_files.test.cjs && node tests/icon_system.test.cjs"
+    "test": "vitest run --config vitest.config.ts && node tests/planet_visual.test.cjs && node tests/asset_registry.test.cjs && node tests/asset_files.test.cjs && node tests/icon_system.test.cjs",
+    "skills:check": "python3 scripts/validate_agent_skills.py && python3 -m unittest discover -s tests/visual-qa -p skills_test.py",
+    "test:design-qa": "node --test tests/visual-qa/checks.test.cjs",
+    "qa:visual": "node scripts/visual-qa.cjs"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
@@ -16,6 +19,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "esbuild": "^0.28.2",
     "jsdom": "^30.0.1",
+    "playwright": "1.65.0",
     "typescript": "5.9.3",
     "vite": "^8.3.0",
     "vitest": "^5.0.0"

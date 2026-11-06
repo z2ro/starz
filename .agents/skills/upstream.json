@@ -1,0 +1,84 @@
+{
+  "repository": "https://github.com/MengTo/Skills",
+  "commit": "5ea1661a0e05d82b054553daaa6baf6d0233c33c",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Meng To",
+  "files": [
+    {
+      "upstream": "agent-skills/ui/design-first-ui-prompting/SKILL.md",
+      "installed": ".agents/skills/design-first-ui-prompting/SKILL.md",
+      "sha256": "5e3d4db0eb0ea983f2bedb90f28f358901c292388a7889e2f66ac133ceff743c"
+    },
+    {
+      "upstream": "agent-skills/ui/design-first-ui-prompting/REFERENCES.md",
+      "installed": ".agents/skills/design-first-ui-prompting/REFERENCES.md",
+      "sha256": "d1d98c3825cd347b460a7333a2f1369740e65cf96a604717589c1a694d5678f1"
+    },
+    {
+      "upstream": "agent-skills/workflow/workflow-score-to-target/SKILL.md",
+      "installed": ".agents/skills/workflow-score-to-target/SKILL.md",
+      "sha256": "a5c321c911d66f5e940cc7b4826be7866ef267b72d13bda688e8b6453eb080a9"
+    },
+    {
+      "upstream": "agent-skills/workflow/workflow-score-to-target/templates/critic-prompt.md",
+      "installed": ".agents/skills/workflow-score-to-target/templates/critic-prompt.md",
+      "sha256": "b29079152b75833637e8359d55c5f33f1e4816e669f7616c3383acda0e793559"
+    },
+    {
+      "upstream": "agent-skills/workflow/workflow-score-to-target/templates/scorecard.md",
+      "installed": ".agents/skills/workflow-score-to-target/templates/scorecard.md",
+      "sha256": "d48776cfd3d0dd4a1175df53abed077621245490fa62a006b1247f4da82df970"
+    },
+    {
+      "upstream": "agent-skills/workflow/workflow-progress-screenshots/SKILL.md",
+      "installed": ".agents/skills/workflow-progress-screenshots/SKILL.md",
+      "sha256": "31cee01b1e30508fe594b22832d1f717f42bafb17b4d6576904951fd543410f6"
+    },
+    {
+      "upstream": "agent-skills/workflow/workflow-progress-screenshots/scripts/capture.mjs",
+      "installed": ".agents/skills/workflow-progress-screenshots/scripts/capture.mjs",
+      "sha256": "bc496dc7fea3474b59d64157c90ca3af124cfadf65bf61038f7e044c964a28a8"
+    },
+    {
+      "upstream": "agent-skills/workflow/workflow-progress-screenshots/scripts/compare.py",
+      "installed": ".agents/skills/workflow-progress-screenshots/scripts/compare.py",
+      "sha256": "cc8f4ae6daf3fa4f79e57ffaf38374bbc07e52715cb30036ff9ad5780db3c333"
+    },
+    {
+      "upstream": "agent-skills/game-development/test-playable-web-games/SKILL.md",
+      "installed": ".agents/skills/test-playable-web-games/SKILL.md",
+      "sha256": "4e22866b1eae238420d48de06ba1df11e70e033a02097575acde827a94d25f9a"
+    },
+    {
+      "upstream": "agent-skills/game-development/test-playable-web-games/agents/openai.yaml",
+      "installed": ".agents/skills/test-playable-web-games/agents/openai.yaml",
+      "sha256": "caf44607586b6c79edcb5c58b576abe2954650e628716ec0427340a5c96eb930"
+    },
+    {
+      "upstream": "LICENSE",
+      "installed": ".agents/skills/MENGTO-LICENSE",
+      "sha256": "b2a071ba22fefd803f4e9d1f5c777dd79c62d191695586a1a73fd4d0ebd051c6"
+    }
+  ],
+  "excluded": [
+    "All other skills, including workflow-ship-change",
+    "All demos and demo assets",
+    "Unlinked ARTICLE.md marketing essay"
+  ],
+  "dependencies": {
+    "design-first-ui-prompting": [],
+    "workflow-score-to-target": [
+      "workflow-progress-screenshots"
+    ],
+    "workflow-progress-screenshots": [
+      "Node >=22 / Chrome (capture.mjs, restricted; not executed by STARZ QA)",
+      "Python / Pillow (optional compare.py)"
+    ],
+    "test-playable-web-games": []
+  },
+  "runtime_policy": {
+    "capture.mjs": "RESTRICTED: do not execute in STARZ; use npm run qa:visual with Playwright pipe transport",
+    "compare.py": "Reviewed, local image inputs only; optional Pillow required"
+  },
+  "updates": "Manual review and repinning only; no updater"
+}

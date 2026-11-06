@@ -1,0 +1,4 @@
+interface:
+  display_name: "STARZ Compact Strategy UI"
+  short_description: "Design compact pixel-art strategy workspaces"
+  default_prompt: "Use $starz-compact-strategy-ui to plan and validate a compact STARZ gameplay screen."
