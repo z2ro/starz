@@ -1,0 +1,87 @@
+.master-ui .galaxy-command{height:100%;min-height:0;display:flex;flex-direction:column;gap:10px}
+.master-ui .galaxy-command>.workspace-header{flex:none;min-height:40px}
+.master-ui .galaxy-navigation{display:flex;align-items:center;gap:8px;min-width:0;flex:none}
+.master-ui .galaxy-navigation label{display:flex;align-items:center;gap:8px;font-size:14px;min-width:0}
+.master-ui .galaxy-navigation select{min-width:0;max-width:230px;min-height:44px}
+.master-ui .galaxy-current{min-width:0;flex:1;font-size:14px;color:var(--master-muted)}
+.master-ui .galaxy-spatial-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;flex:1;min-height:0;height:0}
+.galaxy-visual-workspace,.galaxy-strategic-layer{height:100%;min-height:0;position:relative;min-width:0}
+.galaxy-strategic-layer[hidden]{display:none}
+.spatial-galaxy,.orbital-system{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;border:2px solid var(--master-line);background:var(--master-space);position:relative;isolation:isolate}
+.spatial-toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px;background:var(--master-surface);border-bottom:1px solid var(--master-line-dim);z-index:2}
+.master-ui .spatial-toolbar .pixel-button{min-width:44px;min-height:44px;padding:5px 10px;font-size:14px}
+.spatial-toolbar small{font-size:13px;color:var(--master-muted)}
+.galaxy-space{width:100%;height:100%;min-height:0;display:block;touch-action:none;cursor:grab;background:radial-gradient(ellipse at 40% 40%,#0c1d2c 0,#030b15 70%)}
+.galaxy-space:active{cursor:grabbing}
+.galaxy-space:focus-visible{outline:2px solid var(--master-amber);outline-offset:-3px}
+.galaxy-dust{fill:#607285;opacity:.45;pointer-events:none;shape-rendering:crispEdges}
+.spatial-system,.galaxy-fleet-marker{transform:scale(var(--node-scale,1));cursor:pointer}
+.system-hit{fill:transparent;stroke:none}
+.system-selection{fill:none;stroke:transparent;stroke-width:1;stroke-dasharray:3 4;pointer-events:none}
+.spatial-system.selected .system-selection,.spatial-system:focus-visible .system-selection{stroke:var(--master-amber);stroke-width:2}
+.spatial-system.home .stellar-symbol{fill:var(--master-cyan)}
+.stellar-symbol{fill:#eee9d5;shape-rendering:crispEdges}
+.stellar-symbol.stellar-m,.stellar-symbol.stellar-k{fill:#db9863}.stellar-symbol.stellar-o,.stellar-symbol.stellar-b{fill:#94c7df}
+.unidentified-symbol{fill:#0b1c2b;stroke:#668393;stroke-width:1.5;stroke-dasharray:2 2}
+.system-label{font:14px var(--master-body);fill:var(--master-text);pointer-events:none;paint-order:stroke;stroke:#030b15;stroke-width:3px;stroke-linejoin:round}
+.system-coordinate{font-size:12px;fill:var(--master-muted)}
+.galaxy-space[data-labels=selected] .spatial-system:not(.selected):not(.home):not(:focus-visible) .system-label{display:none}
+.galaxy-fleet-marker{fill:var(--master-cyan);color:var(--master-cyan);shape-rendering:crispEdges}.galaxy-fleet-marker:focus-visible{outline:2px solid var(--master-amber)}
+.spatial-system[data-label-visible=false] .system-label{display:none}
+.spatial-legend{display:flex;flex-wrap:wrap;gap:14px;padding:6px 10px;min-height:28px;font:12px/1.4 var(--master-body);color:var(--master-muted);border-top:1px solid var(--master-line-dim);pointer-events:none}
+.master-ui .galaxy-spatial-detail{height:100%;min-height:0;min-width:0;border:2px solid var(--master-line);background:var(--master-surface)}
+.galaxy-spatial-detail>header{flex:none;min-width:0}.master-ui .galaxy-spatial-detail h2{font:18px/1.4 var(--master-pixel);margin:0 0 6px;overflow-wrap:anywhere}
+.galaxy-spatial-detail header p{font-size:13px;margin:8px 0;color:var(--master-muted)}
+.galaxy-spatial-detail>.pixel-tabs{flex:none}.galaxy-spatial-detail>.content-pages{flex:1;min-height:0}
+.galaxy-spatial-detail .galaxy-planet{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;min-height:60px;text-align:left;padding:8px}
+.galaxy-spatial-detail .galaxy-planet span{font-size:13px}
+.galaxy-planet-facts{display:grid;grid-template-columns:1fr 1fr;gap:12px}.galaxy-planet-facts span{font-size:13px;display:flex;flex-direction:column;gap:4px}
+.galaxy-spatial-detail>.travel-planner{flex:none;min-width:0;margin:0;padding-top:8px;border-top:1px solid var(--master-line-dim)}
+.master-ui .galaxy-spatial-detail>.travel-planner p{font-size:14px;margin:4px 0}.galaxy-spatial-detail>.travel-planner .button{display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px;text-align:center}
+.galaxy-spatial-detail>.travel-planner small{font-size:12px;line-height:1.4;color:var(--master-muted);display:block;margin-top:6px}
+.orbital-host{position:relative;min-height:0;min-width:0;overflow:hidden;background:#030711}
+.orbital-canvas{display:block;width:100%;height:100%;image-rendering:pixelated;touch-action:none;cursor:grab}
+.orbital-canvas:active{cursor:grabbing}.orbital-canvas:focus-visible{outline:2px solid var(--master-amber);outline-offset:-3px}
+.orbital-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.master-ui .orbital-labels button{position:absolute;transform:translate(-50%,-100%);font:13px var(--master-body);background:#04101ce8;border:1px solid var(--master-line-dim);min-height:44px;min-width:44px;max-width:170px;padding:4px 8px;pointer-events:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orbital-labels button[data-selected=true]{border-color:var(--master-amber);color:var(--master-amber)}
+.orbital-labels button[hidden]{display:none}
+.orbital-notice{position:absolute;inset:70px 12px auto;background:var(--master-space);padding:12px;border:1px solid var(--master-line);z-index:3;font-size:14px}
+@media(max-width:1100px) and (min-width:701px){.master-ui .galaxy-spatial-layout{grid-template-columns:minmax(0,1fr) 290px}.galaxy-current{display:none}.spatial-toolbar small{display:none}}
+@media(max-width:700px){
+ .master-ui .galaxy-command{gap:8px}.master-ui .galaxy-command>.workspace-header{min-height:30px}
+ .master-ui .galaxy-navigation{flex-wrap:wrap}.galaxy-current{display:none}.master-ui .galaxy-navigation label{flex:1}.master-ui .galaxy-navigation select{width:100%;max-width:100%}.master-ui .galaxy-navigation>button:first-child{display:none}
+ .master-ui .galaxy-navigation>button:last-child{display:block}.master-ui .galaxy-spatial-layout{display:flex;flex-direction:column;height:0}
+ .px-page-galaxy .px-view[data-panel=main] .galaxy-spatial-detail{display:none}.px-page-galaxy .px-view[data-panel=detail] .galaxy-visual-workspace{display:none}
+ .master-ui .galaxy-visual-workspace{flex:1;min-height:0}.spatial-toolbar small{display:none}.spatial-legend{gap:8px;font-size:12px;padding:4px 6px}
+ .master-ui .galaxy-spatial-detail{flex:1;height:0;min-height:0}.master-ui .galaxy-spatial-detail h2{font-size:16px}.galaxy-spatial-detail>.travel-planner small{display:none}
+ .master-ui .galaxy-command .spatial-toolbar .pixel-button{min-height:44px;padding:4px 8px}
+}
+
+@media(max-width:700px){.master-ui .galaxy-command[data-level=system] .galaxy-navigation>button:first-child{display:block}}
+
+.galaxy-fleet-marker .px-icon{width:18px;height:18px}
+
+@media(max-width:700px) and (max-height:700px){
+ .master-ui .galaxy-command>.workspace-header{display:none}
+ .master-ui .px-page-galaxy .px-view[data-panel=detail] .galaxy-navigation{display:none}
+ .master-ui .galaxy-spatial-detail>header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center}
+ .master-ui .galaxy-spatial-detail>header h2{margin:0;font-size:14px}
+ .master-ui .galaxy-spatial-detail>header>p{grid-column:1/-1;margin:0}
+ .master-ui .galaxy-spatial-detail .px-stellar-data{gap:6px}
+ .master-ui .galaxy-spatial-detail .px-stellar-data span{font-size:13px}
+ .master-ui .galaxy-spatial-detail>.travel-planner{padding-top:4px}
+}
+
+.orbital-reset-symbol{display:none}
+.master-ui .orbital-system .spatial-toolbar select{max-width:180px;min-width:70px;min-height:44px;flex:1;font-size:14px}
+@media(max-width:700px){.orbital-reset-symbol{display:inline}.orbital-reset-word{display:none}}
+@media(max-width:700px) and (max-height:700px){
+ .master-ui .galaxy-spatial-detail{padding:4px;gap:4px}
+ .master-ui .galaxy-spatial-detail>header{grid-template-columns:minmax(0,1fr) auto auto;gap:4px}
+ .master-ui .galaxy-spatial-detail>header h2{grid-column:1;grid-row:1}
+ .master-ui .galaxy-spatial-detail>header>.badge{grid-column:3;grid-row:1}
+ .master-ui .galaxy-spatial-detail>header>p{grid-column:2;grid-row:1;font-size:12px}
+ .master-ui .galaxy-spatial-detail .system-center-distance,.master-ui .galaxy-spatial-detail>.travel-planner>p{display:none}
+ .master-ui .galaxy-spatial-detail>.travel-planner{padding-top:2px}
+}
