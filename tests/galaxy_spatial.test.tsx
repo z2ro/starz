@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { GalaxyView } from '../frontend/src/views/GalaxyView';
-import { authorizedSystem, fleetVisualPosition, knownLocalFleets, orbitalPlanets, orbitalPosition, systemKey, visualPosition, visibleGalaxyLabels, galaxyCenter, fleetMapMarkers } from '../frontend/src/galaxy/galaxyPresentation';
+import { authorizedSystem, fleetVisualPosition, knownLocalFleets, orbitalPlanets, orbitalPosition, systemKey, visualPosition, visibleGalaxyLabels, galaxyCenter, fleetMapMarkers, fleetComposition } from '../frontend/src/galaxy/galaxyPresentation';
 import type { GalaxySystem } from '../frontend/src/types/game';
 import { planetSnapshot, planetCatalog } from './fixtures/planetIntegration';
 const known: GalaxySystem = { id: 'system-0-0', name: 'Asterion', x: 0, y: 0, distance: 0, home: true, knowledge_level: 'SURVEYED', star: { stellar_class: 'G', luminosity: 1, activity: .2 }, planets: [{ planet_index: 0, name: 'Aurelia', gravity: 1, temperature: 288, water: 60, radiation: .1, ownership: 'OWNED', viability: 'VIABLE', colonization: { eligible: false, reason: 'Mundo próprio', population: 20, cost: {} } }] };
@@ -88,4 +88,12 @@ it('groups coincident own fleets and deduplicates IDs instead of overlapping hit
   const fleet = {...planetSnapshot().fleets[0],id:'one',status:'ARRIVED' as const,x:0,y:0};
   const markers = fleetMapMarkers([fleet,fleet,{...fleet,id:'two'}],100);
   expect(markers).toHaveLength(1); expect(markers[0].fleets.map(f => f.id)).toEqual(['one','two']);
+});
+
+it('counts only actual unique ship IDs in a fleet and preserves unknown hull identities', () => {
+  const state=planetSnapshot(),base=state.ships[0],hull=planetCatalog.ships[0];
+  state.ships=[{...base,id:'a',hull_id:hull.id},{...base,id:'b',hull_id:hull.id},{...base,id:'c',hull_id:'not-implemented'}];
+  const fleet={...state.fleets[0],ship_ids:['a','b','a','c','missing']};
+  expect(fleetComposition(fleet,state,planetCatalog)).toEqual([{id:hull.id,name:hull.name,count:2},{id:'not-implemented',name:'Design não identificado',count:1}]);
+  expect(fleet.ship_ids).toEqual(['a','b','a','c','missing']);
 });
