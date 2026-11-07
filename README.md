@@ -1,6 +1,8 @@
 ## Universo persistente (experimento atual)
 
-Research 2.0: [catálogo, infraestrutura e migração](docs/research-2.md). Ambiente isolado: `docker compose -f compose.research.yaml up -d --build --wait`, porta 8031.
+Research 2.0: [catálogo, infraestrutura e migração](docs/research-2.md).
+
+O desenvolvimento atual usa apenas `compose.persistent.yaml`, na porta **8030**, reutilizando o banco e o volume existentes. Não inicie os Composes históricos de pesquisa, defesa ou warfare em paralelo; eles não são necessários para desenvolver ou jogar esta branch.
 
 Contas independentes, mundo compartilhado, progresso offline e pesquisa por níveis:
 

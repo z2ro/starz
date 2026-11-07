@@ -27,8 +27,7 @@ export function PixelCommand() {
  return <div className="strategy-command master-overview">
  <WorkspaceHeader title="Visão geral" icon="planet"/>
  <PixelPanel className="strategy-world master-planet-hero" label="Planeta atual">
- <div className="strategy-world-scene"><img src={planetArtworkFor(p).path} className="px-fallback" alt=""/>{!failed&&!imageMode&&<PlanetProceduralView state={state} catalog={catalog} snapshotReady={snapshotReady??true} onReady={()=>undefined} onFailure={()=>setFailed(true)}/>}</div>
- <div className="master-orbit-guide" aria-hidden="true"/>
+ <div className="strategy-world-scene" data-visual-mode={!failed&&!imageMode?'procedural':'image'}><img src={planetArtworkFor(p).path} className="px-fallback" alt=""/>{!failed&&!imageMode&&<PlanetProceduralView state={state} catalog={catalog} snapshotReady={snapshotReady??true} orbitGuide onReady={()=>undefined} onFailure={()=>setFailed(true)}/>}</div>
  <header className="strategy-world-identity"><span className="px-kicker">{state.active_planet?.home?'MUNDO NATAL':'COLÔNIA'} · {state.system.x}:{state.system.y}</span><h2>{p.name}</h2><span>{state.system.name} · planeta {(state.active_planet?.planet_index??0)+1}</span></header>
  <PlanetaryStatus state={state}/>
  <button className="short-situation" onClick={()=>setSituation(true)}>Abrir situação do planeta em tela cheia →</button>{situation&&<WorkspaceDialog title={p.name} onClose={()=>setSituation(false)}><PlanetaryStatus state={state}/></WorkspaceDialog>}

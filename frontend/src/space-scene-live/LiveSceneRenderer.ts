@@ -6,7 +6,8 @@ import { DEFAULT_SHIP_SETTINGS } from '../shipgeometrylab/shipLabTypes';
 import type { SpaceSceneDescriptor } from '../visual-state/types';
 import { createLiveSceneModel } from './LiveSceneModel';
 import { representativeShip } from './livePresentation';
-import { heroFrustum, type HeroInsets } from './heroFraming';
+import { PLANET_OUTER_RADIUS } from '../planetlab/PlanetModel';
+import { heroFrustum, planetGuideFrame, type HeroInsets } from './heroFraming';
 
 export type LiveRenderOptions = { raw: boolean; paused: boolean };
 export type LiveSceneStats = { fps: number; frameTime: number; triangles: number; drawCalls: number; generationCount: number; renderResolution: string };
@@ -31,7 +32,7 @@ export class LiveSceneRenderer {
   private options: LiveRenderOptions = { raw: false, paused: false };
   private heroInsets: HeroInsets | null = null;
   private shipVisible = false;
-  constructor(private host: HTMLElement, private report: (stats: LiveSceneStats) => void, private onFailure?: (error: unknown) => void) {
+  constructor(private host: HTMLElement, private report: (stats: LiveSceneStats) => void, private onFailure?: (error: unknown) => void, private onPlanetFrame?: (frame: { left: number; top: number; size: number }) => void) {
     this.renderer.setPixelRatio(1); this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.08;
     this.renderer.info.autoReset = false; this.renderer.setClearColor('#030711');
@@ -47,6 +48,7 @@ export class LiveSceneRenderer {
     this.scene.add(this.model.root, this.sky, this.sun, this.sun.target, new THREE.HemisphereLight('#9ccbdd', '#030711', 0.14));
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enablePan = false; this.controls.enableDamping = true; this.controls.dampingFactor = 0.075;
+    this.controls.addEventListener('change', this.reportPlanetFrame);
     this.controls.minZoom = 0.6; this.controls.maxZoom = 3;
     this.observer = new ResizeObserver(() => this.resize());
     this.resetCamera();
@@ -79,8 +81,14 @@ export class LiveSceneRenderer {
     else { const span = Math.max(2.2, 2.8 * height / width); this.camera.top = span; this.camera.bottom = -span; this.camera.right = span * width / height; this.camera.left = -this.camera.right; }
     this.camera.updateProjectionMatrix();
     this.pipeline.resize(width, height, this.renderSettings); this.renderer.setSize(this.pipeline.width, this.pipeline.height, false);
+    this.reportPlanetFrame();
     this.renderer.domElement.style.imageRendering = this.options.raw ? 'auto' : 'pixelated';
   }
+  private reportPlanetFrame = () => {
+    if (!this.onPlanetFrame) return;
+    const { width, height } = this.host.getBoundingClientRect();
+    this.onPlanetFrame(planetGuideFrame(width, height, this.camera, PLANET_OUTER_RADIUS * 1.08));
+  };
   private draw() { this.renderer.info.reset(); this.pipeline.render(this.renderer, this.scene, this.camera, this.renderSettings); }
   private frame = (time: number) => {
     if (this.disposed) return;
@@ -98,7 +106,7 @@ export class LiveSceneRenderer {
   };
   dispose() {
     if (this.disposed) return; this.disposed = true;
-    cancelAnimationFrame(this.frameId); this.observer.disconnect(); this.controls.dispose(); this.model.dispose();
+    cancelAnimationFrame(this.frameId); this.observer.disconnect(); this.controls.removeEventListener('change', this.reportPlanetFrame); this.controls.dispose(); this.model.dispose();
     disposeLabObject(this.sky); this.sun.shadow.dispose(); this.pipeline.dispose(); this.scene.clear(); this.renderer.dispose(); this.renderer.domElement.remove();
   }
 }

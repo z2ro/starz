@@ -10,3 +10,12 @@ export function heroFrustum(width: number, height: number, insets: HeroInsets, s
   const centerX = shipVisible ? -0.55 : 0, centerY = (top - bottom) * unitsPerPixel / 2;
   return { left: centerX - halfWidth, right: centerX + halfWidth, top: centerY + halfHeight, bottom: centerY - halfHeight };
 }
+
+/** Screen-space guide stays centered on the projected origin and inside its host. */
+export function planetGuideFrame(width: number, height: number, frame: { left: number; right: number; top: number; bottom: number; zoom: number }, radius: number) {
+  const scale = height / (frame.top - frame.bottom) * frame.zoom;
+  const x = width / 2 - (frame.left + frame.right) / 2 * scale;
+  const y = height / 2 + (frame.top + frame.bottom) / 2 * scale;
+  const r = Math.max(0, Math.min(radius * scale, x - 8, width - x - 8, y - 8, height - y - 8));
+  return { left: x - r, top: y - r, size: r * 2 };
+}

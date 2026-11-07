@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { PlanetHero } from '../frontend/src/components/planet/PlanetHero';
 import { PLANET_VISUAL_PREFERENCE_KEY, readPlanetVisualPreference } from '../frontend/src/components/planet/planetVisualPreference';
 import { geographicKey } from '../frontend/src/space-scene-live/livePresentation';
-import { heroFrustum } from '../frontend/src/space-scene-live/heroFraming';
+import { heroFrustum, planetGuideFrame } from '../frontend/src/space-scene-live/heroFraming';
 import { planetCatalog, planetPair, planetSnapshot } from './fixtures/planetIntegration';
 
 const gpu = vi.hoisted(() => ({ construct: vi.fn(), start: vi.fn(), setDescriptor: vi.fn(), setOptions: vi.fn(), setHeroInsets: vi.fn(), dispose: vi.fn(), disconnected: vi.fn() }));
@@ -111,4 +111,17 @@ it('keeps the complete planet in the unoccupied hero area across desktop and mob
     expect(y - 1.36 * scale).toBeGreaterThan(top); expect(y + 1.36 * scale).toBeLessThan(height - bottom);
   }
   expect(() => heroFrustum(NaN, 100, { top: 0, bottom: 0 }, false)).toThrow();
+});
+
+it('keeps the Overview guide centered on the projected planet and contained through resize and zoom', () => {
+  for (const [width, height] of [[990, 660], [620, 420], [342, 420]]) for (const ship of [false, true]) for (const zoom of [.6, 1, 3]) {
+    const frame = { ...heroFrustum(width, height, { top: 0, bottom: 0 }, ship), zoom };
+    const guide = planetGuideFrame(width, height, frame, 1.46);
+    const scale = height / (frame.top - frame.bottom) * zoom;
+    expect(guide.left + guide.size / 2).toBeCloseTo(width / 2 - (frame.left + frame.right) / 2 * scale);
+    expect(guide.top + guide.size / 2).toBeCloseTo(height / 2);
+    expect(guide.left).toBeGreaterThanOrEqual(8); expect(guide.top).toBeGreaterThanOrEqual(8);
+    expect(guide.left + guide.size).toBeLessThanOrEqual(width - 8);
+    expect(guide.top + guide.size).toBeLessThanOrEqual(height - 8);
+  }
 });

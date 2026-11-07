@@ -9,11 +9,12 @@ function loadRenderer() {
   return rendererModule ??= import('../../space-scene-live/LiveSceneRenderer').catch(error => { rendererModule = undefined; throw error; });
 }
 
-export function PlanetProceduralView({ state, catalog, snapshotReady, onReady, onFailure }: {
-  state: State; catalog: Catalog; snapshotReady: boolean; onReady: () => void; onFailure: (message: string) => void;
+export function PlanetProceduralView({ state, catalog, snapshotReady, onReady, onFailure, orbitGuide = false }: {
+  state: State; catalog: Catalog; snapshotReady: boolean; orbitGuide?: boolean; onReady: () => void; onFailure: (message: string) => void;
 }) {
   const descriptor = useMemo(() => snapshotReady ? createVisualDescriptor(state, catalog, { observedAt: state.observed_at }) : null, [state, catalog, snapshotReady]);
   const latest = useRef(descriptor), host = useRef<HTMLDivElement>(null), renderer = useRef<LiveSceneRenderer | null>(null);
+  const guide = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onReady, onFailure }); callbacks.current = { onReady, onFailure };
   const fail = (error: unknown) => { renderer.current?.dispose(); renderer.current = null; callbacks.current.onFailure(error instanceof Error ? error.message : 'Visualização procedural indisponível.'); };
   useLayoutEffect(() => {
@@ -41,7 +42,9 @@ export function PlanetProceduralView({ state, catalog, snapshotReady, onReady, o
         if (!probe) throw new Error('WebGL não disponível para a visualização procedural.');
         probe.getExtension('WEBGL_lose_context')?.loseContext();
         if (latest.current && !liveGeneration(latest.current)) throw new Error('Dados do planeta insuficientes para a visualização procedural.');
-        renderer.current = new LiveSceneRenderer(host.current, () => undefined, error => { if (!cancelled) fail(error); });
+        renderer.current = new LiveSceneRenderer(host.current, () => undefined, error => { if (!cancelled) fail(error); }, orbitGuide ? frame => {
+          if (guide.current) Object.assign(guide.current.style, { left: `${frame.left}px`, top: `${frame.top}px`, width: `${frame.size}px`, height: `${frame.size}px` });
+        } : undefined);
         renderer.current.start();
         renderer.current.setOptions({ raw: false, paused: window.matchMedia('(prefers-reduced-motion: reduce)').matches });
         renderer.current.setDescriptor(latest.current);
@@ -54,5 +57,5 @@ export function PlanetProceduralView({ state, catalog, snapshotReady, onReady, o
     }).catch(error => { if (!cancelled) fail(error); });
     return () => { cancelled = true; observer?.disconnect(); canvas?.removeEventListener('webglcontextlost', lost); renderer.current?.dispose(); renderer.current = null; };
   }, []);
-  return <div className="planet-procedural-stage" ref={host} data-planet-key={descriptor?.identity.planetKey ?? ''} />;
+  return <div className="planet-procedural-stage" ref={host} data-planet-key={descriptor?.identity.planetKey ?? ''}>{orbitGuide&&<div className="master-orbit-guide" ref={guide} aria-hidden="true"/>}</div>;
 }
