@@ -1,3 +1,4 @@
+import {planetIdentity} from './planetIdentity';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { createLabPlanet, disposeLabObject } from '../planetlab/PlanetModel';
@@ -18,6 +19,7 @@ export class OrbitalSystemRenderer {
   private pipeline = new ShipPixelPipeline();
   private settings = { ...DEFAULT_SHIP_SETTINGS, pixelSize: 2 };
   private observer: ResizeObserver;
+  private selectedOutline = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(Array.from({length:80},(_,i)=>new THREE.Vector3(Math.cos(i/80*Math.PI*2),Math.sin(i/80*Math.PI*2),0))),new THREE.LineBasicMaterial({color:'#83e5e5',depthTest:true,depthWrite:false}));
   private star = new THREE.Mesh(new THREE.SphereGeometry(.85, 20, 12), new THREE.MeshBasicMaterial({ color: '#ffe1a0', toneMapped: false }));
   private sky = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 450 }, (_, i) => ((i * 137.507 % 1) - .5) * 50), 3)), new THREE.PointsMaterial({ color: '#64788b', size: .027, sizeAttenuation: true }));
   private orbitGeometry = new THREE.BufferGeometry().setFromPoints(Array.from({ length: 160 }, (_, i) => new THREE.Vector3(Math.cos(i / 160 * Math.PI * 2), 0, Math.sin(i / 160 * Math.PI * 2))));
@@ -55,7 +57,8 @@ export class OrbitalSystemRenderer {
     this.controls = new OrbitControls(this.camera, canvas); this.controls.enableDamping = true; this.controls.enablePan = false; this.controls.zoomToCursor = true;
     this.controls.minZoom = .65; this.controls.maxZoom = 5; this.controls.maxPolarAngle = Math.PI * .82;
     this.labels.className = 'orbital-labels'; this.host.append(canvas, this.labels);
-    this.scene.add(this.star, this.sky, this.orbits, this.ships, new THREE.PointLight('#ffe2b6', 3.1, 0, 0), new THREE.HemisphereLight('#9ab9cc', '#030711', .15));
+    this.selectedOutline.visible=false;
+    this.scene.add(this.selectedOutline,this.star, this.sky, this.orbits, this.ships, new THREE.PointLight('#ffe2b6', 3.1, 0, 0), new THREE.HemisphereLight('#9ab9cc', '#030711', .15));
     canvas.addEventListener('pointerdown', this.pointerDown); canvas.addEventListener('pointerup', this.pointerUp); canvas.addEventListener('webglcontextlost', this.contextLost);
     this.observer = new ResizeObserver(() => this.resize()); this.observer.observe(host); this.resetCamera(); this.resize();
     this.frameId = requestAnimationFrame(this.frame);
@@ -93,6 +96,17 @@ export class OrbitalSystemRenderer {
       this.host.dataset.generationCount = String(++this.generationCount);
       this.geographyKey = key; this.span = Math.max(4.5, 2.25 + Math.max(0, models.length - 1) * 1.65 + 1.2);
     }
+    this.planets.forEach(p => {
+      const planet = system.planets?.find(item => item.planet_index === p.index); if(!planet)return;
+      const identity = planetIdentity(system,planet,state.planets), text=`P${identity.ordinal} · ${planet.name} · ${identity.label}`;
+      if(p.label.getAttribute('aria-label') !== `Inspecionar planeta ${text}`){
+        const icon=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS('http://www.w3.org/2000/svg','path');
+        icon.setAttribute('viewBox','0 0 16 16');icon.setAttribute('class',`planet-mark planet-mark-${identity.kind}`);icon.setAttribute('aria-hidden','true');path.setAttribute('d',identity.path);path.setAttribute('fill','currentColor');path.setAttribute('fill-rule','evenodd');icon.append(path);
+        const name=document.createElement('strong'),status=document.createElement('span');name.textContent=`P${identity.ordinal} · ${planet.name}`;status.textContent=identity.label;
+        p.label.replaceChildren(icon,name,status);p.label.dataset.ownership=identity.kind;p.label.setAttribute('aria-label',`Inspecionar planeta ${text}`);
+        const hidden=p.label.hidden;p.label.hidden=false;p.labelWidth=p.label.offsetWidth||200;p.labelHeight=p.label.offsetHeight||44;p.label.hidden=hidden;
+      }
+    });
     const fleets = knownLocalFleets(system, state.fleets);
     const fleetKey = JSON.stringify(fleets.map(f => [f.id, f.ship_ids, f.ship_ids.map(id => state.ships.find(s => s.id === id)?.hull_id)]));
     if (fleetKey !== this.fleetKey) {
@@ -143,18 +157,27 @@ export class OrbitalSystemRenderer {
         p.model.root.rotation.y = time * .015; p.model.cloudLayer.rotation.y = time * .019;
         p.model.atmosphere.material.uniforms.uLight.value.copy(p.model.root.position).negate().normalize();
       });
+      const selected=this.planets.find(p=>p.index===this.selectedIndex);
+      this.selectedOutline.visible=!!selected;
+      if(selected){this.selectedOutline.position.copy(selected.model.root.position);this.selectedOutline.quaternion.copy(this.camera.quaternion);this.selectedOutline.scale.setScalar(1.28*selected.model.root.scale.x*1.16);}
+      this.host.dataset.selectedPlanet=this.selectedIndex===undefined?'':String(this.selectedIndex);
       this.scene.updateMatrixWorld(true); this.camera.updateMatrixWorld(true);
+      const scale=this.height/(this.camera.top-this.camera.bottom)*this.camera.zoom;
+      const obstacles=[{position:this.star.position,radius:.85},...this.planets.map(p=>({position:p.model.root.position,radius:1.36*p.model.root.scale.x}))].map(body=>{const point=body.position.clone().project(this.camera);return{x:(point.x+1)/2*this.width,y:(1-point.y)/2*this.height,r:body.radius*scale+4};});
       const placed: { left: number; right: number; top: number; bottom: number }[] = [];
       [...this.planets].sort((a,b) => Number(b.index === this.selectedIndex) - Number(a.index === this.selectedIndex)).forEach(p => {
         this.projection.copy(p.model.root.position).project(this.camera);
         const x = (this.projection.x + 1) / 2 * this.width, y = (1 - this.projection.y) / 2 * this.height;
+        p.label.dataset.screenX=String(x);p.label.dataset.screenY=String(y);
         p.label.hidden = true;
         if (this.projection.z < -1 || this.projection.z > 1 || x < 0 || x > this.width || y < 0 || y > this.height || p.labelWidth + 8 > this.width) return;
-        const left = Math.max(4, Math.min(this.width - p.labelWidth - 4, x - p.labelWidth / 2));
-        for(const top of [y - 16 - p.labelHeight, y + 16]){
-          const box = {left,right:left+p.labelWidth,top,bottom:top+p.labelHeight};
-          if(top < 4 || box.bottom > this.height - 4 || placed.some(b => box.left < b.right + 4 && box.right > b.left - 4 && box.top < b.bottom + 4 && box.bottom > b.top - 4)) continue;
-          p.label.style.left = `${left+p.labelWidth/2}px`; p.label.style.top = `${box.bottom}px`; p.label.hidden=false; placed.push(box);break;
+        const left = Math.max(4, Math.min(this.width - p.labelWidth - 4, x - p.labelWidth / 2)), radius=1.36*p.model.root.scale.x*scale;
+        const candidates=[{left,top:y-radius-8-p.labelHeight},{left,top:y+radius+8},{left:x-radius-8-p.labelWidth,top:y-p.labelHeight/2},{left:x+radius+8,top:y-p.labelHeight/2}];
+        for(const candidate of candidates){
+          const left=Math.max(4,Math.min(this.width-p.labelWidth-4,candidate.left)),top=Math.max(4,Math.min(this.height-p.labelHeight-4,candidate.top));
+          const box={left,right:left+p.labelWidth,top,bottom:top+p.labelHeight};
+          if(box.left<4||box.right>this.width-4||box.top<4||box.bottom>this.height-4||obstacles.some(b=>box.left<b.x+b.r&&box.right>b.x-b.r&&box.top<b.y+b.r&&box.bottom>b.y-b.r)||placed.some(b=>box.left<b.right+4&&box.right>b.left-4&&box.top<b.bottom+4&&box.bottom>b.top-4))continue;
+          p.label.style.left=`${box.left+p.labelWidth/2}px`;p.label.style.top=`${box.bottom}px`;p.label.hidden=false;placed.push(box);break;
         }
         p.label.dataset.selected = String(p.index === this.selectedIndex);
       });
@@ -168,6 +191,7 @@ export class OrbitalSystemRenderer {
     this.controls.dispose(); const canvas = this.renderer.domElement;
     canvas.removeEventListener('pointerdown', this.pointerDown); canvas.removeEventListener('pointerup', this.pointerUp); canvas.removeEventListener('webglcontextlost', this.contextLost);
     this.planets.forEach(p => disposeLabObject(p.model.root)); this.planets = []; this.shipCache.forEach(s => s.dispose()); this.shipCache.clear();
+    this.selectedOutline.geometry.dispose();this.selectedOutline.material.dispose();
     this.star.geometry.dispose(); this.star.material.dispose(); disposeLabObject(this.sky); this.orbitGeometry.dispose(); this.orbitMaterial.dispose(); this.pipeline.dispose();
     this.scene.clear(); this.renderer.dispose(); canvas.remove(); this.labels.remove();
   }

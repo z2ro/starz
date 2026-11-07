@@ -1,3 +1,5 @@
+import {SystemIdentity} from './PlanetStatus';
+import {planetIdentity} from './planetIdentity';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Catalog, GalaxySystem, State } from '../types/game';
 import type { OrbitalSystemRenderer } from './OrbitalSystemRenderer';
@@ -26,7 +28,8 @@ export function OrbitalSystemScene({ system, state, catalog, selectedIndex, onPl
   }, []);
   useEffect(() => { renderer.current?.setPaused(paused); }, [paused]);
   return <section className="orbital-system" aria-label="Vista orbital do sistema">
-    <nav className="spatial-toolbar" aria-label="Câmera orbital"><PixelButton disabled={!ready || !!error} aria-label="Enquadrar sistema" onClick={() => renderer.current?.resetCamera()}><span className="orbital-reset-word">Enquadrar</span><span className="orbital-reset-symbol" aria-hidden="true">↺</span></PixelButton><PixelButton aria-label="Reduzir vista orbital" disabled={!ready || !!error} onClick={() => renderer.current?.zoom(1 / 1.25)}>−</PixelButton><PixelButton aria-label="Ampliar vista orbital" disabled={!ready || !!error} onClick={() => renderer.current?.zoom(1.25)}>+</PixelButton><PixelButton aria-pressed={paused} onClick={() => setPaused(p => !p)}>{paused ? 'Animar' : 'Pausar'}</PixelButton><select aria-label="Selecionar planeta na órbita" value={selectedIndex??''} onChange={e=>onPlanet(Number(e.target.value))}><option value="" disabled>Planeta…</option>{system.planets?.map(p=><option key={p.planet_index} value={p.planet_index}>{p.name}</option>)}</select></nav>
+    <header className="orbital-system-identity"><SystemIdentity system={system} roster={state.planets}/></header>
+    <nav className="spatial-toolbar" aria-label="Câmera orbital"><PixelButton disabled={!ready || !!error} aria-label="Enquadrar sistema" onClick={() => renderer.current?.resetCamera()}><span className="orbital-reset-word">Enquadrar</span><span className="orbital-reset-symbol" aria-hidden="true">↺</span></PixelButton><PixelButton aria-label="Reduzir vista orbital" disabled={!ready || !!error} onClick={() => renderer.current?.zoom(1 / 1.25)}>−</PixelButton><PixelButton aria-label="Ampliar vista orbital" disabled={!ready || !!error} onClick={() => renderer.current?.zoom(1.25)}>+</PixelButton><PixelButton aria-pressed={paused} onClick={() => setPaused(p => !p)}>{paused ? 'Animar' : 'Pausar'}</PixelButton><select aria-label="Selecionar planeta na órbita" value={selectedIndex??''} onChange={e=>onPlanet(Number(e.target.value))}><option value="" disabled>Planeta…</option>{system.planets?.map(p=><option key={p.planet_index} value={p.planet_index}>{`P${p.planet_index+1} · ${p.name} · ${planetIdentity(system,p,state.planets).label}`}</option>)}</select></nav>
     <div className="orbital-host" ref={host}/>
     {!ready && !error && <p className="orbital-notice" role="status">Gerando planetas conhecidos…</p>}
     {error && <p className="orbital-notice" role="alert">{error} O mapa e o inspetor continuam disponíveis.</p>}

@@ -38,3 +38,29 @@ Development uses only the existing `compose.persistent.yaml` environment at `htt
 Medium-risk frontend changes. Local QA runner jobs cover typecheck, build, spatial/disclosure/camera helpers, existing mission/navigation regressions and scene lifecycle. `scripts/visual-qa.cjs` supports `STARZ_QA_GALAXY_FLOW=1` with the existing galaxy case filter and disposable local API fixtures. It checks both levels, actual camera input, privacy, selection, retained canvas/geography, disposal and real mission-planner navigation. Screenshots and full reports stay in `.qa/runs/galaxy-2/`; no real player data or database writes are used. Browser rendering in SwiftShader is not a physical-GPU benchmark.
 
 Validated with 26 focused frontend tests plus typecheck, build and diff checks. Chromium scenarios cover 1920×1080, 1366×768, 390×844 and an extra 390×650; mouse/wheel, keyboard, touch/pinch, both navigation levels, unknown-data suppression and mission destination transfer passed. A controlled stock/population snapshot refresh preserved the canvas and generation count. WebGL console checking is included in the focused galaxy flow. The two-planet/no-local-fleet fixture reported 9 draw calls and 65,082 triangles (including postprocessing), with low-resolution rendering; no hardware FPS claim is made.
+
+## Galaxy 2.1 — system and planet identity
+
+`SystemIdentity` separates the authorized system name and `(x,y)` from planet ordinals. It shows stellar class, the number of returned known planets and own-planet counts. If any ownership is missing, the count remains unknown (with any confirmed own planets identified separately), rather than claiming zero. The strategic map uses the same count rules.
+
+| Authoritative field | UI rule |
+|---|---|
+| Surveyed `planet.name`, `planet_index` | Same name in map inspector, orbital label and selector. `P1` means API index `0`; mission URLs retain the original zero-based index. |
+| `planet.ownership = OWNED` | Own colony; the exact `state.planets` match on system coordinates **and** index supplies the persistent UUID for management/reinforcement. |
+| Matching roster entry `home = true` | Mundo natal. Neither `system.home` nor the first orbital position identifies the homeworld. |
+| `UNCLAIMED` | Não colonizado; this alone does **not** authorize colonization. |
+| `OCCUPIED` | Ocupado por outro império. No foreign identity is inferred or disclosed. |
+| Missing/contradictory ownership | Estado desconhecido. Missing physical measurements display “Não informado”, never measured zero. |
+| Unclaimed + `colonization.eligible = true` | Colonization may be suggested in the existing planner; its normal server preview/validation still decides whether dispatch is allowed. |
+
+Ownership uses pixel glyphs (home, flag, empty world, shield, unknown). Selection uses a separate cyan label border and a depth-tested outline facing the camera. One `GalaxyView.planetIndex` controls meshes, accessible labels, native keyboard/touch selector and inspector. Camera navigation retains that selection. Label placement avoids projected bodies and other labels; the selector/inspector remain available when an offscreen/crowded label cannot fit. Identity updates do not regenerate planet geometry.
+
+The fixed inspector footer exposes **Administrar** only with a confirmed own UUID, or a read-only **Requisitos** dialog for an unclaimed planet. Requirements use the returned eligibility, reason, cost and expedition population; no automatic action or spending. Occupied/unknown planets expose authorized information and the existing mission planner, without a colonization shortcut. Missing UUID/eligibility no longer implies a colonization mission. A verified foreign public planet UUID can preselect reconnaissance; unknown occupancy/identity falls back to a generic move, not invented permission.
+
+### Reproducible focused checks
+
+Five shared fixtures cover one planet, two including a nonzero-index homeworld, multiple own planets, foreign occupancy and incomplete ownership/physical data. `tests/galaxy_identity.test.tsx` checks mapping, partial counts, zero-vs-missing values, contextual actions and destination preservation. The opt-in `STARZ_QA_GALAXY_IDENTITY_FLOW=1` extends the existing local Playwright runner for `galaxy-populated-1366` and `galaxy-populated-390`: real mesh mouse/touch picking, shared selection, camera retention, layout, requirements dialog, privacy and unchanged renderer/geography. Mobile checks camera controls and mission actions in their respective explicit subviews after layout settles. These use disposable local API fixtures, no database or player accounts.
+
+Evidence for this iteration stays in `.qa/runs/galaxy-21/`. The previous `STARZ_QA_GALAXY_FLOW=1` remains available for mission-planner navigation, camera/zoom, snapshot refresh and disposal regression checks. No gameplay, universe, orbit, renderer factory or schema changes are required.
+
+Galaxy 2.1 validation: 39 focused frontend tests, typecheck, build and diff check passed. Chromium completed all five identity fixtures at both 1366×768 and 390×844; the extra generic 390×650 layout case also passed. The existing Galaxy flow passed at 1366×768, including real mission destination transfer, camera input, snapshot refresh without geography reconstruction and scene disposal. Final captures were reviewed for identity, selection, legibility and reachable actions. No security, JavaScript or layout findings remained in these scoped checks. This is not full-suite or physical-GPU certification.

@@ -1,7 +1,11 @@
+import {PlanetStatus,SystemIdentity} from '../galaxy/PlanetStatus';
+import {planetIdentity,knownPlanetValue} from '../galaxy/planetIdentity';
+import {WorkspaceDialog} from '../pixel-command/WorkspaceDialog';
+import {Costs} from '../universe/ExperienceUI';
 import {WorkspaceHeader, PixelButton, PixelTabs} from '../pixel-command/master/MasterUI';
 import {ContentPages} from '../pixel-command/ContentPages';
 import {useUniverse} from '../universe/useUniverse';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { useGalaxyQuery } from '../api/queries';
 import { Badge } from '../components/ui/Badge';
@@ -26,17 +30,22 @@ export function GalaxyView() {
   const [subject, setSubject] = useState('');
   const [mode, setMode] = useState(state.travel_modes[0]?.id ?? '');
   const [planetIndex, setPlanetIndex] = useState<number>();
+  const [requirementsOpen,setRequirementsOpen]=useState(false);
+
   const [preview, setPreview] = useState<Record<string, TravelPreview>>();
   const systems = galaxy?.systems.map(authorizedSystem) ?? [];
   const selected = systems.find(item => systemKey(item) === selectedId) ?? systems.find(item => item.home) ?? systems[0];
   const key = selected ? systemKey(selected) : '';
   useEffect(() => { setPlanetIndex(undefined); setPreview(undefined); setLevel('galaxy'); setDetail('system'); setSelectedFleet(undefined); }, [key]);
-  const selectSystem = (system: System) => { setSelectedId(systemKey(system)); };
+  useEffect(()=>setRequirementsOpen(false),[key,planetIndex]);
+  const selectSystem = (system: System) => { if(systemKey(system)!==key){setPlanetIndex(undefined);setPreview(undefined);setDetail('system');setLevel('galaxy');} setSelectedId(systemKey(system)); };
   const selectPlanet = (index: number) => { setPlanetIndex(index); setPreview(undefined); setDetail('planet'); };
   const selectFleet = (id: string) => { setSelectedFleet(id); setDetail('fleets'); };
   const surveyed = selected?.knowledge_level === 'SURVEYED';
   const planet = surveyed ? selected?.planets?.find(p => p.planet_index === planetIndex) : undefined;
-  const ownedPlanet = selected && planetIndex !== undefined ? state.planets?.find(p => p.x === selected.x && p.y === selected.y && p.planet_index === planetIndex) : undefined;
+  const identity=selected&&planet?planetIdentity(selected,planet,state.planets):undefined;
+  const ownedPlanet=identity?.ownedId?state.planets?.find(p=>p.id===identity.ownedId):undefined;
+  const contextAction=ownedPlanet?<Link className="button" aria-label="Abrir planeta e instalações" to="/planet" onClick={()=>setActivePlanetId(ownedPlanet.id)}>Administrar</Link>:identity?.kind==='unclaimed'?<PixelButton aria-label="Ver requisitos de colonização" onClick={()=>setRequirementsOpen(true)}>Requisitos</PixelButton>:undefined;
   const fleets = selected ? state.fleets.filter(f => f.status === 'ARRIVED' ? f.x === selected.x && f.y === selected.y : f.destination_x === selected.x && f.destination_y === selected.y) : [];
   const travelPayload = () => {
     if (!selected || !subject) return null;
@@ -54,35 +63,41 @@ export function GalaxyView() {
     <nav className="galaxy-navigation" aria-label="Navegação espacial">
       {level === 'system' ? <PixelButton onClick={() => setLevel('galaxy')}>← Galáxia</PixelButton> : <PixelButton onClick={() => { setCenter(undefined); }}>Mundo natal</PixelButton>}
       <label>Região<select aria-label="Região do mapa" value={center?.join(':') ?? 'home'} onChange={e => { setCenter(e.target.value === 'home' ? undefined : e.target.value.split(':').map(Number) as [number, number]); setLevel('galaxy'); }}><option value="home">Mundo natal · {galaxy.home.join(':')}</option>{[...new Map(state.fleets.filter(f => f.status === 'ARRIVED').map(f => [`${f.x}:${f.y}`, f])).values()].map(f => <option key={`${f.x}:${f.y}`} value={`${f.x}:${f.y}`}>Frota · {f.x}:{f.y}</option>)}</select></label>
-      <span className="galaxy-current">{selected.name ?? 'Localização não identificada'} · {key}</span>
+      <span className="galaxy-current" hidden={level==='system'}>{selected.name ?? 'Localização não identificada'} · {key}</span>
       {surveyed && level === 'galaxy' && <PixelButton onClick={() => setLevel('system')}>Abrir sistema</PixelButton>}
     </nav>
     <div className="galaxy-layout galaxy-spatial-layout">
       <div className="galaxy-visual-workspace">
-        <div className="galaxy-strategic-layer" hidden={level !== 'galaxy'}><SpatialGalaxyMap systems={systems} center={galaxy.center} fleets={state.fleets} observedAt={state.observed_at} selected={selected} onSelect={selectSystem} onOpen={() => setLevel('system')}/></div>
+        <div className="galaxy-strategic-layer" hidden={level !== 'galaxy'}><SpatialGalaxyMap systems={systems} center={galaxy.center} roster={state.planets} fleets={state.fleets} observedAt={state.observed_at} selected={selected} onSelect={selectSystem} onOpen={() => setLevel('system')}/></div>
         {level === 'system' && surveyed && <OrbitalSystemScene system={selected} state={state} catalog={catalog} selectedIndex={planetIndex} onPlanet={selectPlanet} onFleet={selectFleet}/>}
       </div>
       <aside className="system-detail galaxy-spatial-detail" aria-label="Inspetor do sistema">
-        <header><h2>{selected.name ?? 'Localização não identificada'}</h2><Badge tone={surveyed ? 'good' : 'warn'}>{surveyed ? 'Mapeado' : 'Não identificado'}</Badge><p><span>{key}</span><span className="system-center-distance"> · {fmt(selected.distance, 2)} unidades do centro consultado</span></p></header>
+        <header><SystemIdentity system={selected} roster={state.planets}/><Badge tone={surveyed ? 'good' : 'warn'}>{surveyed ? 'Mapeado' : 'Não identificado'}</Badge></header>
         <PixelTabs label="Informação do sistema" items={[{id:'system',label:'Sistema'},{id:'planet',label:'Planeta'},{id:'fleets',label:`Frotas (${fleets.length})`}]} value={detail} onChange={setDetail}/>
+        {detail==='planet'&&planet&&identity&&<div className="selected-planet-heading"><h3>P{planet.planet_index+1} · {planet.name}</h3><PlanetStatus kind={identity.kind}/></div>}
         <ContentPages label="Sistema e missão" resetKey={`${key}:${detail}:${planetIndex}:${selectedFleet}`}>
-          {detail === 'system' && <>{selected.star && <div className="px-stellar-data"><span>Classe estelar <b>{selected.star.stellar_class}</b></span><span>Luminosidade <b>{fmt(selected.star.luminosity,2)}</b></span></div>}{selected.civilization && <p>Território soberano · {selected.civilization}</p>}{!surveyed ? <p>Localização não identificada. Faça um levantamento para revelar a estrela e seus planetas.</p> : <><p>{selected.planets?.length ?? 0} planetas conhecidos · órbitas ilustrativas.</p>{selected.planets?.map(p => <button key={p.planet_index} className="galaxy-planet" onClick={() => selectPlanet(p.planet_index)}><b>{p.name}</b><span>{term(p.viability)} · {fmt(p.temperature)} K · água {fmt(p.water)}%</span></button>)}</>}</>}
-          {detail === 'planet' && (planet ? <><h3>{planet.name}</h3><div className="galaxy-planet-facts"><span>Gravidade <b>{fmt(planet.gravity,2)} g</b></span><span>Temperatura <b>{fmt(planet.temperature)} K</b></span><span>Água <b>{fmt(planet.water)}%</b></span><span>Radiação <b>{fmt(planet.radiation,2)}</b></span></div><p>{term(planet.viability)} · {planet.ownership === 'OWNED' ? 'Mundo do império' : planet.ownership === 'OCCUPIED' ? 'Já ocupado' : planet.colonization.reason ?? 'Disponível para colonização'}</p><div>{ownedPlanet && <Link className="button" to="/planet" onClick={() => setActivePlanetId(ownedPlanet.id)}>Abrir planeta e instalações</Link>}<label>Planeta<select aria-label="Planeta do sistema" value={planetIndex} onChange={e => selectPlanet(Number(e.target.value))}>{selected.planets?.map(p => <option value={p.planet_index} key={p.planet_index}>{p.name}</option>)}</select></label></div></> : <p>{surveyed ? 'Selecione um planeta no sistema ou na lista.' : 'Planetas ainda não identificados.'}</p>)}
+          {detail === 'system' && <>{selected.star && <div className="px-stellar-data"><span>Classe estelar <b>{selected.star.stellar_class}</b></span><span>Luminosidade <b>{fmt(selected.star.luminosity,2)}</b></span></div>}{selected.civilization && <p>Território soberano · {selected.civilization}</p>}{!surveyed ? <p>Localização não identificada. Faça um levantamento para revelar a estrela e seus planetas.</p> : <><p>{selected.planets?.length ?? 0} planetas conhecidos · órbitas ilustrativas.</p>{selected.planets?.map(p => <button key={p.planet_index} className="galaxy-planet" onClick={() => selectPlanet(p.planet_index)}><b>P{p.planet_index+1} · {p.name}</b><PlanetStatus kind={planetIdentity(selected,p,state.planets).kind}/><span>{p.viability?term(p.viability):'Viabilidade não informada'} · {knownPlanetValue(p.temperature,'K')} · água {knownPlanetValue(p.water,'%')}</span></button>)}</>}</>}
+          {detail === 'planet' && (planet ? <><div className="galaxy-planet-facts"><span>Gravidade <b>{knownPlanetValue(planet.gravity,'g',2)}</b></span><span>Temperatura <b>{knownPlanetValue(planet.temperature,'K')}</b></span><span>Água <b>{knownPlanetValue(planet.water,'%')}</b></span><span>Radiação <b>{knownPlanetValue(planet.radiation,'',2)}</b></span></div><p>{planet.viability?term(planet.viability):'Viabilidade não informada'}{identity?.kind==='unclaimed'?` · ${planet.colonization?.reason??(identity.canColonize?'Elegibilidade confirmada pelo servidor.':'Elegibilidade não informada.')}`:identity?.kind==='unknown'?' · Posse não confirmada.':''}</p><div><label>Planeta<select aria-label="Planeta do sistema" value={planetIndex} onChange={e => selectPlanet(Number(e.target.value))}>{selected.planets?.map(p => <option value={p.planet_index} key={p.planet_index}>{`P${p.planet_index+1} · ${p.name} · ${planetIdentity(selected,p,state.planets).label}`}</option>)}</select></label></div></> : <p>{surveyed ? 'Selecione um planeta no sistema ou na lista.' : 'Planetas ainda não identificados.'}</p>)}
           {detail === 'fleets' && (fleets.length ? fleets.filter(f => !selectedFleet || f.id === selectedFleet).map(f => <section key={f.id}><h3>{f.name}</h3><p>{f.status === 'TRANSIT' ? `Em viagem · destino ${f.destination_x}:${f.destination_y} · ${remaining(f.arrival_at)}` : `Chegada em ${f.x}:${f.y}`} · {f.operation ?? f.mission}</p>{fleetComposition(f,state,catalog).map(h => <p key={h.id}>{h.count} × {h.name}</p>)}<a className="button" href={`#/fleets?fleet=${encodeURIComponent(f.id)}`}>Inspecionar frota</a>{selectedFleet && <PixelButton onClick={() => setSelectedFleet(undefined)}>Todas as frotas</PixelButton>}</section>) : <p>Nenhuma frota própria presente ou a caminho. Ausência de informação não comprova ausência de frotas estrangeiras.</p>)}
         </ContentPages>
-        <TravelPlanner targetIndex={planetIndex} state={state} selected={selected} subject={subject} setSubject={setSubject} mode={mode} setMode={setMode} preview={preview} onPreview={travel} onSend={send}/>
+        <TravelPlanner contextAction={contextAction} targetIndex={planet?.planet_index} state={state} selected={selected} subject={subject} setSubject={setSubject} mode={mode} setMode={setMode} preview={preview} onPreview={travel} onSend={send}/>
       </aside>
     </div>
+    {requirementsOpen&&planet&&identity?.kind==='unclaimed'&&<WorkspaceDialog title={`Colonização · ${planet.name}`} onClose={()=>setRequirementsOpen(false)}><ContentPages label="Requisitos de colonização"><p>{selected.name} · Sistema {key} · planeta {planet.planet_index+1}</p><p>{identity.canColonize?'Elegibilidade confirmada nesta consulta. A missão ainda exige naves, combustível e recursos válidos.':planet.colonization?.reason??'Elegibilidade não informada pelo servidor.'}</p>{planet.colonization?.cost&&<Costs state={state} catalog={catalog} values={planet.colonization.cost}/>} {planet.colonization?.population!==undefined&&<p>População da expedição: {fmt(planet.colonization.population)}.</p>}<p>Consulta de requisitos. Nenhum envio ou gasto automático.</p></ContentPages></WorkspaceDialog>}
   </section>;
 }
 
-function TravelPlanner({ targetIndex,state, selected, subject, setSubject, mode, setMode, preview, onPreview, onSend }: { targetIndex?:number;state: ShellContext['state']; selected: System; subject: string; setSubject: (value: string) => void; mode: string; setMode: (value: string) => void; preview?: Record<string, TravelPreview>; onPreview: () => void; onSend: () => void }) {
-  if (state.persistent) return <PersistentTravelPlanner state={state} selected={selected} targetIndex={targetIndex}/>;
+function TravelPlanner({ contextAction,targetIndex,state, selected, subject, setSubject, mode, setMode, preview, onPreview, onSend }: { contextAction?:ReactNode;targetIndex?:number;state: ShellContext['state']; selected: System; subject: string; setSubject: (value: string) => void; mode: string; setMode: (value: string) => void; preview?: Record<string, TravelPreview>; onPreview: () => void; onSend: () => void }) {
+  if (state.persistent) return <PersistentTravelPlanner contextAction={contextAction} state={state} selected={selected} targetIndex={targetIndex}/>;
   return <div className="travel-planner"><label>Frota ou nave<select id="travel-subject" value={subject} onChange={event => setSubject(event.target.value)}><option value="">Selecionar</option>{state.fleets.filter(fleet => fleet.status === 'ARRIVED').map(fleet => <option value={`fleet:${fleet.id}`} key={fleet.id}>{fleet.name}</option>)}{state.ships.filter(ship => ship.ready_at <= (state.observed_at ?? Date.now() / 1000)).map(ship => <option value={`ship:${ship.id}`} key={ship.id}>{ship.id}</option>)}</select></label><label>Modo<select id="travel-mode" value={mode} onChange={event => setMode(event.target.value)}>{state.travel_modes.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label><button className="action secondary" disabled={!subject} onClick={onPreview}>Comparar rota</button>{preview && <div className="preview-list">{Object.entries(preview).map(([id, item]) => <div className="preview-row" key={id}><b>{id}</b><span>{duration(item.eta_seconds)} · combustível {fmt(item.fuel_cost)}</span></div>)}</div>}<button className="action primary" disabled={!subject || !preview} onClick={onSend}>{selected.knowledge_level === 'UNKNOWN' ? 'Explorar sistema' : 'Enviar frota'}</button></div>;
 }
 
-function PersistentTravelPlanner({state,selected,targetIndex}:{state:ShellContext['state'];selected:System;targetIndex?:number}){
+function PersistentTravelPlanner({contextAction,state,selected,targetIndex}:{contextAction?:ReactNode;state:ShellContext['state'];selected:System;targetIndex?:number}){
  const q=useUniverse(state.active_planet?.id??undefined);const owner=q.data?.players?.find(p=>p.planets.some(w=>w.x===selected.x&&w.y===selected.y&&w.index===targetIndex));const target=owner?.planets.find(w=>w.x===selected.x&&w.y===selected.y&&w.index===targetIndex);
- const mission=target?(owner?.self?'REINFORCE':'RECON'):targetIndex!==undefined?'COLONIZE':selected.knowledge_level==='UNKNOWN'?'SURVEY':'MOVE';
- return <div className="travel-planner"><p>Destino {selected.x}:{selected.y}{targetIndex!==undefined?` · planeta ${targetIndex+1}`:" · sistema"}.</p><a className="button" href={`#/fleets?plan=1&x=${selected.x}&y=${selected.y}&mission=${mission}${target?`&target=${target.id}`:targetIndex!==undefined?`&planet_index=${targetIndex}`:''}`}>Planejar missão para {selected.x}:{selected.y}</a><small>Seleção e rascunho preservados. Custos e ETA conferidos pelo servidor.</small></div>;
+ const planet=selected.knowledge_level==='SURVEYED'?selected.planets?.find(p=>p.planet_index===targetIndex):undefined;
+ const identity=planet?planetIdentity(selected,planet,state.planets):undefined;
+ const ownTarget=identity?.ownedId;
+ const targetId=ownTarget??(identity?.kind==='occupied'&&!owner?.self?target?.id:undefined);
+ const mission=ownTarget?'REINFORCE':targetId?'RECON':identity?.canColonize?'COLONIZE':selected.knowledge_level==='UNKNOWN'?'SURVEY':'MOVE';
+ return <div className="travel-planner"><p>Destino {selected.x}:{selected.y}{targetIndex!==undefined?` · planeta ${targetIndex+1}`:" · sistema"}.</p><div className="planet-order-buttons">{contextAction}<a className="button" aria-label={`Planejar missão para ${selected.x}:${selected.y}`} href={`#/fleets?plan=1&x=${selected.x}&y=${selected.y}&mission=${mission}${targetId?`&target=${targetId}`:targetIndex!==undefined?`&planet_index=${targetIndex}`:''}`}>Planejar missão</a></div><small>Seleção e rascunho preservados. Custos e ETA conferidos pelo servidor.</small></div>;
 }

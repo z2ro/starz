@@ -44,7 +44,7 @@ async function galaxyFlow(page, { output, fixture }) {
   const firstIndex=await selector.locator('option:not(:disabled)').first().getAttribute('value');
   await selector.selectOption(firstIndex); await detail();
   await page.getByRole('tab', { name: 'Planeta', exact: true }).waitFor();
-  const mission = page.locator('.travel-planner a.button'); assert((await mission.getAttribute('href')).includes('plan=1'));
+  const mission = page.locator('.travel-planner a[href*="plan=1"]'); assert((await mission.getAttribute('href')).includes('plan=1'));
   const canvasHandle = await canvas.elementHandle(); await main();
   assert(await canvasHandle.evaluate(el => el.isConnected)); assert.equal(await host.getAttribute('data-generation-count'), generation);
   const pause = page.getByRole('button', { name: 'Pausar', exact: true }); if(await pause.count())await pause.click();
@@ -65,9 +65,9 @@ async function galaxyFlow(page, { output, fixture }) {
   assert(await before.evaluate(el => el.isConnected)); await fits();
   const unknown = page.locator('.spatial-system.unknown').first(); await unknown.focus(); await unknown.press('Enter'); await detail();
   assert.equal(await page.getByRole('button', { name: 'Abrir sistema', exact: true }).count(), 0);
-  assert.equal(await page.locator('.galaxy-planet').count(), 0); assert((await page.locator('.travel-planner a').getAttribute('href')).includes('mission=SURVEY'));
-  const missionHref = await page.locator('.travel-planner a').getAttribute('href');
-  await page.locator('.travel-planner a').click(); await page.waitForFunction(() => location.hash.startsWith('#/fleets?plan=1'));
+  assert.equal(await page.locator('.galaxy-planet').count(), 0); assert((await page.locator('.travel-planner a[href*="plan=1"]').getAttribute('href')).includes('mission=SURVEY'));
+  const missionHref = await page.locator('.travel-planner a[href*="plan=1"]').getAttribute('href');
+  await page.locator('.travel-planner a[href*="plan=1"]').click(); await page.waitForFunction(() => location.hash.startsWith('#/fleets?plan=1'));
   assert.equal(await page.getByLabel('Coordenada X', { exact: true }).inputValue(), new URLSearchParams(missionHref.split('?')[1]).get('x'));
   assert.equal(await page.getByLabel('Coordenada Y', { exact: true }).inputValue(), new URLSearchParams(missionHref.split('?')[1]).get('y'));
   assert.deepEqual(gpuErrors,[]);page.off('console',consoleError);

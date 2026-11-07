@@ -59,7 +59,7 @@ it('derives a stable planetary preview only from authorized system data, indepen
 it('opens mapped systems, inspects planets and preserves the real mission destination', () => {
   mount(); fireEvent.click(screen.getByRole('button', { name: 'Abrir sistema', exact: true }));
   fireEvent.click(screen.getByRole('button', { name: 'Planeta na cena' }));
-  expect(screen.getByRole('link', { name: 'Planejar missão para 0:0' })).toHaveAttribute('href', '#/fleets?plan=1&x=0&y=0&mission=COLONIZE&planet_index=0');
+  expect(screen.getByRole('link', { name: 'Planejar missão para 0:0' })).toHaveAttribute('href', '#/fleets?plan=1&x=0&y=0&mission=MOVE&planet_index=0');
   fireEvent.click(screen.getByRole('button', { name: '← Galáxia', exact: true }));
   expect(screen.queryByRole('button', { name: 'Planeta na cena' })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: /Localização não identificada, coordenadas 1:0/ }));

@@ -1,11 +1,13 @@
+import {PlanetMark} from './PlanetStatus';
+import {systemPlanetSummary} from './planetIdentity';
 import { useEffect, useMemo, useRef } from 'react';
-import type { Fleet, GalaxySystem } from '../types/game';
+import type { Fleet, GalaxySystem, State } from '../types/game';
 import { PixelIcon } from '../pixel-command/PixelIcon';
 import { PixelButton } from '../pixel-command/master/MasterUI';
 import { fleetMapMarkers, systemKey, visualPosition, visibleGalaxyLabels } from './galaxyPresentation';
 
-export function SpatialGalaxyMap({ systems, center, fleets, observedAt, selected, onSelect, onOpen }: {
-  systems: GalaxySystem[]; center: number[]; fleets: Fleet[]; observedAt?: number; selected: GalaxySystem; onSelect: (system: GalaxySystem) => void; onOpen: () => void;
+export function SpatialGalaxyMap({ systems, center, roster, fleets, observedAt, selected, onSelect, onOpen }: {
+  systems: GalaxySystem[]; center: number[]; roster: State['planets']; fleets: Fleet[]; observedAt?: number; selected: GalaxySystem; onSelect: (system: GalaxySystem) => void; onOpen: () => void;
 }) {
   const host = useRef<SVGSVGElement>(null), layer = useRef<SVGGElement>(null);
   const camera = useRef({ x: 0, y: 0, zoom: 1, width: 1, height: 1 });
@@ -69,7 +71,8 @@ export function SpatialGalaxyMap({ systems, center, fleets, observedAt, selected
             <rect className="system-hit" x="-23" y="-23" width="46" height="46"/>
             <circle className="system-selection" r="20"/>
             {system.knowledge_level === 'SURVEYED' ? <path className={`stellar-symbol stellar-${system.star?.stellar_class.toLowerCase() ?? 'g'}`} d="M-3 -12H3V-5H7V-2H12V3H5V7H2V12H-3V5H-7V2H-12V-3H-5V-7H-3Z"/> : <path className="unidentified-symbol" d="M0 -8L8 0L0 8L-8 0Z"/>}
-            <text className="system-label" y="39" textAnchor="middle">{(system.name ?? 'Não identificado').slice(0, 22)}</text><text className="system-label system-coordinate" y="55" textAnchor="middle">{system.home ? 'NATAL · ' : ''}{system.x}:{system.y}</text>
+            <text className="system-label" y="39" textAnchor="middle">{(system.name ?? 'Não identificado').slice(0, 22)}</text><text className="system-label system-coordinate" y="55" textAnchor="middle">Sistema {system.x}:{system.y}</text>
+            {system.knowledge_level==='SURVEYED'&&<><text className="system-label system-coordinate" y="71" textAnchor="middle">{systemPlanetSummary(system,roster).known??'?'} planetas · {systemPlanetSummary(system,roster).owned??'?'} próprios</text>{(systemPlanetSummary(system,roster).confirmedOwned??0)>0&&<svg x="13" y="-18" width="14" height="14"><PlanetMark kind="owned"/></svg>}</>}
           </g>
         </g>)}
         {fleetMapMarkers(fleets, observedAt).map(marker => <g key={marker.key} transform={`translate(${marker.x} ${marker.y})`}><a className="galaxy-fleet-marker" href={marker.fleets.length === 1 ? `#/fleets?fleet=${encodeURIComponent(marker.fleets[0].id)}` : '#/fleets'} aria-label={marker.fleets.length === 1 ? `Inspecionar ${marker.fleets[0].name}` : `Inspecionar ${marker.fleets.length} frotas`}><g transform="translate(0 -52)"><title>{marker.fleets.map(f => `${f.name} · ${f.status === 'TRANSIT' ? `Em viagem para ${f.destination_x}:${f.destination_y}` : `Em ${f.x}:${f.y}`}`).join(' · ')}</title><rect x="-22" y="-22" width="44" height="44" fill="transparent"/><svg x="-9" y="-9" width="18" height="18"><PixelIcon name="ship"/></svg>{marker.fleets.length > 1 && <text x="10" y="0">{marker.fleets.length}</text>}</g></a></g>)}

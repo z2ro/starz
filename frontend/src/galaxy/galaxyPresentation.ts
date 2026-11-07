@@ -56,7 +56,7 @@ export function visibleGalaxyLabels(nodes: { system: GalaxySystem; x: number; y:
   for (const node of [...nodes].sort((a, b) => priority(a) - priority(b) || systemKey(a.system).localeCompare(systemKey(b.system)))) {
     if (camera.zoom < .65 && priority(node) > 1) continue;
     const x = node.x * camera.zoom + camera.x, y = node.y * camera.zoom + camera.y;
-    const box = { left: x - 85, right: x + 85, top: y + 24, bottom: y + 59 };
+    const box = { left: x - 85, right: x + 85, top: y + 24, bottom: y + 75 };
     if (box.left < 4 || box.right > camera.width - 4 || box.top < 4 || box.bottom > camera.height - 4) continue;
     if (placed.some(b => box.left < b.right + 8 && box.right > b.left - 8 && box.top < b.bottom + 6 && box.bottom > b.top - 6)) continue;
     if (nodes.some(other => other !== node && Math.abs(other.x * camera.zoom + camera.x - x) < 99 && other.y * camera.zoom + camera.y > box.top - 14 && other.y * camera.zoom + camera.y < box.bottom + 14)) continue;
