@@ -1,0 +1,12 @@
+{
+  "errors": [],
+  "canvasStable": true,
+  "realBuild": true,
+  "realEndTurn": true,
+  "viewports": [
+    "1920x1080",
+    "390x844"
+  ],
+  "gpu": "SwiftShader; no hardware benchmark",
+  "finalSave": "fresh turn 0; all prior saves preserved"
+}

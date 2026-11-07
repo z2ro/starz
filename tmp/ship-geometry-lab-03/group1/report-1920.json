@@ -1,0 +1,41 @@
+{
+  "width": 1920,
+  "height": 1080,
+  "shots": [
+    {
+      "name": "fleet-34-front-pixel",
+      "stats": "FPS\n22\nFrame time\n45.2ms\nTriangles\n19646\nDraw calls\n57\nMesh count\n56\nBounds X/Y/Z\n43.40 / 17.39 / 58.50\nRender resolution\n527 × 321"
+    },
+    {
+      "name": "fleet-side-pixel",
+      "stats": "FPS\n21\nFrame time\n47.4ms\nTriangles\n19646\nDraw calls\n57\nMesh count\n56\nBounds X/Y/Z\n6.84 / 20.49 / 53.00\nRender resolution\n527 × 321"
+    },
+    {
+      "name": "fleet-top-pixel",
+      "stats": "FPS\n22\nFrame time\n45.2ms\nTriangles\n19646\nDraw calls\n57\nMesh count\n56\nBounds X/Y/Z\n60.13 / 4.57 / 16.00\nRender resolution\n527 × 321"
+    },
+    {
+      "name": "fleet-rear-pixel",
+      "stats": "FPS\n22\nFrame time\n45.6ms\nTriangles\n19646\nDraw calls\n57\nMesh count\n56\nBounds X/Y/Z\n33.30 / 13.84 / 16.74\nRender resolution\n527 × 321"
+    },
+    {
+      "name": "fleet-top-silhouette",
+      "stats": "FPS\n41\nFrame time\n24.7ms\nTriangles\n19644\nDraw calls\n56\nMesh count\n56\nBounds X/Y/Z\n60.13 / 4.57 / 16.00\nRender resolution\n527 × 321"
+    },
+    {
+      "name": "fleet-front-raw",
+      "stats": "FPS\n50\nFrame time\n19.9ms\nTriangles\n19644\nDraw calls\n56\nMesh count\n56\nBounds X/Y/Z\n43.40 / 17.39 / 58.50\nRender resolution\n1582 × 965"
+    },
+    {
+      "name": "fleet-scale-pixel",
+      "stats": "FPS\n22\nFrame time\n45.2ms\nTriangles\n19646\nDraw calls\n57\nMesh count\n56\nBounds X/Y/Z\n75.93 / 9.03 / 39.00\nRender resolution\n527 × 321"
+    },
+    {
+      "name": "fleet-scale-silhouette",
+      "stats": "FPS\n39\nFrame time\n25.7ms\nTriangles\n19644\nDraw calls\n56\nMesh count\n56\nBounds X/Y/Z\n75.93 / 9.03 / 39.00\nRender resolution\n527 × 321"
+    }
+  ],
+  "errors": [],
+  "canvasStable": true,
+  "gpu": "SwiftShader software, not hardware performance"
+}

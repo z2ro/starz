@@ -1,0 +1,10 @@
+{
+  "errors": [],
+  "twoContexts": true,
+  "isolatedPlanets": true,
+  "width": {
+    "page": 390,
+    "viewport": 390
+  },
+  "renderer": "Chromium SwiftShader; no GPU benchmark"
+}

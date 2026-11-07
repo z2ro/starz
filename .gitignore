@@ -13,3 +13,6 @@ state.json.tmp
 
 # Sanitized local visual QA captures/reports; never commit browser profiles or sessions.
 qa-artifacts/
+
+# Local validation logs and content-addressed success cache.
+.qa/

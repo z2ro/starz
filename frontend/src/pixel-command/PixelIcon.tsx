@@ -2,6 +2,21 @@ import { createContext } from 'react';
 export const PixelTheme = createContext(false);
 // Filled shapes on an integer 16px grid; labels belong to the surrounding control.
 const shapes = {
+  chip: ['M4 3h8v10H4zM1 4h3v2H1zM1 8h3v2H1zM1 12h3v2H1zM12 4h3v2h-3zM12 8h3v2h-3zM12 12h3v2h-3zM5 1h2v2H5zM9 1h2v2H9zM5 13h2v2H5zM9 13h2v2H9z','M5 4h6v7H5z','M6 5h3v3H6z'],
+  ingots: ['M3 2h9l2 4H1zM2 7h11l2 5H0zM1 12h14v2H1z','M4 3h7v1H4zM3 8h9v2H3z','M3 12h10v1H3z'],
+  gas: ['M6 1h4v2h2v2h1v9H3V5h1V3h2z','M5 5h6v7H5z','M6 1h2v2H6zM5 7h6v2H5z'],
+  fusion: ['M5 1h6v3h2v11H3V4h2z','M5 5h6v6H5z','M7 6h2v2h1v2H6V8h1zM5 12h6v1H5z'],
+  ion: ['M6 1h4v3h2v2h1v9H3V6h1V4h2z','M5 6h6v6H5z','M7 6h3L8 9h2l-4 3 1-3H5z'],
+  overview: ['M1 1h6v6H1zM9 1h6v6H9zM1 9h6v6H1zM9 9h6v6H9z','M2 2h3v3H2zM10 10h3v3h-3z'],
+  empire: ['M7 1h2v1h2v1h2v1h2v2h-2v1h-2v1H9v1H7V8H5V7H3V6H1V4h2V3h2V2h2zM1 9h2v1h2v1h2v1h2v-1h2v-1h2V9h2v2h-2v1h-2v1H9v1H7v-1H5v-1H3v-1H1z','M7 3h2v1h3v1H9v1H7V5H4V4h3z'],
+  workforce: ['M7 1h2v5h4V4h1v4H2V4h1v2h4zM4 2h2v4H4zM10 2h2v4h-2zM3 10h10v4H3z','M4 11h8v1H4z'],
+  tools: ['M2 1h2v3h2V1h2v5L6 8l8 6-2 2L4 9 1 6V3h1zM12 1h2v3l-3 3-2-2z','M3 5h2v1H3z'],
+  sector: ['M5 1h6v1h2v2h1v5h-2v2h-2v2H9v2H7v-2H6v-2H4V9H2V4h1V2h2z','M6 3h4v1h1v4h-1v1H6V8H5V4h1z'],
+  universe: ['M5 1h6v1h2v2h2v2h1v5h-1v2h-2v2h-2v1H5v-1H3v-2H1v-2H0V6h1V4h2V2h2z','M6 2h1v3H4v1H2v4h2v1h3v3h2v-3h3v-1h2V6h-2V5H9V2z'],
+  logout: ['M7 1h3v3H7zM2 4h2v8h8v-2h2v4H2zM8 5h4V3l4 4-4 4V9H8z','M3 5h1v5H3z'],
+  temperature: ['M6 1h4v9h2v4h-2v1H6v-1H4v-4h2z','M7 3h1v8H6v2h4v-2H9V3z'],
+  gravity: ['M6 1h4v3H6zM4 5h8l3 10H1z','M6 7h4v2H6z'],
+  water: ['M7 1h2v2h1v2h2v3h2v5h-2v2H4v-2H2V8h2V5h2V3h1z','M4 9h2v3h2v1H5v-1H4z'],
   cannon: ['M2 12h12v3H2zM5 9h6v3H5zM6 5h5v4H6zM8 1h3v5H8z','M7 6h3v2H7zM4 13h8v1H4z'],
   missile: ['M7 1h2v2h2v7h2v4h-3v-2H6v2H3v-4h2V3h2zM7 13h2v3H7z','M7 4h2v3H7z'],
   railgun: ['M1 12h14v3H1zM5 8h7v4H5zM7 1h2v8H7zM11 1h2v8h-2z','M6 10h5v1H6zM3 13h10v1H3z'],
@@ -24,6 +39,8 @@ const shapes = {
   help: ['M4 1h8v2h2v4h-2v2H9v2H6V7h4V4H6v2H2V3h2zM6 13h3v3H6z', 'M5 2h6v1H5z'],
 } as const;
 export type PixelIconName = keyof typeof shapes;
+export const resourcePixelIcons:Record<string,PixelIconName>={components:'chip',raw_ore:'ore',refined_alloy:'ingots',volatiles:'gas',fusion_fuel:'fusion',ion_fuel:'ion'};
 export function PixelIcon({name}:{name:PixelIconName}) {
-  return <svg className={`px-icon px-icon-${name}`} viewBox="0 0 16 16" aria-hidden="true" focusable="false" shapeRendering="crispEdges"><path fill="currentColor" d={shapes[name][0]}/><path className="px-icon-light" d={shapes[name][1]}/></svg>;
+  const paths:readonly string[]=shapes[name];
+  return <svg className={`px-icon px-icon-${name}`} viewBox="0 0 16 16" aria-hidden="true" focusable="false" shapeRendering="crispEdges"><path fill="currentColor" d={paths[0]}/><path className="px-icon-light" d={paths[1]}/>{paths[2]&&<path className="px-icon-detail" d={paths[2]}/>}</svg>;
 }

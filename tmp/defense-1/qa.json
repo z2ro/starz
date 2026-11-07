@@ -1,0 +1,86 @@
+{
+  "username": "defenseqa_85052580",
+  "errors": [],
+  "plan": {
+    "target": "military_tier_3",
+    "level": 1,
+    "steps": [
+      {
+        "id": "naval_doctrine",
+        "level": 1,
+        "domain": "military",
+        "tier": 1,
+        "cost": {},
+        "work": 9.802644570668537,
+        "in_progress": true,
+        "requirements": []
+      },
+      {
+        "id": "military_tier_2",
+        "level": 1,
+        "domain": "military",
+        "tier": 2,
+        "cost": {
+          "refined_alloy": 40,
+          "components": 20
+        },
+        "work": 120,
+        "in_progress": false,
+        "requirements": [
+          "Capacidade military: 1/3",
+          "Construir instalação especializada: military"
+        ]
+      },
+      {
+        "id": "naval_doctrine",
+        "level": 2,
+        "domain": "military",
+        "tier": 1,
+        "cost": {
+          "refined_alloy": 51,
+          "components": 29
+        },
+        "work": 155,
+        "in_progress": false,
+        "requirements": []
+      },
+      {
+        "id": "military_tier_3",
+        "level": 1,
+        "domain": "military",
+        "tier": 3,
+        "cost": {
+          "refined_alloy": 120,
+          "components": 60
+        },
+        "work": 360,
+        "in_progress": false,
+        "requirements": [
+          "Capacidade military: 1/6",
+          "Construir instalação especializada: military"
+        ]
+      }
+    ],
+    "infrastructure": [],
+    "capacity": [
+      {
+        "domain": "military",
+        "current": 1,
+        "required": 6,
+        "specialized": 0,
+        "specialized_required": 1,
+        "rate": 0.3333333333333333
+      }
+    ],
+    "cost": {
+      "refined_alloy": 211,
+      "components": 109
+    },
+    "note": "Somente planejamento: não reserva recursos. Infraestrutura e energia precisam ser providenciadas; custos de construção não entram no subtotal. A ordem é topológica; domínios independentes podem trabalhar em paralelo."
+  },
+  "realResearch": true,
+  "realBatch": true,
+  "completedQuantity": 2,
+  "ownerIsolation": true,
+  "mobileOverflow": false
+}

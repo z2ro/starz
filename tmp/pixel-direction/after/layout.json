@@ -1,0 +1,65 @@
+{
+  "results": [
+    {
+      "width": 1920,
+      "page": 1920,
+      "planet": {
+        "x": 228,
+        "y": 377.984375,
+        "width": 805,
+        "height": 440,
+        "top": 377.984375,
+        "right": 1033,
+        "bottom": 817.984375,
+        "left": 228
+      },
+      "font": true
+    },
+    {
+      "width": 1440,
+      "page": 1440,
+      "planet": {
+        "x": 194,
+        "y": 365.984375,
+        "width": 782.109375,
+        "height": 340,
+        "top": 365.984375,
+        "right": 976.109375,
+        "bottom": 705.984375,
+        "left": 194
+      },
+      "font": true
+    },
+    {
+      "width": 1366,
+      "page": 1366,
+      "planet": {
+        "x": 194,
+        "y": 365.984375,
+        "width": 733.78125,
+        "height": 340,
+        "top": 365.984375,
+        "right": 927.78125,
+        "bottom": 705.984375,
+        "left": 194
+      },
+      "font": true
+    },
+    {
+      "width": 390,
+      "page": 390,
+      "planet": {
+        "x": 32,
+        "y": 662.546875,
+        "width": 326,
+        "height": 300,
+        "top": 662.546875,
+        "right": 358,
+        "bottom": 962.546875,
+        "left": 32
+      },
+      "font": true
+    }
+  ],
+  "errors": []
+}

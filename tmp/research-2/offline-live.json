@@ -1,0 +1,11 @@
+{
+  "browserClosed": true,
+  "appRestarted": true,
+  "clockNotModified": true,
+  "levels": {
+    "extraction": 1,
+    "naval_doctrine": 1,
+    "energy_engineering": 1,
+    "orbital_engineering": 1
+  }
+}

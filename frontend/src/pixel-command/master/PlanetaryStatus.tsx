@@ -1,0 +1,11 @@
+import type {State} from '../../types/game';
+import {fmt} from '../../app/format';
+import {PixelIcon,type PixelIconName} from '../PixelIcon';
+import {ContextInspector,PixelAction} from './MasterUI';
+function StatusRow({icon,label,value,note,warning=false}:{icon:PixelIconName;label:string;value:string;note?:string;warning?:boolean}){
+ return <div className={`planetary-status-row ${warning?'status-warning':''}`}><dt><PixelIcon name={icon}/>{label}</dt><dd><strong>{value}</strong>{note&&<small>{note}</small>}</dd></div>;
+}
+export function PlanetaryStatus({state}:{state:State}) {
+ const c=state.capacities,p=state.system.planet;
+ return <ContextInspector title="Desenvolvimento planetário" className="planetary-status strategy-world-dossier"><dl><StatusRow icon="people" label="População" value={fmt(state.population.total)} note={`/ ${fmt(state.population.capacity)}${state.population.total>state.population.capacity?' · excedido':''}`} warning={state.population.total>state.population.capacity}/><StatusRow icon="energy" label="Energia livre" value={fmt(c.energy_generation-c.energy_consumption)} note={c.energy_coverage<1?'Déficit':'de margem'} warning={c.energy_coverage<1}/><StatusRow icon="workforce" label="Trabalhadores" value={`${fmt(c.workforce_supply)} / ${fmt(c.workforce_demand)}`} note="oferta / demanda" warning={c.workforce_coverage<1}/><StatusRow icon="tools" label="Construção" value={`${c.construction_slots_available} / ${c.construction_slots}`} note="vagas livres"/><StatusRow icon="build" label="Estaleiro" value={`${c.shipyard_slots_available} / ${c.shipyard_slots}`} note="vagas livres"/></dl><div className="planetary-physical" aria-label="Características físicas"><span><PixelIcon name="temperature"/>{fmt(p.temperature)} K</span><span><PixelIcon name="gravity"/>{fmt(p.gravity,2)} g</span><span><PixelIcon name="water"/>{fmt(p.water,1)}% água</span></div><nav aria-label="Ordens rápidas"><PixelAction to="/development" icon="build" primary>Instalações</PixelAction><PixelAction to="/research" icon="research">Pesquisa</PixelAction><PixelAction to="/shipyard" icon="ship">Estaleiro</PixelAction><PixelAction to="/galaxy" icon="map">Exploração</PixelAction></nav></ContextInspector>;
+}

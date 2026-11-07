@@ -20,22 +20,13 @@ The resumed check passed with all five skills in a new task's initial catalog, u
 
 ## Setup / commands
 
-Use the repository's normal backend Python virtualenv (for the pure fixture exporter) and Node ≥22. Playwright 1.65.0 is a pinned **development-only** dependency; current `PLAYWRIGHT_MODULE` / `CHROMIUM_PATH` conventions are supported.
+Use the repository's existing Python virtualenv and Node ≥22. Playwright is a pinned development-only dependency. Install dependencies/browser only when absent; setup is not a step to repeat for each task.
 
-```sh
-npm ci --ignore-scripts
-# Only if a browser is absent: reviewed local CLI, not a remote shell installer.
-npx --no-install playwright install chromium
-npm run skills:check
-npm run test:design-qa
-npm run qa:visual
-npm run typecheck
-git diff --check
-```
+Choose validation using the [risk-based local QA policy](../development/local-qa.md): low-risk visual corrections use affected scenarios; medium-risk interactions use `affected` and related checks; high-risk changes use broader validation when required; release candidates require `full`. Do not run a sequence of install, skills, checker, full visual, typecheck and build commands as a default UI workflow. Existing standalone tools are targeted/debugging entrypoints when the wrapper cannot express the needed scope.
 
 For an existing local Chromium: `CHROMIUM_PATH=/path/to/chrome npm run qa:visual`. Set `STARZ_QA_PYTHON` if your backend virtualenv interpreter is elsewhere. Optional image comparison uses the reviewed vendored `compare.py` with Python/Pillow and already-sanitized images. The vendored CDP `capture.mjs` is restricted and must not be executed; see the [security audit](../../.agents/skills/UPSTREAM.md).
 
-## What runs
+## Available checks (not a per-task checklist)
 
 `test:design-qa` verifies the **checker**, using small neutral browser fixtures at all three sizes: empty/populated finite content, functioning tabs/pagination, and deliberately broken scroll jail, clipping, overlay occlusion, missing assets and decorative controls. Passing these tests does not approve STARZ's current screens.
 
@@ -85,3 +76,15 @@ See [baseline, root causes and scorecards](compact-workspace-3.md). The normal r
 - Screenshots use `WIDTHxHEIGHT` filenames so reduced-height cases cannot overwrite the canonical phone capture. Fixture snapshots include an engine-generated in-memory transit fleet; extra players/offers/reports remain explicitly staged presentation data, never database records.
 
 Focused iteration may use `STARZ_QA_VIEWS=overview,fleets` or `STARZ_QA_CASE=overview-populated-390`. Such a report is only that scope, never a full-suite pass. Default `npm run qa:visual` is the complete matrix. No unexpected network/mutation event is waived. Capture artifacts and temporary browser profiles are not committed as user data.
+
+## Master UI reference candidate
+
+The [master design reference implementation](../design/starz-master-design-system.md) is Overview-only and awaits owner approval before rollout. Its canonical supplied image is [starz-master-ui.png](../design/references/starz-master-ui.png). Existing compact-workspace results above are historical, not replaced or retroactively re-scored.
+
+The runner now includes 1672×941: the full default matrix is **174** cases; `STARZ_QA_VIEWS=overview` is **12**. `STARZ_QA_MASTER_FLOW=1` additionally exercises the candidate Overview at reference and phone sizes using controlled snapshots: dialogs, keyboard mode changes, refresh/canvas stability, planet switching and actual contextual destinations. Unknown endpoints, non-GET requests and external network remain blocked. This is fixture UI evidence, never persistent multiplayer completion. The owner has approved Overview and authorized global adoption. Contextual destinations now retain the same GameShell/HUD/sidebar; workspaces keep their own layouts. See the [master design system](../design/starz-master-design-system.md).
+
+## Unified local validation
+
+Apply the [risk-based local QA policy](../development/local-qa.md) before choosing checks. Classify every task and record its selected scope. Low-risk changes use targeted checks (`quick` when needed); medium-risk changes use `affected` with related functional/layout checks; high-risk work uses relevant tests and `full` when required; releases require `full`. Do not run all modes sequentially or repeat unchanged successes. Use supported targeted entrypoints when the wrapper would broaden a justified isolated change. Investigate a failed target before expanding; time targets never waive required validation.
+
+The runner retains valid content-fingerprinted results, bounded safe parallelism, complete local logs and nonzero failure exits. Read details only when necessary and avoid routine QA infrastructure audits. Passing Playwright measurements is not artistic approval; review the relevant actual captures before sharing. Pinned third-party skill files remain unchanged, and repository risk-based orchestration determines which checklist items apply.

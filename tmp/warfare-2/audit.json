@@ -1,0 +1,86 @@
+[
+  {
+    "route": "universe",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 1015
+  },
+  {
+    "route": "development",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 1314
+  },
+  {
+    "route": "economy",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 1867
+  },
+  {
+    "route": "research",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 1647
+  },
+  {
+    "route": "defenses",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 1977
+  },
+  {
+    "route": "shipyard",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 1165
+  },
+  {
+    "route": "fleets",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 900
+  },
+  {
+    "route": "galaxy",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 1171
+  },
+  {
+    "route": "overview",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 1183
+  },
+  {
+    "route": "relations",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 900
+  },
+  {
+    "route": "relations?tab=market",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 1006
+  },
+  {
+    "route": "relations?tab=reports",
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 900
+  }
+]

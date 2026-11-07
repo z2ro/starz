@@ -1,0 +1,12 @@
+{
+  "id": "d3076c5c-90b3-4a40-8f3d-1b16fe68c63f",
+  "hull_id": "wayfarer_hull",
+  "propulsion_id": "chemical_drive",
+  "fuel_id": "ion_fuel",
+  "crew": 8,
+  "mass": 24,
+  "ready_at": 7408,
+  "origin_planet_id": "fe8ba5cc-1937-4d01-9251-73a4ee98b0a6",
+  "system_x": 0,
+  "system_y": 1
+}

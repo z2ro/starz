@@ -1,0 +1,73 @@
+{
+  "layouts": [
+    {
+      "width": 1920,
+      "page": 1920,
+      "font": true,
+      "planet": {
+        "x": 228,
+        "y": 367.359375,
+        "width": 805,
+        "height": 436,
+        "top": 367.359375,
+        "right": 1033,
+        "bottom": 803.359375,
+        "left": 228
+      }
+    },
+    {
+      "width": 1440,
+      "page": 1440,
+      "font": true,
+      "planet": {
+        "x": 194,
+        "y": 355.359375,
+        "width": 541.84375,
+        "height": 386,
+        "top": 355.359375,
+        "right": 735.84375,
+        "bottom": 741.359375,
+        "left": 194
+      }
+    },
+    {
+      "width": 1366,
+      "page": 1366,
+      "font": true,
+      "planet": {
+        "x": 194,
+        "y": 354.40625,
+        "width": 507.6875,
+        "height": 386,
+        "top": 354.40625,
+        "right": 701.6875,
+        "bottom": 740.40625,
+        "left": 194
+      }
+    },
+    {
+      "width": 390,
+      "page": 390,
+      "font": true,
+      "planet": {
+        "x": 18,
+        "y": 511.46875,
+        "width": 354,
+        "height": 280,
+        "top": 511.46875,
+        "right": 372,
+        "bottom": 791.46875,
+        "left": 18
+      }
+    }
+  ],
+  "errors": [],
+  "mutations": [],
+  "help": true,
+  "keyboard": true,
+  "records": true,
+  "imageProcedural": true,
+  "nominalExplanation": true,
+  "realNavigation": true,
+  "sharedPixelShell": true
+}

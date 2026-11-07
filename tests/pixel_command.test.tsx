@@ -17,7 +17,8 @@ it('shows local resources once, with nominal rates and real planet identity',()=
  const s=planetSnapshot();s.stocks.raw_ore=1234;mount(s);
  expect(screen.getByRole('region',{name:`Estoque local de ${s.system.planet.name}`}).textContent).toContain('1.234');
  expect(screen.getByRole('region',{name:'Planeta atual'}).textContent).toContain(s.system.planet.name);
- expect(screen.getAllByText(/\/min nom\./).length).toBeGreaterThan(0);
+ fireEvent.click(screen.getByRole('button',{name:'Produção e detalhes dos recursos'}));
+ expect(screen.getAllByText(/\/min nominal/).length).toBeGreaterThan(0);
 });
 it('keeps completed tutorial inside help without discarding saved progress',()=>{
  const s=planetSnapshot();const saved={...initialGuide(s),done:GUIDE_STEPS.map(s=>s.id)};

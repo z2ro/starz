@@ -1,0 +1,61 @@
+/* System workspaces share the approved shell and components, not Overview's hero layout. */
+.master-ui .system-workspace{color:var(--master-text);font:14px/1.45 var(--master-body)}
+.master-ui .system-workspace .workspace-header{gap:12px;min-height:44px;flex:none}
+.master-ui .system-workspace .workspace-header h1{font:700 var(--master-workspace-title)/1.25 var(--master-pixel)!important;margin:0!important;white-space:normal;overflow-wrap:anywhere}
+.master-ui .system-workspace .workspace-header>.px-icon{width:28px;height:28px;flex:none}
+.master-ui .system-workspace .workspace-header>div{min-width:12px}
+.master-ui .system-workspace :is(.eyebrow,.muted,small){color:var(--master-muted)}
+.master-ui .system-workspace :is(h2,h3){color:var(--master-text)}
+.master-ui .system-workspace :is(.panel,.ux-inspector,.research-inspector,.naval-inspector,.system-detail,.economy-processors,.economy-detail,.overview-section,.px-industry-recipe,.universe-row,.market-area,.px-mission-planner .mission-step){border-color:var(--master-line);background-color:var(--master-surface);color:var(--master-text)}
+.master-ui .system-workspace .pixel-panel{background-color:var(--master-space)}
+.master-ui .system-workspace :is(button,.button){color:var(--master-text);background-color:var(--master-raised);border-color:var(--master-line);font-family:var(--master-body)}
+.master-ui .system-workspace :is(button,.button):hover:not(:disabled){background-color:var(--master-hover);border-color:var(--master-cyan)}
+.master-ui .system-workspace :is(button,.button):disabled{background-color:var(--master-disabled);color:var(--master-muted);border-color:var(--master-line-dim);cursor:not-allowed}
+.master-ui .system-workspace :is(button[aria-pressed=true],button[aria-selected=true],.button.active,.universe-tabs>[aria-current=page]){background-color:var(--master-hover);border-color:var(--master-cyan);color:var(--master-text)}
+.master-ui .system-workspace :is(.build-review>button:not(:disabled),.pixel-button-primary:not(:disabled),.action.primary:not(:disabled)){background:linear-gradient(90deg,var(--master-amber-light),var(--master-amber));border-color:var(--master-amber-light);color:var(--master-space);font-weight:700}
+.master-ui .system-workspace :is(input,select,textarea){background-color:var(--master-space);border-color:var(--master-line);color:var(--master-text);font-family:var(--master-body)}
+.master-ui .system-workspace :is(.tabs,.universe-tabs){gap:4px;border-color:var(--master-line-dim)}
+.master-ui .system-workspace :is(.tabs,.universe-tabs)>:is(button,a){border-radius:0;font:14px/1.3 var(--master-body);color:var(--master-text)}
+.master-ui .system-workspace .content-pages>nav{border-top:1px solid var(--master-line-dim);padding-top:6px;color:var(--master-muted)}
+.master-ui .system-workspace .content-pages>nav>button{background:var(--master-raised);border-color:var(--master-line);min-height:44px;min-width:44px}
+.master-ui .system-workspace .status-indicator{font:12px/1.4 var(--master-body);border:1px solid var(--master-line-dim);border-radius:0}
+.master-ui .system-workspace :is(.tone-positive,.tone-good,.tone-active){color:var(--master-cyan)}
+.master-ui .system-workspace :is(.tone-warning,.tone-warn,.ux-warning){color:var(--master-amber)}
+.master-ui .system-workspace :is(.tone-danger,[role=alert]){color:var(--master-danger)}
+/* Technology/map states retain their semantic colors; these are spatial controls, not buttons. */
+.master-ui .system-workspace .research-node{background-color:var(--master-space)}
+.master-ui .system-workspace .research-node.state-available{border-color:var(--master-cyan)}
+.master-ui .system-workspace .research-node.state-locked{border-color:var(--master-line-dim)}
+@media(max-width:700px){
+ .master-ui .system-workspace .workspace-header{gap:8px;min-height:32px}
+ .master-ui .system-workspace .workspace-header>.px-icon{width:24px;height:24px}
+ .master-ui .system-workspace .workspace-header>div{display:none}
+ .master-ui .system-workspace :is(.tabs,.universe-tabs)>:is(button,a){min-height:44px;font-size:13px}
+ .master-ui .system-workspace .viewport-mission-link{border-color:var(--master-line);background:var(--master-raised);color:var(--master-text)}
+}
+/* The legacy planet route keeps its renderer/data, in explicit finite subviews. */
+.master-ui .px-page-planet .viewport-panel-tabs{display:block}
+.master-ui .system-workspace .planet-command-view,.master-ui .system-workspace .planet-command-layout{height:100%;min-height:0;margin:0}
+.master-ui .system-workspace .planet-command-layout{display:flex;border:1px solid var(--master-line)}
+.master-ui .system-workspace :is(.planet-hero,.planet-inspector){width:100%;height:100%;min-height:0!important;max-height:none;overflow:visible;margin:0;border:0;padding:0}
+.master-ui .system-workspace .planet-hero{position:relative;flex:1;background:var(--master-space)}
+.master-ui .system-workspace .planet-art-layer{inset:0;height:100%;position:absolute}
+.master-ui .system-workspace .hero-header{top:16px;left:16px;right:16px}
+.master-ui .system-workspace .planet-header-title{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.master-ui .system-workspace .hero-markers{top:auto;bottom:12px;right:12px}
+.master-ui .system-workspace .planet-inspector{display:flex;flex-direction:column;background:var(--master-surface)}
+.master-ui .system-workspace .planet-inspector-header{padding:12px;flex:none}
+.master-ui .system-workspace .planet-inspector>.tabs{flex:none}
+.master-ui .system-workspace .planet-inspector>.inspector-content{min-height:0;flex:1;display:flex;overflow:visible}
+.master-ui .system-workspace .planet-inspector .content-pages{flex:1;min-height:0}
+.master-ui .system-workspace .hero-overlays{position:static;inset:auto;margin:0;padding:8px;height:100%;width:100%;display:flex;border:0;background:var(--master-surface)}
+.master-ui .system-workspace .hero-overlays .content-pages{flex:1;min-height:0}
+.master-ui .system-workspace .hero-overlays .operations-column{border:1px solid var(--master-line-dim);padding:12px}
+.master-ui .px-view[data-panel=main] .planet-command-layout :is(.planet-inspector,.hero-overlays),.master-ui .px-view[data-panel=detail] .planet-command-layout>.planet-hero,.master-ui .px-view[data-panel=activity] .planet-command-layout :is(.planet-inspector,.planet-art-layer,.hero-header,.hero-markers){display:none}
+@media(max-width:700px){.master-ui .system-workspace .hero-header{inset:12px 12px auto}.master-ui .system-workspace .planet-header-title{gap:6px}.master-ui .system-workspace .planet-inspector-header{padding:8px}.master-ui .system-workspace .planet-inspector .tabs>button{padding:4px;min-width:0}}
+/* Decorative title accents cannot paint over a label in a shrink-to-fit page header. */
+.master-ui .system-workspace .page-header>div:first-child{flex:1;min-width:0}
+.master-ui .system-workspace .workspace-header>div{min-width:64px;overflow:hidden}
+/* An operations page gets the available height, rather than bottom-aligning intrinsic content. */
+.master-ui .system-workspace .hero-overlays{align-items:stretch}
+.master-ui .system-workspace .hero-overlays>.content-pages{height:100%;align-self:stretch}

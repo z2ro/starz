@@ -1,0 +1,53 @@
+{
+  "account": "ux_play_1209155",
+  "errors": [],
+  "actions": [
+    {
+      "url": "http://localhost:8030/api/auth/register",
+      "status": 200,
+      "body": "[credenciais omitidas]"
+    },
+    {
+      "url": "http://localhost:8030/api/build",
+      "status": 200,
+      "body": "{\"id\":\"ore_extractor\",\"planet_id\":\"85fad85a-b432-4a5d-bbf5-7b32770c363a\"}"
+    },
+    {
+      "url": "http://localhost:8030/api/research",
+      "status": 200,
+      "body": "{\"id\":\"energy_engineering\",\"planet_id\":\"85fad85a-b432-4a5d-bbf5-7b32770c363a\"}"
+    },
+    {
+      "url": "http://localhost:8030/api/build-ship",
+      "status": 200,
+      "body": "{\"planet_id\":\"85fad85a-b432-4a5d-bbf5-7b32770c363a\",\"hull_id\":\"scout_hull\",\"propulsion_id\":\"chemical_drive\",\"fuel_id\":\"ion_fuel\"}"
+    },
+    {
+      "url": "http://localhost:8030/api/universe/mission-preview",
+      "status": 200,
+      "body": "{\"planet_id\":\"85fad85a-b432-4a5d-bbf5-7b32770c363a\",\"ship_ids\":[\"dbe60c96-6185-4d35-9b76-ce113792d4c9\"],\"mission\":\"SURVEY\",\"target_planet_id\":null,\"x\":-1,\"y\":-1,\"planet_index\":null,\"cargo\":{}}"
+    },
+    {
+      "url": "http://localhost:8030/api/universe/mission",
+      "status": 200,
+      "body": "{\"planet_id\":\"85fad85a-b432-4a5d-bbf5-7b32770c363a\",\"ship_ids\":[\"dbe60c96-6185-4d35-9b76-ce113792d4c9\"],\"mission\":\"SURVEY\",\"target_planet_id\":null,\"x\":-1,\"y\":-1,\"planet_index\":null,\"cargo\":{}}"
+    },
+    {
+      "url": "http://localhost:8030/api/build",
+      "status": 200,
+      "body": "{\"id\":\"solar_field\",\"planet_id\":\"85fad85a-b432-4a5d-bbf5-7b32770c363a\"}"
+    }
+  ],
+  "width": {
+    "page": 390,
+    "viewport": 390
+  },
+  "realBuild": true,
+  "realResearch": true,
+  "realShip": true,
+  "realDispatch": true,
+  "offlineResearchComplete": true,
+  "tutorialPersisted": true,
+  "lockedResearchExplained": true,
+  "insufficientResourcesBlocked": true
+}

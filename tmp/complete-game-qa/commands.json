@@ -1,0 +1,1987 @@
+[
+  {
+    "endpoint": "campaign/new",
+    "payload": {
+      "seed": "STARZ-CONCORDAT"
+    },
+    "result": {
+      "started": true
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "processor"
+    },
+    "result": {
+      "id": "processor",
+      "complete_at": 1793757694.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 1,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "volatile_well"
+    },
+    "result": {
+      "id": "volatile_well",
+      "complete_at": 1793757991.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 2,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "fuel_refinery"
+    },
+    "result": {
+      "id": "fuel_refinery",
+      "complete_at": 1793758296.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 3,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "research",
+    "payload": {
+      "id": "orbital_engineering"
+    },
+    "result": {
+      "id": "orbital_engineering",
+      "complete_at": 1793758611.738843,
+      "remaining_work": 45.0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 4,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "orbital_shipyard"
+    },
+    "result": {
+      "id": "orbital_shipyard",
+      "complete_at": 1793758926.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 5,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build-ship",
+    "payload": {
+      "hull_id": "scout_hull",
+      "propulsion_id": "chemical_drive",
+      "fuel_id": "ion_fuel"
+    },
+    "result": {
+      "id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "hull_id": "scout_hull",
+      "propulsion_id": "chemical_drive",
+      "fuel_id": "ion_fuel",
+      "crew": 3,
+      "mass": 10.0,
+      "ready_at": 1793759196.738843,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "system_x": 1,
+      "system_y": 0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 6,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "research",
+    "payload": {
+      "id": "industrial_automation"
+    },
+    "result": {
+      "id": "industrial_automation",
+      "complete_at": 1793759586.738843,
+      "remaining_work": 120.0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "event",
+      "choice": "preserve"
+    },
+    "result": null
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 7,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "solar_field"
+    },
+    "result": {
+      "id": "solar_field",
+      "complete_at": 1793759784.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 8,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "manufacturing"
+    },
+    "result": {
+      "id": "manufacturing",
+      "complete_at": 1793760126.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 9,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "research",
+    "payload": {
+      "id": "diplomatic_charter"
+    },
+    "result": {
+      "id": "diplomatic_charter",
+      "complete_at": 1793760546.738843,
+      "remaining_work": 180.0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 10,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "survey",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 2,
+      "y": 0,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 1,
+      "y": 0,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 20,
+      "destination_x": 2,
+      "destination_y": 0,
+      "status": "TRANSIT",
+      "departure_at": 1793760666.738843,
+      "arrival_at": 1793760846.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 10,
+      "mission": "SURVEY",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "preview": {
+        "origin": [
+          1,
+          0
+        ],
+        "destination": [
+          2,
+          0
+        ],
+        "distance": 1.0,
+        "eta_seconds": 180,
+        "fuel_cost": 10,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": null,
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 11,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "envoy",
+      "target": "helion"
+    },
+    "result": {
+      "relation": 35
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "envoy",
+      "target": "helion"
+    },
+    "result": {
+      "relation": 60
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "alliance",
+      "target": "helion"
+    },
+    "result": {
+      "allied": true
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "dispatch",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 1,
+      "y": 0,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 2,
+      "y": 0,
+      "destination_x": 1,
+      "destination_y": 0,
+      "status": "TRANSIT",
+      "mission": "MOVE",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 9.8,
+      "departure_at": 1793760966.738843,
+      "arrival_at": 1793761146.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 10,
+      "preview": {
+        "origin": [
+          2,
+          0
+        ],
+        "destination": [
+          1,
+          0
+        ],
+        "distance": 1.0,
+        "eta_seconds": 180,
+        "fuel_cost": 10,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 12,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "survey",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 1,
+      "y": 1,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 1,
+      "y": 0,
+      "destination_x": 1,
+      "destination_y": 1,
+      "status": "TRANSIT",
+      "mission": "SURVEY",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 29.8,
+      "departure_at": 1793761266.738843,
+      "arrival_at": 1793761446.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 10,
+      "preview": {
+        "origin": [
+          1,
+          0
+        ],
+        "destination": [
+          1,
+          1
+        ],
+        "distance": 1.0,
+        "eta_seconds": 180,
+        "fuel_cost": 10,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "event",
+      "choice": "welcome"
+    },
+    "result": null
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 13,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "envoy",
+      "target": "obsidian"
+    },
+    "result": {
+      "relation": 15
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "envoy",
+      "target": "obsidian"
+    },
+    "result": {
+      "relation": 40
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "envoy",
+      "target": "obsidian"
+    },
+    "result": {
+      "relation": 65
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "alliance",
+      "target": "obsidian"
+    },
+    "result": {
+      "allied": true
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 14,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "dispatch",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 1,
+      "y": 0,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 1,
+      "y": 1,
+      "destination_x": 1,
+      "destination_y": 0,
+      "status": "TRANSIT",
+      "mission": "MOVE",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 19.400000000000002,
+      "departure_at": 1793761866.738843,
+      "arrival_at": 1793762046.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 10,
+      "preview": {
+        "origin": [
+          1,
+          1
+        ],
+        "destination": [
+          1,
+          0
+        ],
+        "distance": 1.0,
+        "eta_seconds": 180,
+        "fuel_cost": 10,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 15,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "civil_district"
+    },
+    "result": {
+      "id": "civil_district",
+      "complete_at": 1793762191.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 16,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "ore_extractor"
+    },
+    "result": {
+      "id": "ore_extractor",
+      "complete_at": 1793762486.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 17,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "solar_field"
+    },
+    "result": {
+      "id": "solar_field",
+      "complete_at": 1793762784.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 18,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "processor"
+    },
+    "result": {
+      "id": "processor",
+      "complete_at": 1793763094.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 19,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "manufacturing"
+    },
+    "result": {
+      "id": "manufacturing",
+      "complete_at": 1793763426.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 20,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "solar_field"
+    },
+    "result": {
+      "id": "solar_field",
+      "complete_at": 1793763684.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "event",
+      "choice": "harden"
+    },
+    "result": null
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 21,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build",
+    "payload": {
+      "id": "research_lab"
+    },
+    "result": {
+      "id": "research_lab",
+      "complete_at": 1793764001.738843
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 22,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "survey",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 0,
+      "y": -1,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 1,
+      "y": 0,
+      "destination_x": 0,
+      "destination_y": -1,
+      "status": "TRANSIT",
+      "mission": "SURVEY",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 49.400000000000006,
+      "departure_at": 1793764266.738843,
+      "arrival_at": 1793764521.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 15,
+      "preview": {
+        "origin": [
+          1,
+          0
+        ],
+        "destination": [
+          0,
+          -1
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 15,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 23,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "dispatch",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 1,
+      "y": 0,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 0,
+      "y": -1,
+      "destination_x": 1,
+      "destination_y": 0,
+      "status": "TRANSIT",
+      "mission": "MOVE",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 34.2,
+      "departure_at": 1793764566.738843,
+      "arrival_at": 1793764821.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 15,
+      "preview": {
+        "origin": [
+          0,
+          -1
+        ],
+        "destination": [
+          1,
+          0
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 15,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 24,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "colonize",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 0,
+      "y": -1,
+      "planet_index": 0
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 1,
+      "y": 0,
+      "destination_x": 0,
+      "destination_y": -1,
+      "status": "TRANSIT",
+      "mission": "COLONIZE",
+      "target_planet_index": 0,
+      "colonization_population": 20,
+      "colonization_origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 64.2,
+      "departure_at": 1793764866.738843,
+      "arrival_at": 1793765121.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 15,
+      "preview": {
+        "origin": [
+          1,
+          0
+        ],
+        "destination": [
+          0,
+          -1
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 15,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 25,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "dispatch",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 1,
+      "y": 0,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 0,
+      "y": -1,
+      "destination_x": 1,
+      "destination_y": 0,
+      "status": "TRANSIT",
+      "mission": "MOVE",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 49.0,
+      "departure_at": 1793765166.738843,
+      "arrival_at": 1793765421.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 15,
+      "preview": {
+        "origin": [
+          0,
+          -1
+        ],
+        "destination": [
+          1,
+          0
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 15,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 26,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "survey",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 0,
+      "y": 1,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 1,
+      "y": 0,
+      "destination_x": 0,
+      "destination_y": 1,
+      "status": "TRANSIT",
+      "mission": "SURVEY",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 79.0,
+      "departure_at": 1793765466.738843,
+      "arrival_at": 1793765721.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 15,
+      "preview": {
+        "origin": [
+          1,
+          0
+        ],
+        "destination": [
+          0,
+          1
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 15,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 27,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "dispatch",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 1,
+      "y": 0,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 0,
+      "y": 1,
+      "destination_x": 1,
+      "destination_y": 0,
+      "status": "TRANSIT",
+      "mission": "MOVE",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 63.8,
+      "departure_at": 1793765766.738843,
+      "arrival_at": 1793766021.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 15,
+      "preview": {
+        "origin": [
+          0,
+          1
+        ],
+        "destination": [
+          1,
+          0
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 15,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 28,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "colonize",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 0,
+      "y": 1,
+      "planet_index": 0
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 1,
+      "y": 0,
+      "destination_x": 0,
+      "destination_y": 1,
+      "status": "TRANSIT",
+      "mission": "COLONIZE",
+      "target_planet_index": 0,
+      "colonization_population": 20,
+      "colonization_origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 93.8,
+      "departure_at": 1793766066.738843,
+      "arrival_at": 1793766321.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 15,
+      "preview": {
+        "origin": [
+          1,
+          0
+        ],
+        "destination": [
+          0,
+          1
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 15,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 29,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "dispatch",
+      "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18",
+      "x": 1,
+      "y": 0,
+      "planet_index": null
+    },
+    "result": {
+      "id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+      "name": "Fleet 01",
+      "ship_ids": [
+        "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      ],
+      "x": 0,
+      "y": 1,
+      "destination_x": 1,
+      "destination_y": 0,
+      "status": "TRANSIT",
+      "mission": "MOVE",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 78.6,
+      "departure_at": 1793766366.738843,
+      "arrival_at": 1793766621.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 15,
+      "preview": {
+        "origin": [
+          0,
+          1
+        ],
+        "destination": [
+          1,
+          0
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 15,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "6fb371c1-c52b-4e44-a829-9f1d07d085fc",
+        "ship_id": "8853864c-d235-4d78-a506-8e8dd1f6ad18"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 30,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build-ship",
+    "payload": {
+      "hull_id": "wayfarer_hull",
+      "propulsion_id": "chemical_drive",
+      "fuel_id": "ion_fuel"
+    },
+    "result": {
+      "id": "50058872-3dc0-4425-8c28-3cc78d26ceaa",
+      "hull_id": "wayfarer_hull",
+      "propulsion_id": "chemical_drive",
+      "fuel_id": "ion_fuel",
+      "crew": 8,
+      "mass": 24.0,
+      "ready_at": 1793766726.738843,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "system_x": 1,
+      "system_y": 0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 31,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "cargo",
+      "ship_id": "50058872-3dc0-4425-8c28-3cc78d26ceaa",
+      "target": "16ccf5af-e684-5ec2-a693-363608c1da79",
+      "resource": "refined_alloy",
+      "amount": 30
+    },
+    "result": {
+      "id": "8315691d-b0f3-442f-84f3-7aaa51ce6242",
+      "name": "Fleet 02",
+      "ship_ids": [
+        "50058872-3dc0-4425-8c28-3cc78d26ceaa"
+      ],
+      "x": 1,
+      "y": 0,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 68,
+      "destination_x": 0,
+      "destination_y": -1,
+      "status": "TRANSIT",
+      "departure_at": 1793766966.738843,
+      "arrival_at": 1793767221.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 34,
+      "mission": "MOVE",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "preview": {
+        "origin": [
+          1,
+          0
+        ],
+        "destination": [
+          0,
+          -1
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 34,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": null,
+        "ship_id": "50058872-3dc0-4425-8c28-3cc78d26ceaa"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 32,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "dispatch",
+      "ship_id": "50058872-3dc0-4425-8c28-3cc78d26ceaa",
+      "x": 1,
+      "y": 0,
+      "planet_index": null
+    },
+    "result": {
+      "id": "8315691d-b0f3-442f-84f3-7aaa51ce6242",
+      "name": "Fleet 02",
+      "ship_ids": [
+        "50058872-3dc0-4425-8c28-3cc78d26ceaa"
+      ],
+      "x": 0,
+      "y": -1,
+      "destination_x": 1,
+      "destination_y": 0,
+      "status": "TRANSIT",
+      "mission": "MOVE",
+      "target_planet_index": null,
+      "colonization_population": null,
+      "colonization_origin_planet_id": null,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "fuel_reserve": 33.519999999999996,
+      "departure_at": 1793767266.738843,
+      "arrival_at": 1793767521.738843,
+      "propulsion": "chemical_drive",
+      "mode": "NORMAL",
+      "fuel_cost": 34,
+      "preview": {
+        "origin": [
+          0,
+          -1
+        ],
+        "destination": [
+          1,
+          0
+        ],
+        "distance": 1.4142135623730951,
+        "eta_seconds": 255,
+        "fuel_cost": 34,
+        "mode": "NORMAL",
+        "heat": 1.0,
+        "signature": 1.0,
+        "fleet_id": "8315691d-b0f3-442f-84f3-7aaa51ce6242",
+        "ship_id": "50058872-3dc0-4425-8c28-3cc78d26ceaa"
+      }
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "event",
+      "choice": "pay"
+    },
+    "result": null
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 33,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "trade",
+      "target": "helion"
+    },
+    "result": {
+      "trade": true
+    }
+  },
+  {
+    "endpoint": "research",
+    "payload": {
+      "id": "nuclear_propulsion"
+    },
+    "result": {
+      "id": "nuclear_propulsion",
+      "complete_at": 1793767604.238843,
+      "remaining_work": 75.0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 34,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "research",
+    "payload": {
+      "id": "naval_doctrine"
+    },
+    "result": {
+      "id": "naval_doctrine",
+      "complete_at": 1793767986.738843,
+      "remaining_work": 240.0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 35,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "research",
+    "payload": {
+      "id": "survey_network"
+    },
+    "result": {
+      "id": "survey_network",
+      "complete_at": 1793768286.738843,
+      "remaining_work": 240.0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 36,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "research",
+    "payload": {
+      "id": "capital_architecture"
+    },
+    "result": {
+      "id": "capital_architecture",
+      "complete_at": 1793768706.738843,
+      "remaining_work": 480.0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 37,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "research",
+    "payload": {
+      "id": "carrier_operations"
+    },
+    "result": {
+      "id": "carrier_operations",
+      "complete_at": 1793769066.738843,
+      "remaining_work": 600.0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 38,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "research",
+    "payload": {
+      "id": "stellar_containment"
+    },
+    "result": {
+      "id": "stellar_containment",
+      "complete_at": 1793769516.738843,
+      "remaining_work": 900.0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 39,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 40,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "build-ship",
+    "payload": {
+      "hull_id": "odyssey_hull",
+      "propulsion_id": "nuclear_drive",
+      "fuel_id": "fusion_fuel"
+    },
+    "result": {
+      "id": "f77073c6-6547-4949-ba83-4d9c0d036e67",
+      "hull_id": "odyssey_hull",
+      "propulsion_id": "nuclear_drive",
+      "fuel_id": "fusion_fuel",
+      "crew": 12,
+      "mass": 65.0,
+      "ready_at": 1793769846.738843,
+      "origin_planet_id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "system_x": 1,
+      "system_y": 0
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 41,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "analyze",
+      "ship_id": "f77073c6-6547-4949-ba83-4d9c0d036e67"
+    },
+    "result": {
+      "discoveries": 8
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 42,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 43,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 44,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "project"
+    },
+    "result": {
+      "project_started": true
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 45,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 46,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 47,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 48,
+      "phase": "VICTORY"
+    }
+  },
+  {
+    "endpoint": "campaign/new",
+    "payload": {
+      "seed": "STARZ-CONCORDAT-DEFEAT"
+    },
+    "result": {
+      "started": true
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 1,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 2,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 3,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 4,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 5,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 6,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "event",
+      "choice": "salvage"
+    },
+    "result": null
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 7,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 8,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 9,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 10,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 11,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 12,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "event",
+      "choice": "close"
+    },
+    "result": null
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 13,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 14,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 15,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 16,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 17,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 18,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 19,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 20,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "event",
+      "choice": "risk"
+    },
+    "result": null
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 21,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 22,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 23,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 24,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 25,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 26,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 27,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 28,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 29,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 30,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 31,
+      "phase": "PLAYING"
+    }
+  },
+  {
+    "endpoint": "campaign/order",
+    "payload": {
+      "action": "end_turn"
+    },
+    "result": {
+      "turn": 32,
+      "phase": "DEFEAT"
+    }
+  },
+  {
+    "endpoint": "campaign/load",
+    "payload": {
+      "empire_id": "b3d2015d-59ca-4995-95c8-6cc58d41ef3f"
+    },
+    "result": {
+      "loaded": true
+    }
+  }
+]

@@ -1,0 +1,181 @@
+{
+  "errors": [],
+  "layouts": [
+    {
+      "route": "universe",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "development",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "research",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "shipyard",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "fleets",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "galaxy",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "economy",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "relations",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "relations?tab=market",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "planet",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "overview",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "missions",
+      "viewport": 1440,
+      "width": 1440,
+      "overflow": []
+    },
+    {
+      "route": "universe",
+      "viewport": 390,
+      "width": 390,
+      "overflow": []
+    },
+    {
+      "route": "development",
+      "viewport": 390,
+      "width": 390,
+      "overflow": [
+        "",
+        "",
+        "",
+        {},
+        {},
+        {},
+        "",
+        ""
+      ]
+    },
+    {
+      "route": "research",
+      "viewport": 390,
+      "width": 390,
+      "overflow": [
+        "",
+        "",
+        "",
+        "",
+        {},
+        {},
+        {},
+        ""
+      ]
+    },
+    {
+      "route": "shipyard",
+      "viewport": 390,
+      "width": 390,
+      "overflow": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "route": "fleets",
+      "viewport": 390,
+      "width": 390,
+      "overflow": []
+    },
+    {
+      "route": "galaxy",
+      "viewport": 390,
+      "width": 390,
+      "overflow": []
+    },
+    {
+      "route": "economy",
+      "viewport": 390,
+      "width": 390,
+      "overflow": []
+    },
+    {
+      "route": "relations",
+      "viewport": 390,
+      "width": 390,
+      "overflow": []
+    },
+    {
+      "route": "relations?tab=market",
+      "viewport": 390,
+      "width": 390,
+      "overflow": []
+    },
+    {
+      "route": "planet",
+      "viewport": 390,
+      "width": 390,
+      "overflow": []
+    },
+    {
+      "route": "overview",
+      "viewport": 390,
+      "width": 390,
+      "overflow": []
+    },
+    {
+      "route": "missions",
+      "viewport": 390,
+      "width": 390,
+      "overflow": []
+    }
+  ],
+  "actions": [],
+  "keyboard": true,
+  "researchBlocked": true,
+  "mapMission": true,
+  "marketAccessible": true
+}

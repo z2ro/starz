@@ -1,0 +1,207 @@
+{
+  "shots": [
+    {
+      "width": 1920,
+      "name": "shipyard-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "name": "shipyard-atlas",
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "name": "shipyard-dominion",
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "name": "fleets-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "name": "fleets-atlas",
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "name": "fleets-dominion",
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "name": "planet-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "name": "planet-atlas",
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "name": "planet-dominion",
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "name": "planet-image",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "shipyard-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "shipyard-atlas",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "shipyard-dominion",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "fleets-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "fleets-atlas",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "fleets-dominion",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "planet-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "planet-atlas",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "planet-dominion",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "planet-image",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "shipyard-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "shipyard-atlas",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "shipyard-dominion",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "fleets-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "fleets-atlas",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "fleets-dominion",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "planet-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "planet-atlas",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "planet-dominion",
+      "overflow": false
+    },
+    {
+      "width": 1366,
+      "name": "planet-image",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "shipyard-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "shipyard-atlas",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "shipyard-dominion",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "fleets-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "fleets-atlas",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "fleets-dominion",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "planet-wayfarer",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "planet-atlas",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "planet-dominion",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "planet-image",
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "gpu": "Chromium SwiftShader; not a physical GPU benchmark",
+  "api": "actual API + disposable PostgreSQL schema"
+}

@@ -7,7 +7,7 @@ function inspectLayout(profile) {
   const rect=el=>{const r=el.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom};};
   const clipped=el=>{
     const r=rect(el);if(r.left< -1||r.top< -1||r.right>innerWidth+1||r.bottom>innerHeight+1)return 'outside viewport';
-    for(let p=el.parentElement;p;p=p.parentElement){if(p.tagName==='DIALOG'&&p.open)break;const s=getComputedStyle(p),b=rect(p);if(/auto|scroll|hidden|clip/.test(s.overflowX)&&(r.left<b.left-2||r.right>b.right+2))return 'horizontal ancestor '+name(p);if(/auto|scroll|hidden|clip/.test(s.overflowY)&&(r.top<b.top-2||r.bottom>b.bottom+2))return 'vertical ancestor '+name(p);}
+    for(let p=el.parentElement;p;p=p.parentElement){if(p.tagName==='DIALOG'&&p.open)break;const s=getComputedStyle(p);if(s.display==='contents')continue;const b=rect(p);if(/auto|scroll|hidden|clip/.test(s.overflowX)&&(r.left<b.left-2||r.right>b.right+2))return 'horizontal ancestor '+name(p);if(/auto|scroll|hidden|clip/.test(s.overflowY)&&(r.top<b.top-2||r.bottom>b.bottom+2))return 'vertical ancestor '+name(p);}
     return null;
   };
   if(document.documentElement.scrollWidth>innerWidth+1||document.documentElement.scrollHeight>innerHeight+1)add('document-overflow',null,`${document.documentElement.scrollWidth}×${document.documentElement.scrollHeight} > ${innerWidth}×${innerHeight}`);
@@ -36,14 +36,20 @@ function inspectLayout(profile) {
       if(lost.length)add('inspector-content-unreachable-without-scroll',inspector,`${lost.length} visible content elements outside the reading area`);
     }
   }
-  for(const el of document.querySelectorAll('.px-view button,.px-view label,.px-view h1,.px-view h2,.px-view p,.px-view .metric,.px-view .data-row'))if(visible(el)&&!el.closest('.map-pan')&&clipped(el))add('clipped-workspace-content',el,clipped(el));
+  for(const el of document.querySelectorAll('.px-view button,.px-view label,.px-view h1,.px-view h2,.px-view p,.px-view .metric,.px-view .data-row,.px-view .planetary-status-row,.px-view .planetary-physical'))if(visible(el)&&!el.closest('.map-pan')&&clipped(el))add('clipped-workspace-content',el,clipped(el));
   for(const el of document.querySelectorAll('.page-item'))if(visible(el)&&clipped(el))add('clipped-page-content',el,clipped(el));
   for(const img of document.images)if(visible(img)&&(!img.complete||!img.naturalWidth))add('unloaded-image',img,'image missing or not decoded');
   for(const icon of document.querySelectorAll('.px-icon'))if(visible(icon)&&getComputedStyle(icon).shapeRendering!=='crispedges')add('pixel-icon-filter',icon,'expected crispEdges');
   for(const canvas of document.querySelectorAll('canvas'))if(visible(canvas)&&(!canvas.width||!canvas.height))add('empty-canvas',canvas,'zero backing resolution');
   for(const el of document.querySelectorAll('[data-pixel-art]'))if(visible(el)&&!['pixelated','crisp-edges'].includes(getComputedStyle(el).imageRendering))add('pixel-asset-smoothing',el,'nearest-neighbor rendering missing');
   if(document.querySelector('.pixel-game')&&!document.fonts.check('16px Silkscreen'))add('pixel-font-unloaded',null,'Silkscreen font has not loaded');
-  return {viewport:{width:innerWidth,height:innerHeight},findings,manualVisualReviewRequired:true};
+  let commonShell;
+  if(document.querySelector('.pixel-game')){
+    for(const [selector,count]of [['.game-shell',1],['.resource-hud',1],['.sidebar-navigation',1],['.resource-hud .px-resources',1],['.px-masthead',0]])if(document.querySelectorAll(selector).length!==count)add('shared-shell-count',null,selector+' expected '+count);
+    const bounds=selector=>{const el=document.querySelector(selector);if(!el)return null;const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
+    commonShell={hud:bounds('.resource-hud'),sidebar:bounds('.sidebar-navigation'),workspace:bounds('#command-content')};
+  }
+  return {viewport:{width:innerWidth,height:innerHeight},findings,commonShell,manualVisualReviewRequired:true};
 }
 
 async function exerciseNavigation(page,profile,onSubview) {
@@ -81,6 +87,7 @@ async function auditContentPages(page,profile){
   let guard=0;while(!await previous.isDisabled()&&guard++<100)await previous.click();
   let count=0;do{
    await page.waitForTimeout(30);const check=await page.evaluate(inspectLayout,{...profile,critical:[]});
+   if(profile.id==='menu')check.findings.push(...(await page.evaluate(inspectNavigationTargets)).findings);
    const label=await deck.getAttribute('aria-label');findings.push(...check.findings.map(f=>({...f,phase:'content-page',deck:label})));
    count++;if(await next.isDisabled())break;await next.click();
   }while(count<100);
@@ -91,3 +98,13 @@ async function auditContentPages(page,profile){
  return {findings,results};
 }
 module.exports={inspectLayout,exerciseNavigation,auditContentPages};
+
+// Scope pairwise geometry checks to the explicitly opened navigation workspace.
+function inspectNavigationTargets(){
+ const dialog=document.querySelector('dialog[open]');if(!dialog)throw Error('Navigation dialog is not open.');
+ const targets=[...dialog.querySelectorAll('a[href],button')].filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(el).visibility!=='hidden'&&!el.closest('[hidden]');}).map(el=>{const r=el.getBoundingClientRect(),icon=el.querySelector('.px-icon')?.getBoundingClientRect();return {name:el.getAttribute('aria-label')??el.textContent.trim(),href:el.getAttribute('href'),x:r.x,y:r.y,width:r.width,height:r.height,icon:icon?{width:icon.width,height:icon.height}:undefined};});
+ const findings=[];
+ for(let i=0;i<targets.length;i++){const a=targets[i];if(a.width<44||a.height<44)findings.push({code:'small-navigation-target',target:a.name,width:a.width,height:a.height});if(a.x<0||a.y<0||a.x+a.width>innerWidth+0.5||a.y+a.height>innerHeight+0.5)findings.push({code:'navigation-target-outside-viewport',target:a.name});for(const b of targets.slice(i+1))if(Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x)>0.5&&Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y)>0.5)findings.push({code:'overlapping-navigation-targets',targets:[a.name,b.name]});}
+ return {targets,findings};
+}
+module.exports.inspectNavigationTargets=inspectNavigationTargets;

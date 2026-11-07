@@ -1,0 +1,138 @@
+{
+  "errors": [],
+  "layouts": [
+    {
+      "route": "universe",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "development",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "research",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "shipyard",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "fleets",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "galaxy",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "economy",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "relations",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "relations?tab=market",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "planet",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "overview",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "missions",
+      "viewport": 1440,
+      "page": 1440
+    },
+    {
+      "route": "universe",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "development",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "research",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "shipyard",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "fleets",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "galaxy",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "economy",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "relations",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "relations?tab=market",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "planet",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "overview",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "missions",
+      "viewport": 390,
+      "page": 390
+    },
+    {
+      "route": "universe",
+      "viewport": 1920,
+      "page": 1920
+    },
+    {
+      "route": "universe",
+      "viewport": 1366,
+      "page": 1366
+    }
+  ],
+  "recommendationPersisted": true,
+  "navigation": true,
+  "researchBlocked": true
+}

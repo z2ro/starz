@@ -1,0 +1,344 @@
+{
+  "campaign": {
+    "log": [
+      {
+        "turn": 0,
+        "message": "Concordat: estabeleça três mundos, pacifique as duas potências e contenha Stargrave antes do turno 60. Comece por um processador e um poço de voláteis."
+      }
+    ],
+    "jobs": [],
+    "turn": 0,
+    "event": null,
+    "phase": "PLAYING",
+    "health": {},
+    "orders": 4,
+    "rivals": [
+      {
+        "x": 2,
+        "y": 0,
+        "id": "helion",
+        "name": "Liga Helion",
+        "allied": false,
+        "claims": [
+          [
+            2,
+            0
+          ]
+        ],
+        "worlds": 1,
+        "industry": 2,
+        "relation": 10,
+        "strength": 14.0,
+        "treasury": 10.0,
+        "conquered": false,
+        "contacted": false,
+        "last_action": "Observando as fronteiras"
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "id": "obsidian",
+        "name": "Pacto Obsidian",
+        "allied": false,
+        "claims": [
+          [
+            1,
+            1
+          ]
+        ],
+        "worlds": 1,
+        "industry": 3,
+        "relation": -10,
+        "strength": 22.0,
+        "treasury": 15.0,
+        "conquered": false,
+        "contacted": false,
+        "last_action": "Fortificando a capital"
+      }
+    ],
+    "outcome": null,
+    "project": 0,
+    "reports": [],
+    "targets": [
+      {
+        "x": 0,
+        "y": -1,
+        "planet_index": 0
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "planet_index": 0
+      },
+      {
+        "x": 1,
+        "y": -1,
+        "planet_index": 0
+      }
+    ],
+    "version": 1,
+    "integrity": 100,
+    "deliveries": 0,
+    "discoveries": 0,
+    "project_started": false,
+    "deadline": 60,
+    "turn_seconds": 300,
+    "fleet_power": 0,
+    "objectives": [
+      {
+        "title": "Indústria sustentável: processador, voláteis e combustível",
+        "done": false
+      },
+      {
+        "title": "Três mundos colonizados",
+        "done": false
+      },
+      {
+        "title": "Duas potências pacificadas por diplomacia ou conquista",
+        "done": false
+      },
+      {
+        "title": "Uma entrega de carga entre colônias",
+        "done": false
+      },
+      {
+        "title": "Três descobertas preservadas",
+        "done": false
+      },
+      {
+        "title": "Pesquisa: Contenção estelar",
+        "done": false
+      },
+      {
+        "title": "Stargrave estabilizada (quatro turnos)",
+        "done": false
+      }
+    ],
+    "tutorial": "Indústria sustentável: processador, voláteis e combustível",
+    "sector": [
+      {
+        "x": 0,
+        "y": -1,
+        "kind": "colony_signal",
+        "surveyed": false,
+        "planet_index": null
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "kind": "colony_signal",
+        "surveyed": false,
+        "planet_index": null
+      },
+      {
+        "x": 1,
+        "y": -1,
+        "kind": "colony_signal",
+        "surveyed": false,
+        "planet_index": null
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "kind": "helion",
+        "surveyed": false,
+        "planet_index": null
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "kind": "obsidian",
+        "surveyed": false,
+        "planet_index": null
+      }
+    ]
+  },
+  "observed_at": 1793757666.738843,
+  "system": {
+    "id": "system-1-0",
+    "name": "Asterion +1:+0",
+    "x": 1,
+    "y": 0,
+    "star": {
+      "stellar_class": "G",
+      "mass": 1.6844666635465813,
+      "luminosity": 3.9279068735736753,
+      "age": 1.755985643598847,
+      "activity": 0.1555284415000893
+    },
+    "planets": [
+      {
+        "id": "planet-1-0-0",
+        "name": "C208-1 1",
+        "mass": 2.1177259812997278,
+        "radius": 0.7883752518811392,
+        "gravity": 1.1126776291323452,
+        "orbital_distance": 0.7863209848643938,
+        "temperature": 634.5767319278605,
+        "atmosphere": "dense methane",
+        "radiation": 0.09376562151539321,
+        "magnetic_field": 0.48977283580607606,
+        "water": 43.7047867668112,
+        "geological_activity": 0.9667589964033433,
+        "mineral_profile": {
+          "raw_ore": 1.2102340583217779,
+          "volatiles": 1.187145995790854
+        },
+        "usable_surface": 68.94316094473244
+      },
+      {
+        "id": "planet-1-0-1",
+        "name": "J328-1 2",
+        "mass": 1.735162536263771,
+        "radius": 1.275760294163618,
+        "gravity": 1.416021580768557,
+        "orbital_distance": 2.121781702076624,
+        "temperature": 351.6107395853414,
+        "atmosphere": "thin nitrogen",
+        "radiation": 0.0807453081902058,
+        "magnetic_field": 1.171136652272028,
+        "water": 84.55746988852557,
+        "geological_activity": 0.9649845747496217,
+        "mineral_profile": {
+          "raw_ore": 1.4542334682786087,
+          "volatiles": 1.1937326591385116
+        },
+        "usable_surface": 66.92426792779924
+      }
+    ],
+    "planet": {
+      "id": "planet-1-0-0",
+      "name": "C208-1 1",
+      "mass": 2.1177259812997278,
+      "radius": 0.7883752518811392,
+      "gravity": 1.1126776291323452,
+      "orbital_distance": 0.7863209848643938,
+      "temperature": 634.5767319278605,
+      "atmosphere": "dense methane",
+      "radiation": 0.09376562151539321,
+      "magnetic_field": 0.48977283580607606,
+      "water": 43.7047867668112,
+      "geological_activity": 0.9667589964033433,
+      "mineral_profile": {
+        "raw_ore": 1.2102340583217779,
+        "volatiles": 1.187145995790854
+      },
+      "usable_surface": 68.94316094473244
+    }
+  },
+  "active_planet": {
+    "id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+    "planet_index": 0,
+    "home": true
+  },
+  "planets": [
+    {
+      "id": "a45a8d4f-d386-4911-8716-ac224ebe558e",
+      "x": 1,
+      "y": 0,
+      "planet_index": 0,
+      "population_total": 100,
+      "created_at": 1793757666.738843,
+      "last_updated": 1793757666.738843,
+      "home": true,
+      "name": "C208-1 1",
+      "stocks": {
+        "raw_ore": 220.0,
+        "volatiles": 100.0,
+        "refined_alloy": 140.0,
+        "components": 55.0,
+        "ion_fuel": 80.0,
+        "fusion_fuel": 0.0
+      }
+    }
+  ],
+  "stocks": {
+    "raw_ore": 220.0,
+    "volatiles": 100.0,
+    "refined_alloy": 140.0,
+    "components": 55.0,
+    "ion_fuel": 80.0,
+    "fusion_fuel": 0.0
+  },
+  "capacities": {
+    "energy_generation": 24.0,
+    "energy_consumption": 7.0,
+    "energy_coverage": 1.0,
+    "industrial_capacity": 0.0,
+    "population_total": 100,
+    "construction_slots": 1,
+    "construction_slots_available": 1,
+    "shipyard_slots": 0,
+    "shipyard_slots_available": 0,
+    "crew_committed": 0,
+    "workforce_supply": 100,
+    "workforce_demand": 18.0,
+    "workforce_coverage": 1.0,
+    "available_population": 82.0,
+    "research_rate": 1.0,
+    "effective_research_rate": 1.0
+  },
+  "population": {
+    "total": 100,
+    "available": 82.0,
+    "capacity": 180
+  },
+  "districts": {
+    "civil_district": 1,
+    "solar_field": 3,
+    "ore_extractor": 1,
+    "research_lab": 1
+  },
+  "construction": [],
+  "research": {
+    "active": null,
+    "remaining_work": 0.0,
+    "complete_at": null,
+    "completed": [],
+    "completed_at": {}
+  },
+  "ships": [],
+  "fleets": [],
+  "notices": [
+    "Spawn avaliado: 0.90 / acesso inicial equilibrado."
+  ],
+  "travel_modes": [
+    {
+      "id": "ECONOMY",
+      "name": "Economy",
+      "description": "Menor consumo, maior duração.",
+      "category": "travel",
+      "cost": {},
+      "requires": [],
+      "travel_time_modifier": 1.55,
+      "fuel_modifier": 0.65,
+      "thermal_modifier": 0.8,
+      "signature_modifier": 0.8
+    },
+    {
+      "id": "FORCED",
+      "name": "Forced",
+      "description": "Menor duração, maior consumo e assinatura.",
+      "category": "travel",
+      "cost": {},
+      "requires": [],
+      "travel_time_modifier": 0.62,
+      "fuel_modifier": 2.2,
+      "thermal_modifier": 1.8,
+      "signature_modifier": 1.8
+    },
+    {
+      "id": "NORMAL",
+      "name": "Normal",
+      "description": "Operação nominal.",
+      "category": "travel",
+      "cost": {},
+      "requires": [],
+      "travel_time_modifier": 1.0,
+      "fuel_modifier": 1.0,
+      "thermal_modifier": 1.0,
+      "signature_modifier": 1.0
+    }
+  ],
+  "unlocked_content": []
+}

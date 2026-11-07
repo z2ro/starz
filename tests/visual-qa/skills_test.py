@@ -18,6 +18,9 @@ class SkillValidationTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         shutil.copytree(ROOT/'.agents', self.root/'.agents')
         shutil.copytree(ROOT/'docs/ux', self.root/'docs/ux')
+        shutil.copytree(ROOT/'docs/development', self.root/'docs/development')
+        (self.root/'docs/design').mkdir()
+        shutil.copy2(ROOT/'docs/design/starz-master-design-system.md', self.root/'docs/design/starz-master-design-system.md')
         shutil.copy2(ROOT/'AGENTS.md', self.root/'AGENTS.md')
         self.assertEqual(validator.validate(self.root), [])
 

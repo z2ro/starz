@@ -1,0 +1,13 @@
+/* Extracted from the supplied 1672×941 master reference; shared by every persistent-universe workspace. */
+.master-ui{
+ --master-space:#04101c;--master-surface:#081a27;--master-raised:#17394b;--master-hover:#205263;
+ --master-text:#f1f1df;--master-muted:#b5ccd2;--master-cyan:#83e5e5;--master-bright:#27ffff;
+ --master-line:#6497a8;--master-line-dim:#305363;--master-shadow:#020912;--master-amber:#ffc465;
+ --master-amber-light:#ffe8a8;--master-disabled:#20313b;--master-danger:#f1b67a;
+ --master-pixel:Silkscreen,monospace;--master-body:system-ui,sans-serif;
+ --master-workspace-title:24px;--master-title:34px;--master-section:20px;--master-label:14px;--master-reading:16px;--master-small:12px;
+ --master-unit:4px;--master-sidebar:248px;--master-header:104px;--master-gap:14px;--master-touch:44px;
+ --master-edge:1px;--master-cut:8px;
+}
+
+@media(max-width:700px){.master-ui{--master-workspace-title:18px}}

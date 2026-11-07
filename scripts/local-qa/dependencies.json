@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "databaseClasses": ["tests.test_postgres.PostgresTests", "tests.test_campaign_db.CampaignDatabase", "tests.test_persistent_universe.SharedUniverse", "tests.test_planetary_defense.DefensePersistence", "tests.test_fleet_intelligence.IntelligencePersistence"],
+  "frontendModules": [
+    {"prefix": "frontend/src/views/EconomyView.tsx", "tests": ["tests/economy_command.test.tsx", "tests/react_frontend.test.tsx"], "views": ["production"]},
+    {"prefix": "frontend/src/views/GalaxyView.tsx", "tests": ["tests/imperial_command_ui.test.tsx", "tests/strategy_experience.test.tsx", "tests/mission_draft.test.tsx"], "views": ["galaxy", "missions"]},
+    {"prefix": "frontend/src/universe/LevelResearch.tsx", "tests": ["tests/research_domains.test.tsx", "tests/research_command.test.tsx", "tests/persistent_universe.test.tsx"], "views": ["research"]},
+    {"prefix": "frontend/src/universe/DefenseView.tsx", "tests": ["tests/defense_view.test.tsx", "tests/warfare_ux.test.tsx"], "views": ["defense"]}
+  ],
+  "sharedFrontend": ["frontend/src/app/", "frontend/src/api/", "frontend/src/types/", "frontend/src/components/", "frontend/src/pixel-command/", "frontend/src/visual/", "frontend/assets/"],
+  "scratch": ["tmp/", "qa-artifacts/", ".qa/", "node_modules/", ".venv/", "frontend/dist/"]
+}

@@ -7,7 +7,11 @@
     "test": "vitest run --config vitest.config.ts && node tests/planet_visual.test.cjs && node tests/asset_registry.test.cjs && node tests/asset_files.test.cjs && node tests/icon_system.test.cjs",
     "skills:check": "python3 scripts/validate_agent_skills.py && python3 -m unittest discover -s tests/visual-qa -p skills_test.py",
     "test:design-qa": "node --test tests/visual-qa/checks.test.cjs",
-    "qa:visual": "node scripts/visual-qa.cjs"
+    "qa:visual": "node scripts/visual-qa.cjs",
+    "qa": "node scripts/qa.cjs",
+    "qa:quick": "node scripts/qa.cjs quick",
+    "qa:affected": "node scripts/qa.cjs affected",
+    "qa:full": "node scripts/qa.cjs full"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",

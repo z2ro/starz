@@ -1,0 +1,13 @@
+{
+  "offerReserved": true,
+  "tradeAccepted": true,
+  "offerCancelled": true,
+  "deliveryReport": {
+    "at": 1793970691.122882,
+    "message": "Contrato comercial entregue: {'raw_ore': 18.0}. Taxa logística já descontada."
+  },
+  "colony": "7922150f-ed37-501b-9a03-ba52c18244f7",
+  "planetSwitchDesktop": true,
+  "planetSwitchMobile": true,
+  "routePreserved": true
+}

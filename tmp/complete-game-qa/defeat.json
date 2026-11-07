@@ -1,0 +1,442 @@
+{
+  "campaign": {
+    "log": [
+      {
+        "turn": 32,
+        "message": "Pacto Obsidian: incursão causa 13 de dano (defesa 0)."
+      },
+      {
+        "turn": 32,
+        "message": "Liga Helion: incursão causa 11 de dano (defesa 0)."
+      },
+      {
+        "turn": 28,
+        "message": "Pacto Obsidian: incursão causa 12 de dano (defesa 0)."
+      },
+      {
+        "turn": 28,
+        "message": "Liga Helion: incursão causa 10 de dano (defesa 0)."
+      },
+      {
+        "turn": 24,
+        "message": "Pacto Obsidian: incursão causa 10 de dano (defesa 0)."
+      },
+      {
+        "turn": 24,
+        "message": "Liga Helion: incursão causa 8 de dano (defesa 0)."
+      },
+      {
+        "turn": 20,
+        "message": "Frente de radiação: risk."
+      },
+      {
+        "turn": 20,
+        "message": "Pacto Obsidian: incursão causa 9 de dano (defesa 0)."
+      },
+      {
+        "turn": 20,
+        "message": "Liga Helion: incursão causa 7 de dano (defesa 0)."
+      },
+      {
+        "turn": 16,
+        "message": "Pacto Obsidian: incursão causa 8 de dano (defesa 0)."
+      },
+      {
+        "turn": 16,
+        "message": "Liga Helion: incursão causa 6 de dano (defesa 0)."
+      },
+      {
+        "turn": 12,
+        "message": "Refugiados no limite do setor: close."
+      },
+      {
+        "turn": 6,
+        "message": "Um arquivo entre as estrelas: salvage."
+      },
+      {
+        "turn": 0,
+        "message": "Concordat: estabeleça três mundos, pacifique as duas potências e contenha Stargrave antes do turno 60. Comece por um processador e um poço de voláteis."
+      }
+    ],
+    "jobs": [],
+    "turn": 32,
+    "event": null,
+    "phase": "DEFEAT",
+    "health": {},
+    "orders": 4,
+    "rivals": [
+      {
+        "x": 3,
+        "y": 0,
+        "id": "helion",
+        "name": "Liga Helion",
+        "allied": false,
+        "claims": [
+          [
+            3,
+            0
+          ],
+          [
+            4,
+            0
+          ],
+          [
+            5,
+            0
+          ],
+          [
+            6,
+            0
+          ]
+        ],
+        "worlds": 4,
+        "industry": 27,
+        "relation": 0,
+        "strength": 64.0,
+        "treasury": 262.0,
+        "conquered": false,
+        "contacted": false,
+        "last_action": "Incursão: 11 de dano ao homeworld"
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "id": "obsidian",
+        "name": "Pacto Obsidian",
+        "allied": false,
+        "claims": [
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            1
+          ]
+        ],
+        "worlds": 4,
+        "industry": 30,
+        "relation": -20,
+        "strength": 76.0,
+        "treasury": 361.0,
+        "conquered": false,
+        "contacted": false,
+        "last_action": "Incursão: 13 de dano ao homeworld"
+      }
+    ],
+    "outcome": "O homeworld não resistiu às crises e incursões.",
+    "project": 0,
+    "reports": [
+      "2:0"
+    ],
+    "targets": [
+      {
+        "x": 1,
+        "y": -1,
+        "planet_index": 0
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "planet_index": 0
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "planet_index": 0
+      }
+    ],
+    "version": 1,
+    "integrity": 0,
+    "deliveries": 0,
+    "discoveries": 0,
+    "project_started": false,
+    "home_industry_ready": false,
+    "deadline": 60,
+    "turn_seconds": 300,
+    "fleet_power": 0,
+    "objectives": [
+      {
+        "title": "Indústria sustentável: processador, voláteis e combustível",
+        "done": false
+      },
+      {
+        "title": "Três mundos colonizados",
+        "done": false
+      },
+      {
+        "title": "Duas potências pacificadas por diplomacia ou conquista",
+        "done": false
+      },
+      {
+        "title": "Uma entrega de carga entre colônias",
+        "done": false
+      },
+      {
+        "title": "Três descobertas preservadas",
+        "done": false
+      },
+      {
+        "title": "Pesquisa: Contenção estelar",
+        "done": false
+      },
+      {
+        "title": "Stargrave estabilizada (quatro turnos)",
+        "done": false
+      }
+    ],
+    "tutorial": "Indústria sustentável: processador, voláteis e combustível",
+    "sector": [
+      {
+        "x": 1,
+        "y": -1,
+        "kind": "colony_signal",
+        "surveyed": false,
+        "planet_index": null
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "kind": "colony_signal",
+        "surveyed": false,
+        "planet_index": null
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "kind": "colony_signal",
+        "surveyed": false,
+        "planet_index": null
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "kind": "helion",
+        "surveyed": false,
+        "planet_index": null
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "kind": "obsidian",
+        "surveyed": false,
+        "planet_index": null
+      }
+    ]
+  },
+  "observed_at": 1793767283.61319,
+  "system": {
+    "id": "system-2-0",
+    "name": "Asterion +2:+0",
+    "x": 2,
+    "y": 0,
+    "star": {
+      "stellar_class": "F",
+      "mass": 1.4640002335066011,
+      "luminosity": 3.632641294135032,
+      "age": 3.420457601935167,
+      "activity": 0.4592389257302155
+    },
+    "planets": [
+      {
+        "id": "planet-2-0-0",
+        "name": "Q941-2 1",
+        "mass": 2.092722929009014,
+        "radius": 0.9512059685967449,
+        "gravity": 1.2462950358271354,
+        "orbital_distance": 1.5665534656100881,
+        "temperature": 393.69872854599845,
+        "atmosphere": "temperate nitrogen",
+        "radiation": 0.46068738379603924,
+        "magnetic_field": 0.7504110704981815,
+        "water": 34.90525883344397,
+        "geological_activity": 0.3993065125171858,
+        "mineral_profile": {
+          "raw_ore": 1.4581695309911897,
+          "volatiles": 1.1759124800114855
+        },
+        "usable_surface": 80.59354291900573
+      },
+      {
+        "id": "planet-2-0-1",
+        "name": "Q189-2 2",
+        "mass": 2.7548831878860196,
+        "radius": 0.8939573714836665,
+        "gravity": 1.2145674486506182,
+        "orbital_distance": 1.3417294948608847,
+        "temperature": 428.66887492925764,
+        "atmosphere": "temperate nitrogen",
+        "radiation": 0.5133507921961264,
+        "magnetic_field": 0.926176349136614,
+        "water": 80.04822223804902,
+        "geological_activity": 0.6257900790726433,
+        "mineral_profile": {
+          "raw_ore": 1.111843884575297,
+          "volatiles": 1.0097849848292564
+        },
+        "usable_surface": 45.79178343392535
+      },
+      {
+        "id": "planet-2-0-2",
+        "name": "Q283-2 3",
+        "mass": 1.1490782670758137,
+        "radius": 1.2913097613616547,
+        "gravity": 1.0812196153140643,
+        "orbital_distance": 1.6734830673040353,
+        "temperature": 380.36362384523335,
+        "atmosphere": "temperate nitrogen",
+        "radiation": 0.41153415771955476,
+        "magnetic_field": 1.488093730415638,
+        "water": 67.50053493179081,
+        "geological_activity": 0.21485618951706903,
+        "mineral_profile": {
+          "raw_ore": 1.1010261831360717,
+          "volatiles": 1.3010001704913075
+        },
+        "usable_surface": 51.625488087877294
+      }
+    ],
+    "planet": {
+      "id": "planet-2-0-0",
+      "name": "Q941-2 1",
+      "mass": 2.092722929009014,
+      "radius": 0.9512059685967449,
+      "gravity": 1.2462950358271354,
+      "orbital_distance": 1.5665534656100881,
+      "temperature": 393.69872854599845,
+      "atmosphere": "temperate nitrogen",
+      "radiation": 0.46068738379603924,
+      "magnetic_field": 0.7504110704981815,
+      "water": 34.90525883344397,
+      "geological_activity": 0.3993065125171858,
+      "mineral_profile": {
+        "raw_ore": 1.4581695309911897,
+        "volatiles": 1.1759124800114855
+      },
+      "usable_surface": 80.59354291900573
+    }
+  },
+  "active_planet": {
+    "id": "a95b2a08-de6f-4fdc-9db8-c3e55b563fc2",
+    "planet_index": 0,
+    "home": true
+  },
+  "planets": [
+    {
+      "id": "a95b2a08-de6f-4fdc-9db8-c3e55b563fc2",
+      "x": 2,
+      "y": 0,
+      "planet_index": 0,
+      "population_total": 180,
+      "created_at": 1793757683.61319,
+      "last_updated": 1793767283.61319,
+      "home": true,
+      "name": "Q941-2 1",
+      "stocks": {
+        "ion_fuel": 80.0,
+        "fusion_fuel": 0.0,
+        "components": 80.0,
+        "refined_alloy": 220.0,
+        "raw_ore": 2140.0,
+        "volatiles": 100.0
+      }
+    }
+  ],
+  "stocks": {
+    "ion_fuel": 80.0,
+    "fusion_fuel": 0.0,
+    "components": 80.0,
+    "refined_alloy": 220.0,
+    "raw_ore": 2140.0,
+    "volatiles": 100.0
+  },
+  "capacities": {
+    "energy_generation": 24.0,
+    "energy_consumption": 7.0,
+    "energy_coverage": 1.0,
+    "industrial_capacity": 0.0,
+    "population_total": 180,
+    "construction_slots": 1,
+    "construction_slots_available": 1,
+    "shipyard_slots": 0,
+    "shipyard_slots_available": 0,
+    "crew_committed": 0,
+    "workforce_supply": 180,
+    "workforce_demand": 18.0,
+    "workforce_coverage": 1.0,
+    "available_population": 162.0,
+    "research_rate": 1.0,
+    "effective_research_rate": 1.0
+  },
+  "population": {
+    "total": 180,
+    "available": 162.0,
+    "capacity": 180
+  },
+  "districts": {
+    "civil_district": 1,
+    "solar_field": 3,
+    "ore_extractor": 1,
+    "research_lab": 1
+  },
+  "construction": [],
+  "research": {
+    "active": null,
+    "remaining_work": 0.0,
+    "complete_at": null,
+    "completed": [],
+    "completed_at": {}
+  },
+  "ships": [],
+  "fleets": [],
+  "notices": [
+    "Spawn avaliado: 0.97 / acesso inicial equilibrado."
+  ],
+  "travel_modes": [
+    {
+      "id": "ECONOMY",
+      "name": "Economy",
+      "description": "Menor consumo, maior duração.",
+      "category": "travel",
+      "cost": {},
+      "requires": [],
+      "travel_time_modifier": 1.55,
+      "fuel_modifier": 0.65,
+      "thermal_modifier": 0.8,
+      "signature_modifier": 0.8
+    },
+    {
+      "id": "FORCED",
+      "name": "Forced",
+      "description": "Menor duração, maior consumo e assinatura.",
+      "category": "travel",
+      "cost": {},
+      "requires": [],
+      "travel_time_modifier": 0.62,
+      "fuel_modifier": 2.2,
+      "thermal_modifier": 1.8,
+      "signature_modifier": 1.8
+    },
+    {
+      "id": "NORMAL",
+      "name": "Normal",
+      "description": "Operação nominal.",
+      "category": "travel",
+      "cost": {},
+      "requires": [],
+      "travel_time_modifier": 1.0,
+      "fuel_modifier": 1.0,
+      "thermal_modifier": 1.0,
+      "signature_modifier": 1.0
+    }
+  ],
+  "unlocked_content": []
+}

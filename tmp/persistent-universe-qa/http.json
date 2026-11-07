@@ -1,0 +1,14 @@
+{
+  "users": [
+    "pilot_a_832894",
+    "pilot_b_832894"
+  ],
+  "two_accounts": true,
+  "offline_level": 2,
+  "fleet_count": 2,
+  "arrival": true,
+  "ownership_isolated": true,
+  "csrf": true,
+  "sessions_revoked": true,
+  "elapsed_seconds": 163
+}

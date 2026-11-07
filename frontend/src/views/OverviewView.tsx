@@ -1,3 +1,4 @@
+import {WorkspaceHeader} from '../pixel-command/master/MasterUI';
 import {ContentPages} from '../pixel-command/ContentPages';
 import {Tabs} from '../components/ui/Tabs';
 import {useState} from 'react';
@@ -43,7 +44,7 @@ export function OverviewView() {
 
   return <div className={`overview-command ${state.persistent?'strategy-colonies':''}`}>
     <header className="overview-command-header">
-      <div><span className="eyebrow">COMANDO IMPERIAL</span><h1>Estado do império</h1><p>{state.system.name} · {state.system.x}:{state.system.y} · {fmt(worlds.length)} mundo{worlds.length === 1 ? '' : 's'} controlado{worlds.length === 1 ? '' : 's'}</p></div>
+      <div><span className="eyebrow">COMANDO IMPERIAL</span><WorkspaceHeader as="div" title="Estado do império" icon="empire"/><p>{state.system.name} · {state.system.x}:{state.system.y} · {fmt(worlds.length)} mundo{worlds.length === 1 ? '' : 's'} controlado{worlds.length === 1 ? '' : 's'}</p></div>
       <div className="overview-command-context"><Icon name="planetActive" className="ui-icon" /><span>PLANETA ATUAL</span><strong>{state.system.planet.name}</strong></div>
     </header>
 

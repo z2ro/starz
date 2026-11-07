@@ -5,7 +5,9 @@ description: Plan, implement or review STARZ gameplay UI as compact fullscreen p
 
 # STARZ compact strategy UI
 
-Read [AGENTS.md](../../../AGENTS.md) and the [design contract](../../../docs/ux/design-contract.md). Start with the relevant existing view, its real state/actions and current rendered screenshots. This skill does not authorize changing gameplay or redesigning unrelated screens.
+Read [AGENTS.md](../../../AGENTS.md), the [design contract](../../../docs/ux/design-contract.md) and the approved [master design system](../../../docs/design/starz-master-design-system.md). Start with the relevant existing view, its real state/actions and current rendered screenshots. This skill does not authorize changing gameplay or redesigning unrelated screens.
+
+Reuse GameShell, ResourceHUD, SidebarNavigation and the master primitives on every persistent gameplay route. Keep Overview’s approved composition intact; system workspaces share its tokens and shell, not its hero layout.
 
 ## Shape the interaction before the CSS
 
@@ -39,8 +41,14 @@ Other failures: clipping with `overflow:hidden`; selecting an offscreen object w
 
 ## Verify and deliver
 
-Use the existing fixture/browser QA in [design QA workflow](../../../docs/ux/design-quality-workflow.md). Test populated and empty states, every visible tab/page, the last item/detail and the primary action by keyboard and touch-sized viewport. Inspect screenshots at native size after fonts/assets/renderers settle. Check clipping and hit targets, not only `scrollHeight`.
+Use the existing fixture/browser QA in [design QA workflow](../../../docs/ux/design-quality-workflow.md), scoped by the [risk-based QA policy](../../../docs/development/local-qa.md). For changed interactions, cover relevant populated/empty states, affected tabs/pages and primary actions by keyboard and touch-sized viewport. Isolated visual fixes need the affected scenarios, not every screen; broad layout changes need broader evidence. Inspect screenshots at native size after fonts/assets/renderers settle. Check clipping and hit targets, not only `scrollHeight`.
 
 Capture baseline and result with matching framing; label staged fixtures and emulated mobile honestly. Follow the installed screenshot skill when visual evidence is needed. Use the scoring skill only when a score/target was requested; numerical scores do not waive hard functional failures. Do not claim visual approval from passing tests.
 
 Existing screens can violate this newer contract. Report that baseline honestly. An infrastructure-only task must not silently redesign them or suppress failing checks. The older [fullscreen workspace document](../../../docs/ux/fullscreen-workspaces.md) describes implementation history; this contract supersedes its allowance for routine inspector/catalog scrolling.
+
+## Local validation
+
+Classify the task before testing: **low** (isolated CSS/icons/text/docs) uses targeted checks, `quick` only if needed; **medium** (shared React/navigation/forms) uses `affected` plus related behavior/layout checks; **high** (core backend, persistence, authentication, large refactors or executable test infrastructure) uses relevant checks and `full` when required; **release** requires `full`.
+
+Follow the [local QA policy](../../../docs/development/local-qa.md). Do not run the three modes sequentially by default or rerun unchanged successful checks. Prefer the local runner and valid caches; if its selection is broader than the justified task, use an existing targeted tool/filter and report why. Investigate a failing target before expanding. Preserve all required tests and quality gates. Low/medium validation targets are under 30 seconds/two minutes, never reasons to stop necessary tests. Keep logs local, output concise, and inspect details only when needed. Do not re-audit QA infrastructure during ordinary UI work. Cached browser evidence still needs relevant visual review before a design-quality claim.

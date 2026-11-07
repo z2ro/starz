@@ -1,0 +1,11 @@
+{
+  "alias": true,
+  "menu": true,
+  "activeFleet": true,
+  "draftRestored": true,
+  "reload": true,
+  "galaxyDestination": true,
+  "shipsRetained": true,
+  "legacyPlanet": true,
+  "errors": []
+}

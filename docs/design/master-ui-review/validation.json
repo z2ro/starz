@@ -1,0 +1,53 @@
+{
+  "scope": "Overview candidate, not rollout approval",
+  "reference_sha256": "4a102ac39951662921f88954faa89589a474fa49746b05ec76d0bbb0bf3a2aef",
+  "cases": 12,
+  "findings": 0,
+  "page_errors": 0,
+  "security_events": 0,
+  "fixture_only": true,
+  "uses_database": false,
+  "functional_flows": [
+    {
+      "kind": "master-functional-flow",
+      "passed": true,
+      "checks": [
+        "resource/records/help/operations dialogs",
+        "keyboard image mode",
+        "procedural restoration",
+        "stock/population update retains canvas and geographic identity",
+        "top and bottom planet selectors",
+        "four actual contextual destinations",
+        "other views keep legacy shell",
+        "intermediate desktop widths keep resource labels readable"
+      ]
+    },
+    {
+      "kind": "master-functional-flow",
+      "passed": true,
+      "checks": [
+        "resource/records/help/operations dialogs",
+        "keyboard image mode",
+        "procedural restoration",
+        "stock/population update retains canvas and geographic identity",
+        "top and bottom planet selectors",
+        "four actual contextual destinations",
+        "other views keep legacy shell"
+      ]
+    }
+  ],
+  "screenshots_reviewed": "Reference comparison plus requested desktop/mobile sizes; not every possible interaction state",
+  "independent_visual_scores": {
+    "composition": 8,
+    "typography_spacing": 8,
+    "pixel_art": 8,
+    "color_components": 8,
+    "functional_usability": 8.5
+  },
+  "intermediate_desktop_widths": [
+    1501,
+    1550,
+    1630,
+    1640
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "width": 1440,
+  "height": 900,
+  "shots": [
+    {
+      "name": "horizon-34-front-pixel",
+      "stats": "FPS\n37\nFrame time\n26.8ms\nTriangles\n2496\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n3.78 / 1.89 / 11.18\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "horizon-side-pixel",
+      "stats": "FPS\n38\nFrame time\n26.4ms\nTriangles\n2496\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n3.78 / 1.89 / 11.18\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "horizon-top-pixel",
+      "stats": "FPS\n37\nFrame time\n26.8ms\nTriangles\n2496\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n3.78 / 1.89 / 11.18\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "horizon-rear-pixel",
+      "stats": "FPS\n36\nFrame time\n28.0ms\nTriangles\n2496\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n3.78 / 1.89 / 11.18\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "horizon-34-rear-pixel",
+      "stats": "FPS\n39\nFrame time\n25.3ms\nTriangles\n2496\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n3.78 / 1.89 / 11.18\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "horizon-front-raw",
+      "stats": "FPS\n47\nFrame time\n21.3ms\nTriangles\n2494\nDraw calls\n8\nMesh count\n8\nBounds X/Y/Z\n3.78 / 1.89 / 11.18\nRender resolution\n1102 × 785"
+    },
+    {
+      "name": "horizon-silhouette",
+      "stats": "FPS\n60\nFrame time\n16.7ms\nTriangles\n2494\nDraw calls\n8\nMesh count\n8\nBounds X/Y/Z\n3.78 / 1.89 / 11.18\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "horizon-engine-closeup",
+      "stats": "FPS\n35\nFrame time\n28.3ms\nTriangles\n2496\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n3.78 / 1.89 / 11.18\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "wayfarer-34-front-pixel",
+      "stats": "FPS\n36\nFrame time\n27.5ms\nTriangles\n3616\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.46 / 4.15 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "wayfarer-side-pixel",
+      "stats": "FPS\n39\nFrame time\n25.7ms\nTriangles\n3616\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.46 / 4.15 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "wayfarer-top-pixel",
+      "stats": "FPS\n39\nFrame time\n25.7ms\nTriangles\n3616\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.46 / 4.15 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "wayfarer-rear-pixel",
+      "stats": "FPS\n35\nFrame time\n28.6ms\nTriangles\n3616\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.46 / 4.15 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "wayfarer-34-rear-pixel",
+      "stats": "FPS\n36\nFrame time\n27.5ms\nTriangles\n3616\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.46 / 4.15 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "wayfarer-front-raw",
+      "stats": "FPS\n60\nFrame time\n16.7ms\nTriangles\n3614\nDraw calls\n8\nMesh count\n8\nBounds X/Y/Z\n5.46 / 4.15 / 18.88\nRender resolution\n1102 × 785"
+    },
+    {
+      "name": "wayfarer-silhouette",
+      "stats": "FPS\n50\nFrame time\n19.9ms\nTriangles\n3614\nDraw calls\n8\nMesh count\n8\nBounds X/Y/Z\n5.46 / 4.15 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "wayfarer-engine-closeup",
+      "stats": "FPS\n24\nFrame time\n41.1ms\nTriangles\n3616\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.46 / 4.15 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "vanguard-34-front-pixel",
+      "stats": "FPS\n27\nFrame time\n37.0ms\nTriangles\n2318\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.62 / 4.26 / 14.92\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "vanguard-side-pixel",
+      "stats": "FPS\n28\nFrame time\n36.1ms\nTriangles\n2318\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.62 / 4.26 / 14.92\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "vanguard-top-pixel",
+      "stats": "FPS\n31\nFrame time\n32.5ms\nTriangles\n2318\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.62 / 4.26 / 14.92\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "vanguard-rear-pixel",
+      "stats": "FPS\n26\nFrame time\n38.5ms\nTriangles\n2318\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.62 / 4.26 / 14.92\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "vanguard-34-rear-pixel",
+      "stats": "FPS\n26\nFrame time\n38.5ms\nTriangles\n2318\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.62 / 4.26 / 14.92\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "vanguard-front-raw",
+      "stats": "FPS\n58\nFrame time\n17.1ms\nTriangles\n2316\nDraw calls\n8\nMesh count\n8\nBounds X/Y/Z\n5.62 / 4.26 / 14.92\nRender resolution\n1102 × 785"
+    },
+    {
+      "name": "vanguard-silhouette",
+      "stats": "FPS\n60\nFrame time\n16.7ms\nTriangles\n2316\nDraw calls\n8\nMesh count\n8\nBounds X/Y/Z\n5.62 / 4.26 / 14.92\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "vanguard-engine-closeup",
+      "stats": "FPS\n35\nFrame time\n28.8ms\nTriangles\n2318\nDraw calls\n9\nMesh count\n8\nBounds X/Y/Z\n5.62 / 4.26 / 14.92\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "fleet-34-front-pixel",
+      "stats": "FPS\n24\nFrame time\n42.2ms\nTriangles\n8426\nDraw calls\n25\nMesh count\n24\nBounds X/Y/Z\n26.95 / 4.26 / 38.34\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "fleet-side-pixel",
+      "stats": "FPS\n25\nFrame time\n40.6ms\nTriangles\n8426\nDraw calls\n25\nMesh count\n24\nBounds X/Y/Z\n5.62 / 4.26 / 47.98\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "fleet-top-pixel",
+      "stats": "FPS\n28\nFrame time\n36.3ms\nTriangles\n8426\nDraw calls\n25\nMesh count\n24\nBounds X/Y/Z\n17.86 / 4.26 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "fleet-rear-pixel",
+      "stats": "FPS\n28\nFrame time\n35.3ms\nTriangles\n8426\nDraw calls\n25\nMesh count\n24\nBounds X/Y/Z\n17.86 / 4.26 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "fleet-top-silhouette",
+      "stats": "FPS\n60\nFrame time\n16.7ms\nTriangles\n8424\nDraw calls\n24\nMesh count\n24\nBounds X/Y/Z\n17.86 / 4.26 / 18.88\nRender resolution\n367 × 261"
+    },
+    {
+      "name": "fleet-front-raw",
+      "stats": "FPS\n57\nFrame time\n17.6ms\nTriangles\n8424\nDraw calls\n24\nMesh count\n24\nBounds X/Y/Z\n26.95 / 4.26 / 38.34\nRender resolution\n1102 × 785"
+    }
+  ],
+  "errors": [],
+  "canvasStable": true,
+  "gpu": "SwiftShader software, not hardware performance"
+}

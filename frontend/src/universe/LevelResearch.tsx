@@ -1,3 +1,4 @@
+import {WorkspaceHeader} from '../pixel-command/master/MasterUI';
 import {ContentPages} from '../pixel-command/ContentPages';
 import {MapViewport} from '../components/ui/MapViewport';
 import {useEffect,useState,useRef} from 'react';
@@ -36,7 +37,7 @@ export function LevelResearch(){
  const activeJob=jobs?.[tech?.domain??'fundamental'];const isActive=activeJob?.active===selected||(!jobs&&state.research.active===selected);const completed=!!quote&&quote.level>=(quote.max_level??(tech?.kind==='breakthrough'?1:50));
  const rate=state.science?.[tech?.domain??domain]?.rate??state.capacities.effective_research_rate;const occupied=jobs?!!activeJob?.active:!!state.research.active;
  const pickState=(t:Technology)=>{if((state.empire_levels?.[t.id]??0)>=(t.kind==='breakthrough'?1:50))return 'Concluído';if(Object.values(jobs??{legacy:state.research}).some(j=>j.active===t.id))return 'Em pesquisa';const q=quotes.find(q=>q.id===t.id);return !q||q.requirements.length?'Bloqueado':'Disponível';};
- return <div className="universe-command research-directorate"><header><span className="eyebrow">DIRETORIA CIENTÍFICA</span><h1>Avançar tecnologias</h1><p>Três domínios · cinco patamares · um programa ativo por domínio. Recursos pagos no planeta selecionado; descobertas pertencem ao império.</p></header>
+ return <div className="universe-command research-directorate"><header><span className="eyebrow">DIRETORIA CIENTÍFICA</span><WorkspaceHeader as="div" title="Avançar tecnologias" icon="research"/><p>Três domínios · cinco patamares · um programa ativo por domínio. Recursos pagos no planeta selecionado; descobertas pertencem ao império.</p></header>
  <nav className="universe-tabs" aria-label="Domínio científico">{Object.entries(researchDomains).map(([id,name])=><button key={id} aria-pressed={domain===id} onClick={()=>{setDomain(id as ResearchDomain);const choices=catalog.technologies.filter(t=>t.domain===id).sort((a,b)=>(a.tier??1)-(b.tier??1));const first=choices.find(t=>quotes.some(q=>q.id===t.id&&!q.requirements.length))??choices[0];setSelected(jobs?.[id as ResearchDomain]?.active??first?.id??selected);}}>{name}<small> · capacidade {fmt(state.science?.[id as ResearchDomain]?.capacity)} · {fmt(state.science?.[id as ResearchDomain]?.rate,2)} trabalho/s</small></button>)}</nav>
  <p>Centro de Pesquisa: capacidade geral e trabalho repartido entre os três domínios. Instalações especializadas: capacidade e velocidade dedicadas. <Link to={`/development?building=${domain}_lab`}>Ampliar infraestrutura {researchDomains[domain]} →</Link></p>
  <p>Conexões mostram requisitos reais no domínio visível. Dependências de outros domínios são navegáveis no detalhe da tecnologia.</p>
