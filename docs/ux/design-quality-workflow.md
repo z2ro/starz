@@ -54,7 +54,7 @@ Outputs: ignored `qa-artifacts/design/results.json` and viewport PNGs. Review ca
 - Missing browser/dependency or early setup failure is **NOT RUN**, never an artistic pass.
 - A run that stops after some cases is **INCOMPLETE**, never a measured pass.
 
-The current implementation predates the stricter [design contract](design-contract.md): it deliberately has scrollable catalogs/inspectors and a scrolling central workspace. Therefore the strict gate can be red on the unchanged baseline. Keep those findings visible. Do not weaken the test, add blanket waivers, hide scrollbars or redesign screens during this infrastructure task. Future authorized UX work fixes the documented debt and reruns the same gate.
+The skill-integration baseline predated the stricter [design contract](design-contract.md): it deliberately has scrollable catalogs/inspectors and a scrolling central workspace. The strict gate was intentionally red on that unchanged baseline; the subsequent Compact Workspace 3.0 work is tracked separately below. Keep those findings visible. Do not weaken the test, add blanket waivers, hide scrollbars or redesign screens during this infrastructure task. Future authorized UX work fixes the documented debt and reruns the same gate.
 
 ### Integration validation baseline
 
@@ -69,3 +69,19 @@ There are 36 ignored viewport captures. Representative Overview desktop, Researc
 Upstream: [MengTo/Skills](https://github.com/MengTo/Skills), MIT ©2026 Meng To, pinned to `5ea1661a0e05d82b054553daaa6baf6d0233c33c`. [File list, dependencies and checksums](../../.agents/skills/upstream.json), [full review](../../.agents/skills/UPSTREAM.md), [license](../../.agents/skills/MENGTO-LICENSE). The importer excluded all demos, unrelated skills and the unlinked marketing essay. No automatic updater exists.
 
 Manual updates require explicit scope, a new full file review and checksums, reference/dependency checks, relevant tests and code review. A skill never grants permission to deploy, force push, merge, access credentials or modify somebody's data. Baseline npm advisories are recorded in the audit; dependency fixes are a separate task.
+
+## Compact Workspace 3.0 lessons
+
+See [baseline, root causes and scorecards](compact-workspace-3.md). The normal runner now covers all 12 primary views plus mission planning, at 1920×1080, 1440×900, 1366×768 and 390×844. It additionally checks global loading/API error states, mobile menu/resources/help/operations, 1093×614 with DPR 1.25 (a 125%-zoom-equivalent layout), and 390×650 reduced height. These are browser emulations, not physical-device or native browser-toolbar zoom certification.
+
+- Allocate a finite workspace first. Only map/tree `.map-pan` is a scroll waiver. Paginate catalogs from measured space; do not apply `max-height` plus `overflow:auto` to the inspector.
+- Keep a paid review atomic: selected object, real benefit/configuration, demand, actual cost, duration, blockers and confirmation. When it cannot fit, offer an explicit fullscreen review rather than clipping it or shrinking text.
+- Preserve stable child identities across pagination and live quote updates. A newly inserted warning must not change the object shown by an open review. Resize can change capacity, not the selected gameplay object.
+- Fleet selection and fleet detail are different tasks: use one operation selector and one inspector, not collection pages nested inside operation pages. Route/ETA and the relevant action stay together.
+- Native `fieldset` layout is not a dependable shrinkable flex workspace. Use labeled groups when explicit step layout is needed, retaining all actual input labels and backend payloads.
+- Audit each tab and every finite reading page, not just the default view. The runner checks visible controls, text, metrics, hit targets, disclosure expansion and actual content transitions. Mobile populated subviews receive extra captures.
+- Closed disclosures are not visible content. Native top-layer dialogs escape ancestor clipping and make the background inactive; measure their actual controls against the viewport. Negative tests keep real clipping detectable.
+- A successful overflow check can still contain unreadable vertical text or a wrapped close label. Inspect captures; keep secondary navigation captions descriptive and close controls wide enough.
+- Screenshots use `WIDTHxHEIGHT` filenames so reduced-height cases cannot overwrite the canonical phone capture. Fixture snapshots include an engine-generated in-memory transit fleet; extra players/offers/reports remain explicitly staged presentation data, never database records.
+
+Focused iteration may use `STARZ_QA_VIEWS=overview,fleets` or `STARZ_QA_CASE=overview-populated-390`. Such a report is only that scope, never a full-suite pass. Default `npm run qa:visual` is the complete matrix. No unexpected network/mutation event is waived. Capture artifacts and temporary browser profiles are not committed as user data.

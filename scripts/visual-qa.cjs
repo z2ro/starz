@@ -2,16 +2,34 @@
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),http=require('node:http');
 const {execFileSync}=require('node:child_process');
 const {launch}=require('./visual-qa/browser.cjs');
-const {inspectLayout,exerciseNavigation}=require('./visual-qa/checks.cjs');
+const {inspectLayout,exerciseNavigation,auditContentPages}=require('./visual-qa/checks.cjs');
 const ROOT=path.resolve(__dirname,'..');
 const pages=[
  {id:'overview',route:'universe',critical:['.strategy-planet-picker select','.strategy-world-dossier a.px-primary'],inspectors:['.strategy-world-dossier']},
- {id:'installations',route:'development',critical:['.ux-inspector > button'],inspectors:['.ux-inspector']},
- {id:'research',route:'research',critical:['.research-inspector > button'],inspectors:['.research-inspector']},
- {id:'defense',route:'defenses',critical:['.ux-inspector > button'],inspectors:['.ux-inspector']},
+ {id:'installations',route:'development',critical:['.ux-inspector .build-review button'],inspectors:['.ux-inspector']},
+ {id:'research',route:'research',critical:['.research-inspector .build-review button'],inspectors:['.research-inspector']},
+ {id:'defense',route:'defenses',critical:['.ux-inspector .build-review button'],inspectors:['.ux-inspector']},
  {id:'shipyard',route:'shipyard',critical:['.naval-inspector .action.primary'],inspectors:['.naval-inspector']},
  {id:'galaxy',route:'galaxy',critical:['.system-detail .travel-planner a.button'],inspectors:['.system-detail']},
+ {id:'production',route:'economy',critical:['.economy-command > .tabs button'],inspectors:['.economy-detail']},
+ {id:'missions',route:'fleets?plan=1',critical:[],inspectors:['.px-mission-planner']},
+ {id:'fleets',route:'fleets',critical:[],inspectors:['.fleet-list']},
+ {id:'colonies',route:'overview',critical:['.overview-command > .tabs button'],inspectors:[]},
+ {id:'diplomacy',route:'relations',critical:[],inspectors:['.px-diplomacy']},
+ {id:'market',route:'relations?tab=market',critical:[],inspectors:['.market-area']},
+ {id:'reports',route:'relations?tab=reports',critical:[],inspectors:['.px-reports']},
 ];
+const selectedPages=process.env.STARZ_QA_VIEWS?pages.filter(p=>process.env.STARZ_QA_VIEWS.split(',').includes(p.id)):pages;
+const sizes=[[1920,1080],[1440,900],[1366,768],[390,844]];
+const cases=['empty','populated'].flatMap(stateName=>sizes.flatMap(([width,height])=>selectedPages.map(profile=>({stateName,width,height,profile}))));
+if(!process.env.STARZ_QA_VIEWS){
+ for(const [width,height]of sizes)for(const mode of ['loading','error'])cases.push({stateName:'empty',width,height,profile:{id:mode,route:'universe',critical:[],inspectors:[]}});
+ for(const height of [844,650])for(const id of ['menu','resources','help','operations'])cases.push({stateName:'populated',width:390,height,profile:{id,route:'universe',critical:[],inspectors:[]}});
+}
+for(const [width,height]of [[1093,614],[390,650]])for(const profile of selectedPages)cases.push({stateName:'populated',width,height,profile});
+const runCases=process.env.STARZ_QA_CASE?cases.filter(c=>`${c.profile.id}-${c.stateName}-${c.width}`===process.env.STARZ_QA_CASE):cases;
+if(!runCases.length)throw Error('No matching QA cases.');
+const expectedCases=runCases.length;
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.ttf':'font/ttf','.woff2':'font/woff2'};
 async function main(){
  const fixtures=JSON.parse(execFileSync(process.env.STARZ_QA_PYTHON||path.join(ROOT,'.venv/bin/python'),[path.join(ROOT,'tests/visual-qa/fixtures.py')],{cwd:ROOT,encoding:'utf8',maxBuffer:5e6,stdio:['ignore','pipe','pipe'],env:{PATH:process.env.PATH,LANG:'C.UTF-8',STARZ_PERSISTENT:'1'}}));
@@ -32,21 +50,23 @@ async function main(){
    }catch{res.writeHead(404).end();}
   });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+server.address().port;
   browser=await launch();
-  for(const stateName of ['empty','populated'])for(const [width,height] of [[1920,1080],[1366,768],[390,844]])for(const profile of pages){
-   const context=await browser.newContext({viewport:{width,height},serviceWorkers:'block'});const page=await context.newPage(),errors=[];
+  for(const {stateName,width,height,profile} of runCases){
+   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:width===1093?1.25:1,serviceWorkers:'block'});const page=await context.newPage(),errors=[];
    page.setDefaultTimeout(5000);page.on('pageerror',e=>errors.push(e.message));
    await context.route('**/*',async route=>{
     const request=route.request(),url=new URL(request.url());
     if(url.origin!==origin){security.push({code:'unexpected-network',origin:url.origin});await route.abort();await page.close();return;}
     if(!url.pathname.startsWith('/api/')){await route.continue();return;}
     if(request.method()!=='GET'){security.push({code:'blocked-api-mutation',path:url.pathname});await route.fulfill({status:403,json:{detail:'Visual QA forbids gameplay mutations.'}});return;}
+    if(url.pathname==='/api/state'&&profile.id==='error'){await route.fulfill({status:503,json:{detail:'STAGED API FAILURE'}});return;}
+    if(url.pathname==='/api/state'&&profile.id==='loading')await new Promise(resolve=>setTimeout(resolve,3000));
     const f=fixtures[stateName];const responses={'/api/config':{persistent:true},'/api/auth/me':{username:'VISUAL_QA_FIXTURE',empire_id:f.universe.empire_id},'/api/catalog':fixtures.catalog,'/api/state':f.state,'/api/universe':f.universe,'/api/galaxy':f.galaxy};
     if(!(url.pathname in responses)){security.push({code:'unhandled-api',path:url.pathname});await route.fulfill({status:404,json:{detail:'No QA fixture for this endpoint.'}});return;}
-    await route.fulfill({json:responses[url.pathname]});
+    if(!page.isClosed())await route.fulfill({json:responses[url.pathname]});
    });
    await context.routeWebSocket('**/*',socket=>{security.push({code:'unexpected-websocket',origin:new URL(socket.url()).origin});socket.close();});
    await page.clock.install({time:new Date(fixtures.now*1000)});
-   await page.goto(origin+'/#/'+profile.route);await page.locator('.px-view').waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(700);
+   await page.goto(origin+'/#/'+profile.route);await page.locator(profile.id==='loading'?'.boot':profile.id==='error'?'.fatal':'.px-view').waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(700);
    // Select actual contextual subviews, without posting any paid action.
    if(width===390){
     if(profile.id==='overview')await page.getByRole('tab',{name:'Situação e ordens',exact:true}).click();
@@ -56,27 +76,37 @@ async function main(){
     if(profile.id==='shipyard')await page.getByRole('tab',{name:'Montagem',exact:true}).click();
     if(profile.id==='galaxy')await page.getByRole('tab',{name:'Sistema e missão',exact:true}).click();
    }
+   if(profile.id==='menu')await page.getByRole('button',{name:'Todos os setores',exact:true}).click();
+   if(profile.id==='resources')await page.getByRole('button',{name:/Produção e detalhes dos recursos/}).click();
+   if(profile.id==='help')await page.getByRole('button',{name:'Ajuda',exact:true}).click();
+   if(profile.id==='operations')await page.getByRole('button',{name:/Operações ·/}).click();
    await page.waitForTimeout(150);
+   if(profile.id==='galaxy'){const next=page.locator('.system-detail > .content-pages > nav [data-qa-next]');for(let n=0;n<20&&await next.count()&&!await next.isDisabled()&&!await page.locator('.system-detail .travel-planner a.button').isVisible();n++)await next.click();}
+   const reviews=page.getByRole('button',{name:'Revisar',exact:true});for(const review of await reviews.all())if(await review.isVisible())await review.click();
+   const dialogs=page.locator('dialog[open]');const scope=await dialogs.count()?dialogs.last():page;const full=scope.locator('button:visible').filter({hasText:/^Abrir .* em tela cheia/});if(await full.count()&&await full.first().isVisible())await full.first().click();
+   await page.waitForTimeout(100);
    const check=await page.evaluate(inspectLayout,{...profile,allowedScroll:['.map-pan']});
    let navigation=[];
    try{
-    navigation=await exerciseNavigation(page);
-    for(const selector of profile.inspectors){for(const summary of await page.locator(selector+' details > summary').all()){
+    navigation=await exerciseNavigation(page,{...profile,allowedScroll:['.map-pan']},stateName==='populated'&&width===390&&height===844?async(group,tab)=>page.screenshot({path:path.join(output,`${profile.id}-populated-390x844-tab-${group}-${tab}.png`),fullPage:false}):undefined);check.findings.push(...navigation.flatMap(n=>n.findings??[]));
+    const reading=await auditContentPages(page,{...profile,allowedScroll:['.map-pan']});check.findings.push(...reading.findings);navigation.push(...reading.results);
+    for(const selector of await page.locator('dialog[open]').count()?[]:profile.inspectors){for(const summary of await page.locator(selector+' details > summary').all()){
      if(!await summary.isVisible()||await summary.evaluate(el=>el.parentElement.open))continue;
-     await summary.click();const expanded=await page.evaluate(inspectLayout,{...profile,allowedScroll:['.map-pan']});check.findings.push(...expanded.findings.map(f=>({...f,phase:'expanded-inspector'})));await summary.click();
+     await summary.click();await page.waitForTimeout(100);const expanded=await page.evaluate(inspectLayout,{...profile,allowedScroll:['.map-pan']});check.findings.push(...expanded.findings.map(f=>({...f,phase:'expanded-inspector'})));await summary.click();
     }}
+    if(profile.id==='reports'&&stateName==='populated'){const report=page.locator('.defense-battle > button:visible').first();if(await report.count()){await report.click();await page.waitForTimeout(100);const reading=await auditContentPages(page,{...profile,allowedScroll:['.map-pan']});check.findings.push(...reading.findings);navigation.push(...reading.results);}}
    }catch(e){errors.push('Interaction check: '+e.message);}
-   const screenshot=`${profile.id}-${stateName}-${width}.png`;await page.screenshot({path:path.join(output,screenshot),fullPage:false});
+   const screenshot=`${profile.id}-${stateName}-${width}x${height}.png`;await page.screenshot({path:path.join(output,screenshot),fullPage:false});
    results.push({view:profile.id,state:stateName,...check,navigation,errors,screenshot});await context.close();
    if(security.length)throw Error('Security boundary triggered; stopped. Inspect sanitized security findings.');
   }
  }catch(e){fatal=e.message;throw e;}finally{
   if(browser)await browser.close();if(server)await new Promise(resolve=>server.close(resolve));await fs.rm(temp,{recursive:true,force:true});
   const failures=results.reduce((n,r)=>n+r.findings.length+r.errors.length+r.navigation.filter(t=>!t.passed).length,0);
-  const status=fatal||results.length!==36?(results.length?'INCOMPLETE':'NOT_RUN'):failures||security.length?'FAIL':'MEASURED_CHECKS_PASS_VISUAL_REVIEW_PENDING';
-  await fs.writeFile(path.join(output,'results.json'),JSON.stringify({status,fatal,expectedCases:36,fixtureOnly:true,usesDatabase:false,security,results},null,2));
+  const status=fatal||results.length!==expectedCases?(results.length?'INCOMPLETE':'NOT_RUN'):failures||security.length?'FAIL':'MEASURED_CHECKS_PASS_VISUAL_REVIEW_PENDING';
+  await fs.writeFile(path.join(output,'results.json'),JSON.stringify({status,fatal,expectedCases,fixtureOnly:true,usesDatabase:false,security,results},null,2));
   console.log(`${results.length} staged viewport checks; ${failures} findings; ${security.length} security events. Screenshots require manual review: ${output}`);
-  if(fatal||results.length!==36||failures||security.length)process.exitCode=1;
+  if(fatal||results.length!==expectedCases||failures||security.length)process.exitCode=1;
  }
 }
 main().catch(e=>{console.error(e.message);process.exitCode=1});

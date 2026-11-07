@@ -1,3 +1,4 @@
+import {ContentPages} from '../pixel-command/ContentPages';
 import { Icon } from '../components/ui/Icon';
 import { resourceIcon } from '../visual/IconRegistry';
 import { Link } from 'react-router-dom';
@@ -17,6 +18,6 @@ export function Activities({catalog,state,compact=false}:{catalog:Catalog;state:
  const row=(j:ReturnType<typeof activityJobs>[number])=><Link className="ux-activity" to={j.path} key={j.key}><span><small>{j.kind}</small><strong>{j.name}</strong></span><b>{j.end===null?'Aguardando capacidade':duration(Math.max(0,(j.end??now)-now))}{typeof j.end==='number'&&<small><time dateTime={new Date(j.end*1000).toISOString()}>{new Date(j.end*1000).toLocaleTimeString('pt-BR')}</time></small>}</b>{j.progress!==undefined&&<Progress value={j.progress} text={`Progresso de ${j.name}`} />}</Link>;
  return <section className={`ux-activities ${compact?'strategy-operations':''}`} aria-label="Atividades em andamento" data-active={jobs.length>0}>
  <div className="ux-section-title"><h2>{compact?'Operações':'Em andamento'}</h2><span>{jobs.length?`${jobs.length} em andamento`:'Nenhuma ordem em andamento'}</span>{!jobs.length&&<Link to="/development">Construir instalação →</Link>}</div>
- <div className="strategy-job-list">{(compact?jobs.slice(0,3):jobs).map(row)}</div>{compact&&jobs.length>3&&<details><summary>Mais {jobs.length-3} operações</summary>{jobs.slice(3).map(row)}</details>}
+ <ContentPages label="Operações" className="strategy-job-list">{jobs.map(row)}</ContentPages>
  </section>;
 }

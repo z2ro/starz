@@ -21,8 +21,8 @@ it('distinguishes market from diplomacy and closes mobile navigation after navig
  render(<MemoryRouter initialEntries={['/relations?tab=market']}><PixelShell state={planetSnapshot()} catalog={rawCatalog}><h1>Setor</h1></PixelShell></MemoryRouter>);
  const nav=screen.getByRole('navigation',{name:'Navegação principal'});
  expect(within(nav).getByRole('link',{name:'Mercado',exact:true})).toHaveAttribute('aria-current','page');expect(within(nav).getByRole('link',{name:'Diplomacia',exact:true})).not.toHaveAttribute('aria-current');
- fireEvent.click(screen.getByRole('button',{name:'Todos os setores'}));expect(nav).toHaveAttribute('data-open','true');
- fireEvent.click(within(nav).getByRole('link',{name:'Diplomacia',exact:true}));expect(nav).toHaveAttribute('data-open','false');expect(within(nav).getByRole('link',{name:'Diplomacia',exact:true})).toHaveAttribute('aria-current','page');
+ fireEvent.click(screen.getByRole('button',{name:'Todos os setores'}));expect(screen.getByRole('dialog',{name:'Setores do império'})).toBeTruthy();
+ fireEvent.click(within(screen.getByRole('dialog',{name:'Setores do império'})).getByRole('link',{name:'Diplomacia',exact:true}));expect(screen.queryByRole('dialog',{name:'Setores do império'})).toBeNull();expect(within(nav).getByRole('link',{name:'Diplomacia',exact:true})).toHaveAttribute('aria-current','page');
 });
 it('discloses all local stocks without changing their values',()=>{
  render(<MemoryRouter><PixelShell state={planetSnapshot()} catalog={rawCatalog}>Setor</PixelShell></MemoryRouter>);

@@ -20,7 +20,7 @@ it('orders real activities by completion and never invents an assembly progress'
 it('keeps empty operations compact and discloses extra actual operations',()=>{
  const s=planetSnapshot();s.construction=[];s.research.active=null;s.ships=[];s.fleets=[];
  const view=render(<MemoryRouter><Activities catalog={catalog} state={s} compact/></MemoryRouter>);expect(screen.getByRole('region')).toHaveAttribute('data-active','false');expect(screen.queryByRole('progressbar')).toBeNull();
- s.construction=Array.from({length:5},(_,i)=>({id:'ore_extractor',started_at:i,complete_at:100+i}));view.rerender(<MemoryRouter><Activities catalog={catalog} state={s} compact/></MemoryRouter>);expect(screen.getByText('Mais 2 operações')).toBeTruthy();
+ s.construction=Array.from({length:5},(_,i)=>({id:'ore_extractor',started_at:i,complete_at:100+i}));view.rerender(<MemoryRouter><Activities catalog={catalog} state={s} compact/></MemoryRouter>);expect(screen.getAllByRole('link').length).toBeGreaterThanOrEqual(5);
 });
 it('persists optional recommendations separately from tutorial progress',()=>{
  const s=planetSnapshot();const mount=()=>render(<MemoryRouter><Routes><Route element={<Outlet context={{state:s,catalog,snapshotReady:true,setActivePlanetId:vi.fn()}}/>}><Route path="/" element={<PixelCommand/>}/></Route></Routes></MemoryRouter>);

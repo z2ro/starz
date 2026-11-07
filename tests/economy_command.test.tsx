@@ -64,4 +64,13 @@ describe('Industrial Command Network', () => {
     expect(screen.getByText('Nenhuma cadeia industrial ativa')).toBeInTheDocument();
     expect(screen.getByText('Sem infraestrutura econômica')).toBeInTheDocument();
   });
+
+  it('exposes both resources and installations in the compact detail selector', () => {
+    renderEconomy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Detalhe' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Inspecionar recurso ou instalação' }), { target: { value: 'district:processor' } });
+    expect(within(screen.getByLabelText('Detalhe da infraestrutura')).getByText('Processador de materiais')).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Inspecionar recurso ou instalação' }), { target: { value: 'resource:raw_ore' } });
+    expect(within(screen.getByLabelText('Detalhe do recurso')).getByText('Ferrita bruta')).toBeInTheDocument();
+  });
 });

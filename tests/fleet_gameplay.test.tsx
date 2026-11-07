@@ -31,7 +31,7 @@ it('filters and migrates propulsion/fuel with a coherent build payload and real 
 });
 it('explains locked requirements and blocks insufficient resources, crew, fuel and slots', () => {
   const state = ready(); state.research.completed = []; view(<ShipyardView />, state); fireEvent.click(screen.getByRole('button', { name: /Dominion/ }));
-  expect(screen.getByRole('button', { name: 'Construir nave' })).toBeDisabled(); expect(screen.getByText(/Modelo bloqueado/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Construir nave' })).toBeDisabled(); expect(screen.getAllByText(/Modelo bloqueado/).length).toBeGreaterThan(0);
   for (const mutate of [(s: typeof state) => { s.stocks.components = 0; }, (s: typeof state) => { s.population.available = 0; }, (s: typeof state) => { s.capacities.shipyard_slots_available = 0; }, (s: typeof state) => { s.stocks.fusion_fuel = 0; }]) {
     const s = ready(); mutate(s); expect(buildConfiguration(catalog, s, catalog.ships.find(h => h.id === 'dominion_hull'), 'chemical_drive', 'ion_fuel').valid).toBe(false);
   }

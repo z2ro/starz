@@ -36,9 +36,20 @@ def fixture(populated):
         e.build('ore_extractor',now=NOW);build_defense(e,'point_defense',2)
         for key in ['extraction','weapons','computing']:e.research(key,now=NOW)
     s.stocks_by_planet={PLANET:s.stocks}
+    if populated:
+        fleet=e.send_fleet(s.system_x+1,s.system_y,s.ships[0]['propulsion_id'],'NORMAL',now=NOW,ship_id=s.ships[0]['id'],planet_id=PLANET)
+        s.fleets[0]['id']='60000000-0000-4000-8000-000000000001'
     state=state_snapshot(e)
     player={'id':EMPIRE,'name':'VISUAL QA · STAGED DATA','self':True,'planets':[{'id':PLANET,'x':s.system_x,'y':s.system_y,'index':s.planet_index,'home':True}],'relation':{'status':'neutral','proposal':None}}
     universe={'empire_id':EMPIRE,'name':player['name'],'players':[player],'research':[research_quote(catalog,s,k) for k in catalog.items['technologies']],'buildings':[building_quote(catalog,s,k) for k in catalog.items['districts']],'reports':[],'battles':[],'intelligence':[],'market':[],'missions':[],'fleet_limit':2,'colony_limit':1,'defenses':{'ships':[{'id':ship['id'],'hull_id':ship['hull_id'],'hp':catalog.get('ships',ship['hull_id']).hull_points} for ship in local_defenders(e,PLANET)],'inventory':s.defenses,'options':[defense_quote(e,k) for k in catalog.items['defenses']],'repairs':[],'operational':min(e.capacities()['energy_coverage'],e.capacities()['workforce_coverage']),'battles':[],'strikes':[]}}
+    if populated:
+        # Presentation-only records exercise long collections; never persisted as gameplay.
+        universe['players'] += [{'id':f'30000000-0000-4000-8000-{i:012d}','name':f'STAGED EMPIRE {i}','self':False,'planets':[{'id':f'40000000-0000-4000-8000-{i:012d}','x':i,'y':0,'index':0,'home':True}],'relation':{'status':'neutral','proposal':None}} for i in range(1,7)]
+        universe['market'] = [{'id':f'offer-{i}','owner':universe['players'][1]['id'],'name':'STAGED TRADE','give':'raw_ore','want':'refined_alloy','give_amount':20+i,'want_amount':10} for i in range(6)]
+        universe['reports'] = [{'at':NOW-i*60,'message':f'STAGED RECORD {i}: entrega de recursos concluída.'} for i in range(12)]
+        unknown={'status':'UNKNOWN','value':None}
+        universe['intelligence']=[{'id':f'intel-{i}','planet_id':PLANET,'planet_name':'STAGED INTELLIGENCE','coordinates':[1,0,0],'at':NOW-60,'expires_at':NOW+3600,'status':'CURRENT','quality':1,'detected':False,**{k:unknown for k in ['ships','defenses','stocks','ammunition','infrastructure','technology']}} for i in range(3)]
+        state['planets'] += [{'id':f'50000000-0000-4000-8000-{i:012d}','name':f'STAGED COLONY {i}','x':i,'y':0,'planet_index':0,'population_total':30,'home':False} for i in range(1,7)]
     return {'state':state,'universe':universe,'galaxy':galaxy_snapshot(e,(s.system_x,s.system_y),2)}
 
 if __name__=='__main__':

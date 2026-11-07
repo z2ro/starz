@@ -37,6 +37,7 @@ it('falls back explicitly to image when WebGL fails',()=>{
 });
 it('uses real construction progress and routes orders to existing gameplay',()=>{
  const s=planetSnapshot();s.observed_at=200;s.construction=[{id:'ore_extractor',started_at:100,complete_at:300}];mount(s);
+ fireEvent.click(screen.getByRole('button',{name:/Operações ·/}));
  const activities=screen.getByRole('region',{name:'Atividades em andamento'});
  expect(within(activities).getAllByRole('progressbar')[0]).toHaveAttribute('aria-valuenow','50');
  expect(screen.getByRole('navigation',{name:'Ordens rápidas'}).querySelector('a')?.getAttribute('href')).toBe('/development');

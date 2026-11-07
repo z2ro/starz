@@ -1,3 +1,6 @@
+import {ContentPages} from '../pixel-command/ContentPages';
+import {Tabs} from '../components/ui/Tabs';
+import {useState} from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { fmt, label } from '../app/format';
 import { HomeworldBadge } from '../components/planet/HomeworldBadge';
@@ -13,6 +16,7 @@ type StrategicAction = { title: string; detail: string; to: string; icon: IconNa
 export function OverviewView() {
   const { catalog, state, activePlanetId, setActivePlanetId } = useOutletContext<ShellContext>();
   const navigate = useNavigate();
+  const [area,setArea]=useState('worlds');
   const worlds = state.planets ?? [];
   const imperialPopulation = worlds.reduce((total, world) => total + world.population_total, 0);
   const arrived = state.fleets.filter(fleet => fleet.status === 'ARRIVED').length;
@@ -29,12 +33,12 @@ export function OverviewView() {
   if (actions.length < 4 && worlds.length > 1) actions.push({ title: 'Gerenciar mundos', detail: `${fmt(worlds.length)} mundos sob controle imperial.`, to: state.persistent?'/universe':'/planet', icon: 'planetActive', tone: 'active' });
   const visibleActions = actions.slice(0, 4);
 
-  const worldRoster = (<section className="overview-worlds" aria-label="Mundos imperiais">
+  const worldRoster = (<section className="overview-worlds" data-count={worlds.length} aria-label="Mundos imperiais">
         <SectionHeader title="Mundos imperiais" eyebrow="COLÔNIAS E MUNDO NATAL" count={worlds.length} />
-        {worlds.length ? <div className="world-roster">{worlds.map(world => {
+        {worlds.length ? <ContentPages label="Colônias" className="world-roster">{worlds.map(world => {
           const selected = world.id === selectedWorldId;
-          return <button className={`world-row ${selected ? 'selected' : ''}`} type="button" key={world.id} onClick={() => setActivePlanetId(world.id)} aria-pressed={selected} aria-label={`Selecionar planeta ${world.name}`}><span className="world-row-icon"><Icon name={selected ? 'planetActive' : 'planet'} className="ui-icon" /></span><span className="world-row-name"><strong>{world.name}</strong><small>{world.x}:{world.y} · planeta {world.planet_index + 1}</small></span><span className="world-row-population"><span>POPULAÇÃO</span><strong>{fmt(world.population_total)}</strong></span>{world.home && <HomeworldBadge />}<span className="world-row-chevron" aria-hidden="true">→</span></button>;
-        })}</div> : <EmptyState title="Sem mundos materializados" icon="planet">Os mundos sob controle aparecerão aqui.</EmptyState>}
+          return <button className={`world-row ${selected ? 'selected' : ''}`} type="button" key={world.id} onClick={() => setActivePlanetId(world.id)} aria-pressed={selected} aria-label={`Selecionar planeta ${world.name}`}><span className="world-row-icon"><Icon name={selected ? 'planetActive' : 'planet'} className="ui-icon" /></span><span className="world-row-name"><strong>{world.name}</strong><small>{world.x}:{world.y} · planeta {world.planet_index + 1}</small></span><span className="world-row-population"><span>POPULAÇÃO</span><strong>{fmt(world.population_total)}</strong></span>{world.home && <HomeworldBadge portuguese={state.persistent}/>}<span className="world-row-chevron" aria-hidden="true">→</span></button>;
+        })}</ContentPages> : <EmptyState title="Sem mundos materializados" icon="planet">Os mundos sob controle aparecerão aqui.</EmptyState>}
       </section>);
 
   return <div className={`overview-command ${state.persistent?'strategy-colonies':''}`}>
@@ -43,12 +47,12 @@ export function OverviewView() {
       <div className="overview-command-context"><Icon name="planetActive" className="ui-icon" /><span>PLANETA ATUAL</span><strong>{state.system.planet.name}</strong></div>
     </header>
 
-    {state.persistent&&worldRoster}
-    <div className="overview-command-main">
+    {state.persistent&&<><Tabs label="Administração imperial" value={area} onChange={setArea} items={[{id:"worlds",label:"Colônias"},{id:"summary",label:"Resumo"},{id:"actions",label:"Ordens"}]}/><div className="colony-area" hidden={area!=="worlds"}>{worldRoster}</div></>}
+    <div className="overview-command-main" hidden={state.persistent&&area!=="summary"}>
       {!state.persistent&&<section className="overview-editorial" aria-label="Contexto do planeta atual">
         <img src="/static/planet-command-hero.png" alt="" />
         <div className="overview-editorial-shade" aria-hidden="true" />
-        <div className="overview-editorial-content"><span className="eyebrow">CONTEXTO ATUAL</span><div><Icon name="planetActive" className="ui-icon" /><strong>{state.system.planet.name}</strong>{state.active_planet?.home && <HomeworldBadge />}</div><p>{state.system.name} · setor {state.system.x}:{state.system.y} · planeta {(state.active_planet?.planet_index ?? 0) + 1}</p><button className="button button-ghost" onClick={() => navigate('/planet')}>Gerenciar planeta →</button></div>
+        <div className="overview-editorial-content"><span className="eyebrow">CONTEXTO ATUAL</span><div><Icon name="planetActive" className="ui-icon" /><strong>{state.system.planet.name}</strong>{state.active_planet?.home && <HomeworldBadge portuguese={state.persistent}/>}</div><p>{state.system.name} · setor {state.system.x}:{state.system.y} · planeta {(state.active_planet?.planet_index ?? 0) + 1}</p><button className="button button-ghost" onClick={() => navigate('/planet')}>Gerenciar planeta →</button></div>
       </section>}
 
       <section className="empire-summary" aria-label="Resumo imperial">
@@ -58,13 +62,13 @@ export function OverviewView() {
       </section>
     </div>
 
-    <div className="overview-command-secondary">
+    <div className="overview-command-secondary" hidden={state.persistent&&area!=="actions"}>
       {!state.persistent&&worldRoster}
 
       <div className="overview-side-stack">
         <section className="overview-actions" aria-label="Ações estratégicas">
           <SectionHeader title="Ações estratégicas" eyebrow="PRÓXIMOS FLUXOS" count={visibleActions.length} />
-          {visibleActions.length ? <div>{visibleActions.map(action => <button type="button" className={`strategic-action tone-${action.tone ?? 'default'}`} key={action.title} onClick={() => navigate(action.to)}><Icon name={action.icon} className="ui-icon" /><span><strong>{action.title}</strong><small>{action.detail}</small></span><i aria-hidden="true">→</i></button>)}</div> : <EmptyState title="Sem ação pendente" icon="operations">Não há fluxo operacional disponível neste contexto.</EmptyState>}
+          {visibleActions.length ? <ContentPages label="Ordens do império">{visibleActions.map(action => <button type="button" className={`strategic-action tone-${action.tone ?? 'default'}`} key={action.title} onClick={() => navigate(action.to)}><Icon name={action.icon} className="ui-icon" /><span><strong>{action.title}</strong><small>{action.detail}</small></span><i aria-hidden="true">→</i></button>)}</ContentPages> : <EmptyState title="Sem ação pendente" icon="operations">Não há fluxo operacional disponível neste contexto.</EmptyState>}
         </section>
         {!state.persistent&&<section className="overview-operations" aria-label="Resumo de operações">
           <SectionHeader title="Operações em andamento" eyebrow="ATIVIDADE" count={activeOperations} />
