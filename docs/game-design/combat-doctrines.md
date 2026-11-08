@@ -93,6 +93,10 @@ flowchart TD
 
 `PROPOSED`: [C3.0-D04 — matriz de cenários](combat-balance-plan.md) estabelece comparações de custo industrial, escolta, guerra eletrônica, ruptura, interdição, Stargrave e reconciliação offline. Os baselines e métricas não representam funcionalidades executadas nem autorizam parâmetros de combate. Os detalhes da C3.0-D02 e C3.0-D03 ainda requerem aprovação explícita.
 
+## 8.2. Integração técnica
+
+`PROPOSED`: a [C3.0-D05](combat-integration.md) especifica pontos de integração do resolvedor, ordens persistentes, alvos pretendidos/efetivos, escudos, sigilo e interdição. Mantém C3.0-D02/D03 e decisões INT-A–E como questões abertas, sem autorizar gameplay.
+
 ## 9. Relatório e interface
 
 Mostrar doutrina, composição antes/depois, quantidade de alvos protegidos, condições de aquisição, ataques absorvidos por cobertura, dano por tipo e efeitos de tecnologia **somente quando calculados pelo servidor**. Jogadores não recebem detalhes ocultos do inimigo que não obtiveram por inteligência legítima.
