@@ -89,6 +89,10 @@ flowchart TD
 - Interdição regional tem contrato distinto de disparos e não deve paralisar a nave adversária indefinidamente.
 - Equivalência de poder, janela de bombardeio, consumo de energia e perda de subsistemas continuam `OPEN`.
 
+## 8.1. Validação futura e balanceamento
+
+`PROPOSED`: [C3.0-D04 — matriz de cenários](combat-balance-plan.md) estabelece comparações de custo industrial, escolta, guerra eletrônica, ruptura, interdição, Stargrave e reconciliação offline. Os baselines e métricas não representam funcionalidades executadas nem autorizam parâmetros de combate. Os detalhes da C3.0-D02 e C3.0-D03 ainda requerem aprovação explícita.
+
 ## 9. Relatório e interface
 
 Mostrar doutrina, composição antes/depois, quantidade de alvos protegidos, condições de aquisição, ataques absorvidos por cobertura, dano por tipo e efeitos de tecnologia **somente quando calculados pelo servidor**. Jogadores não recebem detalhes ocultos do inimigo que não obtiveram por inteligência legítima.
