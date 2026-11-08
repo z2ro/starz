@@ -3,7 +3,7 @@
 **Estado:** `APPROVED` **como design** em 08/11/2026, decisões **A–H** aprovadas explicitamente pelo responsável. **Não implementado.**  
 **Fonte:** deliberação «STARZ — decisões C3.0-D06» (A–H: APROVADO; números sujeitos a simulação).  
 **Escopo:** fechar emissores de guerra eletrônica, contestação, interdição, perfil antiescudo, captura/construção/derrota Stargrave e gate Fundamental V; **não** autoriza código, YAML, banco, testes de gameplay, PR ou merge.  
-**Precedência:** [C3.0-D01–D05](combat-3-decisions.md), [Research 3.0](research-3.md), [Stargrave](stargrave.md). Os parâmetros e contratos técnicos ainda não fixados estão em [C3.0-D07 — contratos técnicos](combat-technical-contracts.md) (`PROPOSED`).
+**Precedência:** [C3.0-D01–D05](combat-3-decisions.md), [Research 3.0](research-3.md), [Stargrave](stargrave.md). O desenho técnico D07-A–H foi aprovado expressamente em [C3.0-D07 — contratos técnicos](combat-technical-contracts.md) (`APPROVED` como design); nomes de schema, parâmetros e resultados de testes continuam `OPEN`/não executados.
 
 ## 1. Registro das oito decisões `APPROVED`
 
@@ -96,7 +96,7 @@ Esta representação **preserva** requisitos existentes não removidos e adicion
 ## 8. Limites de aprovação e próxima especificação
 
 **`APPROVED`:** decisões funcionais D06-A–H descritas acima.  
-**`PROPOSED`:** [C3.0-D07 — modelo de eventos, persistência e transições](combat-technical-contracts.md).  
+**`APPROVED` como design técnico:** [C3.0-D07 — modelo de eventos, persistência e transições](combat-technical-contracts.md), decisões A–H e T01–T16; sem código nem testes executados.  
 **`OPEN`:** fórmula EW, custo/alcance, coeficientes antiescudo, tempo de interdição, HP, orçamento estelar, estado de estrela em sistema múltiplo, concorrência/migrações e destino seguro da estrela.  
 **`NOT IMPLEMENTED`:** todo o gameplay novo; nenhum teste, simulação ou nova migração foi realizado.
 
