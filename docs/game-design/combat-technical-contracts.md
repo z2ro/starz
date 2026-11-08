@@ -209,6 +209,14 @@ Nenhum nome de migration, coluna, constraint ou endpoint fica aprovado por este 
 
 Os cenários **T01–T16** estão **`APPROVED` como critérios de aceitação técnica**; complementam B01–B18 da [C3.0-D04](combat-balance-plan.md). **Nenhum foi executado**.
 
+## 10.1. Atualização posterior — dispensa de saves legados de desenvolvimento
+
+**Decisão explícita posterior do responsável (08/11/2026):** não é necessário preservar compatibilidade com **saves legados descartáveis de desenvolvimento**. Os parágrafos históricos desta D07 sobre fallback de payloads antigos, dual-version, backfill e manutenção dos saves antigos **não são mais requisitos para desenvolvimento em banco isolado e descartável**. A implementação futura poderá usar um contrato único limpo e instalação reprodutível do zero, mediante autorização expressa para o banco-alvo.
+
+**Continuam obrigatórios:** propriedade, autenticação, identidade única da estrela, integridade de recursos, transações atômicas, idempotência do novo estado, replay offline e proteção de bancos compartilhados. A dispensa **não é autorização para reset/descarte** de qualquer banco real. Ver [D12](combat-implementation-plan.md) (`PROPOSED`).
+
+**Atualização dos critérios de QA:** T01/T15 continuam válidos quanto a execução determinística, reentrada e recuperação, mas os testes de *migração de saves anteriores* podem ser substituídos por **instalação limpa e persistência correta do novo contrato**, sem retirar testes de idempotência e multiusuário.
+
 ## 11. Registro das oito decisões D07 aprovadas
 
 | ID | Contrato `APPROVED` como design |
