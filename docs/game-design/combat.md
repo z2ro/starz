@@ -40,7 +40,7 @@ A [C3.0-D05](combat-integration.md) reúne conflitos de seleção/dano, configur
 
 `APPROVED`: [C3.0-D06](combat-operational-closures.md) escolheu Odyssey para EW, `orbital_platform` em modo interdição (sem disparos), gatilho único na chegada por sucessora, perfil antiescudo por `ATTACK` e construção/derrota Stargrave com estado próprio. O gate `science_infrastructure:2` de Fundamental V também foi aprovado. **Nenhuma dessas regras está implementada.** Percentuais e multiplicadores continuam parâmetros de simulação.
 
-`PROPOSED`: [C3.0-D07](combat-technical-contracts.md) especifica contrato de payload, sucessão idempotente de ordens, exclusividade de estrela e 16 cenários de QA técnico, ainda sem aprovação de schema ou execução.
+`APPROVED` como contrato de design técnico: [C3.0-D07](combat-technical-contracts.md) estabelece payload versionado, sucessão idempotente de ordens, exclusividade de estrela e 16 cenários de QA, **não executados**. Schema final e implementação continuam pendentes.
 
 ## 5. Dependências
 
