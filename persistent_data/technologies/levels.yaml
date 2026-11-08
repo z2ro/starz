@@ -558,12 +558,10 @@
     refined_alloy: 30
     components: 14
   requires:
-  - carrier_operations
   - science_infrastructure
   unlocks:
   - dominion_hull
   level_requires:
-    carrier_operations: 3
     science_infrastructure: 3
   infrastructure:
     research_lab: 4
@@ -1032,9 +1030,9 @@
   requires:
   - fundamental_tier_4
   - energy_engineering
-  - military_tier_4
   level_requires:
     energy_engineering: 4
+    science_infrastructure: 2
   cost:
     refined_alloy: 1080
     components: 540

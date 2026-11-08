@@ -1,0 +1,333 @@
+- id: automated_logistics
+  name: Logística Automatizada
+  description: 'Conhecimento para políticas de reabastecimento e rotas com transporte real; a automação
+    operacional depende de implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases de civil_tier_3;
+    valores finais não aprovados.'
+  category: civil
+  domain: civil
+  tier: 3
+  kind: breakthrough
+  requires:
+  - logistics
+  - industrial_automation
+  level_requires:
+    logistics: 3
+  cost:
+    refined_alloy: 120
+    components: 60
+  duration: 360
+  effects: {}
+  unlocks: []
+- id: megastructure_engineering
+  name: Engenharia de Megaestruturas
+  description: 'Base científica para iniciar megaprojetos orbitais; projetos persistentes dependem de
+    implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases de civil_tier_4; valores finais
+    não aprovados.'
+  category: civil
+  domain: civil
+  tier: 4
+  kind: breakthrough
+  requires:
+  - advanced_manufacturing
+  - orbital_engineering
+  level_requires:
+    advanced_manufacturing: 2
+    orbital_engineering: 3
+  cost:
+    refined_alloy: 360
+    components: 180
+  duration: 1080
+  effects: {}
+  unlocks: []
+- id: precision_manufacturing
+  name: Manufatura de Precisão Extrema
+  description: 'Conhecimento para fabricar módulos industriais extremos; fabricação e identidade física
+    dos módulos dependem de implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases de
+    civil_tier_5; valores finais não aprovados.'
+  category: civil
+  domain: civil
+  tier: 5
+  kind: breakthrough
+  requires:
+  - megastructure_engineering
+  - advanced_manufacturing
+  level_requires:
+    advanced_manufacturing: 3
+  cost:
+    refined_alloy: 1080
+    components: 540
+  duration: 3240
+  effects: {}
+  unlocks: []
+- id: stellar_logistics
+  name: Logística Estelar
+  description: 'Conhecimento para transporte e suprimento físico de módulos estelares; carga, rotas e
+    entregas dependem de implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases de civil_tier_5;
+    valores finais não aprovados.'
+  category: civil
+  domain: civil
+  tier: 5
+  kind: breakthrough
+  requires:
+  - automated_logistics
+  - megastructure_engineering
+  - logistics
+  level_requires:
+    logistics: 3
+  cost:
+    refined_alloy: 1080
+    components: 540
+  duration: 3240
+  effects: {}
+  unlocks: []
+- id: fire_control_doctrine
+  name: Doutrina de Controle de Tiro
+  description: 'Conhecimento para políticas de prioridade de alvos; doutrinas operacionais dependem de
+    implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases de military_tier_2; valores
+    finais não aprovados.'
+  category: military
+  domain: military
+  tier: 2
+  kind: breakthrough
+  requires:
+  - weapons
+  - naval_doctrine
+  level_requires:
+    weapons: 2
+    naval_doctrine: 2
+  cost:
+    refined_alloy: 40
+    components: 20
+  duration: 120
+  effects: {}
+  unlocks: []
+- id: fleet_coordination
+  name: Coordenação de Frotas
+  description: 'Conhecimento para escolta e proteção de formação com naves reais; redirecionamento de
+    tiros depende de implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases de military_tier_3;
+    valores finais não aprovados.'
+  category: military
+  domain: military
+  tier: 3
+  kind: breakthrough
+  requires:
+  - naval_doctrine
+  - computing
+  level_requires:
+    naval_doctrine: 3
+    computing: 2
+  cost:
+    refined_alloy: 120
+    components: 60
+  duration: 360
+  effects: {}
+  unlocks: []
+- id: electronic_warfare
+  name: Guerra Eletrônica
+  description: 'Conhecimento para interferência em sensores e aquisição de alvos com Odyssey operacional;
+    contestação e novos relatórios dependem de implementação posterior. Custos e trabalho EXPERIMENTAIS:
+    mesmas bases de military_tier_3; valores finais não aprovados.'
+  category: military
+  domain: military
+  tier: 3
+  kind: breakthrough
+  requires:
+  - sensor_array
+  - computing
+  level_requires:
+    sensor_array: 2
+    computing: 2
+  cost:
+    refined_alloy: 120
+    components: 60
+  duration: 360
+  effects: {}
+  unlocks: []
+- id: spatial_interdiction
+  name: Interdição Espacial
+  description: 'Conhecimento para interdição de chegadas hostis por plataforma orbital em modo próprio;
+    zona e atraso único dependem de implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases
+    de military_tier_4; valores finais não aprovados.'
+  category: military
+  domain: military
+  tier: 4
+  kind: breakthrough
+  requires:
+  - electronic_warfare
+  - gravitational_physics
+  level_requires: {}
+  cost:
+    refined_alloy: 360
+    components: 180
+  duration: 1080
+  effects: {}
+  unlocks: []
+- id: shield_disruption
+  name: Ruptura de Escudos
+  description: 'Conhecimento para perfil ofensivo antiescudo com desvantagem contra casco; aplicação ao
+    combate depende de implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases de military_tier_4;
+    valores finais não aprovados.'
+  category: military
+  domain: military
+  tier: 4
+  kind: breakthrough
+  requires:
+  - weapons
+  - shields
+  level_requires:
+    weapons: 3
+    shields: 2
+  cost:
+    refined_alloy: 360
+    components: 180
+  duration: 1080
+  effects: {}
+  unlocks: []
+- id: containment_warfare
+  name: Guerra de Contenção
+  description: 'Conhecimento para identificar e atacar subsistemas estelares conhecidos ou expostos; unidade
+    excepcional, exposição e dano dirigido dependem de implementação posterior. Custos e trabalho EXPERIMENTAIS:
+    mesmas bases de military_tier_4; valores finais não aprovados.'
+  category: military
+  domain: military
+  tier: 4
+  kind: breakthrough
+  requires:
+  - shield_disruption
+  - gravitational_physics
+  - sensor_array
+  level_requires:
+    sensor_array: 3
+  cost:
+    refined_alloy: 360
+    components: 180
+  duration: 1080
+  effects: {}
+  unlocks: []
+- id: stellar_armaments
+  name: Armamentos Estelares
+  description: 'Conhecimento para integrar armamento estelar em Stargrave comissionada; construção, preparação
+    e disparo dependem de implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases de military_tier_5;
+    valores finais não aprovados.'
+  category: military
+  domain: military
+  tier: 5
+  kind: breakthrough
+  requires:
+  - capital_architecture
+  - mobile_stellar_confinement
+  - weapons
+  level_requires:
+    capital_architecture: 2
+    weapons: 4
+  cost:
+    refined_alloy: 1080
+    components: 540
+  duration: 3240
+  effects: {}
+  unlocks: []
+- id: gravitational_physics
+  name: Física Gravitacional Avançada
+  description: 'Base científica para interdição, gravitação e propulsão excepcional; operações dependem
+    de implementação posterior, sem alterar motores convencionais. Custos e trabalho EXPERIMENTAIS: mesmas
+    bases de fundamental_tier_4; valores finais não aprovados.'
+  category: fundamental
+  domain: fundamental
+  tier: 4
+  kind: breakthrough
+  requires:
+  - navigation
+  - sensor_array
+  level_requires:
+    navigation: 2
+    sensor_array: 2
+  cost:
+    refined_alloy: 360
+    components: 180
+  duration: 1080
+  effects: {}
+  unlocks: []
+- id: extreme_materials
+  name: Materiais Extremos
+  description: 'Conhecimento de materiais para condições energéticas extremas; módulos compatíveis dependem
+    de implementação posterior, sem bônus automático aos hulls. Custos e trabalho EXPERIMENTAIS: mesmas
+    bases de fundamental_tier_4; valores finais não aprovados.'
+  category: fundamental
+  domain: fundamental
+  tier: 4
+  kind: breakthrough
+  requires:
+  - metallurgy
+  - energy_engineering
+  level_requires:
+    metallurgy: 3
+    energy_engineering: 3
+  cost:
+    refined_alloy: 360
+    components: 180
+  duration: 1080
+  effects: {}
+  unlocks: []
+- id: stellar_extraction
+  name: Extração Estelar
+  description: 'Conhecimento para infraestrutura e operações de captura de estrela elegível; reserva exclusiva
+    e projeto persistente dependem de implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas
+    bases de fundamental_tier_5; valores finais não aprovados.'
+  category: fundamental
+  domain: fundamental
+  tier: 5
+  kind: breakthrough
+  requires:
+  - gravitational_physics
+  - megastructure_engineering
+  - science_infrastructure
+  level_requires:
+    science_infrastructure: 2
+  cost:
+    refined_alloy: 1080
+    components: 540
+  duration: 3240
+  effects: {}
+  unlocks: []
+- id: mobile_stellar_confinement
+  name: Confinamento Estelar Móvel
+  description: 'Conhecimento para núcleo móvel com uma única estrela cativa; captura, confinamento e unidade
+    excepcional dependem de implementação posterior. Custos e trabalho EXPERIMENTAIS: mesmas bases de
+    fundamental_tier_5; valores finais não aprovados.'
+  category: fundamental
+  domain: fundamental
+  tier: 5
+  kind: breakthrough
+  requires:
+  - stellar_extraction
+  - extreme_materials
+  - stellar_containment
+  level_requires:
+    stellar_containment: 3
+  cost:
+    refined_alloy: 1080
+    components: 540
+  duration: 3240
+  effects: {}
+  unlocks: []
+- id: gravitational_propulsion
+  name: Propulsão Gravitacional
+  description: 'Conhecimento para propulsão de megaprojetos móveis; rotas, combustível e ETA dependem
+    de implementação posterior, sem modificar hulls convencionais. Custos e trabalho EXPERIMENTAIS: mesmas
+    bases de fundamental_tier_5; valores finais não aprovados.'
+  category: fundamental
+  domain: fundamental
+  tier: 5
+  kind: breakthrough
+  requires:
+  - gravitational_physics
+  - extreme_materials
+  - nuclear_propulsion
+  level_requires:
+    nuclear_propulsion: 3
+  cost:
+    refined_alloy: 1080
+    components: 540
+  duration: 3240
+  effects: {}
+  unlocks: []

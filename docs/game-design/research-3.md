@@ -1,7 +1,7 @@
 # STARZ — Research 3.0: decisões canônicas (R3.0-D01)
 
 **Estado das decisões de identidade:** `APPROVED` (08/11/2026).  
-**Estado no universo persistente:** `NOT IMPLEMENTED` para as 16 novas pesquisas e para os gates redesenhados.  
+**Estado no universo persistente:** `IMPLEMENTED` e testado para as 16 identidades pesquisáveis e os dois gates redesenhados (P1, 08/11/2026). Capacidades operacionais têm implementação separada; pesquisa não executa ações por si só.
 **Escopo:** ciência, descobertas, dependências e compatibilidade; não autoriza implementar gameplay ou modificar catálogos.
 
 ## 1. Autoridade e fronteiras
@@ -92,3 +92,9 @@ O grafo proposto foi verificado conceitualmente com 60 IDs, sem colisões, refer
 - [Gates e migração](../../starz/progression.py)
 
 **Não editar `persistent_data`, gameplay, banco, `AGENTS.md` ou outros arquivos executáveis com base somente neste documento.**
+
+## 7. Checkpoint executável P1
+
+Autorização: tarefa STARZ 3.0 de 08/11/2026. `persistent_data/technologies/discoveries.yaml` adiciona as 16 descobertas, `kind: breakthrough`, sem bônus fictícios nem `advances_tier`. Custos/trabalho são EXPERIMENTAIS, usando a base do avanço do mesmo domínio/tier. Os 44 IDs, 12 avanços e requisitos dos dez hulls foram preservados. Gate Fundamental V científico e desvinculação de `carrier_operations` aplicados sem mudar custo/tempo atuais.
+
+Validação executada: 12 testes em `test_research3` + `test_research_domains`, PASS, 1,863 s (`.qa/runs/starz3-p1/unittest.log`). As novas pesquisas foram iniciadas/concluídas pelo `Engine`, com débito real, trabalho positivo e bloqueio de repetição. Grafo inclui gates implícitos; Fundamental V e contenção alcançados sem pesquisa Militar. Isso não comprova automação logística civil, Stargrave operacional ou balanceamento final. A árvore React já consome catálogo dinâmico; validação visual ocorrerá na integração P6.
