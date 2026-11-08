@@ -26,15 +26,15 @@ Atacantes são naves reais da frota; defensores são naves vinculadas ao planeta
 
 `APPROVED`: [C3.0-D01 — escolta e formações](combat-formations.md) registra as sete decisões explícitas sobre proteção automática, redirecionamento real para HP/escudo da escolta, Vanguard/Sentinel/Aegis, limite inicial de um disparo redirecionado por escolta/salva sujeito a balanceamento, três doutrinas (Equilibrada, Interceptação, Ruptura), guarnição planetária e compatibilidade com salvas simultâneas.
 
-`PROPOSED`: [C3.0-D02 — seleção de alvos](combat-targeting.md) detalha classificação e prioridade de alvos, despacho, sigilo e desempates; não está aprovado nem executado. `IMPLEMENTED` continua sendo o resolvedor descrito na seção 2; não presumir proteção funcional a partir de `role`/nome da nave.
+`APPROVED` como design: [C3.0-D02 — seleção de alvos](combat-targeting.md) fixa prioridade por classe, despacho, sigilo e desempates; **não implementado**. `IMPLEMENTED` continua sendo o resolvedor descrito na seção 2; não presumir proteção funcional a partir de `role`/nome da nave.
 
-## 4.3. Contramedidas, aquisição e subsistemas (`PROPOSED`)
+## 4.3. Contramedidas, aquisição e subsistemas (`APPROVED` como design)
 
-A [C3.0-D03](combat-countermeasures.md) propõe guerra eletrônica contestável, perfil antiescudo com trade-off, interdição regional e ataque especializado contra subsistemas de Stargrave, sem modificar o combate naval, interceptador estratégico ou dano atual. `C3.0-D02` e `C3.0-D03` aguardam decisões expressas; o contrato de escolta `C3.0-D01` é `APPROVED` **apenas como design**.
+A [C3.0-D03](combat-countermeasures.md) define como design aprovado guerra eletrônica contestável, perfil antiescudo com trade-off, interdição regional e ataque especializado contra subsistemas de Stargrave, sem modificar o combate naval, interceptador estratégico ou dano atual. `C3.0-D02` e `C3.0-D03` foram aprovadas como design; valores e detalhes operacionais seguem `OPEN`; o contrato de escolta `C3.0-D01` é `APPROVED` **apenas como design**.
 
-## 4.4. Integração futura (`PROPOSED`)
+## 4.4. Integração futura (`APPROVED` como arquitetura)
 
-A [C3.0-D05](combat-integration.md) reúne conflitos de seleção/dano, configuração de doutrina na ordem `ATTACK`, guerra eletrônica sem emissor definido, guarnição, interdição offline e ausência de entidade Stargrave executável. Trata de **design técnico**, não de implementação; C3.0-D02/D03/D04 continuam `PROPOSED`, e as decisões aprovadas da C3.0-D01 permanecem intactas.
+A [C3.0-D05](combat-integration.md) reúne conflitos de seleção/dano, configuração de doutrina na ordem `ATTACK`, guerra eletrônica sem emissor definido, guarnição, interdição offline e ausência de entidade Stargrave executável. Trata de **design técnico**, não de implementação; C3.0-D02/D03 estão `APPROVED` como design, C3.0-D04 como plano e C3.0-D05 como arquitetura, sem execução; [registro consolidado](combat-3-decisions.md).
 
 ## 5. Dependências
 
