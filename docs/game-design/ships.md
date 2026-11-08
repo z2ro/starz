@@ -35,6 +35,10 @@ Relacionar as classes existentes a seus efeitos reais e às funções propostas 
 
 `APPROVED` (design): [C3.0-D01 — escolta e proteção](combat-formations.md) define proteção automática e redirecionamento para unidades reais, com especialização de Vanguard, Sentinel e Aegis, sujeita a um redirecionamento por escolta/salva inicialmente. `PROPOSED`: [C3.0-D02](combat-targeting.md) trata a escolha determinística dos alvos. **Não implementado**; Sentinel não intercepta mísseis estratégicos e Aegis não compartilha escudos no contrato aprovado.
 
+## 4.2. Odyssey como emissora de guerra eletrônica
+
+`APPROVED` pela [C3.0-D06-A/B](combat-operational-closures.md): a **Odyssey** é a unidade física emissora de `electronic_warfare`, exigindo nave real, presente/operacional e pesquisa concluída. Contribui para contestação de prioridade ofensiva e de novas observações hostis no planeta onde estiver estacionada. Múltiplas Odyssey não somam interferência sem limite; se a emissora cair, reavaliar no próximo snapshot da salva. **Não implementado**; fórmula, intensidade e alcance seguem `OPEN`. A [C3.0-D07](combat-technical-contracts.md) propõe o contrato de snapshots.
+
 ## 5. Dependências
 
 [Pesquisa](research.md): desbloqueio de classes e bônus. [Economia](economy.md): materiais, tripulação e combustível. [Combate](combat.md): perfis, danos e perdas. [Defesas](defenses.md): confrontos locais. [Balanceamento](balance.md): eficiência por custo, não só tamanho visual.
