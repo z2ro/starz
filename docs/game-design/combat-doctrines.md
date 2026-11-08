@@ -97,6 +97,10 @@ flowchart TD
 
 `APPROVED` como arquitetura: a [C3.0-D05](combat-integration.md) especifica pontos de integração do resolvedor, ordens persistentes, alvos pretendidos/efetivos, escudos, sigilo e interdição. Mantém INT-B e INT-D como questões abertas; C3.0-D02/D03 e INT-A/C/E foram aprovadas como design, sem autorizar gameplay.
 
+## 8.3. Fechamento operacional D06 e integração técnica D07
+
+`APPROVED` como design: a [C3.0-D06](combat-operational-closures.md) definiu Odyssey emissora EW, `orbital_platform` em modo de interdição com gatilho de chegada, perfil antiescudo na ordem e Stargrave com vínculo estelar exclusivo e estados degradáveis. **Números continuam candidatos para simulação**. A [C3.0-D07](combat-technical-contracts.md) está `PROPOSED` e detalha persistência/eventos, sem autorizar código.
+
 ## 9. Relatório e interface
 
 Mostrar doutrina, composição antes/depois, quantidade de alvos protegidos, condições de aquisição, ataques absorvidos por cobertura, dano por tipo e efeitos de tecnologia **somente quando calculados pelo servidor**. Jogadores não recebem detalhes ocultos do inimigo que não obtiveram por inteligência legítima.
