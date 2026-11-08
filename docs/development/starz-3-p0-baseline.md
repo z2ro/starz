@@ -81,3 +81,19 @@
 **Nota:** aprovação de D11, dispensa de saves antigos e o comando “ok, vamos seguir” autorizam avançar neste **diagnóstico documental**. Eles não devem ser interpretados como autorização de reset, merge, deploy ou implantação automática de novo gameplay.
 
 **Sem testes executados, alterações em Python/YAML, banco ou frontend nesta etapa.**
+
+## 7. Execução P0 — autorização STARZ 3.0 (08/11/2026)
+
+A instrução de implementação STARZ 3.0 substitui a restrição documental de início acima. Base executada: `651fd75`, branch `experiment/persistent-universe`; sem alterações rastreadas preexistentes. `docs/game-desing/` é arquivo local do responsável e permanece intocado.
+
+| Verificação executada | Resultado | Evidência local |
+|---|---|---|
+| Catálogo base + campanha + persistente | PASS, três catálogos | `.qa/runs/starz3-p0/content.log` |
+| Backend sem banco | PASS, 83 testes | `.qa/runs/starz3-p0/backend-unit.log` |
+| PostgreSQL/migrations/multiplayer | PASS, 32 testes, zero skips | `.qa/runs/starz3-p0/backend-db.log` |
+
+Execução pelos grupos exportados do runner local, sem ampliar para navegador/build durante o baseline de backend. Total 96,5 s; PostgreSQL 91,5 s. O helper existente criou um contêiner `starz-qa-*` identificado, imagem local `postgres:17-alpine`, porta efêmera somente loopback e dados tmpfs; removeu somente esse contêiner ao terminar. Não houve acesso a saves, URLs de banco herdadas ou projetos Compose existentes. Nenhuma falha preexistente apareceu nesse escopo; frontend e visual ainda não validados nesta P0.
+
+Auditoria do gerador: `generate_system` cria exatamente um `Star` por sistema. A identidade estelar pode ser derivada do UUID persistente do sistema com namespace estável. Captura exige overlay persistente de ausência em todas as leituras autorizadas; o objeto procedural sozinho não determina disponibilidade. O alvo atual de `ATTACK` é planeta; presença naval no espaço profundo não existe e não será simulada como órbita arbitrária.
+
+Diferenças para os contratos: 44→60 pesquisas; sem novas doutrinas/escoltas/EW/perfil/interdição; sem fonte/projeto/unidade estelar persistentes. Lacunas funcionais efetivas: localização de montagem e fase de retirada do astro (D06-F); proteção/conhecimento de módulos e regras detalhadas de bombardeio; presença/combate no espaço profundo; extinção de império e direitos de terceiros neutros. Coeficientes podem ser experimentais conforme a autorização atual, mas não resolvem essas decisões funcionais. Cada fatia independente deve avançar, com os limites registrados no relatório de implementação.
