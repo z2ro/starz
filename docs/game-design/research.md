@@ -58,13 +58,17 @@ Fundadoras: `construction_engineering`, `naval_doctrine`, `energy_engineering`, 
 
 ## 3. Decisões aprovadas
 
-`APPROVED`: preservar três domínios e a progressão da civilização. A infraestrutura científica, industrial e estelar deve sustentar a futura Stargrave; o modelo visual não desbloqueia essa unidade. A nova distribuição de linhas do GDD não está integralmente aprovada.
+`APPROVED`: preservar três domínios e a progressão da civilização. A infraestrutura científica, industrial e estelar deve sustentar a futura Stargrave; o modelo visual não desbloqueia essa unidade. A identidade das 16 novas descobertas, com IDs, domínios, tiers, dependências e capacidades, está `APPROVED` na [R3.0-D01](research-3.md); não está implementada. O contrato de execução [R3.0-D02](research-operational.md) continua `PROPOSED`.
 
-## 4. Mudanças propostas
+## 4. Research 3.0 — decisões documentais posteriores
 
-`PROPOSED`: especializações em logística automatizada, megaestruturas, indústria de precisão, logística estelar, guerra eletrônica, interdição, ruptura, guerra de contenção, armamentos estelares, gravitação avançada, materiais extremos, extração estelar, confinamento móvel e propulsão gravitacional. São nomes de design do GDD §4, não novos IDs executáveis.
+**`APPROVED` (08/11/2026):** preservar os 44 IDs, adicionar exatamente 16 descobertas `breakthrough` únicas, sem `advances_tier`, segundo a tabela canônica [R3.0-D01](research-3.md). Foram aprovados IDs, nomes, domínios, tiers, requisitos científicos e capacidades principais. Preservar as dez classes convencionais e o acesso de saves existentes; especializações não são mutuamente exclusivas.
 
-`PROPOSED`: diferenciar descoberta, especialização e projeto estelar dos tipos atuais. Separar captura/confinamento da linha militar; esta poderia exigir o comissionamento armado, não a captura científica. D01: hoje `stellar_containment` exige `carrier_operations: 3`, `science_infrastructure: 3` e `research_lab: 4`, e seu efeito é `energy: 0.06` por nível. `future_unlocks` documenta intenção, não cria projeto estelar.
+**`APPROVED`:** remover a dependência de `military_tier_4` de `fundamental_tier_5` e desvincular `stellar_containment` de `carrier_operations`, sem alterar automaticamente trabalho pago ou níveis legados. Contramedidas especializadas de Tier IV não precisam de tecnologias exclusivas de Stargrave. Os valores e custos finais estão abertos.
+
+**`PROPOSED`:** substituir o requisito Militar IV de Fundamental V por `science_infrastructure:2`; preservar demais requisitos/bônus de `stellar_containment`; especificar políticas, operações e megaprojetos segundo [R3.0-D02](research-operational.md). As funções militares detalhadas dependem de [Combat 3.0 — doutrinas](combat-doctrines.md).
+
+**`IMPLEMENTED`, apenas no estado atual:** `stellar_containment` ainda exige `carrier_operations:3`, concede `energy:0.06` por nível, possui `future_unlocks:stellar_megastructures` apenas documental e participa do desbloqueio legado da Dominion. Esta seção não altera o YAML.
 
 ## 5. Dependências
 
@@ -86,11 +90,11 @@ Custo do próximo nível: `ceil(base_cost × level_cost_growth^nível_atual)`. T
 
 ## 8. Questões abertas
 
-`OPEN`: quais linhas novas substituirão ou complementarão as atuais? Como migrar níveis de `stellar_containment` se seu efeito mudar? Quais projetos estelares serão únicos, repetíveis ou especializados? Que infraestrutura e duração tornam cada domínio competitivo? Nenhum novo ID ou valor foi atribuído.
+`APPROVED`: 16 novos IDs, requisitos e propósitos estão registrados em [R3.0-D01](research-3.md). `OPEN`: requisitos substitutos exatos de Fundamental V, limites e números de balanceamento, custos, tempos, implementação de políticas e projetos. `PROPOSED`: contratos em [R3.0-D02](research-operational.md). Nenhum novo ID ou valor foi cadastrado no catálogo executável.
 
 ## 9. Fontes
 
-- [GDD §4, §10 e §12](STARZ-GDD-v1.md).
+- [GDD §4, §10 e §12](STARZ-GDD-v1.md); [R3.0-D01 aprovada](research-3.md); [R3.0-D02 proposta](research-operational.md).
 - [Catálogo efetivo](../../persistent_data/technologies/levels.yaml), [instalações científicas](../../persistent_data/districts/economy.yaml).
 - [Fórmulas, gates e migração](../../starz/progression.py), [simulação e ciência](../../starz/simulation.py), [agregação/persistência](../../starz/db/store.py).
 - [Planejamento](../../starz/persistent/research_planning.py), [validação de dados](../../starz/data.py), [documentação Research 2.0](../research-2.md).
