@@ -129,7 +129,7 @@ Amplia os casos **T01–T32** aprovados como QA documental. Os casos **T33–T48
 
 ## 9. D10-H — portas de decisão antes da implementação (`APPROVED` como planejamento)
 
-**Gate de design:** D10-A–G estão `APPROVED` como design; permanece necessário definir localização autoritativa em espaço livre e transferência de custódia previamente confirmada. Ver [C3.0-D11](combat-custody-transfer.md) (`PROPOSED`). Não deixar esses detalhes para um `if` improvisado.
+**Gate de design:** D10-A–G estão `APPROVED` como design; permanece necessário definir localização autoritativa em espaço livre e transferência de custódia previamente confirmada. Ver [C3.0-D11](combat-custody-transfer.md) (`APPROVED` como design); implementação de espaço profundo ainda `OPEN`. Não deixar esses detalhes para um `if` improvisado.
 
 **Gate de dados:** identificar chave canônica de estrela no gerador de sistemas de estrela única; escolher agregados mínimos, chaves, índices/constraints e tipos reais; garantir leitura de saves sem entidades novas.
 
@@ -166,4 +166,4 @@ A [C3.0-D11](combat-custody-transfer.md) está **`APPROVED` como design** e fech
 - [Stargrave](stargrave.md), [combate](combat.md), [balanceamento](balance.md), [catálogo de design](README.md).
 - [Modelo PostgreSQL](../../starz/db/models.py), [ordens/missões](../../starz/persistent/service.py), [motor de combate](../../starz/persistent/combat.py).
 
-**Estado final: `APPROVED` como design técnico; T33–T48 aprovados como critérios futuros, não executados.** Schema/nomes definitivos, custos, prazos, transferência de custódia por conquista/cessão e espaço livre continuam `OPEN`; ver [C3.0-D11](combat-custody-transfer.md), `PROPOSED`. Nenhum gameplay foi alterado.
+**Estado final: `APPROVED` como design técnico; T33–T48 aprovados como critérios futuros, não executados.** Schema/nomes definitivos, custos, prazos, transferência de custódia por conquista/cessão e espaço livre continuam `OPEN`; ver [C3.0-D11](combat-custody-transfer.md), `APPROVED` como design, com schema/rotas finais pendentes. Nenhum gameplay foi alterado.
