@@ -113,6 +113,10 @@ Na ofensiva, formar o grupo real da ordem `ATTACK`. Na defesa, todas as naves do
 14. Replay/reconciliação não duplica perdas, consumo de munição, recompensas ou relatórios.
 15. O relatório do atacante não revela estoques/tecnologias privadas não confirmadas por inteligência.
 
+## 8.1. Dependência do próximo contrato
+
+`PROPOSED`: [C3.0-D03 — guerra eletrônica, antiescudos, interdição e contenção estelar](combat-countermeasures.md) considera esta C3.0-D02 como **hipótese**, não como regra aprovada. A interferência só poderá degradar uma priorização especializada para o comportamento Equilibrada após aprovação conjunta dos contratos relevantes. Nenhum algoritmo desta D02 foi implementado ou validado por teste de aplicação.
+
 ## 9. Decisões pendentes — C3.0-D02
 
 | ID | Decisão proposta para aprovação |
