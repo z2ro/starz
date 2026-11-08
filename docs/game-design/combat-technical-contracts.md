@@ -1,9 +1,9 @@
 # STARZ — C3.0-D07: contratos técnicos de persistência, eventos e Stargrave
 
-**Estado:** `PROPOSED` — especificação técnica para revisão posterior, **não aprovada nem implementada**.  
+**Estado:** `APPROVED` **como contrato técnico de design** em 08/11/2026: decisões **D07-A–H** e cenários **T01–T16** aprovados explicitamente. **Não implementado nem testado.**  
 **Base aprovada:** [C3.0-D01–D05](combat-3-decisions.md) e [C3.0-D06 A–H](combat-operational-closures.md).  
 **Escopo:** estruturas e fronteiras de dados, atomicidade, versões, ordens sucessoras, seleção determinística de alvos, estados estelares, API futura, migração segura e testes de aceitação.  
-**Não autorizado:** modificar `starz/`, `persistent_data/`, migrations, testes executáveis, frontend, CI, PR, merge ou deploy. Os nomes de campos, tabelas e eventos aqui são **candidatos técnicos**, não schema autorizado.
+**Limite da aprovação:** a especificação define obrigações de versão, atomicidade, idempotência, unicidade e compatibilidade; **nomes de campos, tabelas, enums, migrações e parâmetros numéricos são candidatos**, não um schema final. Não há autorização para modificar `starz/`, `persistent_data/`, migrations, testes executáveis, frontend, CI, PR, merge ou deploy.
 
 ## 1. Autoridade e arquitetura existente (`IMPLEMENTED`)
 
@@ -28,9 +28,9 @@
 5. **Estado estelar**: projeto, estrela origem e Stargrave têm vínculo de identidade exclusivo em um registro persistente separado dos hulls e das projeções procedurais.
 6. **Observabilidade**: relatório derivado somente de resultados do servidor; visibilidade por jogador, sem consultas arbitrárias ao adversário.
 
-## 3. Contrato candidato de missão `ATTACK` (`PROPOSED`)
+## 3. Contrato de missão `ATTACK` (`APPROVED` como arquitetura; campos candidatos)
 
-**Estrutura conceitual da extensão de `UniverseOrder.payload`:**
+**Estrutura conceitual de extensão de `UniverseOrder.payload` (nomes candidatos, não definitivos):**
 
 | Campo candidato | Semântica | Fallback seguro |
 |---|---|---|
@@ -41,7 +41,7 @@
 | `mission_chain_id` | Identifica despacho, eventual sucessora e retorno, permitindo deduplicação | Ordens antigas seguem sua semântica existente |
 | `originating_order_id` | Referência da ordem de onde surgiu a sucessora, quando houver | Nenhuma para despacho inicial |
 
-**Os nomes são proposições, não campos aprovados.** A futura implementação deve validar enum, pesquisa, propriedade, participantes, antifraude e compatibilidade. Não reescrever ordens antigas para preenchê-los, nem tratar payload não reconhecido como autorização para ataque especial.
+**`APPROVED`: versionar e validar a configuração da ordem, com fallback legado. Os nomes são candidatos e não campos executáveis definitivamente aprovados.** A futura implementação deve validar enum, pesquisa, propriedade, participantes, antifraude e compatibilidade. Não reescrever ordens antigas para preenchê-los, nem tratar payload não reconhecido como autorização para ataque especial.
 
 ### 3.1. Política de versão e upgrade
 
@@ -50,7 +50,7 @@
 - **Decisão `OPEN`:** como revalidar perda posterior de acesso científico (se esse caso puder existir); não introduzir revogação de pesquisa sem contrato.
 - Novo recurso deve ser ativado por capability/versão em ambiente de teste depois de aprovação, com rollback que não perde ordens em trânsito.
 
-## 4. Máquina de estados da interdição (`PROPOSED`)
+## 4. Máquina de estados da interdição (`APPROVED` como contrato; sem implementação)
 
 ```mermaid
 flowchart TD
@@ -77,7 +77,7 @@ flowchart TD
 
 **Riscos e mitigação:** loops de chegada no mesmo timestamp, ordem sucessora duplicada, consumo de reserva no retorno, estratégia de atacante esgotar várias plataformas, corrida entre captura de planeta e interdição. Invariantes: ETA estritamente posterior, uma sucessora por evento, zero duplicação de munição/combustível e ordenação estável de eventos.
 
-## 5. Odyssey/EW — contrato de presença e snapshots (`PROPOSED`)
+## 5. Odyssey/EW — contrato de presença e snapshots (`APPROVED` como design)
 
 ### 5.1. Emissão
 
@@ -91,7 +91,7 @@ flowchart TD
 
 O servidor pode conhecer estados privados para **resolver** uma contestação, mas o cliente só vê estados autorizados. Um relatório adversário não revela ID da Odyssey emissora, sua pesquisa exata ou posição de unidades ocultas, exceto se observáveis por uma mecânica legítima.
 
-## 6. Escudos e perfis — contrato de um disparo (`PROPOSED`)
+## 6. Escudos e perfis — contrato de um disparo (`APPROVED` como design)
 
 **Sequência:**
 1. Seleção do alvo pretendido pela doutrina autoritativa e eventual degradação EW.
@@ -103,7 +103,7 @@ O servidor pode conhecer estados privados para **resolver** uma contestação, m
 
 **Cuidado:** `plans` calcula hoje projeção aproximada, mas `apply_hits` aplica dano efetivo. Antes de implementar novo redirecionamento/antiescudo, definir um modelo de projeção coerente para o **caminho novo**, preservando resultados legados de `balanced+standard` para saves antigos. Os coeficientes antiescudo 1,25× e 0,80× permanecem candidatos, não números aprovados.
 
-## 7. Modelo persistente estelar — entidades conceituais (`PROPOSED`)
+## 7. Modelo persistente estelar — obrigações aprovadas e entidades candidatas
 
 | Entidade candidata | Chave lógica | Dados que devem existir | Unicidade/integridade |
 |---|---|---|---|
@@ -113,7 +113,7 @@ O servidor pode conhecer estados privados para **resolver** uma contestação, m
 | **StellarBinding** (ou relação equivalente) | Identidade da estrela + unidade/projeto atual | Tipo de vínculo, ownership, estado de compromisso, transição final | **Uma única relação ativa para cada estrela e para cada Stargrave** |
 | **StellarOperation** | ID de operação e token de deduplicação | Extração, estabilização, transporte de módulo, viagem, ataque, destroço e resgate | Eventos únicos, concluídos uma vez, sem itens duplicados |
 
-**Não é obrigatório criar cinco tabelas:** a implementação deverá escolher o menor modelo normalizado que imponha restrições transacionais reais. Evitar JSONB desconectado sem unicidade para a fonte estelar. Tabelas/constraints e colunas exatas só poderão ser definidas em migração autorizada.
+**`APPROVED` como obrigação:** garantir unicidade/atomicidade e vínculos duráveis. **Não é obrigatório criar cinco tabelas:** a implementação deverá escolher o menor modelo normalizado que imponha restrições transacionais reais. Evitar JSONB desconectado sem unicidade para a fonte estelar. Tabelas/constraints e colunas exatas só poderão ser definidas em migração autorizada.
 
 ### 7.1. Identidade da estrela
 
@@ -142,7 +142,7 @@ flowchart TD
 - O projeto não deve permitir `operational` antes de conclusão de todos os requisitos do comissionamento armado, incluindo `stellar_armaments`. Ciência de captura sozinha não concede meganave armada.
 - Hipótese de uma Stargrave operacional **ou em obra** por império é parâmetro de ensaio; não fixar índice de unicidade imperial definitivo antes de decisão quantitativa.
 
-## 8. Stargrave e combate (`PROPOSED`)
+## 8. Stargrave e combate (`APPROVED` como arquitetura, detalhes `OPEN`)
 
 ### 8.1. Estados propostos
 
@@ -201,11 +201,11 @@ Nenhum nome de migration, coluna, constraint ou endpoint fica aprovado por este 
 | **T15** | Tick offline, replay e reset de sessão | Exatamente uma resolução por evento, resultados estáveis e save preservado |
 | **T16** | Dados de inteligência adversária ocultos | Logs e UI não revelam nível tecnológico ou fonte de EW não observada |
 
-Os cenários **T01–T16** complementam os **B01–B18** da [C3.0-D04](combat-balance-plan.md), mas **não foram executados**.
+Os cenários **T01–T16** estão **`APPROVED` como critérios de aceitação técnica**; complementam B01–B18 da [C3.0-D04](combat-balance-plan.md). **Nenhum foi executado**.
 
-## 11. Decisões D07 que exigem aprovação
+## 11. Registro das oito decisões D07 aprovadas
 
-| ID | Recomendação `PROPOSED` |
+| ID | Contrato `APPROVED` como design |
 |---|---|
 | **D07-A** | `UniverseOrder.payload` de ataque versionado, com doutrina/perfil congelados no despacho e fallback legado |
 | **D07-B** | Interdição atômica por ordem sucessora B e marca por cadeia, sem mudança retroativa da ordem A |
@@ -216,7 +216,7 @@ Os cenários **T01–T16** complementam os **B01–B18** da [C3.0-D04](combat-ba
 | **D07-G** | Alvo excepcional móvel via adaptador de combate, sem criar `hull` fictício ou alterar missões legadas |
 | **D07-H** | Estratégia de migração/versionamento/rollback e cenários T01–T16 antes de qualquer rollout |
 
-**`OPEN` mesmo se D07-A–H forem aprovadas:** schema e nomes finais, origem de identidade em sistemas binários, coeficientes EW/escudos/interdição, duração e custos, propriedade de destroços, possibilidade de resgate, efeitos estelares no planeta, limites por império e testes quantitativos.
+**`APPROVED`:** D07-A–H e os cenários T01–T16 foram aprovados expressamente em 08/11/2026. **`OPEN` após a aprovação:** schema e nomes finais, origem de identidade em sistemas binários, coeficientes EW/escudos/interdição, duração e custos, propriedade de destroços, possibilidade de resgate, efeitos estelares no planeta, limites por império e testes quantitativos.
 
 ## 12. Referências e separação de responsabilidades
 
@@ -225,4 +225,4 @@ Os cenários **T01–T16** complementam os **B01–B18** da [C3.0-D04](combat-ba
 - [Motor de combate](../../starz/persistent/combat.py), [missões](../../starz/persistent/service.py), [inteligência](../../starz/persistent/intelligence.py), [modelo de ordens](../../starz/db/models.py).
 - [Política de QA local](../development/local-qa.md), [instruções de repositório](../../AGENTS.md).
 
-**Aprovação de documentação não equivale a autorização para implementar gameplay.**
+**Aprovação expressa dos contratos de design e dos cenários de aceitação não equivale a autorização de implementação.** Nenhum YAML, código, banco, teste de gameplay, PR ou merge foi modificado por esta aprovação.
