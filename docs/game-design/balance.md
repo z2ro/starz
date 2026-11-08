@@ -1,0 +1,66 @@
+# Balanceamento e validação de design
+
+## 1. Propósito e escopo
+
+Separar fórmulas executadas de hipóteses do [GDD §10 e §13](STARZ-GDD-v1.md). Registrar necessidades de simulação, sem alterar valores ou executar uma nova campanha de testes.
+
+## 2. Comportamento implementado
+
+`IMPLEMENTED`: custos, taxas e perfis vêm dos catálogos efetivos. Fórmulas compartilhadas geram previews e execução. Os números abaixo são observações do código atual, não novo balanceamento aprovado.
+
+| Sistema | Fórmula atual / limite |
+|---|---|
+| Pesquisa | `ceil(base_cost × 1.7^nível)` e `ceil(base_work × 1.55^nível)` no catálogo atual; coeficientes pertencem à definição. |
+| Efeitos | Bônus por nível × nível + marcos atingidos uma vez; efeitos somados entre tecnologias. |
+| Construção | `ceil(base_cost × 1.6^n)`; `max(1, ceil(base_duration × 1.4^n / (1 + build_speed)))`; `n` inclui obras pendentes. |
+| Produção de instalações | Base × `n × 1.08^(n−1)` × bônus aplicáveis × cobertura, limitada pelos insumos. |
+| Ciência | Taxa-base dos centros/laboratórios × `(1 + research)` × cobertura; capacidade agregada por domínio. |
+| Slots de frotas em trânsito | `2 + fleet_slots_bonus`. |
+| Limite colonial | `1 + int(colonies_bonus)`, considerando missões coloniais comprometidas. |
+| Carga | Soma das capacidades dos hulls × `(1 + cargo_bonus)`. |
+| Saque | Vitória atacante, até 25% de cada estoque, limitado pela carga sobrevivente. |
+
+`IMPLEMENTED`: no cálculo-base de viagem, combustível é `ceil(massa × distância × fator_do_modo / (eficiência_da_propulsão × densidade_do_combustível))`. Tempo-base: `max(1, round(distância × 180 × fator_do_modo / fator_de_velocidade))`. Movimento persistente usa modo `NORMAL`, aplica bônus `speed` ao ETA e `fuel` ao consumo; `TRANSPORT` também considera `transport`. Expedição acrescenta tempo próprio. Reserva de retorno é real; estes valores não vêm da geometria do mapa.
+
+## 3. Decisões aprovadas
+
+`APPROVED`: preservar regras existentes enquanto mudanças não forem autorizadas; Stargrave sem vitória automática e derrotável por preparação convencional e contramedidas. Nenhum dos novos parâmetros abaixo recebe aprovação por constar no GDD.
+
+## 4. Mudanças propostas
+
+| Hipótese do GDD | Estado | O que falta comprovar |
+|---|---|---|
+| Tier II em 1–3 dias; III em 4–10 dias; IV em 2–4 semanas; V em 4–8 semanas. | `PROPOSED` | Caminho completo, custos, infraestrutura e padrões de atividade. |
+| Primeira Stargrave em 8–12 semanas. | `PROPOSED` | Cadeia estelar ainda não implementada. |
+| Stargrave equivalente a 30–50 Dominion em indústria, mais captura/infraestrutura. | `PROPOSED` | Custo econômico completo e contrajogo. |
+| Preparação de bombardeio em 12–24 h. | `PROPOSED` | Janela de resposta, interrupção e impacto offline. |
+| Uma Stargrave operacional por império. | `PROPOSED` | Definição de operacional, perda, reconstrução e armazenamento. |
+
+Não são prazos forçados, promessas de duração ou limites atuais do servidor.
+
+## 5. Dependências
+
+Todas as especificações: [pesquisa](research.md), [economia](economy.md), [naves](ships.md), [defesas](defenses.md), [combate](combat.md), [Stargrave](stargrave.md) e [progressão](progression.md). Valores visuais não são dados de balanceamento militar.
+
+## 6. Regras e contratos de validação
+
+`IMPLEMENTED`: catálogos validam identificadores, referências, dependências cíclicas e efeitos suportados. Há testes do motor; isso não equivale a um simulador econômico-militar de longo prazo.
+
+`PROPOSED`: `BalanceScenario` deve reutilizar as regras autoritativas, com estado inicial, seed, ações e resultados reproduzíveis. Comparar custos de construção, operação, reposição e logística, sem uma segunda implementação de fórmulas. Design e executáveis permanecem separados; uma tabela Markdown não altera YAML.
+
+## 7. Considerações de balanceamento
+
+`PROPOSED`: cenários industrial, científico, militar, equilibrado, corrida estelar, coalizão de contramedidas, inatividade, recuperação e sistema sem estrela. Medir retorno de investimento, tempo até desbloqueios, gargalos, eficiência militar por custo e concentração de poder. Coalizões militares e sistemas sem estrela ainda exigem mecânicas próprias antes de testes de execução real.
+
+Critérios a validar: nenhuma rota impossível, recuperação econômica viável, especializações competitivas e derrota possível da Stargrave com custo e preparo proporcionais. Os limiares quantitativos desses critérios estão `OPEN`.
+
+## 8. Questões abertas
+
+`OPEN`: metas de ritmo por perfil de jogador, pressão de manutenção, valor de contramedidas, recuperação pós-guerra e estabilidade de economia multi-colônia. Os coeficientes atuais precisam de medição antes de qualquer promessa de equilíbrio. Não preencher lacunas com equivalências de arte ou nomes de classes.
+
+## 9. Fontes
+
+- [GDD §10–13](STARZ-GDD-v1.md), [progressão executável](../../starz/progression.py).
+- [Simulação econômica](../../starz/simulation.py), [produção](../../starz/economy.py), [viagem](../../starz/travel.py).
+- [Dispatch e retorno persistentes](../../starz/persistent/service.py), [combate](../../starz/persistent/combat.py), [validação de catálogos](../../starz/data.py).
+- [Catálogos persistentes](../../persistent_data), [catálogos base](../../game_data).
