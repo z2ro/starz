@@ -22,6 +22,7 @@ from ..defenses import defense_quote
 from .combat import resolve_battle, resolve_missiles, local_defenders
 from .intelligence import gather_intelligence, intel_view, known_threat
 from .combat_rules import interdiction_delay
+from . import stellar_delivery
 from ..travel import preview_travel
 
 
@@ -217,7 +218,7 @@ class PersistentStore(Store):
         require(doctrine=='balanced' or level(s,'fire_control_doctrine')>=1,'Requer Doutrina de Controle de Tiro.')
         require(profile=='standard' or level(s,'shield_disruption')>=1,'Requer Ruptura de Escudos.')
         combat={'version':1,'doctrine':doctrine,'weapon_profile':profile,'experiment':'intermediate'}
-        require(mission in {'MOVE','REINFORCE','SURVEY','COLONIZE','TRANSPORT','ATTACK','ESPIONAGE','RECON','EXPEDITION'},'Missão desconhecida.')
+        require(mission in {'MOVE','REINFORCE','SURVEY','COLONIZE','TRANSPORT','ATTACK','ESPIONAGE','RECON','EXPEDITION','STELLAR_DELIVERY'},'Missão desconhecida.')
         require(0 < len(ids) <= 100 and len(ids)==len(set(ids)), 'Selecione de 1 a 100 naves únicas.')
         ships=[next((x for x in s.ships if x['id']==id),None) for id in ids]
         require(all(ships), 'Nave não pertence ao jogador.')
@@ -231,6 +232,11 @@ class PersistentStore(Store):
             star=session.get(m.StarSystem,target.system_id)
             require(star.universe_id==empire.universe_id,'Destino fora do universo.')
             tx,ty=star.x,star.y
+        stellar_shipment=None
+        if mission=='STELLAR_DELIVERY':
+            require(target is None,'Remessa estelar usa projeto, não planeta fictício.')
+            stellar_shipment=stellar_delivery.shipment(session,empire,e,data)
+            tx,ty=stellar_shipment[1].x,stellar_shipment[1].y
         roles=[e.catalog.get('ships',x['hull_id']).role for x in ships]
         if mission in {'SURVEY','EXPEDITION','ESPIONAGE','RECON'}: require(any(r in {'exploration','science'} for r in roles),'Missão exige exploradora ou nave científica.')
         if mission=='RECON': require(target and target.empire_id and target.empire_id!=empire.id,'Reconhecimento exige planeta de outro jogador.')
@@ -242,6 +248,7 @@ class PersistentStore(Store):
         source=next((p for p in s.planets if (p['x'],p['y'])==origin and p['id']==s.planet_id),None)
         if source:
             require(all(ship['id'] in {v['id'] for v in local_defenders(e,source['id'])} for ship in ships),'Selecione o planeta onde estas naves estão destacadas.')
+        if mission=='STELLAR_DELIVERY':require(source is not None,'Carregue módulos em colônia própria selecionada.')
         if mission=='COLONIZE':
             require(source is not None,'Colonização deve partir do mundo próprio selecionado.')
             require(any(r in {'exploration','logistics'} for r in roles),'Colonização exige exploração ou logística.')
@@ -258,6 +265,9 @@ class PersistentStore(Store):
         source=next((p for p in s.planets if (p['x'],p['y'])==origin and p['id']==s.planet_id),None)
         old=[f for f in s.fleets if set(ids)&set(f['ship_ids'])]
         capacity=sum(e.catalog.get('ships',x['hull_id']).cargo_capacity for x in ships)*(1+effect(e.catalog,s,'cargo'))
+        if stellar_shipment:
+            require(stellar_shipment[4]<=capacity,'Módulos e suprimentos excedem a capacidade real da frota.')
+            require(all(s.stocks.get(r,0)>=n for r,n in stellar_shipment[3].items()),'Estoque insuficiente para a remessa estelar.')
         if mission=='EXPEDITION': require(capacity>0, 'Expedição exige capacidade de carga; use uma Odyssey científica.')
         if data.get('preview'):
             return {'eta_seconds':duration,'fuel_id':ships[0]['fuel_id'],'fuel_cost':fuel,'launch_fuel':2*fuel if source or mission not in {'MOVE','REINFORCE','COLONIZE'} else fuel,'cargo_capacity':capacity,'ship_count':len(ships),'origin':list(origin),'destination':[tx,ty],'departure_at':s.last_updated,'arrival_at':s.last_updated+duration,'return_at':None if mission in {'MOVE','REINFORCE','COLONIZE'} else s.last_updated+2*duration,'combat':combat,'escort_enabled':level(s,'fleet_coordination')>=1,'threat':known_threat(s,str(target.id),s.last_updated) if target else {'status':'UNKNOWN','message':'Sem alvo planetário.'}}
@@ -275,6 +285,8 @@ class PersistentStore(Store):
             capacity=sum(e.catalog.get('ships',x['hull_id']).cargo_capacity for x in ships)*(1+effect(e.catalog,s,'cargo'))
             require(sum(cargo.values())<=capacity,'Capacidade de carga insuficiente.')
             e._pay(cargo)
+        if stellar_shipment:
+            cargo=stellar_shipment[3];e._pay(cargo)
         reserve= fuel if source else sum(f.get('fuel_reserve',0) for f in old)-fuel
         for f in old: f['ship_ids']=[id for id in f['ship_ids'] if id not in ids]
         s.fleets=[f for f in s.fleets if f['ship_ids']]
@@ -282,13 +294,21 @@ class PersistentStore(Store):
         f={'id':fid,'name':f'{mission} · {len(ids)} naves','ship_ids':ids,'x':origin[0],'y':origin[1],'destination_x':tx,'destination_y':ty,'status':'TRANSIT','mission':'SURVEY' if mission=='SURVEY' else 'COLONIZE' if mission=='COLONIZE' else 'MOVE','target_planet_index':data.get('planet_index') if mission=='COLONIZE' else None,'colonization_population':e.colonization_rules.population if mission=='COLONIZE' else None,'colonization_origin_planet_id':s.planet_id if mission=='COLONIZE' else None,'origin_planet_id':source['id'] if source else next((f.get('origin_planet_id') for f in old if f.get('origin_planet_id')),None),'fuel_reserve':reserve,'departure_at':now,'arrival_at':now+duration,'propulsion':ships[0]['propulsion_id'],'mode':'NORMAL','fuel_cost':fuel}
         s.fleets.append(f)
         s.universe.setdefault('fleet_planets',{})[fid]=None
-        session.add(m.UniverseOrder(universe_id=empire.universe_id,empire_id=empire.id,kind='mission',payload={'fleet_id':fid,'mission':mission,'target':str(target.id) if target else None,'cargo':cargo,'origin':list(origin),'origin_planet':source['id'] if source else next((f.get('origin_planet_id') for f in old if f.get('origin_planet_id')),None),'duration':duration,'fuel':fuel,'combat':combat,'chain_id':fid,'interdiction_applied':False},due_at=utc(now+duration),resolved=False))
+        order=m.UniverseOrder(id=uuid4(),universe_id=empire.universe_id,empire_id=empire.id,kind='mission',payload={'fleet_id':fid,'mission':mission,'target':str(target.id) if target else None,'cargo':cargo,'origin':list(origin),'origin_planet':source['id'] if source else next((f.get('origin_planet_id') for f in old if f.get('origin_planet_id')),None),'duration':duration,'fuel':fuel,'combat':combat,'chain_id':fid,'interdiction_applied':False,**({'project_id':str(stellar_shipment[0].id),'module_ids':[str(u.id) for u in stellar_shipment[2]]} if stellar_shipment else {})},due_at=utc(now+duration),resolved=False)
+        session.add(order)
+        if stellar_shipment:
+            self.save(session,empire.id,e);session.flush()
+            stellar_delivery.launch(session,stellar_shipment[0],stellar_shipment[2],fid,order.id)
         return f
 
     def resolve(self, session, order, engines):
         if getattr(order,'resolved',False):return
         e=engines.get(str(order.empire_id));p=order.payload
         if e is None:return
+        if order.kind in {'stellar_module','stellar_phase'}:
+            from .stellar import complete
+            complete(self,session,order,engines)
+            return
         if order.kind=='trade_delivery':
             for destination,cargo in p['deliveries']:
                 planet=session.get(m.Planet,UUID(destination))
@@ -336,6 +356,9 @@ class PersistentStore(Store):
                 battle.update(attacker_name=session.get(m.Empire,order.empire_id).name,defender_name=session.get(m.Empire,target.empire_id).name,attacker=str(order.empire_id),defender=str(target.empire_id),planet_name=target_engine.system().planet.name,coordinates=[target_engine.state.system_x,target_engine.state.system_y,target_engine.state.planet_index])
                 self.battle_report(e,battle,str(order.empire_id));self.battle_report(target_engine,battle,str(target.empire_id))
                 p=deepcopy(p);p['cargo']=battle['loot']
+        elif mission=='STELLAR_DELIVERY':
+            stellar_delivery.deliver(session,order,e)
+            p={**deepcopy(p),'cargo':{},'module_ids':[]}
         elif mission=='EXPEDITION':
             reward=ceil(20*(1+effect(self.catalog,e.state,'expedition'))*(1+sum(self.catalog.get('ships',s['hull_id']).science_bonus for s in ships)))
             capacity=sum(self.catalog.get('ships',s['hull_id']).cargo_capacity for s in ships)*(1+effect(self.catalog,e.state,'cargo'))
@@ -343,6 +366,7 @@ class PersistentStore(Store):
             p=deepcopy(p);p['cargo']={'raw_ore':reward,'volatiles':reward/2}
             self.report(e,'Expedição coletou amostras; entrega no retorno.')
         elif mission=='RETURN':
+            if p.get('module_ids'):stellar_delivery.return_modules(session,order,p.get('origin_planet'))
             destination=next((world for world in e.state.planets if world['id']==p['origin_planet']),None) if p.get('origin_planet') else next((world for world in e.state.planets if [world['x'],world['y']]==p['origin']),None)
             if destination:
                 stocks=e.state.stocks_by_planet[destination['id']]

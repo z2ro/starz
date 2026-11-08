@@ -31,3 +31,13 @@ Evidência: `.qa/runs/starz3-p2-combat/unit-final.log` (31 testes); `.qa/runs/st
 ## Pendências funcionais delimitadas
 
 P3–P6 continuam em implementação. Espaço profundo depende de presença/âncora e combate suportados pelo servidor; não será falsificado como alvo planetário. Extinção de império não existe como estado autoritativo; offline não habilita custódia órfã. Direitos especiais de terceiros neutros e os contratos civis não aprovados permanecem fora das operações habilitadas.
+
+## P3 — captura, módulos e construção
+
+`IMPLEMENTED` / `TESTED`: migration aditiva `d05e00000001`, fonte estelar canônica `uuid5(system_uuid, 'star:0')`, exclusividade por estrela, projetos e módulos identificados, cinco etapas por ordens do reconciliador atual. A origem só perde o astro ao concluir Estabilização; planetas e coordenadas são mantidos. Reserva rejeita sistema desconhecido, natal, habitado ou com colonização comprometida. O overlay autoritativo bloqueia colonização durante compromisso/ausência e só é exposto no mapa para sistemas conhecidos.
+
+Fabricação consome `refined_alloy`/`components` na colônia, exige pesquisa e indústria efetiva; módulo pronto ocupa 50 unidades de carga EXPERIMENTAIS. `STELLAR_DELIVERY` reutiliza frotas, combustível, capacidade, ETA, retorno e recall. Cada módulo tem uma identidade, origem e estado; entrega/reentrada não duplica carga. Fases consomem módulos reais entregues; `stellar_armaments` é exigida no comissionamento. Unidade excepcional tem identidade própria, cinco subsistemas e estoque derivado de suprimentos físicos; não foi criado hull.
+
+Perfil `experimental-stellar-v1`: módulo custa 200 ligas + 100 componentes; trabalho 600 dividido pela indústria efetiva; fase dura 600 s. Esses valores servem a execução/ensaios, não são balanceamento final. Cancelamento pré-compromisso libera reserva; após entregar/consumir módulos, cancelamento genérico é recusado em vez de fabricar reembolso.
+
+Evidência: seis testes CPU; sete integrações PostgreSQL (`.qa/runs/starz3-p3-db/` e `.qa/runs/starz3-p3-commission/`). A primeira execução encontrou dois erros da mesma causa: autoflush de fase 5 antes do status `commissioned`; corrigida a escrita conjunta e reexecutados os dois casos, ambos PASS. Cinco casos não afetados já haviam passado. Jornadas incluem frota real de entrega, retirada no momento aprovado, fonte única, replay, recall de módulos e comissionamento único. Downgrade recusa apagar registros estelares/ordens pendentes; apenas schema estelar vazio pode ser revertido. Não houve migração do ambiente do responsável.

@@ -45,6 +45,7 @@ class GameState:
     campaign: dict[str, Any] | None = None
     universe: dict[str, Any] | None = None
     defenses: dict = field(default_factory=dict)
+    stellar_states: dict[str, dict] = field(default_factory=dict)
     science_global: dict | None = None
     research_rate_global: float | None = None
     planet_last_updated: float | None = None
@@ -201,6 +202,9 @@ class Engine:
     def colonization_status(self, x: int, y: int, planet_index: int) -> dict[str, Any]:
         if self.knowledge_level(x, y) != 'SURVEYED':
             return {'eligible': False, 'reason': 'Requer levantamento do sistema.'}
+        stellar=self.state.stellar_states.get(f'{x}:{y}',{})
+        if stellar.get('reserved') or stellar.get('present') is False:
+            return {'eligible':False,'reason':'Sistema comprometido por operação estelar ou sem estrela disponível.'}
         system = generate_system(self.state.seed, x, y, self.catalog)
         if not 0 <= planet_index < len(system.planets):
             return {'eligible': False, 'reason': 'Planeta inexistente.'}

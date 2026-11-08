@@ -105,3 +105,14 @@ A [C3.0-D08](combat-stellar-disposition.md) está `APPROVED` como design e estab
 **`NOT IMPLEMENTED`:** todo o gameplay novo; nenhum teste, simulação ou nova migração foi realizado.
 
 Fontes: [Registro Combat 3.0](combat-3-decisions.md), [C3.0-D03](combat-countermeasures.md), [C3.0-D05](combat-integration.md), [Research 3.0](research-3.md), [Stargrave](stargrave.md), [órgão de missões](../../starz/persistent/service.py), [ordens](../../starz/db/models.py).
+
+## 9. Fechamentos expressos durante a implementação STARZ 3.0 (08/11/2026)
+
+O responsável autorizou explicitamente, por respostas contextuais nesta tarefa:
+
+- **`APPROVED` — montagem/retirada:** montagem no sistema de captura; módulos enviados fisicamente de colônia própria; retirada da estrela somente ao concluir Estabilização.
+- **`APPROVED` — tiro dirigido:** subsistema escolhido no despacho, exigindo reconhecimento confirmado e vigente da Stargrave; dano convencional continua permitido sem reconhecimento. Contenção só é elegível depois de zerar o escudo e danificar um módulo externo. Proteções reais continuam aplicáveis.
+- **`APPROVED` — bombardeio:** reutilizar o dano estratégico a defesas/instalações, preservando `civil_district`; preparação visível segundo a matriz experimental D08; guerra e superioridade orbital verificadas no início e no fim; cancelar se armamento, controle ou contenção forem incapacitados; uma operação ativa por Stargrave; não apagar planeta, colônia ou conta.
+- **`APPROVED` — energia operacional:** reserva persistente da estrela cativa, regeneração e custos experimentais limitados, piso protegido de contenção e consumo compartilhado entre escudos, viagem e disparo. Unidade selada não regenera energia militar.
+
+Esses fechamentos não aprovam valores finais. Estado de implementação/testes consta no [registro executável](../development/starz-3-implementation.md). Não representam soberania implícita, suporte de combate em espaço profundo ou extinção de império.

@@ -96,7 +96,7 @@ class Mission(BaseModel):
     model_config={'extra':'forbid'}
     planet_id: UUID | None = None
     ship_ids:list[str]=Field(min_length=1,max_length=100)
-    mission:Literal['MOVE','SURVEY','COLONIZE','TRANSPORT','ATTACK','ESPIONAGE','EXPEDITION','RECON','REINFORCE']
+    mission:Literal['MOVE','SURVEY','COLONIZE','TRANSPORT','ATTACK','ESPIONAGE','EXPEDITION','RECON','REINFORCE','STELLAR_DELIVERY']
     target_planet_id:UUID | None=None
     x:int=Field(default=0,ge=-100,le=100)
     y:int=Field(default=0,ge=-100,le=100)
@@ -104,6 +104,8 @@ class Mission(BaseModel):
     cargo:dict[str,float]=Field(default_factory=dict,max_length=10)
     doctrine:Literal['balanced','interception','rupture']='balanced'
     weapon_profile:Literal['standard','anti_shield']='standard'
+    stellar_project_id:UUID | None=None
+    module_ids:list[UUID]=Field(default_factory=list,max_length=50)
 
 
 def perform(request,call,planet_id=None):
@@ -228,3 +230,55 @@ class DefenseMode(BaseModel):
 def defense_mode(body:DefenseMode,request:Request):
     from ..defenses import set_platform_mode
     return perform(request,lambda session,empire,e:set_platform_mode(e,str(body.unit_id),body.mode),body.planet_id)
+
+
+class StellarReserve(BaseModel):
+    model_config={'extra':'forbid'}
+    planet_id:UUID | None=None
+    x:int=Field(ge=-100,le=100)
+    y:int=Field(ge=-100,le=100)
+    idempotency_key:UUID
+
+
+class StellarManufacture(BaseModel):
+    model_config={'extra':'forbid'}
+    planet_id:UUID | None=None
+    kind:Literal['containment','shielding','control','propulsion','weapons']
+    idempotency_key:UUID
+
+
+class StellarPhase(BaseModel):
+    model_config={'extra':'forbid'}
+    planet_id:UUID | None=None
+    project_id:UUID
+    idempotency_key:UUID
+
+
+@router.get('/api/universe/stellar')
+def stellar_status(request:Request,planet_id:UUID | None=None):
+    from .stellar import snapshot
+    return perform(request,lambda session,empire,e:snapshot(session,empire,e),planet_id)
+
+
+@router.post('/api/universe/stellar/reserve')
+def stellar_reserve(body:StellarReserve,request:Request):
+    from .stellar import reserve
+    return perform(request,lambda session,empire,e:reserve(session,empire,e,body.x,body.y,str(body.idempotency_key)),body.planet_id)
+
+
+@router.post('/api/universe/stellar/module')
+def stellar_manufacture(body:StellarManufacture,request:Request):
+    from .stellar import manufacture
+    return perform(request,lambda session,empire,e:manufacture(session,empire,e,body.kind,str(body.idempotency_key)),body.planet_id)
+
+
+@router.post('/api/universe/stellar/phase')
+def stellar_phase(body:StellarPhase,request:Request):
+    from .stellar import start_phase
+    return perform(request,lambda session,empire,e:start_phase(session,empire,e,str(body.project_id),str(body.idempotency_key)),body.planet_id)
+
+
+@router.post('/api/universe/stellar/cancel')
+def stellar_cancel(body:StellarPhase,request:Request):
+    from .stellar import cancel_project
+    return perform(request,lambda session,empire,e:cancel_project(session,empire,e,str(body.project_id),str(body.idempotency_key)),body.planet_id)

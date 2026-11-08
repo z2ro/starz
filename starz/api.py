@@ -216,7 +216,7 @@ def galaxy_snapshot(engine, center: tuple[int, int], radius: int):
                     })
                 item.update({
                     'id': system.id, 'name': system.name,
-                    'star': {'stellar_class': system.star.stellar_class, 'luminosity': system.star.luminosity, 'activity': system.star.activity},
+                    'star': {'stellar_class': system.star.stellar_class, 'luminosity': system.star.luminosity, 'activity': system.star.activity, **engine.state.stellar_states.get(f'{x}:{y}',{})},
                     'planet': {'name': system.planet.name, 'gravity': system.planet.gravity, 'temperature': system.planet.temperature, 'water': system.planet.water, 'radiation': system.planet.radiation},
                     'planets': planets,
                 })

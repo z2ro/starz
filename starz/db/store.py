@@ -177,6 +177,10 @@ def load(session: Session, empire: m.Empire, planet_id=None, catalog: Catalog | 
     progress = session.get(m.EmpireProgress, empire.id)
     state.universe = deepcopy(progress.payload) if progress else None
     if progress:
+        for source, origin in session.execute(select(m.StellarSource, m.StarSystem).join(m.StarSystem, m.StarSystem.id == m.StellarSource.origin_system_id).where(m.StellarSource.universe_id == empire.universe_id)):
+            reserved = session.scalar(select(m.StellarProject.id).where(m.StellarProject.source_id == source.id, m.StellarProject.status != 'cancelled')) is not None
+            state.stellar_states[f'{origin.x}:{origin.y}'] = {'canonical_star_id': str(source.id), 'present': source.removed_at is None, 'reserved': reserved, 'lifecycle': 'absent' if source.removed_at is not None else 'reserved' if reserved else 'available'}
+    if progress:
         missions = {row.payload.get('fleet_id'): row.payload.get('mission') for row in rows(m.UniverseOrder) if row.kind == 'mission' and not row.resolved}
         for fleet in state.fleets:
             fleet['operation'] = missions.get(fleet['id'], fleet['mission'])
