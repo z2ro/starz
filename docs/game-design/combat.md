@@ -44,7 +44,7 @@ A [C3.0-D05](combat-integration.md) reúne conflitos de seleção/dano, configur
 
 ## 4.6. Destino após derrota — D08 e D09
 
-`APPROVED`: [C3.0-D08](combat-stellar-disposition.md) define núcleo selado sem autodestruição, custódia contestável e reconstrução/repatriação/descomissionamento como destinos mutuamente exclusivos, com elegibilidade inicial de estrela única. A matriz D08-F é **experimental, sem valores finais**. `PROPOSED`: [C3.0-D09](combat-stellar-custody.md) detalha contratos de claims, disputa, fluxo material, concorrência e cenários técnicos T17–T32. **Não implementado**.
+`APPROVED`: [C3.0-D08](combat-stellar-disposition.md) define núcleo selado sem autodestruição, custódia contestável e reconstrução/repatriação/descomissionamento como destinos mutuamente exclusivos, com elegibilidade inicial de estrela única. A matriz D08-F é **experimental, sem valores finais**. `APPROVED` como design: [C3.0-D09](combat-stellar-custody.md) detalha contratos de claims, disputa, fluxo material, concorrência e critérios técnicos T17–T32, **não executados**. `PROPOSED`: [C3.0-D10](combat-custody-adjudication.md) refina controle militar, adjudicação de claims e critérios T33–T48. **Não implementado**.
 
 ## 5. Dependências
 
