@@ -169,7 +169,7 @@ As setas indicam caminhos **conceituais**; recuperação de `damaged` e `incapac
 
 ### 8.4. Decisão posterior C3.0-D08: destino estelar (`APPROVED`)
 
-A [C3.0-D08-A–H](combat-stellar-disposition.md) fechou a direção funcional antes `OPEN`: ao ser derrotada, Stargrave mantém núcleo seguro em destroço, custódia depende de reivindicação e controle militar e os três destinos exclusivos são **reconstrução**, **repatriação física** ou **relíquia selada**. Captura inicial restringe-se a estrela única. A matriz numérica D08-F foi aprovada **somente para ensaios**. A [C3.0-D09](combat-stellar-custody.md) propõe transações/fluxos de custódia e testes T17–T32, mas esses detalhes estão **`PROPOSED`**.
+A [C3.0-D08-A–H](combat-stellar-disposition.md) fechou a direção funcional antes `OPEN`: ao ser derrotada, Stargrave mantém núcleo seguro em destroço, custódia depende de reivindicação e controle militar e os três destinos exclusivos são **reconstrução**, **repatriação física** ou **relíquia selada**. Captura inicial restringe-se a estrela única. A matriz numérica D08-F foi aprovada **somente para ensaios**. A [C3.0-D09](combat-stellar-custody.md) aprova como design transações/fluxos de custódia e critérios T17–T32, **não executados**. A [C3.0-D10](combat-custody-adjudication.md) permanece `PROPOSED` para regras de controle regional, disputa de claims, schema e T33–T48.
 
 Essa decisão posterior prevalece sobre descrições históricas de destino totalmente `OPEN` nesta D07, sem aprovar nomes de schema, custódia diplomática ou parâmetros finais.
 
