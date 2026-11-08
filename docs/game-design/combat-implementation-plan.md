@@ -1,6 +1,6 @@
 # STARZ — C3.0-D12: proposta de schema mínimo e plano de implementação
 
-**Estado:** `PROPOSED` — documentação técnica para decisão, não implementada.  
+**Estado:** `PROPOSED` — documentação técnica para decisão, não implementada. **P0: diagnóstico documental parcial publicado**, sem testes executados; ver [inventário e bloqueios reais de P0](../development/starz-3-p0-baseline.md).  
 **Base:** [C3.0-D01–D11 aprovadas](combat-3-decisions.md), incluindo [D11](combat-custody-transfer.md), [R3.0-D01](research-3.md) e as partes aprovadas da [D06](combat-operational-closures.md).  
 **Nova decisão de escopo do responsável (08/11/2026):** **não é necessário preservar compatibilidade ou migrar saves legados de desenvolvimento**; o STARZ ainda está em desenvolvimento. Essa dispensa **não** autoriza eliminar identidades científicas/hulls já aprovadas, corromper estado em execução, apagar dados reais ou resetar ambientes compartilhados sem permissão específica.  
 **Objetivo:** sair da expansão indefinida de propostas e entrar em um **plano implementável, sequenciado e verificável**. Não aprova por si só alterações de gameplay, migration, deploy, PR ou merge.
