@@ -1,8 +1,8 @@
 # STARZ — C3.0-D05: integração técnica e registro de decisões
 
-**Estado:** `PROPOSED` — somente design; não autoriza implementação ou migração.  
+**Estado:** `APPROVED` como contrato de arquitetura e plano futuro (08/11/2026); **não implementado**. Questões ainda sem escolha definida continuam `OPEN`. Ver [registro consolidado](combat-3-decisions.md).  
 **Branch de referência:** `experiment/persistent-universe`.  
-**Autoridade:** [C3.0-D01 — formação e escolta](combat-formations.md) está `APPROVED` como design. [C3.0-D02 — targeting](combat-targeting.md), [C3.0-D03 — contramedidas](combat-countermeasures.md) e [C3.0-D04 — balanceamento](combat-balance-plan.md) continuam `PROPOSED`.  
+**Autoridade:** [C3.0-D01 — formação](combat-formations.md), [C3.0-D02 — targeting](combat-targeting.md) e [C3.0-D03 — contramedidas](combat-countermeasures.md) estão `APPROVED` como design; [C3.0-D04 — balanceamento](combat-balance-plan.md) está aprovado como plano sem execução.  
 **Risco da alteração atual:** baixo, documental. Nenhum comportamento executável ou dado persistido é modificado.
 
 ## 1. Objetivo
@@ -27,7 +27,7 @@ Conectar capacidades de Research 3.0 ao resolvedor de combate, às ordens persis
 
 **Diferença importante:** `plans` usa projeção aproximada para escolher candidatos e `apply_hits` aplica absorção real. Não presumir que a projeção atual é um simulador exato de escudos planetários, casco ou overkill. Também não modificar essa semântica para a doutrina Equilibrada sem um requisito explícito.
 
-## 3. Pipeline de integração candidato (`PROPOSED`)
+## 3. Pipeline de integração aprovado como arquitetura (`APPROVED`)
 
 ```mermaid
 flowchart TD
@@ -120,7 +120,7 @@ A tabela **não** cria schema. Não alterar `EmpireProgress`, `UniverseOrder`, `
 | **INT-07** | Não há estrela capturada/subsistemas de Stargrave executáveis | Não representar Stargrave por hull legado nem produzir simulação numérica falsa; modelo persistente separado |
 | **INT-08** | O relatório de batalha pode revelar atributos não confirmados | Exibir eventos observáveis e resultado do próprio império; privacidade de tecnologia/estoque inimigo deve ser explicitamente validada |
 
-## 7. Sequência incremental sugerida — não autorizada para codificação
+## 7. Sequência incremental aprovada como planejamento — não autorizada para codificação
 
 | Etapa | Escopo futuro | Dependências | Risco de implementação |
 |---|---|---|---|
@@ -133,9 +133,9 @@ A tabela **não** cria schema. Não alterar `EmpireProgress`, `UniverseOrder`, `
 
 Nenhuma dessas etapas foi autorizada como tarefa executável. Seleção de testes local por risco segue [política de QA](../development/local-qa.md); não criar GitHub Actions ou usar CI como substituto de validação local.
 
-## 8. Registro de decisões aguardando aprovação
+## 8. Registro de decisões aprovadas e abertas
 
-### C3.0-D02: A–G `PROPOSED`
+### C3.0-D02: A–G `APPROVED`
 - **A:** Interceptação prioriza `light`, fallback Equilibrada.
 - **B:** Ruptura prioriza `capital > medium > light`, sem bônus de dano.
 - **C:** manter ranking determinístico legado dentro da classe; Equilibrada compatível.
@@ -144,7 +144,7 @@ Nenhuma dessas etapas foi autorizada como tarefa executável. Seleção de teste
 - **F:** informação privada não deve ser inferida da seleção de alvos da batalha.
 - **G:** preservar salvas simultâneas, munição, relatório e replay.
 
-### C3.0-D03: A–G `PROPOSED`
+### C3.0-D03: A–G `APPROVED`
 - **A:** interferência contesta prioridade especializada sem negar disparos.
 - **B:** reduzir qualidade somente de novas observações, mantendo 0–3/expiração.
 - **C:** antiescudo opcional por frota com desvantagem contra casco.
@@ -153,18 +153,18 @@ Nenhuma dessas etapas foi autorizada como tarefa executável. Seleção de teste
 - **F:** vulnerabilidade convencional de Stargrave e subsistemas degradáveis.
 - **G:** simultaneidade, segurança, sigilo, idempotência e logs.
 
-### C3.0-D05: novas perguntas `OPEN`
-- **INT-A:** a doutrina Ruptura também prioriza estruturas de defesa `capital`?
-- **INT-B:** qual entidade real emite guerra eletrônica: hull existente, instalação, módulo ou operação?
-- **INT-C:** o perfil antiescudo fica na ordem de ataque ou configura-se como política reutilizável da frota?
-- **INT-D:** interdição atua no lançamento, entrada regional ou chegada? Qual máximo de adiamentos?
-- **INT-E:** a política defensiva da guarnição permanece Equilibrada ou há escolha explícita do proprietário?
+### C3.0-D05: INT-A/C/E definidas; INT-B/D `OPEN`
+- **INT-A (`APPROVED`):** sim, estruturas defensivas atualmente classificadas como `capital` continuam elegíveis ao foco Ruptura. Medir o efeito em balanceamento.
+- **INT-B (`OPEN`):** qual entidade real emite guerra eletrônica: hull existente, instalação, módulo ou operação? Nenhuma alternativa escolhida.
+- **INT-C (`APPROVED`):** perfil antiescudo opcional da frota capturado no despacho da ordem `ATTACK`, sem escolha por salva.
+- **INT-D (`OPEN`):** interdição atua no lançamento, entrada regional ou chegada? Qual máximo de adiamentos? Nenhuma alternativa escolhida.
+- **INT-E (`APPROVED`):** guarnição usa Equilibrada na primeira versão; escoltas cooperam conforme C3.0-D01.
 
-**Aprovações da D01 não podem ser anuladas por escolher uma opção aqui.** O restante continua `OPEN`, não `IMPLEMENTED`.
+**Aprovações das C3.0-D01 a D05 não autorizam implementar.** INT-B/D, fórmulas, schemas, parâmetros e modelo persistente da Stargrave continuam `OPEN`, não `IMPLEMENTED`.
 
 ## 9. Critérios de saída para implementação futura
 
-- D02 e D03 aprovadas nominalmente; perguntas INT-A–E decididas.
+- D02 e D03 `APPROVED` como design; INT-A/C/E decididas; INT-B/D ainda precisam de definição expressa.
 - Contrato de persistência de doutrina, consumo antiescudo e interdição formalizado, versionado e compatível.
 - Testes planejados para legado byte/semanticamente equivalente, escolta por salva, escudos de bateria, munição, ownership, replay offline e sigilo de relatórios.
 - Para Stargrave, requisitos de modelo persistente, vínculo único à estrela, subsistemas e recuperação definidos antes de testes de dano.
