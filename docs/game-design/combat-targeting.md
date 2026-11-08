@@ -117,6 +117,10 @@ Na ofensiva, formar o grupo real da ordem `ATTACK`. Na defesa, todas as naves do
 
 `PROPOSED`: [C3.0-D03 — guerra eletrônica, antiescudos, interdição e contenção estelar](combat-countermeasures.md) considera esta C3.0-D02 como **hipótese**, não como regra aprovada. A interferência só poderá degradar uma priorização especializada para o comportamento Equilibrada após aprovação conjunta dos contratos relevantes. Nenhum algoritmo desta D02 foi implementado ou validado por teste de aplicação.
 
+## 8.2. Matriz de cenários posterior
+
+`PROPOSED`: os casos B01–B10 e B18 da [C3.0-D04](combat-balance-plan.md) buscam medir custo, desempate, classes, redirecionamento, munição e regressão de saves. Eles **não** aprovam o ranking ou a persistência desta C3.0-D02 e não constituem testes executados.
+
 ## 9. Decisões pendentes — C3.0-D02
 
 | ID | Decisão proposta para aprovação |
