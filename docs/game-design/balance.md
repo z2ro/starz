@@ -50,6 +50,12 @@ A [C3.0-D06-A–H](combat-operational-closures.md) foi aprovada como **design**,
 
 Não há dados de eficácia ou regressão executados. [C3.0-D07](combat-technical-contracts.md) aprovou como critérios de aceitação técnica os 16 cenários T01–T16, que complementam B01–B18, **sem execução**. Custos, duração, consumo, HP, alcance, blindagem e efeitos planetários continuam `OPEN`.
 
+## 4.3. Matriz experimental C3.0-D08 aprovada como método
+
+`APPROVED` apenas como metodologia: [C3.0-D08-F/G](combat-stellar-disposition.md) compara três cenários (conservador/intermediário/elevado) de antiescudo e casco, atraso de interdição, preparação de ataque estelar, rendimento de salvamento e janela de estabilização. **Nenhum número é constante aprovada** e **nenhuma simulação foi executada**. A recuperação segura, os três destinos e a ausência de autodestruição são **`APPROVED` como design**, não resultados medidos.
+
+`PROPOSED`: [C3.0-D09](combat-stellar-custody.md) adiciona contratos T17–T32 para claims, reconstrução, repatriação, relíquia selada e idempotência. Custos, limiares de equilíbrio, penalidades, percentuais e duração final permanecem `OPEN`.
+
 ## 5. Dependências
 
 Todas as especificações: [pesquisa](research.md), [economia](economy.md), [naves](ships.md), [defesas](defenses.md), [combate](combat.md), [Stargrave](stargrave.md) e [progressão](progression.md). Valores visuais não são dados de balanceamento militar.
