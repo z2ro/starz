@@ -46,7 +46,7 @@ A aprovação desses requisitos não aprova custos, duração, dano, limites ope
 
 `APPROVED`: subsistemas Contenção, Propulsão, Armamentos, Escudos e Controle podem perder capacidades; destroços não movem nem atacam e preservam o vínculo com a estrela até resolução segura. Derrota não apaga planetas, IDs ou coordenadas nem explode automaticamente a estrela.
 
-`PROPOSED`: [C3.0-D07](combat-technical-contracts.md) apresenta fonte estelar, projeto, unidade excepcional, unicidade transacional e ordem de transições. **Ainda não aprovado:** esquema executável, fórmula de dano, estados exatos, destino físico da estrela, recuperação/reparo e efeitos no sistema. A meta de **uma Stargrave em obra ou operacional por império** é limite inicial sujeito a simulação, não hard cap final.
+`APPROVED` como contrato técnico de design: [C3.0-D07](combat-technical-contracts.md) exige fonte estelar, projeto, unidade excepcional, unicidade transacional, máquina de estados e vínculos exclusivos. **Ainda não definido/implementado:** schema executável, fórmulas de dano, nomes finais de estados, destino físico da estrela, recuperação/reparo e efeitos no sistema. A meta de **uma Stargrave em obra ou operacional por império** é limite inicial sujeito a simulação, não hard cap final.
 
 ## 5. Dependências
 
