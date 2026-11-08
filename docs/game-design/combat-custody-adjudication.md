@@ -1,6 +1,6 @@
 # STARZ — C3.0-D10: adjudicação de custódia e contratos de consistência
 
-**Estado:** `PROPOSED` — ainda não aprovado, não implementado e não testado.  
+**Estado:** `APPROVED` como **design técnico** em 08/11/2026; decisões D10-A–H e critérios T33–T48 aprovados expressamente. **Não implementado; testes não executados.**  
 **Autoridade:** [C3.0-D08 A–H](combat-stellar-disposition.md), [C3.0-D09 A–H e T17–T32](combat-stellar-custody.md), [C3.0-D07 A–H](combat-technical-contracts.md).  
 **Propósito:** decidir quem pode reivindicar um núcleo selado, o que acontece quando o controle militar muda, como evitar claims e destinos concorrentes e que invariantes o schema deverá impor.  
 **Fora do escopo:** implementação de gameplay, migrations, endpoints, frontend, regras numéricas finais, alianças ainda não existentes, PR, merge ou deploy.
@@ -11,7 +11,7 @@ A D09 **aprovou** que propriedade histórica, controle militar, custódia e dest
 
 **Diretriz geral proposta:** iniciar um claim **não concede posse**, e nenhum desempate por ID/horário pode converter automaticamente uma disputa militar legítima em propriedade. `claim_pending` é expectativa revogável/contestável, não titularidade; `in_custody` é compromisso persistente obtido após validação de presença e ausência de contestação elegível.
 
-## 2. D10-A — controle local sem soberania fictícia (`PROPOSED`)
+## 2. D10-A — controle local sem soberania fictícia (`APPROVED` como design)
 
 **Recomendação:** derivar elegibilidade de reivindicação de **unidades militares reais presentes na localização atual do destroço**, não de dono do sistema por inferência, nome do mapa, proximidade visual ou vitória histórica.
 
@@ -23,7 +23,7 @@ A D09 **aprovou** que propriedade histórica, controle militar, custódia e dest
 
 **`OPEN`:** definição técnica de `free_space_location` e como modelar recuperação de destroço fora de planeta; tratamento de terceiros não hostis e tratados. Não criar essas mecânicas por presunção.
 
-## 3. D10-B — elegibilidade e precedência de claims (`PROPOSED`)
+## 3. D10-B — elegibilidade e precedência de claims (`APPROVED` como design)
 
 **Proposta para primeira versão:** permitir **um claim ativo por núcleo**; múltiplos pedidos válidos simultâneos competem por **reserva transacional**, mas a reserva apenas inicia a operação. Um rival que apareça com força militar válida pode **contestar e suspender** o claim.
 
@@ -35,7 +35,7 @@ A D09 **aprovou** que propriedade histórica, controle militar, custódia e dest
 
 **`OPEN`:** comportamento exato de claims suspensos (retomar ou reiniciar), necessidade de operações de guerra específicas para contestar, limitações de neutralidade.
 
-## 4. D10-C — contestação e resolução sem microgerenciamento (`PROPOSED`)
+## 4. D10-C — contestação e resolução sem microgerenciamento (`APPROVED` como design)
 
 - Um claim tem três resultados semânticos: **concluído**, **interrompido/contestável**, **rejeitado**; não há resolução por sorte ou clique repetido. Estados e enums finais ficam sujeitos ao schema.
 - Contestação depende de **presença militar combatível e regras já válidas de hostilidade**, não de um contador fictício de influência.
@@ -46,7 +46,7 @@ A D09 **aprovou** que propriedade histórica, controle militar, custódia e dest
 
 **Teste-chave:** dois impérios com claims sucessivos não podem produzir dois custodians, duas recompensas nem duas operações de destino válidas.
 
-## 5. D10-D — custódia confirmada e perda subsequente de controle (`PROPOSED`)
+## 5. D10-D — custódia confirmada e perda subsequente de controle (`APPROVED` como design)
 
 **Recomendação:** distinguir **custódia já confirmada** de **claim pendente**.
 
@@ -57,7 +57,7 @@ A D09 **aprovou** que propriedade histórica, controle militar, custódia e dest
 
 **`OPEN`:** se e como permitir transferência coercitiva de custódia após tomada da região, cessão consensual, perda de império e domínio neutro. Requer decisão separada, para evitar objetos irrecuperáveis.
 
-## 6. D10-E — contrato mínimo de persistência e unicidade (`PROPOSED`)
+## 6. D10-E — contrato mínimo de persistência e unicidade (`APPROVED` como arquitetura; nomes candidatos)
 
 Usar o PostgreSQL autoritativo existente; entidades conceituais aprovadas em D07 são fronteiras, **não** obrigação de criar exatamente cinco tabelas.
 
@@ -81,7 +81,7 @@ Usar o PostgreSQL autoritativo existente; entidades conceituais aprovadas em D07
 
 **`OPEN`:** nomenclatura, índices e tabelas reais, modo de lock, fronteiras do ledger e tratamento de serialização/isolamento conforme o código PostgreSQL atual; é obrigatório validá-los antes de migrations.
 
-## 7. D10-F — evento de liquidação e fluxos de recuperação (`PROPOSED`)
+## 7. D10-F — evento de liquidação e fluxos de recuperação (`APPROVED` como design)
 
 Propor **um evento de domínio atômico por mudança de custódia/destino**, idempotente ao reprocessar `settle` ou worker offline.
 
@@ -104,9 +104,9 @@ flowchart TD
 - Ordens de núcleo em trânsito também precisam de idempotência e prevenção de dois destinos concorrentes; um evento de falha não teleporta a estrela.
 - Não usar `UniverseOrder` com conteúdo arbitrário sem validar compatibilidade: adaptar a contratos versionados de missão/operacionalização da D07, sem gravar duplicadamente resultados entre `payload` e tabelas de custódia.
 
-## 8. D10-G — testes adicionais de adversarialidade (`PROPOSED`)
+## 8. D10-G — critérios técnicos de adversarialidade (`APPROVED` como QA futuro)
 
-Amplia os casos **T01–T32** aprovados como QA documental, **sem executar testes**.
+Amplia os casos **T01–T32** aprovados como QA documental. Os casos **T33–T48 também estão `APPROVED` como critérios de aceitação**, **sem testes executados**.
 
 | ID | Situação adversarial | Resultado obrigatório |
 |---|---|---|
@@ -127,9 +127,9 @@ Amplia os casos **T01–T32** aprovados como QA documental, **sem executar teste
 | **T47** | UI adversária consulta operação de custódia privada | Não divulgar credenciais, pesquisas ou estado reservado não autorizado |
 | **T48** | Undo/rollback de migração com operação pendente | Não perder vínculo, destino, ledger nem ordens comprometidas |
 
-## 9. D10-H — portas de decisão antes da implementação (`PROPOSED`)
+## 9. D10-H — portas de decisão antes da implementação (`APPROVED` como planejamento)
 
-**Gate de design:** aprovar ou revisar D10-A–G; decidir como se prova controle militar em planeta versus espaço livre e como reivindicar núcleo cuja custódia foi obtida por outro império. Não deixar esses detalhes para um `if` improvisado.
+**Gate de design:** D10-A–G estão `APPROVED` como design; permanece necessário definir localização autoritativa em espaço livre e transferência de custódia previamente confirmada. Ver [C3.0-D11](combat-custody-transfer.md) (`PROPOSED`). Não deixar esses detalhes para um `if` improvisado.
 
 **Gate de dados:** identificar chave canônica de estrela no gerador de sistemas de estrela única; escolher agregados mínimos, chaves, índices/constraints e tipos reais; garantir leitura de saves sem entidades novas.
 
@@ -141,9 +141,9 @@ Amplia os casos **T01–T32** aprovados como QA documental, **sem executar teste
 
 Nenhuma dessas atividades executáveis está autorizada apenas por esta D10.
 
-## 10. Decisões D10 para deliberação
+## 10. Registro das decisões D10 aprovadas
 
-| ID | Decisão sugerida, **`PROPOSED`** |
+| ID | Decisão **`APPROVED` como design** |
 |---|---|
 | **D10-A** | Controle militar é presença autoritativa real no local; vitória histórica/mapa não basta |
 | **D10-B** | Um claim ativo por núcleo; reserva transacional é disputa temporária, não propriedade |
@@ -154,7 +154,11 @@ Nenhuma dessas atividades executáveis está autorizada apenas por esta D10.
 | **D10-G** | Cenários adversariais T33–T48 como critérios de QA técnico |
 | **D10-H** | Gates de schema, transação, UI e QA antes de qualquer implementação |
 
-**`OPEN` após eventual aprovação:** tratamento de regiões em espaço livre, transferência de custódia por conquista/cessão, impérios extintos, aliados/neutros, limites temporais/numéricos, custódia de relíquia e destinação planetária após reinstalação. Esses são problemas reais a fechar, não permissões implícitas para inventar regras no código.
+**`APPROVED`** como design: D10-A–H e T33–T48, **sem implementação nem execução**. **`OPEN` após aprovação:** tratamento de regiões em espaço livre, transferência de custódia por conquista/cessão, impérios extintos, aliados/neutros, limites temporais/numéricos, custódia de relíquia e destinação planetária após reinstalação. Esses são problemas reais a fechar, não permissões implícitas para inventar regras no código.
+
+## 10.1. Proposta posterior — transferência de custódia
+
+A [C3.0-D11](combat-custody-transfer.md) está **`PROPOSED`** e busca fechar as lacunas que não foram escolhidas pela D10: transferência legítima de custódia já confirmada, cessão consensual, império extinto, espaço livre e neutralidade. As regras **D10-A–H e T33–T48** estão aprovadas; **D11 não está automaticamente aprovada**.
 
 ## 11. Referências
 
@@ -162,4 +166,4 @@ Nenhuma dessas atividades executáveis está autorizada apenas por esta D10.
 - [Stargrave](stargrave.md), [combate](combat.md), [balanceamento](balance.md), [catálogo de design](README.md).
 - [Modelo PostgreSQL](../../starz/db/models.py), [ordens/missões](../../starz/persistent/service.py), [motor de combate](../../starz/persistent/combat.py).
 
-**Estado final: `PROPOSED`, sem alterações de gameplay.**
+**Estado final: `APPROVED` como design técnico; T33–T48 aprovados como critérios futuros, não executados.** Schema/nomes definitivos, custos, prazos, transferência de custódia por conquista/cessão e espaço livre continuam `OPEN`; ver [C3.0-D11](combat-custody-transfer.md), `PROPOSED`. Nenhum gameplay foi alterado.
