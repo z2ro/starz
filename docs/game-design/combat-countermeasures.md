@@ -1,6 +1,6 @@
 # STARZ — C3.0-D03: guerra eletrônica, ruptura e contramedidas estelares
 
-**Estado:** `PROPOSED` — contrato funcional para revisão, **não aprovado nem implementado**.  
+**Estado:** `APPROVED` como design em 08/11/2026 para C3-D03-A–G. **Não implementado**; emissor, fórmulas, geometria, schema e números seguem `OPEN`. Ver [registro consolidado](combat-3-decisions.md).  
 **Branch de referência:** `experiment/persistent-universe`.  
 **Autoridade aprovada:** [R3.0-D01](research-3.md) fixa os IDs e os propósitos de `electronic_warfare`, `shield_disruption`, `spatial_interdiction` e `containment_warfare` (e as contramedidas no Tier IV). [C3.0-D01](combat-formations.md) fixa o redirecionamento por escolta e as três doutrinas.  
 **Propostas correlatas:** [C3.0-D02 — seleção de alvos](combat-targeting.md), [R3.0-D02 — capacidades](research-operational.md), [Stargrave](stargrave.md), [defesas](defenses.md).  
@@ -33,7 +33,7 @@ Esses fatos não demonstram que qualquer capacidade desta D03 esteja disponível
 ## 3. `electronic_warfare` — interferência eletrônica (Militar III)
 
 **Capacidade principal `APPROVED`:** interferir em sensores e aquisição de alvos.  
-**Contrato `PROPOSED`:** contestar a *precisão da escolha*, não desligar navios ou retirar unidades da batalha.
+**Contrato `APPROVED` como design:** contestar a *precisão da escolha*, não desligar navios ou retirar unidades da batalha.
 
 ### 3.1. Dois contextos, mesma descoberta
 
@@ -61,7 +61,7 @@ Esses fatos não demonstram que qualquer capacidade desta D03 esteja disponível
 ## 4. `shield_disruption` — perfil antiescudo (Militar IV)
 
 **Capacidade principal `APPROVED`:** combate especializado contra escudos energéticos.  
-**Contrato `PROPOSED`:** permitir **um perfil ofensivo de antiescudo por frota** quando a tecnologia estiver concluída. O perfil é independente da doutrina de *seleção* do alvo: Interceptação/Ruptura respondem a **quem** atacar; antiescudo responde a **como** o dano é aplicado.
+**Contrato `APPROVED` como design:** permitir **um perfil ofensivo de antiescudo por frota** quando a tecnologia estiver concluída. O perfil é independente da doutrina de *seleção* do alvo: Interceptação/Ruptura respondem a **quem** atacar; antiescudo responde a **como** o dano é aplicado.
 
 ### 4.1. Mecanismo mínimo
 
@@ -82,7 +82,7 @@ O contrato atual resolve `planetary_shield` antes do escudo naval. **`PROPOSED`:
 ## 5. `spatial_interdiction` — interdição operacional (Militar IV)
 
 **Capacidade principal `APPROVED`:** restringir operações estratégicas hostis de forma contestável.  
-**Contrato `PROPOSED`:** uma **zona regional de interdição** sustentada por unidade/instalação real e custo operacional, sem tratar interdição como disparo comum.
+**Contrato `APPROVED` como design:** uma **zona regional de interdição** sustentada por unidade/instalação real e custo operacional, sem tratar interdição como disparo comum.
 
 - O emissor tem identidade, proprietário, posição, estado, cobertura e janela de atividade.
 - A zona somente afeta **operações hostis elegíveis** que cruzem uma condição explícita de entrada, saída ou chegada; o caso exato de gatilho é `OPEN`.
@@ -97,7 +97,7 @@ O contrato atual resolve `planetary_shield` antes do escudo naval. **`PROPOSED`:
 ## 6. `containment_warfare` — ataques de contenção (Militar IV)
 
 **Capacidade principal `APPROVED`:** atingir subsistemas críticos de contenção estelar sem exigir tecnologia de construção da Stargrave.  
-**Contrato `PROPOSED`:** uma **opção de tiro dirigido** a subsistema **identificado e vulnerável**, sob condições de batalha e oportunidade. Não é um multiplicador global de dano.
+**Contrato `APPROVED` como design:** uma **opção de tiro dirigido** a subsistema **identificado e vulnerável**, sob condições de batalha e oportunidade. Não é um multiplicador global de dano.
 
 ### 6.1. Pré-condições
 
@@ -185,15 +185,15 @@ Não alterar seis salvas, saque, defesa planetária ou condição de vitória po
 
 ## 10.1. Critérios de avaliação posteriores
 
-`PROPOSED`: os casos B11–B18 da [C3.0-D04](combat-balance-plan.md) definem condições de observação, custo de oportunidade, interdição offline, vulnerabilidade convencional e subsistemas Stargrave. Não são resultados executáveis nem aprovação dos algoritmos desta C3.0-D03.
+`PROPOSED`: os casos B11–B18 da [C3.0-D04](combat-balance-plan.md) definem condições de observação, custo de oportunidade, interdição offline, vulnerabilidade convencional e subsistemas Stargrave. Não são resultados executáveis; os contratos funcionais A–G desta C3.0-D03 estão aprovados, mas não os valores de balanceamento.
 
 ## 10.2. Integração técnica pendente
 
-`PROPOSED`: a [C3.0-D05](combat-integration.md) preserva o estado C3-D03-A–G e registra a necessidade de definir emissor de interferência, política de perfil antiescudo, janela de interdição e modelo persistente da Stargrave antes de implementar. A documentação não autoriza desenvolvimento executável.
+`APPROVED` como design: a [C3.0-D05](combat-integration.md) consolida C3-D03-A–G aprovadas e registra a necessidade de definir emissor de interferência, janela de interdição e modelo persistente da Stargrave antes de implementar. A documentação não autoriza desenvolvimento executável.
 
-## 11. Decisões para aprovação posterior
+## 11. Decisões aprovadas — C3.0-D03
 
-| ID | Deliberação `PROPOSED` |
+| ID | Deliberação `APPROVED` (design) |
 |---|---|
 | **C3-D03-A** | Guerra eletrônica degrada a prioridade de alvos especializada para Equilibrada, sem reduzir o número de tiros ou apagar alvos |
 | **C3-D03-B** | Em reconhecimento, a tecnologia afeta somente observações **novas**, preservando 0–3, expiração e `counter_intelligence` |
@@ -203,7 +203,7 @@ Não alterar seis salvas, saque, defesa planetária ou condição de vitória po
 | **C3-D03-F** | Stargrave conserva vulnerabilidade convencional; dano degradável aos cinco subsistemas conceituais e interceptador de mísseis continua restrito |
 | **C3-D03-G** | Manter simultaneidade, autoridade, sigilo, idempotência e relatórios como invariantes; nenhum valor numérico aprovado |
 
-**`OPEN`**: emissor elegível de interferência; fórmula de contestação; perfil/penalidade antiescudo; raio e custos da interdição; momento exato de gatilho; modelo persistente de módulos; janelas de reação e bombardeio; custo de precisão; algoritmo C3.0-D02; interfaces. Todos requerem revisão separada antes de escrever código.
+**`APPROVED`**: C3-D03-A–G, incluindo o algoritmo funcional de targeting da C3.0-D02. **`OPEN`**: emissor elegível de interferência; fórmula de contestação; coeficientes e penalidade antiescudo; raio, custo e gatilho da interdição; modelo persistente de módulos; janelas de reação e bombardeio; custo de precisão; interfaces e nomes de campos. Nenhum código é autorizado por essa aprovação.
 
 ## 12. Referências
 
