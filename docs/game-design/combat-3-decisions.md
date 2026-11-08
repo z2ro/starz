@@ -1,7 +1,7 @@
 # STARZ — Combat 3.0: registro de aprovações
 
 **Decisão do responsável:** «aprovo tudo» (08/11/2026), emitida após apresentação da [C3.0-D05](combat-integration.md), das C3.0-D02/D03 pendentes e do [plano C3.0-D04](combat-balance-plan.md).  
-**Estado:** `APPROVED` **como design e planejamento** até [C3.0-D10 A–H](combat-custody-adjudication.md), incluindo C3.0-D06–D09. T01–T48 aprovados como critérios de QA técnico, não executados. [C3.0-D11](combat-custody-transfer.md) está `PROPOSED`. `NOT IMPLEMENTED` para novas mecânicas.  
+**Estado:** `APPROVED` **como design e planejamento** até [C3.0-D11 A–H](combat-custody-transfer.md), incluindo C3.0-D06–D10. T01–T64 aprovados como critérios de QA técnico, não executados. [C3.0-D12](combat-implementation-plan.md) está `PROPOSED`. **Saves legados descartáveis de desenvolvimento não requerem compatibilidade**; `NOT IMPLEMENTED` para novas mecânicas.  
 **Branch:** `experiment/persistent-universe`.  
 **Escopo:** registrar decisões concretas submetidas à aprovação. Não interpretar como licença para implementar gameplay, alterar YAML ou banco, iniciar testes de gameplay, criar PR ou realizar merge.
 
@@ -100,4 +100,12 @@ Permanecem `OPEN` nomes de tabelas/campos/enums, schema final, mecanismo de migr
 
 **`APPROVED` como design técnico:** [C3.0-D10-A–H](combat-custody-adjudication.md) — elegibilidade baseada em presença militar real, claim exclusivo como reserva temporária, suspensão diante de contestação, custódia confirmada não revogada retroativamente, constraints de estrela/núcleo, liquidação idempotente com ledger, cenários T33–T48 e gates de migração/UI/QA. Nenhum critério T33–T48 foi executado.
 
-**`OPEN`:** transferência de custódia previamente confirmada por conquista/cessão, regras de espaço profundo, neutralidade, extinção de impérios, titularidade de relíquias, tempo/custo final e schema real. A [C3.0-D11](combat-custody-transfer.md) é `PROPOSED` para as opções D11-A–H e T49–T64; a aprovação D10 não decide automaticamente essas lacunas.
+**`OPEN`:** transferência de custódia previamente confirmada por conquista/cessão, regras de espaço profundo, neutralidade, extinção de impérios, titularidade de relíquias, tempo/custo final e schema real. A [C3.0-D11](combat-custody-transfer.md) foi posteriormente `APPROVED` como design (D11-A–H e T49–T64). Valores quantitativos, schema físico, espaço profundo e contratos de extinção continuam `OPEN`.
+
+## 12. Aprovação explícita C3.0-D11 e política de desenvolvimento (08/11/2026)
+
+**`APPROVED` como design:** [C3.0-D11-A–H](combat-custody-transfer.md) — transferência coercitiva por nova reivindicação contestável; cessão voluntária com oferta/aceitação bilateral; inatividade não equivale a extinção; localização real do núcleo em órbita/espaço profundo; claims com janelas finitas sem autodestruição; histórico, unicidade e transação de custódia; critérios T49–T64 e gates de schema/QA. Nenhum teste foi executado.
+
+**Mudança de escopo explicitamente aceita:** o responsável **dispensou a compatibilidade com saves de desenvolvimento existentes**; o jogo está em desenvolvimento. Para futura implementação, não é necessário manter caminho de `backfill` ou payload legado **em ambiente isolado e comprovadamente descartável**. Esta dispensa não autoriza apagar dados de ambientes compartilhados, expor informações de usuários ou eliminar invariantes de integridade do novo estado persistente. A [C3.0-D12](combat-implementation-plan.md) está `PROPOSED` como schema limpo e ordem de implementação P0–P6.
+
+**`OPEN`:** schema final/entidades e migrações, elegibilidade de movimentação em espaço profundo, extinção de impérios, neutralidade, parâmetros quantitativos e contratos civis não aprovados em R3.0-D02. **Não houve gameplay, alteração de banco nem reset.**
