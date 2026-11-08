@@ -1,6 +1,6 @@
 # STARZ — Combat 3.0: doutrinas, formações e resolução de combate
 
-**Estado:** contrato geral `PROPOSED`; decisões de escolta e três doutrinas da [C3.0-D01](combat-formations.md) `APPROVED` em 08/11/2026; detalhes do seletor em [C3.0-D02](combat-targeting.md) `PROPOSED`. Nada implementado.  
+**Estado:** C3.0-D01–D03 `APPROVED` como design, D04 como plano de validação e D05 como arquitetura em 08/11/2026. Ver [registro consolidado](combat-3-decisions.md). Parâmetros ainda `OPEN`; nada implementado.  
 **Dependência:** [Research 3.0 — identidades aprovadas](research-3.md) e [contratos operacionais propostos](research-operational.md).
 
 ## 1. Objetivo
@@ -29,16 +29,16 @@ Tornar composição naval, reconhecimento, doutrina, escolta e contramedidas esc
 
 | Doutrina | Identidade aprovada | Algoritmo de prioridade |
 |---|---|---|
-| Equilibrada | Padrão, sem pesquisa específica | Fallback legado, detalhamento em [C3.0-D02](combat-targeting.md) (`PROPOSED`) |
-| Interceptação | Ameaças leves | Prioridade exata ainda `PROPOSED` |
-| Ruptura | Alvos pesados | Prioridade exata ainda `PROPOSED` |
+| Equilibrada | Padrão, sem pesquisa específica | Fallback legado, aprovado em [C3.0-D02](combat-targeting.md) como design |
+| Interceptação | Ameaças leves | Prioriza `light`, fallback Equilibrada, `APPROVED` como design |
+| Ruptura | Alvos pesados | `capital > medium > light`, `APPROVED` como design |
 
-**Não existe doutrina Proteção** no conjunto aprovado: cobertura decorre automaticamente de `fleet_coordination` e composição de frota. `fire_control_doctrine` habilita as alternativas de foco, sujeitas ao contrato de seleção. IDs executáveis de doutrina, ranking, custo de oportunidade e formato persistido não estão aprovados.
+**Não existe doutrina Proteção** no conjunto aprovado: cobertura decorre automaticamente de `fleet_coordination` e composição de frota. `fire_control_doctrine` habilita as alternativas de foco, sujeitas ao contrato de seleção. IDs executáveis, custo de oportunidade quantitativo e formato persistido exato seguem `OPEN`; ranking funcional foi aprovado.
 
 ## 4.1. Aprovação C3.0-D01 e detalhamento C3.0-D02
 
 - `APPROVED`: [C3.0-D01](combat-formations.md) registra proteção automática, redirecionamento real, papéis de Vanguard/Sentinel/Aegis, limite inicial de **um disparo por escolta/salva** sujeito a simulação, guarnição cooperativa e simultaneidade compatível com saves.
-- `PROPOSED`: [C3.0-D02 — doutrinas e seleção determinística](combat-targeting.md) especifica ordem de resolução, priorização de classes, fallback, seleção de alvos, telemetria e regras de sigilo. Os detalhes ainda precisam de aprovação e **não** autorizam implementação.
+- `APPROVED` como design: [C3.0-D02 — doutrinas e seleção determinística](combat-targeting.md) especifica ordem de resolução, prioridade por classe, fallback, seleção, telemetria e sigilo. Campos executáveis e números ainda `OPEN`; não autoriza implementação.
 
 ## 5. Formação e escolta
 
@@ -72,7 +72,7 @@ flowchart TD
 
 ## 6.1. Contrato C3.0-D03 em revisão
 
-`PROPOSED`: [C3.0-D03 — guerra eletrônica, ruptura e contramedidas estelares](combat-countermeasures.md) separa interferência de aquisição, perfil antiescudo e ataque dirigido a módulo. Não acrescenta um bônus universal de dano nem altera o papel aprovado de escoltas. `C3.0-D02` permanece `PROPOSED` e **não foi elevada a `APPROVED` por autorização genérica de continuidade**.
+`APPROVED` como design: [C3.0-D03 — guerra eletrônica, ruptura e contramedidas estelares](combat-countermeasures.md) separa interferência de aquisição, perfil antiescudo e ataque dirigido a módulo. Não acrescenta um bônus universal de dano nem altera o papel aprovado de escoltas. `C3.0-D02` foi elevada a `APPROVED` por aprovação expressa de 08/11/2026; parâmetros, schema e implementação continuam pendentes.
 
 ## 7. Guerra eletrônica e inteligência
 
@@ -91,11 +91,11 @@ flowchart TD
 
 ## 8.1. Validação futura e balanceamento
 
-`PROPOSED`: [C3.0-D04 — matriz de cenários](combat-balance-plan.md) estabelece comparações de custo industrial, escolta, guerra eletrônica, ruptura, interdição, Stargrave e reconciliação offline. Os baselines e métricas não representam funcionalidades executadas nem autorizam parâmetros de combate. Os detalhes da C3.0-D02 e C3.0-D03 ainda requerem aprovação explícita.
+`APPROVED` como plano de validação: [C3.0-D04 — matriz de cenários](combat-balance-plan.md) estabelece comparações de custo industrial, escolta, guerra eletrônica, ruptura, interdição, Stargrave e reconciliação offline. Os baselines e métricas não representam funcionalidades executadas nem autorizam parâmetros de combate. Os detalhes funcionais A–G da C3.0-D02/D03 estão aprovados; efeitos quantitativos e condições operacionais ainda `OPEN`.
 
 ## 8.2. Integração técnica
 
-`PROPOSED`: a [C3.0-D05](combat-integration.md) especifica pontos de integração do resolvedor, ordens persistentes, alvos pretendidos/efetivos, escudos, sigilo e interdição. Mantém C3.0-D02/D03 e decisões INT-A–E como questões abertas, sem autorizar gameplay.
+`APPROVED` como arquitetura: a [C3.0-D05](combat-integration.md) especifica pontos de integração do resolvedor, ordens persistentes, alvos pretendidos/efetivos, escudos, sigilo e interdição. Mantém INT-B e INT-D como questões abertas; C3.0-D02/D03 e INT-A/C/E foram aprovadas como design, sem autorizar gameplay.
 
 ## 9. Relatório e interface
 
@@ -116,9 +116,9 @@ A seleção de doutrina deve ser compacta e fazer parte da gestão de frota exis
 
 ## 11. Questões `OPEN`
 
-- As três doutrinas estão aprovadas; como calibrar as prioridades e resolver empates sem favoritismo? Ver [C3.0-D02](combat-targeting.md).
+- As três doutrinas e o desempate funcional estão aprovados; calibrar a eficácia e testar vieses de identificação ou overkill. Ver [C3.0-D02](combat-targeting.md).
 - Como selecionar entre alvos sob informação incompleta e empates sem viés indesejado?
-- Proteção deve redirecionar ataques, reduzir dano, ou ambos? Não decidir simultaneamente antes de comparar alternativas.
+- A C3.0-D01 aprovou redirecionamento real, sem redução percentual adicional nem escudo compartilhado; validar limite inicial de uma interceptação por escolta/salva.
 - Que função de combate mínima é necessária para cada uma das dez classes?
 - Como medir custo de oportunidade da ruptura de escudos?
 - Quando a janela de interdição afeta lançamento versus chegada e quais contramedidas a neutralizam?
