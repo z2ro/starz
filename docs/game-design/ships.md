@@ -31,6 +31,10 @@ Relacionar as classes existentes a seus efeitos reais e às funções propostas 
 
 `PROPOSED`: funções de classe do GDD conforme a última coluna; composição com sinergias e contramedidas que preservem utilidade das classes menores. Não representar `role: escort` ou `role: command` como proteção/comando já executado.
 
+## 4.1. Refinamento de formação
+
+`PROPOSED`: [C3.0-D01 — escolta e proteção](combat-formations.md) especifica um primeiro contrato de cobertura funcional para Vanguard, Sentinel e Aegis, com danos aplicados a unidades reais. **Não implementado**; não atribuir a Sentinel interceptação de mísseis estratégicos nem à Aegis compartilhamento automático de escudos.
+
 ## 5. Dependências
 
 [Pesquisa](research.md): desbloqueio de classes e bônus. [Economia](economy.md): materiais, tripulação e combustível. [Combate](combat.md): perfis, danos e perdas. [Defesas](defenses.md): confrontos locais. [Balanceamento](balance.md): eficiência por custo, não só tamanho visual.
