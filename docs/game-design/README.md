@@ -44,6 +44,7 @@ O estado aplica-se à afirmação identificada, não a todo o documento citado. 
 | [Combat 3.0 — C3.0-D10](combat-custody-adjudication.md) | `APPROVED` como design: controle militar, claims contestáveis e critérios T33–T48; sem implementação. |
 | [Combat 3.0 — C3.0-D11](combat-custody-transfer.md) | `APPROVED` como design: transferência por conquista, cessão bilateral, núcleo órfão e âncora espacial; T49–T64 aprovados e não executados. |
 | [Combat 3.0 — C3.0-D12](combat-implementation-plan.md) | `PROPOSED`: schema, plano P0–P6 e política de saves de desenvolvimento descartáveis, sem executar código. |
+| [Implementação STARZ 3.0 — P0](../development/starz-3-p0-baseline.md) | Diagnóstico documental parcial de backend, pesquisa, universo procedural, testes existentes e pendências reais de QA; sem implementação. |
 | [Combat 3.0 — Registro de decisões](combat-3-decisions.md) | Aprovações expressas C3.0-D01–D11; D12 `PROPOSED`, números/schema finais `OPEN`. |
 | [Economia](economy.md) | Estoques locais, cadeias, população, energia e logística. |
 | [Naves](ships.md) | Hulls, funções, composição e limites dos modelos visuais. |
