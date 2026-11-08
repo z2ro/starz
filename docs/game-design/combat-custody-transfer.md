@@ -1,6 +1,6 @@
 # STARZ — C3.0-D11: transferência legítima de custódia e localização de destroços
 
-**Estado:** `PROPOSED` — contrato de design para deliberação, **não aprovado, implementado ou testado**.  
+**Estado:** `APPROVED` como **contrato de design** (08/11/2026); **D11-A–H** e **T49–T64** aprovados expressamente. **Não implementado; critérios de QA não executados.**  
 **Base aprovada:** [C3.0-D10 A–H e T33–T48](combat-custody-adjudication.md), [C3.0-D09 A–H](combat-stellar-custody.md), [C3.0-D08 A–H](combat-stellar-disposition.md), [C3.0-D07](combat-technical-contracts.md).  
 **Objetivo:** fechar as lacunas de **transferência de custódia já confirmada**, localização física de destroços, extinção de impérios e proteção contra captura automática/infinita.  
 **Restrições:** não criar transferência de planeta por analogia, alianças inexistentes, soberania de sistema ou segunda fonte de verdade. Somente documentação; nenhum código, migration, YAML, teste executado, PR, merge ou deploy.
@@ -14,7 +14,7 @@
 - Destroço selado não se autodestrói por ausência de login, não produz energia/armas, não cria segundo astro.
 - Batalhas, ordens e planetas atuais **não** fornecem por si só controle de regiões de espaço profundo. A proposta não autoriza inventar isso silenciosamente.
 
-## 2. D11-A — transferência de custódia por conquista (`PROPOSED`)
+## 2. D11-A — transferência de custódia por conquista (`APPROVED` como design)
 
 **Escolha recomendada:** permitir transferência coercitiva **somente após uma nova operação de adjudicação**, iniciada por império militarmente habilitado no local, com uma janela contestável e revalidação no commit.
 
@@ -29,7 +29,7 @@
 
 **Trade-off:** recapturar a região pode interromper a transferência; a posse do núcleo não é um saque instantâneo. A ausência do antigo custodiante não impede para sempre uma transferência legítima, desde que o processo completo de contenda e as regras multiplayer sejam respeitados.
 
-## 3. D11-B — cessão voluntária, com aceitação bilateral (`PROPOSED`)
+## 3. D11-B — cessão voluntária, com aceitação bilateral (`APPROVED` como design)
 
 **Escolha recomendada:** aceitar cessão somente entre **dois impérios existentes e autenticados**, mediante oferta persistente e aceitação expressa no servidor.
 
@@ -42,7 +42,7 @@
 
 **Vantagem:** possibilita recuperação negociada sem exigir uma guerra artificial para transferir um destroço.
 
-## 4. D11-C — custodiante extinto ou indisponível (`PROPOSED`)
+## 4. D11-C — custodiante extinto ou indisponível (`APPROVED` como design)
 
 **Escolha recomendada:** distinguir **inatividade/offline** de **extinção autoritativa do império**.
 
@@ -52,7 +52,7 @@
 - Enquanto a transferência não ocorre, o núcleo selado permanece seguro e sem recursos gerados.
 - `OPEN`: STARZ deve definir o que significa extinção definitiva, suas regras de dados e recuperação de contas; se não existir mecanismo, **não habilitar** automaticamente essa via no rollout.
 
-## 5. D11-D — localização autoritativa do destroço (`PROPOSED`)
+## 5. D11-D — localização autoritativa do destroço (`APPROVED` como design)
 
 **Escolha recomendada:** localização como **âncora persistente de combate** com chave de universo/sistema e modalidade, sem usar coordenadas apenas visuais.
 
@@ -68,7 +68,7 @@
 - Um núcleo não é simultaneamente reivindicável em órbita, espaço profundo e trânsito.
 - Deslocamentos futuros do núcleo são operações reais, com vínculo e ETA, sem teleporte e sem gerar cópias.
 
-## 6. D11-E — arbitragem, janelas e proteção offline (`PROPOSED`)
+## 6. D11-E — arbitragem, janelas e proteção offline (`APPROVED` como design)
 
 **Escolha recomendada:** janela finita e explícita de disputa **sem cronômetro de autodestruição**, integrada ao reconciliador de eventos.
 
@@ -81,7 +81,7 @@
 
 **`OPEN`:** duração final, reabertura automática versus manual de claims, tratamento de contestantes neutros e limites de tentativas. Os parâmetros serão calibrados pela C3.0-D04/D08-F.
 
-## 7. D11-F — contrato de dados e transação de transferência (`PROPOSED`)
+## 7. D11-F — contrato de dados e transação de transferência (`APPROVED` como arquitetura conceitual)
 
 **Nenhuma tabela final aprovada aqui.** Campos/entidades abaixo são semânticos para desenho da migração futura.
 
@@ -102,7 +102,7 @@
 - Mudança de localização durante operação invalida ou pausa claims que dependiam da âncora anterior; nunca transfere posse sobre uma localização desatualizada.
 - Não persistir dois registros independentes que pretendam ser fonte de verdade da titularidade.
 
-## 8. D11-G — critérios técnicos adicionais (`PROPOSED`, não executados)
+## 8. D11-G — critérios técnicos adicionais (`APPROVED` como plano de QA, não executados)
 
 Complementam **T01–T48 já aprovados como critérios documentais**.
 
@@ -125,21 +125,21 @@ Complementam **T01–T48 já aprovados como critérios documentais**.
 | **T63** | Transferência para império de outro universo | Rejeitar por constraints de universo e ownership |
 | **T64** | Relatório adversário sobre cessão privada | Não revelar identidade/tecnologia não legitimamente conhecida |
 
-## 9. D11-H — critérios de saída antes de schema e gameplay (`PROPOSED`)
+## 9. D11-H — critérios de saída antes de schema e gameplay (`APPROVED` como planejamento)
 
-1. Aprovar ou revisar D11-A–G; confirmar necessidade de cessão bilateral, órbita/âncora e fluxo de império extinto.
+1. D11-A–G foram aprovados como design; validar futuramente contratos reais de cessão bilateral, órbita/âncora e eventual fluxo de império extinto antes de implementar.
 2. Projetar contratos de combate/movimento em espaço profundo **antes** de disponibilizar destroços disputáveis fora da órbita planetária. Não falsificar posição com um `target_planet_id` aleatório.
 3. Definir regras jurídicas de jogo (war status, neutralidade, extinção, controle regional e transferência entre impérios) que realmente existam no servidor, com lacunas explícitas.
 4. Escolher modelo mínimo de tabelas/constraints/versão com migração aditiva segura e rollback que preserve operações pendentes.
 5. Planejar observabilidade e UI compacta: mostrar ação contextual de reclamar, contestar, ceder ou executar destino só quando autorizada.
-6. Adicionar T49–T64 aos gates de QA após decisão expressa e autorização separada de execução.
+6. T49–T64 estão aprovados como critérios de QA **não executados**; sua implementação e execução ainda requerem autorização separada.
 7. Só depois parametrizar tempos/percentuais e comparar limites conservador, intermediário e elevado; não promover números hipotéticos de D08-F para produção.
 
 **Se houver desacordo entre proposta e modelo executável, preservar o estado autoritativo atual e registrar a lacuna.** Não criar serviços paralelos de posse, claims ou Stargrave.
 
-## 10. Decisões para aprovação
+## 10. Registro das decisões D11 aprovadas
 
-| ID | Proposta |
+| ID | Decisão `APPROVED` como design |
 |---|---|
 | **D11-A** | Transferência por conquista requer novo claim contestável e commit de custódia, nunca saque imediato |
 | **D11-B** | Cessão voluntária requer oferta e aceitação explícita de dois impérios, transacional |
@@ -150,7 +150,11 @@ Complementam **T01–T48 já aprovados como critérios documentais**.
 | **D11-G** | Cenários T49–T64 como critérios técnicos futuros, não executados |
 | **D11-H** | Gates de aprovação, localização, schema, segurança, UX e QA antes de implementar |
 
-**`OPEN`:** definição executável de espaço profundo, status de extinção de império, neutralidade/alianças/cessão, prazos quantitativos, custódia em território de terceiro, direito de resgate do proprietário histórico, propriedade da relíquia e colonização após repatriação. A D11 é uma recomendação, não uma decisão do responsável.
+**`APPROVED`:** D11-A–H e T49–T64 como contratos/QA futuros. **`OPEN`:** definição executável de espaço profundo, status autoritativo de extinção, neutralidade/alianças, prazos quantitativos, custódia de terceiros, resgate do proprietário histórico, propriedade da relíquia e colonização após repatriação. Nomes de enums, tabelas e campos não são definitivos.
+
+### Atualização de escopo — desenvolvimento sem saves legados
+
+O responsável dispensou retrocompatibilidade com **saves de desenvolvimento** enquanto o produto ainda não foi lançado. Isso **não** elimina as garantias de identidade, autoria, atomicidade, idempotência, exclusividade de estrela ou integridade **durante a execução**. Banco e ambientes compartilhados, contas e dados reais não ficam autorizados para limpeza por esta decisão. O plano seguinte de implementação e schema é a [C3.0-D12](combat-implementation-plan.md), **`PROPOSED`**, sem autorização de código.
 
 ## 11. Referências
 
@@ -158,4 +162,4 @@ Complementam **T01–T48 já aprovados como critérios documentais**.
 - [Registro de decisões](combat-3-decisions.md), [Stargrave](stargrave.md), [índice](README.md), [QA e balanceamento](combat-balance-plan.md).
 - [Modelos de dados](../../starz/db/models.py), [serviço persistente](../../starz/persistent/service.py), [motor de combate](../../starz/persistent/combat.py).
 
-**Não há implementação, migration, testes de gameplay, PR ou merge decorrentes desta proposta.**
+**Não há implementação, migration, testes de gameplay, PR ou merge decorrentes desta aprovação.** A dispensa de compatibilidade com **saves descartáveis de desenvolvimento**, aprovada posteriormente, está registrada no [plano D12](combat-implementation-plan.md) e no [índice](README.md); não autoriza apagar dados de ambientes compartilhados.
