@@ -10,6 +10,7 @@ from ..db.store import utc, epoch
 from ..data import DataValidationError
 from ..progression import level
 from ..universe import generate_system
+from .combat_rules import STELLAR_RULES
 
 # Experimental construction profile; not approved production balance.
 PROFILE = 'experimental-stellar-v1'
@@ -273,8 +274,8 @@ def complete(store, session, order, engines):
                         project_id=project.id, empire_id=empire.id, system_id=system.id, planet_id=None,
                         state='operational', stocks=dict(project.stocks), created_at=now,
                         payload={'profile': PROFILE, 'original_owner_id': str(empire.id),
-                                 'hp': 5000, 'shield': 2000,
-                                 'subsystems': {key: 1000 for key in MODULE_KINDS}}))
+                                 'hp': STELLAR_RULES['structural_hp'], 'shield': STELLAR_RULES['shield_capacity'],
+                                 'subsystems': {key: STELLAR_RULES['subsystem_hp'] for key in MODULE_KINDS}}))
             project.stocks, project.status = {}, 'commissioned'
     module.updated_at = now
     order.payload = {**order.payload, 'applied': True}
@@ -299,13 +300,22 @@ def snapshot(session, empire, engine):
                for module in session.scalars(select(m.StellarModule).where(
                    m.StellarModule.universe_id == empire.universe_id,
                    m.StellarModule.empire_id == empire.id).order_by(m.StellarModule.created_at, m.StellarModule.id))]
+    owned_units = list(session.scalars(select(m.StellarUnit).where(
+        m.StellarUnit.universe_id == empire.universe_id,
+        m.StellarUnit.empire_id == empire.id).order_by(m.StellarUnit.created_at, m.StellarUnit.id)))
+    if owned_units:
+        from .stargrave import settle_energy
+        for unit in owned_units:settle_energy(unit,engine.state.last_updated)
     units = [{'id': str(unit.id), 'source_id': str(unit.source_id), 'project_id': str(unit.project_id),
               'system_id': str(unit.system_id), 'planet_id': str(unit.planet_id) if unit.planet_id else None,
               'state': unit.state, 'payload': deepcopy(unit.payload), 'stocks': dict(unit.stocks)}
-             for unit in session.scalars(select(m.StellarUnit).where(
-                 m.StellarUnit.universe_id == empire.universe_id,
-                 m.StellarUnit.empire_id == empire.id).order_by(m.StellarUnit.created_at, m.StellarUnit.id))]
-    return {'projects': projects, 'modules': modules, 'units': units, 'profile': PROFILE,
+             for unit in owned_units]
+    contacts = [{'id':str(unit.id),'planet_id':str(unit.planet_id),'system_id':str(unit.system_id),
+                 'owner_id':str(unit.empire_id),'state':unit.state}
+                for unit in session.scalars(select(m.StellarUnit).join(m.Planet,m.Planet.id==m.StellarUnit.planet_id).where(
+                    m.StellarUnit.universe_id==empire.universe_id,m.Planet.empire_id==empire.id,
+                    m.StellarUnit.empire_id!=empire.id).order_by(m.StellarUnit.id))]
+    return {'projects': projects, 'modules': modules, 'units': units, 'contacts':contacts, 'profile': PROFILE,
             'experimental': True, 'module_cargo': MODULE_CARGO, 'module_cost': dict(MODULE_COST),
             'module_work': MODULE_WORK, 'phase_seconds': PHASE_SECONDS,
             'phases': [{'phase': index, 'module_kind': kind, 'research': list(gates)}

@@ -163,3 +163,7 @@ O responsável dispensou retrocompatibilidade com **saves de desenvolvimento** e
 - [Modelos de dados](../../starz/db/models.py), [serviço persistente](../../starz/persistent/service.py), [motor de combate](../../starz/persistent/combat.py).
 
 **Não há implementação, migration, testes de gameplay, PR ou merge decorrentes desta aprovação.** A dispensa de compatibilidade com **saves descartáveis de desenvolvimento**, aprovada posteriormente, está registrada no [plano D12](combat-implementation-plan.md) e no [índice](README.md); não autoriza apagar dados de ambientes compartilhados.
+
+## 12. Fechamento operacional inicial autorizado (implementação STARZ 3.0)
+
+`APPROVED`, resposta expressa do responsável em 08/11/2026: na entrega orbital inicial, exigir órbita de planeta próprio e naves militares locais; claims contestados encerram sem transferir custódia e permitem nova tentativa manual. Cessão bilateral só ocorre fora de guerra e não move o núcleo. Conquista de custódia exige uma nova janela e presença válida. Espaço profundo e extinção permanecem indisponíveis enquanto não houver contratos autoritativos correspondentes. Esse fechamento não fixa duração final das janelas ou custos.

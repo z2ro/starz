@@ -77,3 +77,36 @@ class StellarDelivery(unittest.TestCase):
             modules=[session.get(m.StellarModule,UUID(id)) for id in request['module_ids']]
             self.assertTrue(all(u.status=='ready' and u.project_id is None and u.fleet_id is None for u in modules))
             self.assertEqual(session.get(m.StellarProject,UUID(project['project_id'])).stocks,{})
+
+    def test_T10_two_empires_cannot_reserve_same_star_concurrently(self):
+        from concurrent.futures import ThreadPoolExecutor
+        store,now,a,b,project,request=self.prepare()
+        store.transaction(a,lambda session,emp,e:stellar.cancel_project(session,emp,e,project['project_id'],uuid4().hex))
+        store.run(b,lambda e:e.state.system_knowledge.update({f"{request['x']}:{request['y']}":now[0]}))
+        def reserve(actor):
+            try:
+                return store.transaction(actor,lambda session,emp,e:stellar.reserve(session,emp,e,request['x'],request['y'],uuid4().hex))
+            except DataValidationError:return None
+        with ThreadPoolExecutor(2) as pool:results=list(pool.map(reserve,[a,b]))
+        self.assertEqual(sum(result is not None for result in results),1)
+        with Session(self.db) as session:
+            projects=list(session.scalars(select(m.StellarProject).where(m.StellarProject.source_id==UUID(project['source_id']),m.StellarProject.status!='cancelled')))
+            self.assertEqual(len(projects),1)
+
+    def test_T11_colonization_and_reservation_are_atomic_competitors(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from starz.universe import generate_system,colonization_viability
+        store,now,a,b,project,request=self.prepare()
+        state=store.run(a,lambda e:e.state.to_dict())
+        with Session(self.db) as session:occupied={(s.x,s.y) for s in session.scalars(select(m.StarSystem))}
+        rules=next(iter(self.catalog.items['colonization'].values()))
+        x,y=next((state['system_x']+dx,state['system_y']+dy) for dx in range(-5,6) for dy in range(-5,6) if (state['system_x']+dx,state['system_y']+dy) not in occupied and colonization_viability(generate_system(state['seed'],state['system_x']+dx,state['system_y']+dy,self.catalog).planets[0],rules)=='VIABLE')
+        for actor in (a,b):store.run(actor,lambda e:e.state.system_knowledge.update({f'{x}:{y}':now[0]}))
+        def compete(kind):
+            try:
+                if kind=='capture':store.transaction(b,lambda session,emp,e:stellar.reserve(session,emp,e,x,y,uuid4().hex))
+                else:store.transaction(a,lambda session,emp,e:store.dispatch(session,emp,e,{'ship_ids':request['ship_ids'],'mission':'COLONIZE','planet_index':0,'x':x,'y':y,'cargo':{}}))
+                return True
+            except DataValidationError:return False
+        with ThreadPoolExecutor(2) as pool:results=list(pool.map(compete,['capture','colonize']))
+        self.assertEqual(sum(results),1)

@@ -104,6 +104,8 @@ class Mission(BaseModel):
     cargo:dict[str,float]=Field(default_factory=dict,max_length=10)
     doctrine:Literal['balanced','interception','rupture']='balanced'
     weapon_profile:Literal['standard','anti_shield']='standard'
+    target_stellar_id:UUID | None=None
+    target_subsystem:Literal['containment','shielding','control','propulsion','weapons'] | None=None
     stellar_project_id:UUID | None=None
     module_ids:list[UUID]=Field(default_factory=list,max_length=50)
 
@@ -282,3 +284,23 @@ def stellar_phase(body:StellarPhase,request:Request):
 def stellar_cancel(body:StellarPhase,request:Request):
     from .stellar import cancel_project
     return perform(request,lambda session,empire,e:cancel_project(session,empire,e,str(body.project_id),str(body.idempotency_key)),body.planet_id)
+
+
+class StargraveCommand(BaseModel):
+    model_config={'extra':'forbid'}
+    planet_id:UUID | None=None
+    unit_id:UUID
+    action:Literal['move','attack','bombard']
+    target_stellar_id:UUID | None=None
+    target_planet_id:UUID
+    idempotency_key:UUID
+    doctrine:Literal['balanced','interception','rupture']='balanced'
+    weapon_profile:Literal['standard','anti_shield']='standard'
+    target_subsystem:Literal['containment','shielding','control','propulsion','weapons'] | None=None
+    preview:bool=False
+
+
+@router.post('/api/universe/stargrave')
+def stargrave_command(body:StargraveCommand,request:Request):
+    from .stargrave import command
+    return perform(request,lambda session,empire,e:command(request.app.state.store,session,empire,e,body.model_dump(mode='json')),body.planet_id)

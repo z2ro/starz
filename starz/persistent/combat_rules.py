@@ -12,6 +12,18 @@ EXPERIMENTS = {
     'elevated': {'shield': 1.4, 'hull': .7, 'delay': .4, 'delay_cap': 3600},
 }
 
+SUBSYSTEMS = ('containment', 'shielding', 'control', 'propulsion', 'weapons')
+
+# Independent exceptional-unit trial parameters; never hull/engine catalog entries.
+STELLAR_RULES = {
+    'structural_hp': 5000, 'subsystem_hp': 1000, 'shield_capacity': 2000,
+    'energy_capacity': 10000, 'containment_floor': 1000, 'energy_regen': 1,
+    'weapon_energy': 100, 'shield_energy': 20, 'weapon_damage': 300,
+    'armor': 2, 'gravitational_speed': 1, 'travel_energy_per_distance': 100,
+    'bombard_energy': 2000, 'bombard_damage': 1000,
+}
+BOMBARD_PREPARATION = {'conservative': 86400, 'intermediate': 64800, 'elevated': 43200}
+
 
 def experiment_rules(experiment):
     if not isinstance(experiment, str) or experiment not in EXPERIMENTS:
@@ -23,7 +35,7 @@ def combat_config(config=None):
     result = {'version': 1, 'doctrine': 'balanced', 'weapon_profile': 'standard',
               'experiment': 'intermediate'}
     if config is not None:
-        if not isinstance(config, dict) or config.keys() - result.keys():
+        if not isinstance(config, dict) or config.keys() - (result.keys() | {'target_subsystem', 'target_stellar_id'}):
             raise DataValidationError('Configuração de combate inválida.')
         result.update(config)
     if type(result['version']) is not int or result['version'] != 1:
@@ -33,6 +45,12 @@ def combat_config(config=None):
     if result['weapon_profile'] not in ('standard', 'anti_shield'):
         raise DataValidationError('Perfil de arma inválido.')
     experiment_rules(result['experiment'])
+    if result.get('target_stellar_id') is not None:
+        if not isinstance(result['target_stellar_id'], str) or not 0 < len(result['target_stellar_id']) <= 128:
+            raise DataValidationError('Alvo estelar inválido.')
+    if result.get('target_subsystem') is not None:
+        if result['target_subsystem'] not in SUBSYSTEMS or not result.get('target_stellar_id'):
+            raise DataValidationError('Alvo de subsistema inválido.')
     return result
 
 

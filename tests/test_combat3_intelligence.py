@@ -49,3 +49,15 @@ class ElectronicIntelligence(unittest.TestCase):
         self.assertEqual(set_platform_mode(self.b,unit['id'],'interdiction')['mode'],'interdiction')
         validate_defenses(self.b.catalog,self.b.state)
         set_platform_mode(self.b,unit['id'],'defense')
+
+    def test_stellar_observation_never_exposes_unrelated_homeworld(self):
+        from types import SimpleNamespace
+        self.a.state.universe['levels'].update(intelligence=50,sensor_array=50,computing=50)
+        self.fixture.ship(self.b,'odyssey_hull','home-emitter')
+        unit=SimpleNamespace(id='known-stellar-unit',state='operational',payload={'hp':5000,'shield':1000,'subsystems':{'weapons':1000}})
+        report=gather_intelligence(self.a,self.b,self.probes,'ESPIONAGE',stellar_units=[unit],observation={'planet_id':self.a.state.planet_id,'planet_name':'Órbita observada','coordinates':[0,0,0]})
+        self.assertEqual(report['quality'],3);self.assertFalse(report['interference'])
+        self.assertEqual(report['stellar_units']['status'],'CONFIRMED')
+        self.assertEqual(report['planet_id'],self.a.state.planet_id)
+        for key in ('ships','defenses','stocks','ammunition','infrastructure','technology'):
+            self.assertEqual(report[key],{'status':'UNKNOWN','value':None})

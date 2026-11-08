@@ -41,3 +41,21 @@ Fabricação consome `refined_alloy`/`components` na colônia, exige pesquisa e 
 Perfil `experimental-stellar-v1`: módulo custa 200 ligas + 100 componentes; trabalho 600 dividido pela indústria efetiva; fase dura 600 s. Esses valores servem a execução/ensaios, não são balanceamento final. Cancelamento pré-compromisso libera reserva; após entregar/consumir módulos, cancelamento genérico é recusado em vez de fabricar reembolso.
 
 Evidência: seis testes CPU; sete integrações PostgreSQL (`.qa/runs/starz3-p3-db/` e `.qa/runs/starz3-p3-commission/`). A primeira execução encontrou dois erros da mesma causa: autoflush de fase 5 antes do status `commissioned`; corrigida a escrita conjunta e reexecutados os dois casos, ambos PASS. Cinco casos não afetados já haviam passado. Jornadas incluem frota real de entrega, retirada no momento aprovado, fonte única, replay, recall de módulos e comissionamento único. Downgrade recusa apagar registros estelares/ordens pendentes; apenas schema estelar vazio pode ser revertido. Não houve migração do ambiente do responsável.
+
+### Revisão concorrente P3
+
+`TESTED`: T10/T11 executados com duas threads e sessões PostgreSQL reais: duas reservas da mesma fonte produzem um vencedor; reserva e despacho colonial são concorrentes mutuamente exclusivos. Dois testes PASS em 23,4 s, `.qa/runs/starz3-p3-concurrency/`. Esse resultado complementa os sete casos SQL anteriores; não é inferido de locks ou documentação.
+
+## P4 — unidade excepcional operacional e combate
+
+`IMPLEMENTED` / `TESTED` no backend: Stargrave sem hull convencional, integridade estrutural e cinco subsistemas persistentes; reserva energética limitada, piso de contenção e custos compartilhados de escudos, disparo e deslocamento. Movimento gravitacional usa a aritmética comum de distância/tempo, sem instalar motor convencional fictício. Trânsito registra origem, destino e ETA reais; só confirma órbita na chegada.
+
+O mesmo resolvedor de seis salvas recebe unidades excepcionais reais. Dano convencional pode derrotar Stargrave; tiro dirigido exige pesquisa e reconhecimento confirmado vigente no despacho. Contenção exige escudo zerado e dano externo; proteções são reavaliadas no disparo, com fallback convencional explícito quando necessário, sem segundo orçamento de dano. Perder propulsão, controle, armamento ou contenção limita capacidades reais. Derrota produz `sealed_wreck` com identidade, origem e timestamp estável; sem autodestruição ou energia militar por offline.
+
+`ATTACK` pode citar unidade estelar numa órbita real, inclusive invasora sobre planeta próprio. Guerra é contra o dono da unidade; não se altera propriedade do planeta. Quando o alvo está fora do planeta de seu dono, não se somam defesas nem estoques de seu mundo natal. Reconhecimento específico da unidade usa observação parcial: não revela o inventário do mundo natal remoto. Dado de sistema desconhecido continua oculto.
+
+Bombardeio reutiliza absorção/dano estratégico, preserva `civil_district`, exige superioridade orbital e guerra no início/fim e cancela se perder capacidade/condições. Preparação experimental: 24/18/12 h. Uma operação ativa por unidade. Fonte continua ausente após derrota; o modelo visual não a recria.
+
+Coeficientes de ensaio centralizados em `combat_rules.py`: HP estrutural 5000, módulo 1000, escudo 2000; energia máxima 10000, piso 1000, regeneração 1/s, disparo 100 e sustentação de escudo 20 por salva; dano naval 300, armadura 2; velocidade gravitacional 1, custo 100 de energia/distância; bombardeio custa 2000 de energia e aplica orçamento estratégico 1000. São parâmetros EXPERIMENTAIS, não balanceamento final ou escala física medida.
+
+Evidência: 54 testes CPU direcionados (`.qa/runs/starz3-p4-combat/cpu-final.log`), quatro testes de inteligência/isolamento de observação (`.qa/runs/starz3-p4-intelligence/`), quatro cenários PostgreSQL em `.qa/runs/starz3-p4-db/` e `.qa/runs/starz3-p4-orbital/`. Os cenários SQL constroem a unidade pelas cinco fases e usam ordens reais; não inserem uma Stargrave pronta para fingir a jornada. Espaço profundo continua indisponível: sem combate/claim por proximidade visual ou planeta fictício. UI e matriz de balanceamento seguem para P6.

@@ -237,12 +237,28 @@ class PersistentStore(Store):
             require(target is None,'Remessa estelar usa projeto, não planeta fictício.')
             stellar_shipment=stellar_delivery.shipment(session,empire,e,data)
             tx,ty=stellar_shipment[1].x,stellar_shipment[1].y
+        orbital_observation=None
+        if data.get('target_stellar_id') and mission in {'RECON','ESPIONAGE'}:
+            from .stargrave import orbital_target
+            require(target is not None,'Informe a órbita real da unidade.')
+            orbital_observation=orbital_target(session,empire,e,str(target.id),data['target_stellar_id'])
+            combat['target_stellar_id']=str(orbital_observation.id)
         roles=[e.catalog.get('ships',x['hull_id']).role for x in ships]
         if mission in {'SURVEY','EXPEDITION','ESPIONAGE','RECON'}: require(any(r in {'exploration','science'} for r in roles),'Missão exige exploradora ou nave científica.')
-        if mission=='RECON': require(target and target.empire_id and target.empire_id!=empire.id,'Reconhecimento exige planeta de outro jogador.')
+        if mission=='RECON': require(orbital_observation is not None or target and target.empire_id and target.empire_id!=empire.id,'Reconhecimento exige planeta de outro jogador.')
         if mission=='REINFORCE': require(target and target.empire_id==empire.id,'Reforço exige um planeta do próprio império.')
-        if mission=='ESPIONAGE': require(level(s,'intelligence')>=1 and target and target.empire_id and target.empire_id!=empire.id,'Espionagem exige Inteligência 1 e planeta de outro jogador.')
-        if mission=='ATTACK': require(target and target.empire_id!=empire.id and self.relation(session,empire.id,target.empire_id)['status']=='war','Ataque exige guerra declarada contra o proprietário.')
+        if mission=='ESPIONAGE': require(level(s,'intelligence')>=1 and (orbital_observation is not None or target and target.empire_id and target.empire_id!=empire.id),'Espionagem exige Inteligência 1 e planeta de outro jogador.')
+        if data.get('target_stellar_id') and mission not in {'RECON','ESPIONAGE'}:
+            from .stargrave import orbital_target
+            require(mission=='ATTACK' and target is not None,'Alvo estelar exige ataque orbital autorizado.')
+            orbital_target(session,empire,e,str(target.id),data['target_stellar_id'])
+            combat['target_stellar_id']=data['target_stellar_id']
+        elif mission=='ATTACK':require(target and target.empire_id!=empire.id and self.relation(session,empire.id,target.empire_id)['status']=='war','Ataque exige guerra declarada contra o proprietário.')
+        if data.get('target_subsystem'):
+            from .stargrave import authorize_aim
+            require(mission=='ATTACK' and target is not None,'Tiro dirigido exige ataque orbital autorizado.')
+            authorize_aim(session,empire,e,str(target.id),data.get('target_stellar_id'),data['target_subsystem'])
+            combat['target_subsystem']=data['target_subsystem']
         if mission=='TRANSPORT': require(target and target.empire_id is not None,'Transporte exige destino colonizado.')
         if mission=='EXPEDITION': require(level(s,'expedition_science')>=1,'Requer Ciência de expedições 1.')
         source=next((p for p in s.planets if (p['x'],p['y'])==origin and p['id']==s.planet_id),None)
@@ -305,6 +321,10 @@ class PersistentStore(Store):
         if getattr(order,'resolved',False):return
         e=engines.get(str(order.empire_id));p=order.payload
         if e is None:return
+        if order.kind.startswith('stargrave_'):
+            from .stargrave import complete
+            complete(self,session,order,engines)
+            return
         if order.kind in {'stellar_module','stellar_phase'}:
             from .stellar import complete
             complete(self,session,order,engines)
@@ -334,27 +354,50 @@ class PersistentStore(Store):
         if not fleet:return
         mission=p['mission'];ships=[s for s in e.state.ships if s['id'] in fleet['ship_ids']]
         target=session.get(m.Planet,UUID(p['target'])) if p.get('target') else None
-        target_engine=None
-        if target:
-            target_engine=Engine(self.catalog,load(session,session.get(m.Empire,target.empire_id),planet_id=target.id,catalog=self.catalog))
+        target_engine=None;opponent_id=target.empire_id if target else None;stellar_target=None
+        unit_id=p.get('combat',{}).get('target_stellar_id') if mission in {'ATTACK','RECON','ESPIONAGE'} else None
+        if unit_id:
+            candidate=session.get(m.StellarUnit,UUID(unit_id))
+            if candidate and candidate.universe_id==order.universe_id and target and candidate.planet_id==target.id and candidate.system_id==target.system_id and candidate.state in {'operational','damaged','incapacitated'}:
+                stellar_target=candidate;opponent_id=candidate.empire_id
+            else:opponent_id=None
+        if target and opponent_id:
+            opponent=session.get(m.Empire,opponent_id)
+            target_engine=Engine(self.catalog,load(session,opponent,planet_id=target.id if opponent_id==target.empire_id else None,catalog=self.catalog))
         if mission in {'MOVE','REINFORCE'}:e.state.universe.setdefault('fleet_planets',{})[fleet['id']]=str(target.id) if target and target.empire_id==order.empire_id else None
         if mission=='RETURN':e.state.universe.setdefault('fleet_planets',{})[fleet['id']]=p.get('origin_planet')
         if mission=='TRANSPORT' and target:
             for r,n in p['cargo'].items():target_engine.state.stocks[r]=target_engine.state.stocks.get(r,0)+n
             self.report(target_engine, f'Carga recebida: {p["cargo"]}.')
-        elif mission in {'ESPIONAGE','RECON'} and target:
-            intelligence=gather_intelligence(e,target_engine,ships,mission)
+        elif mission in {'ESPIONAGE','RECON'} and target and target_engine:
+            observed=session.scalars(select(m.StellarUnit).where(m.StellarUnit.universe_id==order.universe_id,m.StellarUnit.empire_id==target.empire_id,m.StellarUnit.planet_id==target.id,m.StellarUnit.state.in_(['operational','damaged']))).all()
+            observation=None
+            if stellar_target:
+                star=session.get(m.StarSystem,target.system_id)
+                physical=generate_system(e.state.seed,star.x,star.y,self.catalog).planets[target.planet_index]
+                observed=[stellar_target]
+                observation={'planet_id':str(target.id),'planet_name':physical.name,'coordinates':[star.x,star.y,target.planet_index]}
+            intelligence=gather_intelligence(e,target_engine,ships,mission,stellar_units=observed,observation=observation)
             self.report(e,f"Inteligência de {intelligence['planet_name']}: qualidade {intelligence['quality']}/3. Consulte Registros.")
             if intelligence['detected']:self.report(target_engine,f"Reconhecimento de {session.get(m.Empire,order.empire_id).name} detectado em {intelligence['planet_name']}. Reveja suas defesas.")
         elif mission=='ATTACK' and target:
-            # A peace accepted during transit prevents combat; vessels return intact.
-            if self.relation(session,order.empire_id,target.empire_id)['status']=='war':
-                if self.interdict(session,order,e,target_engine,fleet):
+            # War follows the actual orbital opponent, never an unrelated planet owner.
+            if target_engine and self.relation(session,order.empire_id,opponent_id)['status']=='war':
+                system=session.get(m.StarSystem,target.system_id)
+                if self.interdict(session,order,e,target_engine,fleet,region=(system.x,system.y)):
                     self.save(session,order.empire_id,e)
                     return
-                battle=resolve_battle(e,ships,target_engine,str(target.id),config=p.get('combat'))
-                battle.update(attacker_name=session.get(m.Empire,order.empire_id).name,defender_name=session.get(m.Empire,target.empire_id).name,attacker=str(order.empire_id),defender=str(target.empire_id),planet_name=target_engine.system().planet.name,coordinates=[target_engine.state.system_x,target_engine.state.system_y,target_engine.state.planet_index])
-                self.battle_report(e,battle,str(order.empire_id));self.battle_report(target_engine,battle,str(target.empire_id))
+                if stellar_target:
+                    from .stargrave import combat_units,apply_result
+                    units=combat_units([stellar_target],target_engine,e.state.last_updated)
+                    battle=resolve_battle(e,ships,target_engine,str(target.id),config=p.get('combat'),stellar_defenders=units,planet_defenses=opponent_id==target.empire_id,allow_loot=opponent_id==target.empire_id)
+                    apply_result([stellar_target],units,e.state.last_updated)
+                else:
+                    from .stargrave import resolve_planet_battle
+                    battle=resolve_planet_battle(self,session,order,e,ships,target_engine,target)
+                physical=generate_system(e.state.seed,system.x,system.y,self.catalog).planets[target.planet_index]
+                battle.update(attacker_name=session.get(m.Empire,order.empire_id).name,defender_name=session.get(m.Empire,opponent_id).name,attacker=str(order.empire_id),defender=str(opponent_id),planet_name=physical.name,coordinates=[system.x,system.y,target.planet_index])
+                self.battle_report(e,battle,str(order.empire_id));self.battle_report(target_engine,battle,str(opponent_id))
                 p=deepcopy(p);p['cargo']=battle['loot']
         elif mission=='STELLAR_DELIVERY':
             stellar_delivery.deliver(session,order,e)
@@ -374,9 +417,9 @@ class PersistentStore(Store):
                 if destination['id']==e.state.planet_id:e.state.stocks=stocks
             self.report(e,'Frota retornou ao sistema de origem.')
         if target_engine:
-            self.save(session,target.empire_id,target_engine);session.flush()
+            self.save(session,opponent_id,target_engine);session.flush()
             # Same-owner delivery must not be overwritten by the origin snapshot.
-            if target.empire_id==order.empire_id:
+            if opponent_id==order.empire_id:
                 for r,n in p['cargo'].items():
                     e.state.stocks_by_planet[str(target.id)][r]=target_engine.state.stocks[r]
         if mission not in {'MOVE','REINFORCE','COLONIZE','RETURN'} and fleet in e.state.fleets:
@@ -384,12 +427,13 @@ class PersistentStore(Store):
             session.add(m.UniverseOrder(universe_id=order.universe_id,empire_id=order.empire_id,kind='mission',payload={**p,'mission':'RETURN','cargo':p.get('cargo',{}) if mission in {'ATTACK','EXPEDITION'} else {}},due_at=utc(fleet['arrival_at']),resolved=False))
         self.save(session,order.empire_id,e)
 
-    def interdict(self,session,order,attacker,defender,fleet):
+    def interdict(self,session,order,attacker,defender,fleet,region=None):
         p=order.payload
         if p.get('interdiction_applied') or level(defender.state,'spatial_interdiction')<1:return False
-        providers=[defender]
+        region=region or (defender.state.system_x,defender.state.system_y)
+        providers=[defender] if (defender.state.system_x,defender.state.system_y)==region else []
         for world in defender.state.planets:
-            if world['id']!=defender.state.planet_id and (world['x'],world['y'])==(defender.state.system_x,defender.state.system_y):
+            if world['id']!=defender.state.planet_id and (world['x'],world['y'])==region:
                 owner=session.get(m.Empire,session.get(m.Planet,UUID(defender.state.planet_id)).empire_id)
                 providers.append(Engine(self.catalog,load(session,owner,planet_id=world['id'],catalog=self.catalog)))
         def active(local):
