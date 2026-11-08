@@ -177,7 +177,7 @@ Complementam [T01–T16](combat-technical-contracts.md) e [B01–B18](combat-bal
 
 ## 10.1. Estado após aprovação e dependências da D10
 
-**`APPROVED`:** D09-A–H, T17–T32 como futuros cenários de QA, distinção de custódia/controle/posse, exclusividade de destino e compensação material idempotente. **`OPEN`:** eleição de controlador em localização disputada, critérios de legitimidade diplomática, prioridade/resolução de claims concorrentes, duração das janelas, titularidade da relíquia e decisões de schema físico. A [C3.0-D10](combat-custody-adjudication.md) está `APPROVED` como design: controle militar real, claims contestáveis e persistência atômica, com critérios T33–T48 ainda não executados. A [C3.0-D11](combat-custody-transfer.md) continua `PROPOSED` para transferência de custódia confirmada e espaço profundo.
+**`APPROVED`:** D09-A–H, T17–T32 como futuros cenários de QA, distinção de custódia/controle/posse, exclusividade de destino e compensação material idempotente. **`OPEN`:** eleição de controlador em localização disputada, critérios de legitimidade diplomática, prioridade/resolução de claims concorrentes, duração das janelas, titularidade da relíquia e decisões de schema físico. A [C3.0-D10](combat-custody-adjudication.md) está `APPROVED` como design: controle militar real, claims contestáveis e persistência atômica, com critérios T33–T48 ainda não executados. A [C3.0-D11](combat-custody-transfer.md) foi `APPROVED` para transferência contestável/voluntária e âncoras físicas; implementação de espaço profundo e schema real seguem `OPEN`. Saves de desenvolvimento antigos não exigem compatibilidade; ver [D12](combat-implementation-plan.md) (`PROPOSED`).
 
 ## 11. Referências
 
