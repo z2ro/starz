@@ -1,6 +1,6 @@
 # STARZ — Combat 3.0: doutrinas, formações e resolução de combate
 
-**Estado:** `PROPOSED` — proposta de design para discussão, não autorização de gameplay.  
+**Estado:** contrato geral `PROPOSED`; decisões de escolta e três doutrinas da [C3.0-D01](combat-formations.md) `APPROVED` em 08/11/2026; detalhes do seletor em [C3.0-D02](combat-targeting.md) `PROPOSED`. Nada implementado.  
 **Dependência:** [Research 3.0 — identidades aprovadas](research-3.md) e [contratos operacionais propostos](research-operational.md).
 
 ## 1. Objetivo
@@ -25,24 +25,24 @@ Tornar composição naval, reconhecimento, doutrina, escolta e contramedidas esc
 6. A decisão do combate é autoritativa, reproduzível e atomicamente persistida.
 7. O modo padrão deve manter comportamento compatível com saves atuais e sem pesquisas novas.
 
-## 4. Doutrinas predefinidas — proposta inicial
+## 4. Doutrinas de alvo — três opções `APPROVED`
 
-| Doutrina de UI (não ID executável) | Seleção prioritária | Trade-off / função |
+| Doutrina | Identidade aprovada | Algoritmo de prioridade |
 |---|---|---|
-| Equilibrada (padrão) | Política de alvo normal | Sem vantagens especiais nem configuração obrigatória |
-| Interceptação | Ameaças leves e antiescolta | Reduz foco em capitais enquanto existem ameaças elegíveis |
-| Ruptura | Unidades blindadas/capitais e escudos quando descobertos | Pode desperdiçar esforço contra enxames e alvos inadequados |
-| Proteção | Prioriza cobertura de naves de suporte e logística | Reduz liberdade ofensiva da formação |
+| Equilibrada | Padrão, sem pesquisa específica | Fallback legado, detalhamento em [C3.0-D02](combat-targeting.md) (`PROPOSED`) |
+| Interceptação | Ameaças leves | Prioridade exata ainda `PROPOSED` |
+| Ruptura | Alvos pesados | Prioridade exata ainda `PROPOSED` |
 
-Estas quatro opções são candidatas. Não fixar percentuais, prioridades exatas, regras de empate ou IDs de enum sem aprovação. Uma doutrina só pode selecionar alvos legalmente detectáveis/presentes.
+**Não existe doutrina Proteção** no conjunto aprovado: cobertura decorre automaticamente de `fleet_coordination` e composição de frota. `fire_control_doctrine` habilita as alternativas de foco, sujeitas ao contrato de seleção. IDs executáveis de doutrina, ranking, custo de oportunidade e formato persistido não estão aprovados.
 
-## 4.1. Refinamento C3.0-D01 — escolta e proteção
+## 4.1. Aprovação C3.0-D01 e detalhamento C3.0-D02
 
-`PROPOSED`: [C3.0-D01 — escolta, formações e proteção](combat-formations.md) aprofunda o redirecionamento limitado de disparos, a elegibilidade real de Vanguard/Sentinel/Aegis, o tratamento da guarnição e a simultaneidade das salvas. Ele **recomenda** três doutrinas ofensivas, sem a candidata Proteção, mas essa escolha ainda não é `APPROVED`. O detalhamento continua sem autorização para gameplay.
+- `APPROVED`: [C3.0-D01](combat-formations.md) registra proteção automática, redirecionamento real, papéis de Vanguard/Sentinel/Aegis, limite inicial de **um disparo por escolta/salva** sujeito a simulação, guarnição cooperativa e simultaneidade compatível com saves.
+- `PROPOSED`: [C3.0-D02 — doutrinas e seleção determinística](combat-targeting.md) especifica ordem de resolução, priorização de classes, fallback, seleção de alvos, telemetria e regras de sigilo. Os detalhes ainda precisam de aprovação e **não** autorizam implementação.
 
 ## 5. Formação e escolta
 
-**Proposta:** separar papéis (escolta, linha, suporte) dos hulls de forma derivada. `fleet_coordination` habilita a aplicação funcional; hulls atuais conservam requisitos de construção.
+**`APPROVED`:** a proteção é automática, depende de `fleet_coordination` e da composição real. Os papéis e cobertura por nave estão definidos na [C3.0-D01](combat-formations.md). Hulls e requisitos atuais de construção são preservados; ainda não existe gameplay executável dessas habilidades.
 
 - Vanguard: escolta leve, protege funções vulneráveis contra ameaças leves.
 - Sentinel: defesa e interceptação elegível, sujeita a munição/capacidade quando a regra específica existir.
@@ -104,7 +104,7 @@ A seleção de doutrina deve ser compacta e fazer parte da gestão de frota exis
 
 ## 11. Questões `OPEN`
 
-- Quantas doutrinas lançar? A opção Proteção é necessária ou a formação já cobre essa função?
+- As três doutrinas estão aprovadas; como calibrar as prioridades e resolver empates sem favoritismo? Ver [C3.0-D02](combat-targeting.md).
 - Como selecionar entre alvos sob informação incompleta e empates sem viés indesejado?
 - Proteção deve redirecionar ataques, reduzir dano, ou ambos? Não decidir simultaneamente antes de comparar alternativas.
 - Que função de combate mínima é necessária para cada uma das dez classes?
