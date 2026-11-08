@@ -37,7 +37,7 @@ Registrar defesa local e munição atuais, sem implementar Defense 3.0. Separar 
 
 ## 4.2. C3.0-D06-C/D aprovada: plataforma em modo de interdição
 
-`APPROVED` como design: depois de pesquisar `spatial_interdiction`, uma `orbital_platform` real, energizada e guarnecida pode alternar entre **defesa convencional** (dispara normalmente) e **interdição** (emite zona no sistema, **não dispara armamentos convencionais**). Uma missão `ATTACK` hostil elegível sofre, na chegada, **um atraso limitado por cadeia**, sem interdição de neutros ou de `RETURN`. A [C3.0-D07](combat-technical-contracts.md) propõe ordens sucessoras e transações idempotentes; ainda `PROPOSED`.
+`APPROVED` como design: depois de pesquisar `spatial_interdiction`, uma `orbital_platform` real, energizada e guarnecida pode alternar entre **defesa convencional** (dispara normalmente) e **interdição** (emite zona no sistema, **não dispara armamentos convencionais**). Uma missão `ATTACK` hostil elegível sofre, na chegada, **um atraso limitado por cadeia**, sem interdição de neutros ou de `RETURN`. A [C3.0-D07](combat-technical-contracts.md) aprovou como design o uso de ordens sucessoras e transações idempotentes; schema final e implementação continuam pendentes.
 
 **Não implementado:** modo da plataforma, zona, parâmetros e armazenamento. A hipótese **25% do ETA, até 30 min** não é balanceamento final. Nenhuma nova estrutura defensiva é obrigatória na primeira versão. Interceptadores atuais continuam exclusivos contra mísseis estratégicos.
 
