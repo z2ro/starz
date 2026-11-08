@@ -203,3 +203,17 @@ class Research3(unittest.TestCase):
                     pending.append(f'{node.domain}_tier_{node.tier}')
             self.assertTrue(seen.isdisjoint({'stellar_extraction', 'mobile_stellar_confinement',
                                              'stellar_armaments'}))
+
+
+class ResearchGraphDiagnostics(unittest.TestCase):
+    def test_missing_tier_returns_validation_error_instead_of_crashing(self):
+        from copy import deepcopy
+        catalog=deepcopy(Catalog.load('game_data','persistent_data'))
+        del catalog.items['technologies']['military_tier_2']
+        self.assertTrue(any('avanço de tier ausente' in error for error in catalog._reference_errors()))
+
+    def test_cross_domain_stellar_cycle_is_rejected(self):
+        from copy import deepcopy
+        catalog=deepcopy(Catalog.load('game_data','persistent_data'))
+        catalog.items['technologies']['advanced_manufacturing'].level_requires['stellar_armaments']=1
+        self.assertTrue(any('ciclo proibido' in error for error in catalog._reference_errors()))

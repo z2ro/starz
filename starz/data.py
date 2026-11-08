@@ -328,6 +328,7 @@ class Catalog:
         return errors
 
     def _technology_cycles(self) -> list[str]:
+        errors: list[str] = []
         graph = {item.id: list(item.requires) for entries in self.items.values() for item in entries.values()}
         for defense in self.items['defenses'].values():
             graph[defense.id].extend(defense.level_requires)
@@ -343,7 +344,6 @@ class Catalog:
                     graph[target].append(technology.id)
         visiting: set[str] = set()
         visited: set[str] = set()
-        errors: list[str] = []
 
         def visit(node: str) -> None:
             if node in visiting:
