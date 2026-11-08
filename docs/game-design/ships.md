@@ -33,7 +33,7 @@ Relacionar as classes existentes a seus efeitos reais e às funções propostas 
 
 ## 4.1. Refinamento de formação
 
-`PROPOSED`: [C3.0-D01 — escolta e proteção](combat-formations.md) especifica um primeiro contrato de cobertura funcional para Vanguard, Sentinel e Aegis, com danos aplicados a unidades reais. **Não implementado**; não atribuir a Sentinel interceptação de mísseis estratégicos nem à Aegis compartilhamento automático de escudos.
+`APPROVED` (design): [C3.0-D01 — escolta e proteção](combat-formations.md) define proteção automática e redirecionamento para unidades reais, com especialização de Vanguard, Sentinel e Aegis, sujeita a um redirecionamento por escolta/salva inicialmente. `PROPOSED`: [C3.0-D02](combat-targeting.md) trata a escolha determinística dos alvos. **Não implementado**; Sentinel não intercepta mísseis estratégicos e Aegis não compartilha escudos no contrato aprovado.
 
 ## 5. Dependências
 
