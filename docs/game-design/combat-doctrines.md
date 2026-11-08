@@ -99,7 +99,7 @@ flowchart TD
 
 ## 8.3. Fechamento operacional D06 e integração técnica D07
 
-`APPROVED` como design: a [C3.0-D06](combat-operational-closures.md) definiu Odyssey emissora EW, `orbital_platform` em modo de interdição com gatilho de chegada, perfil antiescudo na ordem e Stargrave com vínculo estelar exclusivo e estados degradáveis. **Números continuam candidatos para simulação**. A [C3.0-D07](combat-technical-contracts.md) está `PROPOSED` e detalha persistência/eventos, sem autorizar código.
+`APPROVED` como design: a [C3.0-D06](combat-operational-closures.md) definiu Odyssey emissora EW, `orbital_platform` em modo de interdição com gatilho de chegada, perfil antiescudo na ordem e Stargrave com vínculo estelar exclusivo e estados degradáveis. **Números continuam candidatos para simulação**. A [C3.0-D07](combat-technical-contracts.md) está `APPROVED` como contrato de design técnico de persistência/eventos, **sem autorizar código**.
 
 ## 9. Relatório e interface
 
