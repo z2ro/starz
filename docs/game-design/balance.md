@@ -44,6 +44,12 @@ Não são prazos forçados, promessas de duração ou limites atuais do servidor
 
 A [C3.0-D01 — escoltas](combat-formations.md) está `APPROVED` **como design**, inclusive o limite inicial de um redirecionamento por escolta/salva sujeito a simulação; [C3.0-D02 — targeting](combat-targeting.md) e [C3.0-D03 — contramedidas](combat-countermeasures.md) estão `APPROVED` como design. A C3.0-D04 **não** apresenta resultados de testes, win rates, metas aprovadas ou um simulador executado. Nenhuma implementação foi autorizada.
 
+## 4.2. Hipóteses quantitativas C3.0-D06 — não são números aprovados
+
+A [C3.0-D06-A–H](combat-operational-closures.md) foi aprovada como **design**, mas a confirmação explicitou que **os números continuam sujeitos a simulação**. Candidatos de ensaio: ruptura de escudos em **1,25×** de efetividade contra proteção energética e **0,80×** contra casco; interdição com atraso **até 25% do ETA original, limitado a 30 minutos**; máximo de **uma Stargrave em obra ou operacional por império** como regra inicial, não hard cap definitivo. Mesmo a degradação de um nível de qualidade EW demanda simulação e definição de contestação.
+
+Não há dados de eficácia ou regressão executados. [C3.0-D07](combat-technical-contracts.md) propõe 16 cenários de aceitação técnica T01–T16 que complementam B01–B18, também **sem execução**. Custos, duração, consumo, HP, alcance, blindagem e efeitos planetários continuam `OPEN`.
+
 ## 5. Dependências
 
 Todas as especificações: [pesquisa](research.md), [economia](economy.md), [naves](ships.md), [defesas](defenses.md), [combate](combat.md), [Stargrave](stargrave.md) e [progressão](progression.md). Valores visuais não são dados de balanceamento militar.
