@@ -1,7 +1,7 @@
 # STARZ — Combat 3.0: registro de aprovações
 
 **Decisão do responsável:** «aprovo tudo» (08/11/2026), emitida após apresentação da [C3.0-D05](combat-integration.md), das C3.0-D02/D03 pendentes e do [plano C3.0-D04](combat-balance-plan.md).  
-**Estado:** `APPROVED` **como design e planejamento**, incluindo C3.0-D06-A–H e C3.0-D07-A–H em 08/11/2026; T01–T16 aprovados como critérios de aceitação técnica. `NOT IMPLEMENTED` para novas mecânicas.  
+**Estado:** `APPROVED` **como design e planejamento** até [C3.0-D08 A–H](combat-stellar-disposition.md), incluindo C3.0-D06/D07; T01–T16 aprovados como critérios técnicos. [C3.0-D09](combat-stellar-custody.md) está `PROPOSED`. `NOT IMPLEMENTED` para novas mecânicas.  
 **Branch:** `experiment/persistent-universe`.  
 **Escopo:** registrar decisões concretas submetidas à aprovação. Não interpretar como licença para implementar gameplay, alterar YAML ou banco, iniciar testes de gameplay, criar PR ou realizar merge.
 
@@ -81,3 +81,11 @@ Aprovação documental não inicia nenhuma dessas atividades executáveis.
 O responsável aprovou a [C3.0-D07](combat-technical-contracts.md) integralmente como **contrato técnico de design**: **D07-A a D07-H**, cobrindo payloads versionados, sucessão idempotente de ordens, emissor Odyssey por snapshot, orçamento único de dano, vinculação 1:1 da estrela, persistência de destroços, unidade excepcional e migração/rollback. Os cenários **T01–T16** passam a ser critérios de aceitação aprovados, **sem execução**.
 
 Permanecem `OPEN` nomes de tabelas/campos/enums, schema final, mecanismo de migração, identidade de estrela em sistemas múltiplos, limiares e custos, balanceamento e destino da estrela após perda da Stargrave. Nenhum arquivo executável foi alterado e nenhum PR/merge foi autorizado.
+
+## 9. Aprovação expressa C3.0-D08 (08/11/2026)
+
+**`APPROVED` como design:** [C3.0-D08-A–H](combat-stellar-disposition.md) — confinamento seguro após derrota (A), custódia disputável sem transferência instantânea (B), três destinos finais mutuamente exclusivos: reconstrução, repatriação física, relíquia selada (C), captura inicial só em sistema descoberto/desabitado/não natal/de estrela única (D), ciclo de vida sem autodestruição temporizada (E), plano de simulação de três cenários (F), metodologia incremental (G) e unicidade/idempotência/compatibilidade (H).
+
+**`APPROVED` exclusivamente como método:** a matriz D08-F conservador/intermediário/elevado. **`OPEN` quantitativo:** antiescudo 1,10–1,40×, casco 0,70–0,90×, interdição 10–40% do ETA e tetos 10–60 min, preparo 12–24 h, recuperação 10–40% e estabilização 12–48 h são **valores de ensaio**, não constantes de gameplay aprovadas. Nenhum baseline ou simulação foi executado.
+
+**`PROPOSED`:** [C3.0-D09](combat-stellar-custody.md) — detalhamento de transações, disputa de custódia, compensações, três fluxos de destino e critérios T17–T32; não aprova antecipadamente direitos ou prioridades diplomáticas. Nenhuma alteração de gameplay, banco, catálogo ou deploy foi autorizada.
