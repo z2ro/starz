@@ -18,6 +18,10 @@ Atacantes são naves reais da frota; defensores são naves vinculadas ao planeta
 
 `PROPOSED`: sinergias específicas de classes; subsistemas da Stargrave; batalha orbital seguida de preparação de bombardeio, interrupção e contramedidas. GDD sugere proteger contas novas e criar janelas de reação/offline; essas proteções específicas não são presumidas existentes. A hipótese de 12–24 h não é regra atual.
 
+## 4.1. Combat 3.0 — continuação documental
+
+`PROPOSED`: [Doutrinas, formações e resolução de combate](combat-doctrines.md) define a próxima fase de desenho funcional, dependente das descobertas `APPROVED` em [Research 3.0 — R3.0-D01](research-3.md) e dos contratos `PROPOSED` em [R3.0-D02](research-operational.md). Nenhuma doutrina, escolta funcional, guerra eletrônica ou ataque a subsistema proposto foi implementado por este registro.
+
 ## 5. Dependências
 
 [Naves](ships.md) fornecem perfis; [pesquisa](research.md), modificadores; [defesas](defenses.md), proteção/munição; [economia](economy.md), custos e carga; [Stargrave](stargrave.md), contratos futuros. Inteligência tem qualidade e validade próprias, não equivale a acesso ao estado privado de outro império.
