@@ -54,7 +54,7 @@ Não há dados de eficácia ou regressão executados. [C3.0-D07](combat-technica
 
 `APPROVED` apenas como metodologia: [C3.0-D08-F/G](combat-stellar-disposition.md) compara três cenários (conservador/intermediário/elevado) de antiescudo e casco, atraso de interdição, preparação de ataque estelar, rendimento de salvamento e janela de estabilização. **Nenhum número é constante aprovada** e **nenhuma simulação foi executada**. A recuperação segura, os três destinos e a ausência de autodestruição são **`APPROVED` como design**, não resultados medidos.
 
-`PROPOSED`: [C3.0-D09](combat-stellar-custody.md) adiciona contratos T17–T32 para claims, reconstrução, repatriação, relíquia selada e idempotência. Custos, limiares de equilíbrio, penalidades, percentuais e duração final permanecem `OPEN`.
+`APPROVED` como critérios de QA não executados: [C3.0-D09](combat-stellar-custody.md) adiciona contratos T17–T32 para claims, reconstrução, repatriação, relíquia selada e idempotência. `PROPOSED`: [C3.0-D10](combat-custody-adjudication.md) adiciona cenários T33–T48 para controle militar concorrente, garantias de unicidade e retrials. Custos, limiares de equilíbrio, penalidades, percentuais e duração final permanecem `OPEN`.
 
 ## 5. Dependências
 
