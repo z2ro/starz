@@ -40,7 +40,7 @@ it('shows system identity separately and manages the correct homeworld',()=>{
  expect(within(inspector).getByText(/Estrela classe K.*2 planetas conhecidos.*1 próprio/)).toBeTruthy();
  fireEvent.click(screen.getByRole('button',{name:/P2 · Nativa/}));
  expect(within(inspector).getByText('Mundo natal',{exact:true})).toBeTruthy();
- expect(within(inspector).getByText('P2 · Nativa')).toBeTruthy();
+ expect(within(inspector).getByText('P2 · Nativa')).toBeTruthy();expect(within(inspector).getByText('17 °C')).toBeTruthy();
  expect(screen.getByRole('link',{name:'Planejar missão para -2:-1'})).toHaveAttribute('href',`#/fleets?plan=1&x=-2&y=-1&mission=REINFORCE&target=${roster[0].id}`);
  fireEvent.click(screen.getByRole('link',{name:'Abrir planeta e instalações'}));expect(setActivePlanetId).toHaveBeenCalledWith(roster[0].id);expect(screen.getByText('Existing planet inspector')).toBeTruthy();
 });

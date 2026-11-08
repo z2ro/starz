@@ -1,3 +1,4 @@
+import {stellarAppearance,visualOrbitRadius} from './galaxyVisuals';
 import type { Catalog, Fleet, GalaxySystem, State } from '../types/game';
 import {seededRandom} from '../planet3d/planetVisual';
 import { seedNumber } from '../planetlab/planetGenerator';
@@ -28,9 +29,9 @@ export function fleetVisualPosition(fleet: Fleet, observedAt: number | undefined
 export function knownLocalFleets(system: GalaxySystem, fleets: Fleet[]) {
   return fleets.filter(f => f.status === 'ARRIVED' && f.x === system.x && f.y === system.y);
 }
-export function orbitalPosition(system: GalaxySystem, index: number, seconds: number, slot: number) {
+export function orbitalPosition(system: GalaxySystem, index: number, seconds: number, slot: number, starRadius:number=stellarAppearance(system.star?.stellar_class??'G').radius) {
   const phase = seedNumber(`starz:orbit:v1:${systemKey(system)}:${index}`) / 0xffffffff * Math.PI * 2;
-  const radius = 2.25 + slot * 1.65;
+  const radius = visualOrbitRadius(starRadius,slot);
   const angle = phase + seconds * .022 / (slot + 1);
   return { x: Math.cos(angle) * radius, y: 0, z: Math.sin(angle) * radius, radius };
 }

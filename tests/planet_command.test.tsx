@@ -41,6 +41,7 @@ describe('Imperial Command Planet view', () => {
   it('maps real inspector data, nominal rates and accessible sections without empty mineral data', () => {
     render(<PlanetInspector catalog={catalog} state={state} tab="overview" onTab={vi.fn()} onNavigate={vi.fn()} />);
     expect(screen.getByText('Características físicas')).toBeInTheDocument();
+    expect(screen.getByText('15 °C')).toBeInTheDocument();expect(state.system.planet.temperature).toBe(288);
     expect(screen.getByText('Desenvolvimento')).toBeInTheDocument();
     expect(screen.getByText('Produção local')).toBeInTheDocument();
     expect(screen.getByText('+120/h nom.')).toBeInTheDocument();

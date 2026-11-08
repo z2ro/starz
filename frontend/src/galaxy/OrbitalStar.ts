@@ -6,7 +6,7 @@ export const ORBITAL_PALETTE=SHIP_PIXEL_PALETTE.map((color,i)=>i===22?'#633333':
 import {stellarAppearance,stellarSurface} from './galaxyVisuals';
 
 /** Local stellar material; the shared low-resolution palette/dither pass remains unchanged. */
-export function createOrbitalStar(seed:string,stellarClass:string){
+export function createOrbitalStar(seed:string,stellarClass:string,visualScale=1){
  const appearance=stellarAppearance(stellarClass);
  const texture=new THREE.DataTexture(stellarSurface(seed),96,48,THREE.RGBAFormat);
  texture.minFilter=texture.magFilter=THREE.NearestFilter;texture.needsUpdate=true;
@@ -21,6 +21,7 @@ export function createOrbitalStar(seed:string,stellarClass:string){
     gl_FragColor=vec4(color*(0.22+level*0.24),1.0);}`,
   toneMapped:false,
  });
- const mesh=new THREE.Mesh(new THREE.SphereGeometry(.85,32,24),material);
- return {mesh,dispose(){texture.dispose();material.dispose();mesh.geometry.dispose();}};
+ const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),material);
+ const radius=appearance.radius*THREE.MathUtils.clamp(Number.isFinite(visualScale)?visualScale:1,.75,1.5);mesh.scale.setScalar(radius);
+ return {mesh,radius,dispose(){texture.dispose();material.dispose();mesh.geometry.dispose();}};
 }

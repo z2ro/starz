@@ -48,12 +48,13 @@ async function galaxyFlow(page, { output, fixture }) {
   const canvasHandle = await canvas.elementHandle(); await main();
   assert(await canvasHandle.evaluate(el => el.isConnected)); assert.equal(await host.getAttribute('data-generation-count'), generation);
   const pause = page.getByRole('button', { name: 'Pausar', exact: true }); if(await pause.count())await pause.click();
+  const cameraState=await host.evaluate(el=>[...el.dataset.cameraTarget.split(',').map(Number),Number(el.dataset.cameraZoom)]);
   const stock=fixture.state.stocks.components,population=fixture.state.population.total,previousResource=await page.locator('.resource-components strong').innerText();
   try{
     fixture.state.stocks.components=(stock??0)+100;fixture.state.population.total=population+1;
     await page.clock.fastForward(15001);
     await page.waitForFunction(previous=>document.querySelector('.resource-components strong')?.textContent!==previous,previousResource);
-    assert(await canvasHandle.evaluate(el=>el.isConnected));assert.equal(await host.getAttribute('data-generation-count'),generation);
+    assert(await canvasHandle.evaluate(el=>el.isConnected));assert.equal(await host.getAttribute('data-generation-count'),generation);const afterCamera=await host.evaluate(el=>[...el.dataset.cameraTarget.split(',').map(Number),Number(el.dataset.cameraZoom)]);afterCamera.forEach((value,i)=>assert(Math.abs(value-cameraState[i])<1e-8,'Resource updates must preserve the camera'));
   }finally{fixture.state.stocks.components=stock;fixture.state.population.total=population;}
   const beforeCamera = await page.screenshot();
   const sceneBox = await canvas.boundingBox();
@@ -61,6 +62,7 @@ async function galaxyFlow(page, { output, fixture }) {
   await page.mouse.move(sceneBox.x+sceneBox.width*.65,sceneBox.y+sceneBox.height*.5);await page.mouse.wheel(0,-120);
   await page.getByRole('button', { name: 'Ampliar vista orbital', exact: true }).click(); await page.waitForTimeout(200);
   assert(!beforeCamera.equals(await page.screenshot())); await capture('orbital-inspection');
+  await page.getByRole('button',{name:'Enquadrar sistema',exact:true}).click();await page.waitForTimeout(100);assert.equal(await host.getAttribute('data-camera-target'),'0,0,0');assert.equal(await host.getAttribute('data-camera-zoom'),'1');
   await page.getByRole('button', { name: '← Galáxia', exact: true }).click(); await canvas.waitFor({ state: 'detached' });
   assert(await before.evaluate(el => el.isConnected)); await fits();
   const unknown = page.locator('.spatial-system.unknown').first(); await unknown.focus(); await unknown.press('Enter'); await detail();

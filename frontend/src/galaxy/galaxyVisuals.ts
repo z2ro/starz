@@ -14,9 +14,11 @@ export function decorativeStars(seed:string,count=420){
  return stars;
 }
 
+// Display radii only: class is not a measured physical size. Typical planet radius is .634.
+export const STELLAR_VISUAL_RADII={O:1.58,B:1.55,A:1.5,F:1.47,G:1.44,K:1.42,M:1.3} as const;
 export function stellarAppearance(stellarClass:string){
  const type=stellarClass.toUpperCase();
- return {color:starVisualConfig({stellar_class:type,luminosity:1}).color,stellarClass:type};
+ return {color:starVisualConfig({stellar_class:type,luminosity:1}).color,stellarClass:type,radius:STELLAR_VISUAL_RADII[type as keyof typeof STELLAR_VISUAL_RADII]??1.44};
 }
 /** Sample the sphere in 3D before projecting to noise, so both longitude edges agree. */
 export function stellarSurface(seed:string,width=96,height=48){
@@ -33,9 +35,11 @@ export function stellarSurface(seed:string,width=96,height=48){
 }
 
 /** Project a complete circular orbit, including body radius, into camera right/up axes. */
-export function orbitalFrame(radius:number,bodyRadius:number,width:number,height:number,right:{x:number;z:number},up:{x:number;z:number}){
- const x=radius*Math.hypot(right.x,right.z)+bodyRadius,y=radius*Math.hypot(up.x,up.z)+bodyRadius;
+export function orbitalFrame(radius:number,bodyRadius:number,width:number,height:number,right:{x:number;z:number},up:{x:number;z:number},starRadius=0){
+ const x=Math.max(starRadius,radius*Math.hypot(right.x,right.z)+bodyRadius),y=Math.max(starRadius,radius*Math.hypot(up.x,up.z)+bodyRadius);
  const marginX=Math.min(52,width*.1),marginY=Math.min(40,height*.12);
  const halfHeight=Math.max(y*height/Math.max(1,height-2*marginY),x*height/Math.max(1,width-2*marginX));
  return {halfHeight,halfWidth:halfHeight*width/Math.max(1,height),x,y};
 }
+
+export const visualOrbitRadius=(starRadius:number,slot:number)=>starRadius+.72+.5+slot*1.85;

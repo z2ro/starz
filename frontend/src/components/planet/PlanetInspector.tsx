@@ -9,7 +9,7 @@ import { Metric } from '../ui/Metric';
 import { Progress } from '../ui/Progress';
 import { Tabs } from '../ui/Tabs';
 import { HomeworldBadge } from './HomeworldBadge';
-import { fmt, label, nominalRate, strategicResources, term } from '../../app/format';
+import { fmt, formatTemperatureKelvin, label, nominalRate, strategicResources, term } from '../../app/format';
 import type { Catalog, PlanetTab, State } from '../../types/game';
 
 const ratio = (value: number, maximum: number) => maximum > 0 ? Math.min(100, Math.max(0, 100 * value / maximum)) : 0;
@@ -23,7 +23,7 @@ export function PlanetInspector({ catalog, state, tab, onTab, onNavigate, compac
   const resources = strategicResources(catalog, state);
   const tabs: Array<[PlanetTab, string]> = [['overview', 'Visão geral'], ['districts', 'Distritos'], ['orbit', 'Órbita'], ['data', 'Dados']];
   const physical = [
-    ['Gravidade', `${fmt(planet.gravity, 2)} g`], ['Temperatura', `${fmt(planet.temperature)} K`], ['Água', `${fmt(planet.water, 1)}%`], ['Atmosfera', planet.atmosphere],
+    ['Gravidade', `${fmt(planet.gravity, 2)} g`], ['Temperatura', formatTemperatureKelvin(planet.temperature)], ['Água', `${fmt(planet.water, 1)}%`], ['Atmosfera', planet.atmosphere],
     ['Radiação', fmt(planet.radiation, 2)], ['Campo magnético', fmt(planet.magnetic_field, 2)], ['Superfície útil', `${fmt(planet.usable_surface, 1)}%`], ['Atividade geológica', fmt(planet.geological_activity, 2)],
   ];
   const development = [

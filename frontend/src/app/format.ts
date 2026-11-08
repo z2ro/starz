@@ -1,6 +1,12 @@
 import type { Catalog, Content, District, Hull, State } from '../types/game';
 
 export const fmt = (value: number | undefined, digits = 0) => Number(value ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: digits });
+/** API planetary temperatures are Kelvin; convert only at player-facing boundaries. */
+export function formatTemperatureKelvin(value:unknown):string {
+  if(typeof value!=='number'||!Number.isFinite(value)||value<0)return 'Não informado';
+  const celsius=value-273.15;
+  return `${fmt(Math.abs(celsius)<.5?0:celsius)} °C`;
+}
 export const duration = (seconds: number) => seconds < 60 ? `${Math.max(0, Math.ceil(seconds))}s` : seconds < 3600 ? `${Math.ceil(seconds / 60)}min` : `${Math.floor(seconds / 3600)}h ${Math.ceil(seconds % 3600 / 60)}min`;
 export const remaining = (stamp: number | null, now = Date.now() / 1000) => stamp === null ? 'Pausada' : duration(stamp - now);
 export const percent = (value: number) => Math.max(0, Math.min(100, value));

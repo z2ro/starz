@@ -89,3 +89,54 @@ Validation for this refinement: 53 existing targeted frontend tests plus 9 new v
 In the same class-K two-planet fixture at 1366×768, renderer counters changed from **10 draw calls / 65,082 triangles** to **12 / 66,114** (+1.6% triangles). A sequential 12-callback wall-time smoke completed in approximately 0.2s before and after; because browser time is controlled and rendering uses SwiftShader, these observations do not establish FPS or hardware performance. No full-suite or GPU benchmark was run.
 
 A class-M browser check exposed the default palette's lack of rust/red swatches. The pipeline now optionally accepts an exactly 48-color palette; all existing callers retain the original palette and byte-identical postprocessing shaders. Only the orbital instance substitutes three nonstellar/duplicate swatches with `#633333`, `#b56847`, `#e49a69`. Default-palette/shader regressions and palette-length/disposal checks are covered. Class K, M and O fixtures are available through `STARZ_QA_STELLAR_CLASS` on the visual flow, without changing backend data.
+
+## Galaxy 2.3 — stellar scale, camera director and Celsius
+
+### Presentation sizes
+
+No measured stellar radius is available in the Galaxy contract. The following display radii are explicitly a **class-based presentation heuristic**, not physical dimensions:
+
+| Class | Visual radius | Diameter relative to a typical planet |
+|---|---:|---:|
+| O | 1.58 | 2.49× |
+| B | 1.55 | 2.45× |
+| A | 1.50 | 2.37× |
+| F | 1.47 | 2.32× |
+| G | 1.44 | 2.27× |
+| K | 1.42 | 2.24× |
+| M | 1.30 | 2.05× |
+
+The typical solid planet radius is `1.28 × .495 = .6336` in this scene; existing planet geometry and display sizes are retained. Unknown class uses radius 1.44 without claiming a known class. `createOrbitalStar` and the optional fifth `OrbitalSystemRenderer` constructor argument support a visual scale multiplier (default 1, bounded .75–1.5, nonfinite input falls back to 1). The star remains at the origin with its approved surface/palette/lighting.
+
+Illustrative orbit radius is now `starRadius + .72 + .5 + slot × 1.85`, where .72 bounds the largest existing atmospheric planet radius. Thus the nearest planetary surface clears the star by at least .5 display units. These radii supersede the 2.2 presentation radii; deterministic phases, angular speeds, authoritative coordinates, physical `orbital_distance`, travel costs and server state are unchanged. The renderer updates illustrative rings and positions together without regenerating geography.
+
+### OrbitalCameraDirector
+
+A small reusable director evaluates 12 azimuths and four elevations against the actual projected star/planet disks, orbit envelope, viewport and label dimensions. It favors body separation, annotation room and a compact, familiar viewing angle. Initial load and Reset fit the complete projected orbital envelope with responsive margins. It chooses camera poses; it never changes planetary phases or moves bodies to stage a screenshot.
+
+Manual drag, zoom and selection retain the existing controls. Selection interpolates camera target/position/zoom over 360ms; reduced motion snaps immediately. Focus retains orbital context and searches zooms .65–1.1 and small target offsets using the **same** `orbitalLabelRect` solver as the HTML labels, so long annotations can fit on short mobile workspaces. Pointer gestures/zoom cancel the transition. Ordinary resource/population updates do not restart focus or reset the camera. Reset cancels transitions/damping residue and restores a full-system frame while preserving the selected planet. Offscreen/crowded unselected labels can still be suppressed; the selector and inspector remain available. Natural overlaps during animation/manual views remain allowed.
+
+### Player-facing temperature boundary
+
+`formatTemperatureKelvin` is the sole formatter for physical planetary temperature. It validates finite nonnegative Kelvin, subtracts 273.15 once, formats integer degrees with the existing pt-BR number formatter and appends `°C`. Valid negative Celsius is retained; near-zero rounding does not show `-0`. Missing/invalid data is “Não informado”. Examples: 299 K → 26 °C; 321 K → 48 °C; 325 K → 52 °C; 250 K → -23 °C.
+
+| Source (stored/API unit) | Player-facing consumer |
+|---|---|
+| `state.system.planet.temperature` — Kelvin | Overview `PlanetaryStatus`; Planet `PlanetInspector` physical data |
+| `/api/galaxy` surveyed `planets[].temperature` — Kelvin | Galaxy planet list and selected-planet inspector |
+
+Units were checked against the existing universe generator, API snapshot pass-through and visual-state contract. Backend/YAML/database values and scientific mappings remain Kelvin. The Planet Lab's relative 0–1 temperature control/diagnostics are not physical measurements and are not converted. Developer raw-descriptor diagnostics retain source units. The master design contract now records Celsius for the player-facing display.
+
+### Scoped validation and evidence
+
+Medium risk: 107 focused frontend tests cover class sizes/configuration, orbital clearance, deterministic framing for 1/2/5 planets across aspect ratios, nonmutation, camera focus/cancel/Reset, short-view label fitting, all Celsius examples/missing/negative values and actual UI boundaries, plus existing navigation/geography/lifecycle regressions. Typecheck/build/diff checks are scoped; no automatic full suite or backend tests are required for these presentation-only changes.
+
+The existing `STARZ_QA_GALAXY_VISUAL_FLOW=1` supports `STARZ_QA_GALAXY_CAMERA_FLOW=1` for initial/selection/Reset captures, paused Reset consistency, default disk separation, reduced-motion behavior and a real smooth transition. Identity fixtures exercise 1/2/multiple planets, occupancy and unknown data at 1366×768 and 390×844. The existing general flow additionally checks camera-state preservation during a stock/population refresh (numeric tolerance 1e-8, avoiding false failures on floating-point roundoff), manual controls and Reset after zoom/rotation. All routes use isolated API fixtures, not player saves.
+
+Actual browser evidence is in `.qa/runs/galaxy-23/`: baseline `ce2a5f9` and updated orbital captures at 1920×1080, 1366×768 and 390×844, including initial, selection and Reset. Overview/Planet route layout checks also cover desktop/mobile for the Celsius rollout. There was no separate third-reference image file attached to this task; composition review used the available baseline captures. This remains a presentation heuristic, not an astronomical camera/size model or a GPU benchmark.
+
+The default director also derives a minimum elevation from the innermost radius: `sin(elevation) × innerRadius >= starRadius + .08`. This keeps the illustrative path's projection outside the stellar disk in the initial/Reset composition, in addition to world-space surface clearance. Manual rotation remains unrestricted within the existing controls.
+
+Final scoped results: all 107 selected frontend tests passed; the affected camera tests were rerun after the minimum-elevation refinement. Typecheck, build and diff checks passed. Chromium initial/selection/Reset and smooth/reduced-motion focus checks passed at all three requested viewports; all five identity fixtures passed at 1366×768 and 390×844. Overview/Planet route checks and mission/lifecycle regressions passed, with no remaining scoped layout, JavaScript or WebGL findings. Full-suite and physical-GPU validation were intentionally not run.
+
+A hidden mobile workspace defers focus until it has real dimensions; controls keep a valid temporary camera pose. The 1366px browser flow additionally closes/reopens the scene with its host initially hidden, then verifies the selected planet and full-system frame when revealed. No renderer is recreated for ordinary camera operations or data refreshes.
