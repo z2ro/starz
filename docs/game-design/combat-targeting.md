@@ -1,6 +1,6 @@
 # STARZ — C3.0-D02: doutrinas e seleção determinística de alvos
 
-**Estado:** `PROPOSED` — especificação para discussão; nenhuma prioridade algorítmica foi aprovada nesta D02.  
+**Estado:** `APPROVED` (08/11/2026), somente como design. C3-D02-A–G foram aprovadas; fórmulas, schema e implementação permanecem pendentes. Ver [registro consolidado](combat-3-decisions.md).  
 **Contratos aprovados:** [C3.0-D01 — escoltas e formações](combat-formations.md), [R3.0-D01 — identidades científicas](research-3.md).  
 **Escopo:** doutrinas, seleção, redirecionamento, sigilo, replay e testes futuros; não implementar gameplay.
 
@@ -10,7 +10,7 @@ Um comandante escolhe no máximo **uma doutrina para uma frota**; o servidor sel
 
 **`APPROVED` por C3.0-D01:** exatamente três opções, **Equilibrada, Interceptação e Ruptura**; sem quarta doutrina Proteção; proteção automática via `fleet_coordination`; até **um redirecionamento por escolta por salva** como limite inicial sujeito a simulação; funções distintas de Vanguard, Sentinel e Aegis; guarnição cooperativa por planeta; salvas simultâneas e fallback legado.
 
-**`PROPOSED` nesta D02:** prioridade exata por classe, regra de desempate, momento de armazenamento da doutrina, tratamento das defesas, admissibilidade e telemetria.
+**`APPROVED` nesta D02:** prioridades por classe, desempate legado, armazenamento conceitual na ordem, fallback, guarnição e invariantes de sigilo/telemetria. Nomes executáveis de campos, coeficientes e implementação continuam `OPEN`.
 
 ## 2. Base autoritativa (`IMPLEMENTED`)
 
@@ -32,11 +32,11 @@ Em `starz/persistent/combat.py`:
 | **Interceptação** | Exige `fire_control_doctrine` concluída | Se houver alvos elegíveis `light`, considerar primeiro apenas esses; nos demais casos aplicar Equilibrada | Equilibrada se não houver `light` elegível |
 | **Ruptura** | Exige `fire_control_doctrine` concluída | Preferência de classe `capital` > `medium` > `light`; dentro da primeira classe elegível, usar ranking legado | Equilibrada caso não exista classe elegível para a política; nenhuma unidade ganha penetração especial |
 
-**`PROPOSED`:** esse ranking não adiciona multiplicador de dano, bypass de escudo, bônus percentual, munição, novos tipos de arma ou licença para atacar subsistemas. O `weapon_modifiers` atual ainda determina o dano do atirador **contra o alvo efetivo**, e pode tornar uma doutrina menos eficiente. A classe `capital` também pode identificar uma plataforma defensiva pesada: comparar o impacto disso antes da aprovação.
+**`APPROVED`:** esse ranking não adiciona multiplicador de dano, bypass de escudo, bônus percentual, munição, novos tipos de arma ou licença para atacar subsistemas. O `weapon_modifiers` atual ainda determina o dano do atirador **contra o alvo efetivo**, e pode tornar uma doutrina menos eficiente. A classe `capital` também pode identificar uma plataforma defensiva pesada: comparar o impacto disso antes da aprovação.
 
 **Atenção:** "Ruptura" (doutrina de alvo pesado) não equivale à pesquisa `shield_disruption` (perfil antiescudo), que exige contrato próprio.
 
-## 4. Algoritmo conceitual proposto
+## 4. Algoritmo funcional aprovado (ainda não implementado)
 
 1. **Validar** ordem, guerra, participantes reais, munição, posição e pesquisa, sem consultar dados privados do adversário fora do escopo de batalha.
 2. **Criar snapshot por salva** de cada lado: atiradores, alvos, HP, escudos, classe, especializações e disponibilidade de escoltas.
@@ -67,12 +67,12 @@ Na ofensiva, formar o grupo real da ordem `ATTACK`. Na defesa, todas as naves do
 
 **`PROPOSED` para a escolha entre duas escoltas elegíveis:** primeiro verificar capacidade e condição real, depois especialidade apropriada, depois ID estável como desempate. Não permitir proteger um ataque já direcionado à própria escolta nem cadeias recursivas de redirecionamento (a escolta que recebe o tiro não pode ser novamente escoltada no mesmo disparo).
 
-## 5. Compatibilidade e persistência propostas
+## 5. Compatibilidade aprovada e persistência ainda não implementada
 
 - Para qualquer save ou ordem sem doutrina nova: **Equilibrada**, com ranking legado. Não converter automaticamente todos os impérios para Interceptação ou Ruptura.
 - Política especializada exige `fire_control_doctrine` no momento da configuração/partida, e não pode ser selecionada apenas no frontend.
-- **Proposta:** a doutrina ofensiva selecionada é imutável após confirmar o despacho `ATTACK`, ficando no contexto persistente da ordem; assim, uma mudança posterior no estado da frota não altera retroativamente combate já contratado. O nome exato de campo de persistência está `OPEN`.
-- **Proposta:** guarnições planetárias heterogêneas usam Equilibrada como doutrina de tiro em sua primeira versão. A **cobertura de escolta cooperativa** aprovada continua ativa nessa guarnição, independente da doutrina ofensiva. Não atribuir arbitrariamente doutrina de uma frota local às demais.
+- **`APPROVED` como contrato funcional:** a doutrina ofensiva selecionada é imutável após confirmar o despacho `ATTACK`, ficando no contexto persistente da ordem; assim, uma mudança posterior no estado da frota não altera retroativamente combate já contratado. O nome exato de campo de persistência está `OPEN`.
+- **`APPROVED` como contrato funcional:** guarnições planetárias heterogêneas usam Equilibrada como doutrina de tiro em sua primeira versão. A **cobertura de escolta cooperativa** aprovada continua ativa nessa guarnição, independente da doutrina ofensiva. Não atribuir arbitrariamente doutrina de uma frota local às demais.
 - Ao combinar/dividir frotas e carregar saves antigos, validar e manter um padrão seguro. Não exigir migração destrutiva ou preenchimento compulsório de novos campos.
 - Missões `MOVE`/`TRANSPORT`/`RECON` não ganham disparos ou efeitos de doutrina sem definição própria.
 
@@ -115,19 +115,19 @@ Na ofensiva, formar o grupo real da ordem `ATTACK`. Na defesa, todas as naves do
 
 ## 8.1. Dependência do próximo contrato
 
-`PROPOSED`: [C3.0-D03 — guerra eletrônica, antiescudos, interdição e contenção estelar](combat-countermeasures.md) considera esta C3.0-D02 como **hipótese**, não como regra aprovada. A interferência só poderá degradar uma priorização especializada para o comportamento Equilibrada após aprovação conjunta dos contratos relevantes. Nenhum algoritmo desta D02 foi implementado ou validado por teste de aplicação.
+`APPROVED` como design: as decisões A–G da [C3.0-D03 — guerra eletrônica e contramedidas](combat-countermeasures.md) também foram aprovadas. A implementação da degradação de prioridade ainda exige fórmula, emissor e testes próprios. Nenhum algoritmo desta D02 foi implementado ou validado por teste de aplicação.
 
 ## 8.2. Matriz de cenários posterior
 
-`PROPOSED`: os casos B01–B10 e B18 da [C3.0-D04](combat-balance-plan.md) buscam medir custo, desempate, classes, redirecionamento, munição e regressão de saves. Eles **não** aprovam o ranking ou a persistência desta C3.0-D02 e não constituem testes executados.
+`APPROVED` como plano de validação: os casos B01–B10 e B18 da [C3.0-D04](combat-balance-plan.md) medirirão custo, desempate, classes, redirecionamento, munição e regressão de saves. **Nenhum cenário foi executado**; ranking e fallback desta D02 já foram aprovados como design.
 
 ## 8.3. Registro de integração
 
-A [C3.0-D05](combat-integration.md) mantém as decisões C3-D02-A–G `PROPOSED` e identifica conflitos concretos, incluindo classificação de estruturas pesadas como `capital` e persistência da seleção da missão. Nenhum desses pontos foi aprovado por continuidade documental.
+A [C3.0-D05](combat-integration.md) e o [registro consolidado](combat-3-decisions.md) refletem a aprovação expressa de C3-D02-A–G. Estruturas pesadas com classe `capital` permanecem elegíveis; nomes de campos e regras quantitativas ainda estão `OPEN`.
 
-## 9. Decisões pendentes — C3.0-D02
+## 9. Decisões aprovadas — C3.0-D02
 
-| ID | Decisão proposta para aprovação |
+| ID | Decisão `APPROVED` (design) |
 |---|---|
 | **C3-D02-A** | Interceptação: priorizar `light` com fallback Equilibrada |
 | **C3-D02-B** | Ruptura: ordenar `capital > medium > light`; manter modificadores existentes |
@@ -137,7 +137,7 @@ A [C3.0-D05](combat-integration.md) mantém as decisões C3-D02-A–G `PROPOSED`
 | **C3-D02-F** | Separar aquisição de alvos presentes da inteligência prévia; não conceder acesso a dados privados |
 | **C3-D02-G** | Exigir telemetria reprodutível e preservar simultaneidade, defesa planetária, munição e persistência |
 
-Todos esses itens estão **`PROPOSED`**. Números, variantes de armas, fórmula eletrônica e detalhes de armazenamento permanecem `OPEN`. Uma aprovação de design **não** autoriza implementação automática.
+Todos os itens **C3-D02-A–G estão `APPROVED` como design**. Números, variantes de armas, fórmula eletrônica e nomes de campos permanecem `OPEN`. A aprovação não autoriza implementar automaticamente.
 
 ## 10. Fontes
 
