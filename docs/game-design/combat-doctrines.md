@@ -36,6 +36,10 @@ Tornar composição naval, reconhecimento, doutrina, escolta e contramedidas esc
 
 Estas quatro opções são candidatas. Não fixar percentuais, prioridades exatas, regras de empate ou IDs de enum sem aprovação. Uma doutrina só pode selecionar alvos legalmente detectáveis/presentes.
 
+## 4.1. Refinamento C3.0-D01 — escolta e proteção
+
+`PROPOSED`: [C3.0-D01 — escolta, formações e proteção](combat-formations.md) aprofunda o redirecionamento limitado de disparos, a elegibilidade real de Vanguard/Sentinel/Aegis, o tratamento da guarnição e a simultaneidade das salvas. Ele **recomenda** três doutrinas ofensivas, sem a candidata Proteção, mas essa escolha ainda não é `APPROVED`. O detalhamento continua sem autorização para gameplay.
+
 ## 5. Formação e escolta
 
 **Proposta:** separar papéis (escolta, linha, suporte) dos hulls de forma derivada. `fleet_coordination` habilita a aplicação funcional; hulls atuais conservam requisitos de construção.
