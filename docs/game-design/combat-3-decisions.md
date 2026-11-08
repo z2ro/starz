@@ -1,7 +1,7 @@
 # STARZ — Combat 3.0: registro de aprovações
 
 **Decisão do responsável:** «aprovo tudo» (08/11/2026), emitida após apresentação da [C3.0-D05](combat-integration.md), das C3.0-D02/D03 pendentes e do [plano C3.0-D04](combat-balance-plan.md).  
-**Estado:** `APPROVED` **como design e planejamento**, incluindo C3.0-D06-A–H em 08/11/2026; `NOT IMPLEMENTED` para novas mecânicas. A [C3.0-D07](combat-technical-contracts.md) continua `PROPOSED`.  
+**Estado:** `APPROVED` **como design e planejamento**, incluindo C3.0-D06-A–H e C3.0-D07-A–H em 08/11/2026; T01–T16 aprovados como critérios de aceitação técnica. `NOT IMPLEMENTED` para novas mecânicas.  
 **Branch:** `experiment/persistent-universe`.  
 **Escopo:** registrar decisões concretas submetidas à aprovação. Não interpretar como licença para implementar gameplay, alterar YAML ou banco, iniciar testes de gameplay, criar PR ou realizar merge.
 
@@ -54,7 +54,7 @@ As **diretrizes arquiteturais INT-01–INT-08** ficam aprovadas como **princípi
 ## 5. Aspectos não aprovados ou não resolvidos
 
 1. **Parâmetros quantitativos:** coeficientes de guerra eletrônica, antiescudo, alcance/custo da interdição, dano de subsistemas, recursos, tempos, duração, janelas de reação, consumo e thresholds de balanceamento. O limite de uma interceptação por escolta/salva é **regra inicial aprovada**, ainda sujeita a simulação.
-2. **Contratos técnicos exatos:** Odyssey e plataforma com gatilho na chegada já foram escolhidas na C3.0-D06. Persistem `OPEN` alcance, fórmula, nomes de campos/enums, schema, APIs, migrações, rollback, sigilo detalhado e integridade persistente da Stargrave; consultar [C3.0-D07](combat-technical-contracts.md) (`PROPOSED`).
+2. **Contratos técnicos exatos:** Odyssey e plataforma com gatilho na chegada já foram escolhidas na C3.0-D06. Persistem `OPEN` alcance, fórmula, nomes de campos/enums, schema, APIs, migrações, rollback, sigilo detalhado e integridade persistente da Stargrave; consultar [C3.0-D07](combat-technical-contracts.md) (`APPROVED` como arquitetura; nomes e migrações finais ainda `OPEN`).
 3. **R3.0-D02:** os contratos operacionais das tecnologias não discutidos especificamente nas C3.0-D01–D05 **não são automaticamente reclassificados**. A aprovação de Combat 3.0 não substitui uma decisão explícita sobre todos os contratos de Pesquisa 3.0.
 4. **Research Fundamental V:** substituição de `military_tier_4` por `science_infrastructure:2` está `APPROVED` pela C3.0-D06-H; continua **não implementada** no YAML executável.
 5. **Desenvolvimento:** nenhuma implementação de gameplay, catálogo de pesquisa, testes de simulação, migrações, PR, merge ou deploy é autorizada por esta decisão.
@@ -62,7 +62,7 @@ As **diretrizes arquiteturais INT-01–INT-08** ficam aprovadas como **princípi
 ## 6. Próximos gates
 
 - **G0:** regras funcionais C3.0-D01–D03 aprovadas; plano C3.0-D04 e integração C3.0-D05 aprovados como documentação.
-- **G1:** INT-B/D foram fechadas funcionalmente pela D06; fechar números, contrato de destino da estrela, schema, eventos e algoritmos operacionais ainda `OPEN`; revisar a [C3.0-D07](combat-technical-contracts.md) antes de qualquer execução.
+- **G1:** INT-B/D foram fechadas funcionalmente pela D06; fechar números, contrato de destino da estrela, schema, eventos e algoritmos operacionais ainda `OPEN`; aplicar os contratos de design [C3.0-D07](combat-technical-contracts.md) aprovados, ainda fechando schema, rollback e parâmetros antes de eventual execução autorizada.
 - **G2:** somente com autorização separada de implementação/validação, executar baseline e cenários documentados.
 - **G3:** medir custo-benefício das tecnologias e contramedidas e propor faixas de ajuste para aprovação específica.
 
@@ -72,6 +72,12 @@ Aprovação documental não inicia nenhuma dessas atividades executáveis.
 
 **`APPROVED` como design:** [C3.0-D06-A–H](combat-operational-closures.md): Odyssey emissora, EW determinística, plataforma orbital em modo interdição sem disparo, interdição única na chegada por ordem sucessora, perfil antiescudo por frota, cinco etapas de captura/construção Stargrave, cinco subsistemas com destroço e recuperação segura, e `science_infrastructure:2` como requisito substituto de Fundamental V. A D06 supersede os antigos estados `OPEN` de INT-B e INT-D apenas na escolha funcional.
 
-**`PROPOSED`:** [C3.0-D07 — contratos técnicos](combat-technical-contracts.md) documenta possíveis campos/versionamento, vínculos exclusivos de estrela, transações e cenários T01–T16; seu desenho ainda não foi aprovado.
+**`APPROVED` como arquitetura técnica:** [C3.0-D07 — contratos técnicos](combat-technical-contracts.md) estabelece decisões D07-A–H, campos conceituais versionados, unicidade do vínculo estelar, transações e cenários T01–T16. **Não aprova nomes finais de schema nem representa execução dos testes.**
 
 **`OPEN`:** 1,25×/0,80× antiescudo e atraso 25%/30 min são **hipóteses sujeitas a simulação**, não constantes aprovadas. Qualidade EW, demais coeficientes, custos, HP, slots e duração continuam indefinidos. Não houve edição executável, migração ou teste de gameplay.
+
+## 8. Aprovação explícita C3.0-D07 (08/11/2026)
+
+O responsável aprovou a [C3.0-D07](combat-technical-contracts.md) integralmente como **contrato técnico de design**: **D07-A a D07-H**, cobrindo payloads versionados, sucessão idempotente de ordens, emissor Odyssey por snapshot, orçamento único de dano, vinculação 1:1 da estrela, persistência de destroços, unidade excepcional e migração/rollback. Os cenários **T01–T16** passam a ser critérios de aceitação aprovados, **sem execução**.
+
+Permanecem `OPEN` nomes de tabelas/campos/enums, schema final, mecanismo de migração, identidade de estrela em sistemas múltiplos, limiares e custos, balanceamento e destino da estrela após perda da Stargrave. Nenhum arquivo executável foi alterado e nenhum PR/merge foi autorizado.
