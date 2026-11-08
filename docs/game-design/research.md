@@ -66,9 +66,9 @@ Fundadoras: `construction_engineering`, `naval_doctrine`, `energy_engineering`, 
 
 **`APPROVED`:** remover a dependência de `military_tier_4` de `fundamental_tier_5` e desvincular `stellar_containment` de `carrier_operations`, sem alterar automaticamente trabalho pago ou níveis legados. Contramedidas especializadas de Tier IV não precisam de tecnologias exclusivas de Stargrave. Os valores e custos finais estão abertos.
 
-**`PROPOSED`:** substituir o requisito Militar IV de Fundamental V por `science_infrastructure:2`; preservar demais requisitos/bônus de `stellar_containment`; especificar políticas, operações e megaprojetos segundo [R3.0-D02](research-operational.md). As funções militares detalhadas dependem de [Combat 3.0 — doutrinas](combat-doctrines.md).
+**`APPROVED` pela [C3.0-D06-H](combat-operational-closures.md):** substituir o requisito Militar IV de Fundamental V por `science_infrastructure:2`, preservando `fundamental_tier_4`, `energy_engineering` e `energy_engineering:4`. **`PROPOSED`/`OPEN`:** detalhes restantes de migração, contratos civis e megaprojetos da [R3.0-D02](research-operational.md), custos e durações. As funções militares detalhadas foram aprovadas no design em [Combat 3.0](combat-3-decisions.md), mas não implementadas.
 
-**`IMPLEMENTED`, apenas no estado atual:** `stellar_containment` ainda exige `carrier_operations:3`, concede `energy:0.06` por nível, possui `future_unlocks:stellar_megastructures` apenas documental e participa do desbloqueio legado da Dominion. Esta seção não altera o YAML.
+**`IMPLEMENTED`, apenas no estado atual:** `fundamental_tier_5` ainda exige `military_tier_4` no YAML; `stellar_containment` ainda exige `carrier_operations:3`, concede `energy:0.06` por nível, possui `future_unlocks:stellar_megastructures` apenas documental e participa do desbloqueio legado da Dominion. Esta seção não altera o YAML.
 
 ## 5. Dependências
 
