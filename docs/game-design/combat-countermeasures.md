@@ -3,7 +3,7 @@
 **Estado:** `APPROVED` como design em 08/11/2026 para C3-D03-A–G. **Não implementado**; emissor, fórmulas, geometria, schema e números seguem `OPEN`. Ver [registro consolidado](combat-3-decisions.md).  
 **Branch de referência:** `experiment/persistent-universe`.  
 **Autoridade aprovada:** [R3.0-D01](research-3.md) fixa os IDs e os propósitos de `electronic_warfare`, `shield_disruption`, `spatial_interdiction` e `containment_warfare` (e as contramedidas no Tier IV). [C3.0-D01](combat-formations.md) fixa o redirecionamento por escolta e as três doutrinas.  
-**Propostas correlatas:** [C3.0-D02 — seleção de alvos](combat-targeting.md), [R3.0-D02 — capacidades](research-operational.md), [Stargrave](stargrave.md), [defesas](defenses.md).  
+**Especificação aprovada correlata:** [C3.0-D02 — seleção de alvos](combat-targeting.md); **propostas restantes:** [R3.0-D02 — capacidades](research-operational.md), [Stargrave](stargrave.md), [defesas](defenses.md).  
 **Sem autorização:** código, YAML, novos IDs executáveis, migrações, números de dano, custo, tempo, alcance ou eficácia.
 
 ## 1. Objetivos e invariantes
@@ -12,7 +12,7 @@
 2. Ciência habilita capacidades; execução exige presença, oportunidade e requisitos concretos, não apenas um nível de pesquisa.
 3. Resultado é **determinístico**, calculado no servidor e reproduzível por snapshots de combate/ordens persistentes.
 4. Dano e proteção são os **mesmos recursos físicos** existentes no combate. Não criar uma reserva paralela de HP, escudo ou dano eletrônico.
-5. Não alterar o contrato aprovado de escolta, não alterar unilateralmente o algoritmo ainda proposto da C3.0-D02 e não quebrar saves legados.
+5. Não alterar o contrato aprovado de escolta, preservar o algoritmo funcional aprovado da C3.0-D02 e não quebrar saves legados.
 6. O atacante pode selecionar um alvo **presente e combatível** sem espionagem prévia; isso não autoriza revelar estoques, pesquisas e subsistemas privados.
 7. A Stargrave continua uma unidade militar móvel excepcional com **exatamente uma estrela cativa**, não um `hull` convencional. Pode perder contra frotas convencionais preparadas e não concede vitória automática.
 8. `missile_interceptor` e `resolve_missiles` permanecem restritos às munições estratégicas existentes; não inferir interceptação genérica de armas Stargrave.
@@ -129,7 +129,7 @@ Uma frota com naves convencionais e sem `containment_warfare` deve ser capaz de 
 
 | Ação ofensiva | Resposta defensiva | Limite que impede dominância |
 |---|---|---|
-| Interceptação/Ruptura (C3.0-D02, ainda `PROPOSED`) | Escoltas e composição aprovadas pela C3.0-D01 | Doutrina orienta alvo, não gera dano extra |
+| Interceptação/Ruptura (C3.0-D02, `APPROVED` como design) | Escoltas e composição aprovadas pela C3.0-D01 | Doutrina orienta alvo, não gera dano extra |
 | `electronic_warfare` | Sensores, computação e capacidade de aquisição | Não impede todo disparo nem substitui espionagem |
 | `shield_disruption` | Reservas de escudo, armadura e composições sem escudo | Perfil tem custo de oportunidade contra casco |
 | `spatial_interdiction` | Neutralizar emissor, contornar zona, manter operação | Nunca bloqueio permanente ou universal |
@@ -154,7 +154,7 @@ A presença de estruturas não concede segurança absoluta ao planeta; combate o
 1. Resolver condições de chegada, diplomacia, interdição e disponibilidade da operação **antes** de montar o combate, com estado e timestamp autoritativos.
 2. Construir snapshots de ambos os lados: participantes, doutrinas, pesquisas, sensores, informação, escudos e recursos.
 3. Resolver contestação de aquisição eletrônica **antes** da escolha de alvos da salva, sem alterar permanentemente políticas.
-4. Aplicar seleção conforme C3.0-D02 (que continua `PROPOSED`), selecionar alvo pretendido, verificar cobertura/único redirecionamento por escolta da C3.0-D01.
+4. Aplicar seleção conforme C3.0-D02 (com contrato funcional `APPROVED` e parâmetros `OPEN`), selecionar alvo pretendido, verificar cobertura/único redirecionamento por escolta da C3.0-D01.
 5. Aplicar perfil antiescudo ou disparo dirigido **sobre o alvo efetivo** com um orçamento único de dano, respeitando absorção real; para Stargrave, considerar regras de módulos quando existirem.
 6. Planejar **ambos os lados** da salva sem aplicar perdas antes de completar os dois planos.
 7. Aplicar HP/escudos/módulos, consumir munição e registrar perdas, uma vez, preservando simultaneidade.
@@ -185,7 +185,7 @@ Não alterar seis salvas, saque, defesa planetária ou condição de vitória po
 
 ## 10.1. Critérios de avaliação posteriores
 
-`PROPOSED`: os casos B11–B18 da [C3.0-D04](combat-balance-plan.md) definem condições de observação, custo de oportunidade, interdição offline, vulnerabilidade convencional e subsistemas Stargrave. Não são resultados executáveis; os contratos funcionais A–G desta C3.0-D03 estão aprovados, mas não os valores de balanceamento.
+`APPROVED` como metodologia sem execução: os casos B11–B18 da [C3.0-D04](combat-balance-plan.md) definem condições de observação, custo de oportunidade, interdição offline, vulnerabilidade convencional e subsistemas Stargrave. Não são resultados executáveis; os contratos funcionais A–G desta C3.0-D03 estão aprovados, mas não os valores de balanceamento.
 
 ## 10.2. Integração técnica pendente
 
