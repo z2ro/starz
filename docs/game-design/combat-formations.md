@@ -1,6 +1,6 @@
 # STARZ — C3.0-D01: escolta, formações e proteção
 
-**Estado:** `PROPOSED` — regras funcionais aguardando aprovação.  
+**Estado das decisões C3.0-D01 A–G:** `APPROVED` (08/11/2026), não implementadas. Hipóteses numéricas e detalhes algorítmicos além dessas decisões permanecem `PROPOSED`/`OPEN`.  
 **Contexto aprovado:** [Research 3.0 R3.0-D01](research-3.md), especialmente `fleet_coordination` e `fire_control_doctrine`.  
 **Documentos relacionados:** [Combat 3.0](combat-doctrines.md), [combate atual](combat.md), [naves](ships.md).  
 **Escopo:** design documental; sem código, novos atributos, YAML, migração ou valores de balanceamento autorizados.
@@ -18,11 +18,11 @@ Criar decisões de composição reais sem microgerenciamento individual: doutrin
 - As frotas reais armazenam `ship_ids`. A operação de missão em `UniverseOrder` fornece `fleet_id`; partidas, retornos, combate e relatórios são persistidos.
 - Não presumir posição 3D, raio de escolta, armas de interceptação naval ou compartilhamento de escudos a partir do nome/role de uma classe.
 
-## 3. Decisões de interface propostas
+## 3. Decisões de interface aprovadas (`APPROVED`)
 
 - Uma **doutrina de alvo por frota em missão**, com padrão «Equilibrada». A seleção é feita antes do combate; não há comandos por salva.
 - A cobertura de escolta é **automática** quando o império concluiu `fleet_coordination` e tem unidades habilitadas presentes. Nenhuma segunda escolha de formação obrigatória.
-- Recomendar **três** doutrinas inicialmente: Equilibrada (padrão, compatível com hoje), Interceptação (ameaças leves) e Ruptura (alvos pesados). A quarta candidata «Proteção» fica **não recomendada**, porque duplicaria a responsabilidade da formação.
+- Adotar **três** doutrinas: Equilibrada (padrão, compatível com hoje), Interceptação (ameaças leves) e Ruptura (alvos pesados). **Não adicionar a doutrina Proteção**, porque duplicaria a formação automática. A especificação exata de prioridade/tie-break continua `PROPOSED` em [C3.0-D02](combat-targeting.md).
 - `fire_control_doctrine` habilita doutrinas de foco; `fleet_coordination` habilita proteção funcional. Uma pesquisa não substitui a outra.
 - Sem `fire_control_doctrine`, usar a política atual, sem efeitos colaterais. Sem `fleet_coordination`, nenhum tiro é redirecionado por escolta.
 
@@ -32,9 +32,9 @@ Criar decisões de composição reais sem microgerenciamento individual: doutrin
 |---|---|---|---|
 | Multiplicador passivo de redução de dano | Simples | Vira bônus invisível, aproxima-se de `armor` e favorece agrupamentos excessivos | Não recomendar |
 | Compartilhamento geral de escudos | Valor temático para Aegis | Nova reserva de recursos, recarga e ordem de absorção; alto custo de persistência | Adiar |
-| **Redirecionamento limitado de disparos** | Efeito compreensível, usa HP/escudos reais e funciona com seleção existente | Exige regra de escolha e limite por escolta | **Recomendar para primeira versão** |
+| **Redirecionamento limitado de disparos** | Efeito compreensível, usa HP/escudos reais e funciona com seleção existente | Exige regra de escolha e limite por escolta | **`APPROVED`** |
 
-## 5. Mecânica mínima de escolta — proposta de implementação futura
+## 5. Mecânica mínima de escolta — contrato aprovado, não implementado
 
 ### 5.1. Elegibilidade
 
@@ -54,13 +54,13 @@ Criar decisões de composição reais sem microgerenciamento individual: doutrin
 | `aegis_hull` (Aegis) | Atlas e Dominion | Contra disparos convencionais elegíveis | Usa **escudos e HP próprios**, sem transferir ou inventar escudos |
 | Demais classes | Sem capacidade de escolta automática | Mantêm papéis ofensivos/científicos/logísticos | Não receber poderes não especificados |
 
-**Justificativa:** Vanguard protege unidades de apoio de forma geral; Sentinel cobre ameaças leves com vocação antinaves leves já compatível com seu perfil; Aegis preserva capitais de suporte/comando. As três compartilham um único algoritmo de proteção, variando somente elegibilidade.
+**`APPROVED` — mapa de proteção por hull:** Vanguard protege unidades de apoio de forma geral; Sentinel cobre ameaças leves com vocação antinaves leves já compatível com seu perfil; Aegis preserva capitais de suporte/comando. As três compartilham um único algoritmo de proteção, variando somente elegibilidade.
 
 ### 5.3. Limite e ordenação
 
-**Hipótese de design (não coeficiente aprovado):** cada escolta pode redirecionar no máximo **um disparo por salva**, sem gastar outra munição nem criar HP. Precisa ter HP positivo e proteção disponível no *snapshot* do início da salva; não pode redirecionar para um casco cujo HP+escudo projetado já esteja esgotado.
+**`APPROVED` como regra inicial, sujeita a medição no simulador:** cada escolta pode redirecionar no máximo **um disparo por salva**, sem gastar outra munição nem criar HP. A calibração final do limite permanece `OPEN` e só poderá mudar mediante nova decisão. Precisa ter HP positivo e proteção disponível no *snapshot* do início da salva; não pode redirecionar para um casco cujo HP+escudo projetado já esteja esgotado.
 
-Para um ataque a um alvo protegido, buscar escoltas elegíveis ainda disponíveis. Prioridade de desempate recomendada: especialidade (Sentinel contra classe leve; Vanguard para apoio; Aegis para capital), menor quantidade de redirecionamentos na salva e ID estável. A lista exata de prioridades requer comparação de simulação; não atribuir coeficientes artificiais.
+**`PROPOSED` — detalhamento algorítmico:** para um ataque a um alvo protegido, buscar escoltas elegíveis ainda disponíveis. Prioridade de desempate recomendada: especialidade (Sentinel contra classe leve; Vanguard para apoio; Aegis para capital), menor quantidade de redirecionamentos na salva e ID estável. A lista exata de prioridades requer comparação de simulação; não atribuir coeficientes artificiais.
 
 Um disparo redirecionado passa a ter a **escolta como alvo efetivo**. Recalcular modificador de classe do atirador contra a escolta efetiva; aplicar escudo, armadura e dano segundo a rotina autoritativa, com as reservas planetárias existentes quando aplicáveis. Não se produz um disparo extra, não se divide dano entre dois cascos e não se cria um bônus de dano.
 
@@ -82,9 +82,9 @@ Um disparo redirecionado passa a ter a **escolta como alvo efetivo**. Recalcular
 | Equilibrada | Seleção convencional existente | Fallback obrigatório para saves/ordens sem doutrina |
 | Interceptação | Ameaças leves elegíveis | Menor atenção a capitais se houver alvos leves |
 | Ruptura | Capitais e unidades pesadas elegíveis | Pode ser fraca contra enxames e escoltas |
-| Proteção | **Retirar da seleção inicial proposta** | Sua função fica na cobertura de formação automática |
+| Proteção | **Excluída da seleção aprovada** | Sua função fica na cobertura de formação automática |
 
-A doutrina deve ser lida do **contexto de frota real/ordem**, e não apenas de nível científico. Novo campo e armazenamento dependem de uma especificação de persistência; não inventar nome executável agora. Para ataque, congelar seleção no despacho é **proposta**, pois disparos só serão calculados na chegada; para guarnições compostas por frotas diversas, usar Equilibrada na primeira versão evita regras de conflito não especificadas. Revisar essa assimetria antes da aprovação final de targeting.
+**`PROPOSED` — armazenamento e seleção:** a doutrina deve ser lida do **contexto de frota real/ordem**, e não apenas de nível científico. Novo campo e armazenamento dependem de uma especificação de persistência; não inventar nome executável agora. Para ataque, congelar seleção no despacho é **proposta**, pois disparos só serão calculados na chegada; para guarnições compostas por frotas diversas, usar Equilibrada na primeira versão evita regras de conflito não especificadas. Revisar essa assimetria na [C3.0-D02](combat-targeting.md) antes da aprovação final de targeting.
 
 ## 7. Integrações que precisam de design adicional
 
@@ -113,7 +113,7 @@ A doutrina deve ser lida do **contexto de frota real/ordem**, e não apenas de n
 14. Balanceamento compara eficiência industrial por composição e evita «screen spam».
 15. Relatórios registram o suficiente para reproduzir seleção e redirecionamento sem revelar inteligência ilegítima.
 
-## 9. Decisões que ainda exigem aprovação
+## 9. Registro das decisões aprovadas (08/11/2026)
 
 - **C3-D01-A:** proteção automática por pesquisa+composição, sem configuração manual.
 - **C3-D01-B:** redirecionamento limitado para HP/escudos reais, em vez de redução percentual ou escudo compartilhado.
@@ -123,7 +123,7 @@ A doutrina deve ser lida do **contexto de frota real/ordem**, e não apenas de n
 - **C3-D01-F:** guarnição defensora conjunta por planeta e ataque agrupado por frota real.
 - **C3-D01-G:** preservação explícita da simultaneidade e do comportamento legado como fallback.
 
-Números, prioridades finais e contrato de armazenamento da doutrina continuam `OPEN`. **Nenhum item aqui é `APPROVED` por constar no documento.**
+As decisões **C3-D01-A–G foram aprovadas expressamente pelo responsável**. O limite de um redirecionamento por escolta/salva foi aprovado como ponto de partida para simulação, **não** como calibração definitiva. Prioridades finais, armazenamento de doutrinas, estados e fórmulas permanecem `OPEN` e são tratados em [C3.0-D02](combat-targeting.md). Nada aqui está `IMPLEMENTED`.
 
 ## 10. Fontes de implementação e QA (somente referência)
 
@@ -132,4 +132,4 @@ Números, prioridades finais e contrato de armazenamento da doutrina continuam `
 - [Catálogo de hulls](../../persistent_data/ships/functions.yaml).
 - [Política de testes local](../development/local-qa.md).
 
-**Não implementar, não registrar novos efeitos no catálogo e não executar suítes completas por causa desta documentação.**
+**Aprovação de design, não de implementação.** Não alterar catálogos, saves, código ou testes de gameplay sem uma autorização separada.
