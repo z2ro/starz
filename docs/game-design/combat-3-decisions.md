@@ -1,7 +1,7 @@
 # STARZ — Combat 3.0: registro de aprovações
 
 **Decisão do responsável:** «aprovo tudo» (08/11/2026), emitida após apresentação da [C3.0-D05](combat-integration.md), das C3.0-D02/D03 pendentes e do [plano C3.0-D04](combat-balance-plan.md).  
-**Estado:** `APPROVED` **como design e planejamento** até [C3.0-D09 A–H](combat-stellar-custody.md), incluindo C3.0-D06/D07/D08. T01–T32 são critérios técnicos aprovados, não executados. [C3.0-D10](combat-custody-adjudication.md) está `PROPOSED`. `NOT IMPLEMENTED` para novas mecânicas.  
+**Estado:** `APPROVED` **como design e planejamento** até [C3.0-D10 A–H](combat-custody-adjudication.md), incluindo C3.0-D06–D09. T01–T48 aprovados como critérios de QA técnico, não executados. [C3.0-D11](combat-custody-transfer.md) está `PROPOSED`. `NOT IMPLEMENTED` para novas mecânicas.  
 **Branch:** `experiment/persistent-universe`.  
 **Escopo:** registrar decisões concretas submetidas à aprovação. Não interpretar como licença para implementar gameplay, alterar YAML ou banco, iniciar testes de gameplay, criar PR ou realizar merge.
 
@@ -94,4 +94,10 @@ Permanecem `OPEN` nomes de tabelas/campos/enums, schema final, mecanismo de migr
 
 **`APPROVED` como design:** [C3.0-D09-A–H](combat-stellar-custody.md): distinguir proprietário histórico, controlador regional, custodiante e destinatário; claim posterior à estabilização e com revalidação de presença militar; reservar um destino exclusivo com compensação controlada; três operações distintas para reconstrução, repatriação física e relíquia; unicidade transacional, locks/versionamento e idempotência; estado estelar como overlay no mundo procedural sem revelar inteligência privada; cenário de QA `T17–T32` e rollout incremental **apenas planejado**.
 
-**`OPEN`:** regras específicas de presença/controle em espaço livre, concorrência militar e prioridade de claims, transferências de custódia já confirmada, custo/janela/percentuais, schema definitivo, direitos de aliados/neutros e destino pós-repatriação. A [C3.0-D10](combat-custody-adjudication.md) contém recomendações `PROPOSED` e os cenários T33–T48 ainda não aprovados. **Não houve implementação nem execução de QA.**
+**`OPEN`:** regras específicas de presença/controle em espaço livre, concorrência militar e prioridade de claims, transferências de custódia já confirmada, custo/janela/percentuais, schema definitivo, direitos de aliados/neutros e destino pós-repatriação. A [C3.0-D10](combat-custody-adjudication.md) está `APPROVED` como design para controle local, claims, adjudicação, invariantes transacionais e T33–T48; persistência final ainda `OPEN`. A [C3.0-D11](combat-custody-transfer.md) está `PROPOSED` para transferências legítimas e localização espacial. **Não houve implementação nem execução de QA.**
+
+## 11. Aprovação expressa C3.0-D10 (08/11/2026)
+
+**`APPROVED` como design técnico:** [C3.0-D10-A–H](combat-custody-adjudication.md) — elegibilidade baseada em presença militar real, claim exclusivo como reserva temporária, suspensão diante de contestação, custódia confirmada não revogada retroativamente, constraints de estrela/núcleo, liquidação idempotente com ledger, cenários T33–T48 e gates de migração/UI/QA. Nenhum critério T33–T48 foi executado.
+
+**`OPEN`:** transferência de custódia previamente confirmada por conquista/cessão, regras de espaço profundo, neutralidade, extinção de impérios, titularidade de relíquias, tempo/custo final e schema real. A [C3.0-D11](combat-custody-transfer.md) é `PROPOSED` para as opções D11-A–H e T49–T64; a aprovação D10 não decide automaticamente essas lacunas.
