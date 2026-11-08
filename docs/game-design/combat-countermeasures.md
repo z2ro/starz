@@ -183,6 +183,10 @@ Não alterar seis salvas, saque, defesa planetária ou condição de vitória po
 
 **Comparações de equilíbrio necessárias:** frota mista contra navios de escudo alto/baixo; doutrina sob interferência; defesa com/sem carga planetária; Stargrave com escolta versus frota antissubsistema; resultado offline sob interdição. Comparar custo industrial, tempo de reposição, energia, tripulação e perdas, não apenas dano bruto.
 
+## 10.1. Critérios de avaliação posteriores
+
+`PROPOSED`: os casos B11–B18 da [C3.0-D04](combat-balance-plan.md) definem condições de observação, custo de oportunidade, interdição offline, vulnerabilidade convencional e subsistemas Stargrave. Não são resultados executáveis nem aprovação dos algoritmos desta C3.0-D03.
+
 ## 11. Decisões para aprovação posterior
 
 | ID | Deliberação `PROPOSED` |
