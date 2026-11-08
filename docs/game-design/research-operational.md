@@ -26,6 +26,9 @@ As políticas devem ser simples e contextuais, não uma linguagem programável d
 
 ## 3. Contratos militares propostos
 
+**Autoridade posterior:** a função operacional de escolta/coordenação da pesquisa `fleet_coordination` foi refinada e **aprovada como design** em [C3.0-D01](combat-formations.md). Os algoritmos de seleção das três doutrinas permanecem **propostos** em [C3.0-D02](combat-targeting.md). O restante desta R3.0-D02 não ganha aprovação automática.
+
+
 | ID | Modelo | Ativação e comportamento | Limite e evidência exigida |
 |---|---|---|---|
 | `fire_control_doctrine` | `POLICY` | Aplica à frota prioridade predefinida de classes de alvos; padrão equilibrado. | Não dá dano grátis, alvos invisíveis nem acesso a subsistemas não detectados. |
