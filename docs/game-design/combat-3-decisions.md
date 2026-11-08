@@ -88,7 +88,7 @@ Permanecem `OPEN` nomes de tabelas/campos/enums, schema final, mecanismo de migr
 
 **`APPROVED` exclusivamente como método:** a matriz D08-F conservador/intermediário/elevado. **`OPEN` quantitativo:** antiescudo 1,10–1,40×, casco 0,70–0,90×, interdição 10–40% do ETA e tetos 10–60 min, preparo 12–24 h, recuperação 10–40% e estabilização 12–48 h são **valores de ensaio**, não constantes de gameplay aprovadas. Nenhum baseline ou simulação foi executado.
 
-**`APPROVED` como design:** [C3.0-D09](combat-stellar-custody.md) — contratos A–H de transação, reivindicação, custódia, compensações, três fluxos de destino e critérios T17–T32, ainda sem execução. Prioridades diplomáticas e critérios finos de controle militar permanecem `OPEN` e são analisados na [C3.0-D10](combat-custody-adjudication.md) (`PROPOSED`). Nenhuma alteração de gameplay, banco, catálogo ou deploy foi autorizada.
+**`APPROVED` como design:** [C3.0-D09](combat-stellar-custody.md) — contratos A–H de transação, reivindicação, custódia, compensações, três fluxos de destino e critérios T17–T32, ainda sem execução. Os princípios de controle militar e claims estão aprovados em [C3.0-D10](combat-custody-adjudication.md). Permanecem `OPEN` a transferência de custódia previamente confirmada, regras de espaço profundo e direitos diplomáticos, tratados na [C3.0-D11](combat-custody-transfer.md) (`PROPOSED`). Nenhuma alteração de gameplay, banco, catálogo ou deploy foi autorizada.
 
 ## 10. Aprovação expressa C3.0-D09 (08/11/2026)
 
