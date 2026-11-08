@@ -1,7 +1,9 @@
+import {decorativeStars,orbitalFrame} from './galaxyVisuals';
+import {createOrbitalStar,ORBITAL_PALETTE} from './OrbitalStar';
 import {planetIdentity} from './planetIdentity';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { createLabPlanet, disposeLabObject } from '../planetlab/PlanetModel';
+import { createLabPlanet, disposeLabObject, PLANET_OUTER_RADIUS } from '../planetlab/PlanetModel';
 import { ShipPixelPipeline } from '../shipgeometrylab/ShipPixelPipeline';
 import { DEFAULT_SHIP_SETTINGS } from '../shipgeometrylab/shipLabTypes';
 import { FLEET_DESIGNS } from '../shipgeometrylab/FleetStudy';
@@ -16,18 +18,23 @@ export class OrbitalSystemRenderer {
   private scene = new THREE.Scene();
   private camera = new THREE.OrthographicCamera(-8, 8, 6, -6, .1, 150);
   private controls: OrbitControls;
-  private pipeline = new ShipPixelPipeline();
+  private pipeline = new ShipPixelPipeline(ORBITAL_PALETTE);
   private settings = { ...DEFAULT_SHIP_SETTINGS, pixelSize: 2 };
   private observer: ResizeObserver;
   private selectedOutline = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(Array.from({length:80},(_,i)=>new THREE.Vector3(Math.cos(i/80*Math.PI*2),Math.sin(i/80*Math.PI*2),0))),new THREE.LineBasicMaterial({color:'#83e5e5',depthTest:true,depthWrite:false}));
-  private star = new THREE.Mesh(new THREE.SphereGeometry(.85, 20, 12), new THREE.MeshBasicMaterial({ color: '#ffe1a0', toneMapped: false }));
-  private sky = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 450 }, (_, i) => ((i * 137.507 % 1) - .5) * 50), 3)), new THREE.PointsMaterial({ color: '#64788b', size: .027, sizeAttenuation: true }));
+  private stellar=createOrbitalStar('starz:stellar:initial','G');
+  private star=this.stellar.mesh;
+  private stellarKey='';
+  private light=new THREE.PointLight('#ffe2b6',3.1,0,0);
+  private sky=new THREE.Group();
   private orbitGeometry = new THREE.BufferGeometry().setFromPoints(Array.from({ length: 160 }, (_, i) => new THREE.Vector3(Math.cos(i / 160 * Math.PI * 2), 0, Math.sin(i / 160 * Math.PI * 2))));
-  private orbitMaterial = new THREE.LineBasicMaterial({ color: '#42677d', transparent: true, opacity: .55 });
+  private orbitMaterial = new THREE.LineBasicMaterial({ color: '#33546b', transparent: true, opacity: .34 });
+  private selectedOrbitMaterial=new THREE.LineBasicMaterial({color:'#6cabb4',transparent:true,opacity:.68});
+  private leaders=document.createElementNS('http://www.w3.org/2000/svg','svg');
   private orbits = new THREE.Group();
   private ships = new THREE.Group();
   private shipCache = new Map<ShipDesignId, ReturnType<typeof FLEET_DESIGNS[number]['create']>>();
-  private planets: { model: PlanetModel; index: number; slot: number; label: HTMLButtonElement; labelWidth: number; labelHeight: number }[] = [];
+  private planets: { model: PlanetModel; index: number; slot: number; label: HTMLButtonElement; leader: SVGPolylineElement; labelWidth: number; labelHeight: number }[] = [];
   private labels = document.createElement('div');
   private projection = new THREE.Vector3();
   private ray = new THREE.Raycaster();
@@ -56,9 +63,10 @@ export class OrbitalSystemRenderer {
     canvas.setAttribute('aria-label', 'Vista orbital interativa: arraste para girar e use roda ou pinça para zoom');
     this.controls = new OrbitControls(this.camera, canvas); this.controls.enableDamping = true; this.controls.enablePan = false; this.controls.zoomToCursor = true;
     this.controls.minZoom = .65; this.controls.maxZoom = 5; this.controls.maxPolarAngle = Math.PI * .82;
-    this.labels.className = 'orbital-labels'; this.host.append(canvas, this.labels);
+    this.labels.className = 'orbital-labels';this.leaders.classList.add('orbital-leaders');this.leaders.setAttribute('aria-hidden','true');this.labels.append(this.leaders);this.host.append(canvas,this.labels);
+    this.camera.add(this.sky);this.sky.position.z=-100;this.scene.add(this.camera);
     this.selectedOutline.visible=false;
-    this.scene.add(this.selectedOutline,this.star, this.sky, this.orbits, this.ships, new THREE.PointLight('#ffe2b6', 3.1, 0, 0), new THREE.HemisphereLight('#9ab9cc', '#030711', .15));
+    this.scene.add(this.selectedOutline,this.star, this.orbits, this.ships, this.light, new THREE.HemisphereLight('#9ab9cc', '#030711', .15));
     canvas.addEventListener('pointerdown', this.pointerDown); canvas.addEventListener('pointerup', this.pointerUp); canvas.addEventListener('webglcontextlost', this.contextLost);
     this.observer = new ResizeObserver(() => this.resize()); this.observer.observe(host); this.resetCamera(); this.resize();
     this.frameId = requestAnimationFrame(this.frame);
@@ -82,19 +90,33 @@ export class OrbitalSystemRenderer {
     const changedSystem = !this.system || systemKey(system) !== systemKey(this.system);
     const models = orbitalPlanets(system), key = JSON.stringify(models.map(p => [p.planet.planet_index, p.settings, p.atmosphere]));
     this.system = system; this.dirty = true;
+    const stellarKey=`${systemKey(system)}:${system.star?.stellar_class??'G'}`;
+    if(stellarKey!==this.stellarKey){
+      this.scene.remove(this.star);this.stellar.dispose();this.stellar=createOrbitalStar(`starz:stellar:v1:${systemKey(system)}`,system.star?.stellar_class??'G');this.star=this.stellar.mesh;this.scene.add(this.star);
+      this.light.color.copy(this.star.material.uniforms.color.value);this.host.dataset.starClass=system.star?.stellar_class??'UNKNOWN';
+      disposeLabObject(this.sky);this.sky.clear();
+      const stars=decorativeStars(`starz:orbital-sky:v2:${systemKey(system)}`,190);
+      for(const brightness of [.3,.52,.8]){
+        const points=stars.filter(p=>p.brightness===brightness),geometry=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p.x*2-1,p.y*2-1,0)));
+        const material=new THREE.PointsMaterial({color:brightness===.8?'#788582':'#304b65',size:brightness===.8?2:1,sizeAttenuation:false,transparent:true,opacity:brightness,depthWrite:false,toneMapped:false});
+        const layer=new THREE.Points(geometry,material);layer.frustumCulled=false;this.sky.add(layer);
+      }
+      this.stellarKey=stellarKey;
+    }
     if (Number.isFinite(state.observed_at) && (this.lastObserved === undefined || state.observed_at! > this.lastObserved)) { this.lastObserved = state.observed_at; this.epoch = state.observed_at!; this.received = performance.now(); }
     if (key !== this.geographyKey) {
-      this.planets.forEach(p => { this.scene.remove(p.model.root); disposeLabObject(p.model.root); p.label.remove(); }); this.planets = []; this.orbits.clear();
+      this.planets.forEach(p => { this.scene.remove(p.model.root); disposeLabObject(p.model.root); p.label.remove();p.leader.remove(); }); this.planets = []; this.orbits.clear();
       models.forEach(({ planet, settings, atmosphere }, slot) => {
-        const model = createLabPlanet(settings); model.root.scale.setScalar(.37 + (planet.planet_index % 3) * .035);
+        const model = createLabPlanet(settings); model.root.scale.setScalar(.46 + (planet.planet_index % 3) * .035);
         model.root.userData.planetIndex = planet.planet_index; model.atmosphere.visible = atmosphere.visible;
         const label = document.createElement('button'); label.type = 'button'; label.textContent = planet.name; label.dataset.planetIndex = String(planet.planet_index);
         label.setAttribute('aria-label', `Inspecionar planeta ${planet.name}`); label.onclick = () => this.selectPlanet(planet.planet_index); this.labels.append(label);
-        this.planets.push({ model, index: planet.planet_index, slot, label, labelWidth: label.offsetWidth || 170, labelHeight: label.offsetHeight || 44 }); this.scene.add(model.root);
-        const orbit = new THREE.LineLoop(this.orbitGeometry, this.orbitMaterial); const radius = orbitalPosition(system, planet.planet_index, 0, slot).radius; orbit.scale.set(radius, 1, radius); this.orbits.add(orbit);
+        const leader=document.createElementNS('http://www.w3.org/2000/svg','polyline');this.leaders.append(leader);
+        this.planets.push({ model, index: planet.planet_index, slot, label, leader, labelWidth: label.offsetWidth || 170, labelHeight: label.offsetHeight || 44 }); this.scene.add(model.root);
+        const orbit = new THREE.LineLoop(this.orbitGeometry, this.orbitMaterial); const radius = orbitalPosition(system, planet.planet_index, 0, slot).radius; orbit.scale.set(radius, 1, radius);orbit.userData.planetIndex=planet.planet_index; this.orbits.add(orbit);
       });
       this.host.dataset.generationCount = String(++this.generationCount);
-      this.geographyKey = key; this.span = Math.max(4.5, 2.25 + Math.max(0, models.length - 1) * 1.65 + 1.2);
+      this.geographyKey = key; this.span = models.length?orbitalPosition(system,models[models.length-1].planet.planet_index,0,models.length-1).radius:.85;
     }
     this.planets.forEach(p => {
       const planet = system.planets?.find(item => item.planet_index === p.index); if(!planet)return;
@@ -108,7 +130,7 @@ export class OrbitalSystemRenderer {
       }
     });
     const fleets = knownLocalFleets(system, state.fleets);
-    const fleetKey = JSON.stringify(fleets.map(f => [f.id, f.ship_ids, f.ship_ids.map(id => state.ships.find(s => s.id === id)?.hull_id)]));
+    const fleetKey = systemKey(system)+':'+this.span+JSON.stringify(fleets.map(f => [f.id, f.ship_ids, f.ship_ids.map(id => state.ships.find(s => s.id === id)?.hull_id)]));
     if (fleetKey !== this.fleetKey) {
       this.ships.clear();
       fleets.forEach((fleet, i) => {
@@ -127,7 +149,7 @@ export class OrbitalSystemRenderer {
     if (changedSystem) this.resetCamera();
     this.host.dataset.systemKey = systemKey(system);
   }
-  select(index: number | undefined) { this.dirty = true; this.selectedIndex = index; this.planets.forEach(p => p.label.setAttribute('aria-pressed', String(p.index === index))); }
+  select(index: number | undefined) { this.dirty = true; this.selectedIndex = index; this.planets.forEach(p => p.label.setAttribute('aria-pressed', String(p.index === index)));this.orbits.children.forEach(orbit=>(orbit as THREE.LineLoop).material=orbit.userData.planetIndex===index?this.selectedOrbitMaterial:this.orbitMaterial); }
   setPaused(paused: boolean) {
     this.dirty = true;
     if (paused && !this.paused) this.frozenTime = this.simulationTime();
@@ -135,14 +157,16 @@ export class OrbitalSystemRenderer {
     this.paused = paused;
   }
   private simulationTime() { return this.paused ? this.frozenTime : this.epoch + (performance.now() - this.received) / 1000; }
-  resetCamera() { this.camera.position.set(5, 8, 7).normalize().multiplyScalar(20); this.camera.zoom = 1.2; this.camera.up.set(0, 1, 0); this.controls.target.set(0, 0, 0); this.controls.update(); this.resize(); }
+  resetCamera() { this.camera.position.set(4, 5, 9).normalize().multiplyScalar(20); this.camera.zoom = 1; this.camera.up.set(0, 1, 0); this.controls.target.set(0, 0, 0); this.controls.update(); this.resize(); }
   zoom(factor: number) { this.dirty = true; this.camera.zoom = THREE.MathUtils.clamp(this.camera.zoom * factor, .65, 5); this.camera.updateProjectionMatrix(); }
   private resize() {
     this.dirty = true;
     this.planets.forEach(p => { const hidden = p.label.hidden; p.label.hidden = false; p.labelWidth = p.label.offsetWidth || 170; p.labelHeight = p.label.offsetHeight || 44; p.label.hidden = hidden; });
     const box = this.host.getBoundingClientRect(); this.width = Math.max(1, box.width); this.height = Math.max(1, box.height);
-    const span = Math.max(this.span, this.span * this.height / this.width);
-    Object.assign(this.camera, { left: -span * this.width / this.height, right: span * this.width / this.height, top: span, bottom: -span }); this.camera.updateProjectionMatrix();
+    this.camera.updateMatrixWorld(true);const m=this.camera.matrixWorld.elements;
+    const frame=orbitalFrame(this.planets.length?this.span:0,this.planets.length?Math.max(...this.planets.map(p=>PLANET_OUTER_RADIUS*p.model.root.scale.x)):.85,this.width,this.height,{x:m[0],z:m[2]},{x:m[4],z:m[6]});
+    Object.assign(this.camera,{left:-frame.halfWidth,right:frame.halfWidth,top:frame.halfHeight,bottom:-frame.halfHeight});
+    this.host.dataset.orbitalFrame=JSON.stringify(frame); this.camera.updateProjectionMatrix();
     this.pipeline.resize(this.width, this.height, this.settings); this.renderer.setSize(this.pipeline.width, this.pipeline.height, false);
   }
   private frame = () => {
@@ -152,6 +176,8 @@ export class OrbitalSystemRenderer {
       if(this.paused && !cameraChanged && !this.dirty){this.frameId=requestAnimationFrame(this.frame);return;}
       this.dirty = false;
       const time = this.simulationTime();
+      this.star.rotation.y=time*.006;
+      this.sky.scale.set(this.camera.right/this.camera.zoom,this.camera.top/this.camera.zoom,1);
       this.planets.forEach(p => {
         const orbit = orbitalPosition(this.system!, p.index, time, p.slot); p.model.root.position.set(orbit.x, orbit.y, orbit.z);
         p.model.root.rotation.y = time * .015; p.model.cloudLayer.rotation.y = time * .019;
@@ -169,15 +195,18 @@ export class OrbitalSystemRenderer {
         this.projection.copy(p.model.root.position).project(this.camera);
         const x = (this.projection.x + 1) / 2 * this.width, y = (1 - this.projection.y) / 2 * this.height;
         p.label.dataset.screenX=String(x);p.label.dataset.screenY=String(y);
-        p.label.hidden = true;
+        p.label.hidden = true;p.leader.style.display='none';
         if (this.projection.z < -1 || this.projection.z > 1 || x < 0 || x > this.width || y < 0 || y > this.height || p.labelWidth + 8 > this.width) return;
         const left = Math.max(4, Math.min(this.width - p.labelWidth - 4, x - p.labelWidth / 2)), radius=1.36*p.model.root.scale.x*scale;
-        const candidates=[{left,top:y-radius-8-p.labelHeight},{left,top:y+radius+8},{left:x-radius-8-p.labelWidth,top:y-p.labelHeight/2},{left:x+radius+8,top:y-p.labelHeight/2}];
+        const candidates=[{left,top:y-radius-8-p.labelHeight},{left,top:y+radius+8},{left:x-radius-8-p.labelWidth,top:y-p.labelHeight/2},{left:x+radius+8,top:y-p.labelHeight/2},
+          ...[-1,1].flatMap(side=>[-1,1].map(vertical=>({left:side<0?x-radius-8-p.labelWidth:x+radius+8,top:vertical<0?y-radius-8-p.labelHeight:y+radius+8})))];
         for(const candidate of candidates){
           const left=Math.max(4,Math.min(this.width-p.labelWidth-4,candidate.left)),top=Math.max(4,Math.min(this.height-p.labelHeight-4,candidate.top));
           const box={left,right:left+p.labelWidth,top,bottom:top+p.labelHeight};
           if(box.left<4||box.right>this.width-4||box.top<4||box.bottom>this.height-4||obstacles.some(b=>box.left<b.x+b.r&&box.right>b.x-b.r&&box.top<b.y+b.r&&box.bottom>b.y-b.r)||placed.some(b=>box.left<b.right+4&&box.right>b.left-4&&box.top<b.bottom+4&&box.bottom>b.top-4))continue;
-          p.label.style.left=`${box.left+p.labelWidth/2}px`;p.label.style.top=`${box.bottom}px`;p.label.hidden=false;placed.push(box);break;
+          p.label.style.left=`${box.left+p.labelWidth/2}px`;p.label.style.top=`${box.bottom}px`;p.label.hidden=false;placed.push(box);
+          const endX=Math.max(box.left,Math.min(box.right,x)),endY=Math.max(box.top,Math.min(box.bottom,y)),dx=endX-x,dy=endY-y,length=Math.hypot(dx,dy)||1;
+          p.leader.setAttribute('points',`${x+dx/length*(radius+2)},${y+dy/length*(radius+2)} ${endX},${endY}`);p.leader.dataset.selected=String(p.index===this.selectedIndex);p.leader.style.display='';break;
         }
         p.label.dataset.selected = String(p.index === this.selectedIndex);
       });
@@ -192,7 +221,7 @@ export class OrbitalSystemRenderer {
     canvas.removeEventListener('pointerdown', this.pointerDown); canvas.removeEventListener('pointerup', this.pointerUp); canvas.removeEventListener('webglcontextlost', this.contextLost);
     this.planets.forEach(p => disposeLabObject(p.model.root)); this.planets = []; this.shipCache.forEach(s => s.dispose()); this.shipCache.clear();
     this.selectedOutline.geometry.dispose();this.selectedOutline.material.dispose();
-    this.star.geometry.dispose(); this.star.material.dispose(); disposeLabObject(this.sky); this.orbitGeometry.dispose(); this.orbitMaterial.dispose(); this.pipeline.dispose();
+    this.stellar.dispose(); disposeLabObject(this.sky); this.orbitGeometry.dispose(); this.orbitMaterial.dispose();this.selectedOrbitMaterial.dispose(); this.pipeline.dispose();
     this.scene.clear(); this.renderer.dispose(); canvas.remove(); this.labels.remove();
   }
 }

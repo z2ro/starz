@@ -19,7 +19,7 @@
 .system-hit{fill:transparent;stroke:none}
 .system-selection{fill:none;stroke:transparent;stroke-width:1;stroke-dasharray:3 4;pointer-events:none}
 .spatial-system.selected .system-selection,.spatial-system:focus-visible .system-selection{stroke:var(--master-amber);stroke-width:2}
-.spatial-system.home .stellar-symbol{fill:var(--master-cyan)}
+
 .stellar-symbol{fill:#eee9d5;shape-rendering:crispEdges}
 .stellar-symbol.stellar-m,.stellar-symbol.stellar-k{fill:#db9863}.stellar-symbol.stellar-o,.stellar-symbol.stellar-b{fill:#94c7df}
 .unidentified-symbol{fill:#0b1c2b;stroke:#668393;stroke-width:1.5;stroke-dasharray:2 2}
@@ -102,7 +102,7 @@
 .orbital-labels button span{grid-column:2;font:12px/15px var(--master-body);color:var(--master-muted)}
 .orbital-labels button[data-selected=true]{border-color:var(--master-cyan);color:var(--master-cyan)}
 .spatial-system.selected .system-selection,.spatial-system:focus-visible .system-selection{stroke:var(--master-cyan)}
-.spatial-system.home .stellar-symbol{fill:var(--master-text)}
+
 .selected-planet-heading{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;border-left:2px solid var(--master-cyan);padding-left:8px}.selected-planet-heading h3{font:600 14px/1.4 var(--master-body);margin:0}
 .selected-planet-heading p{font-size:13px;color:var(--master-muted)}
 .master-ui .galaxy-spatial-detail>header{gap:6px}
@@ -113,3 +113,13 @@
 .planet-order-buttons>.button{flex:1;min-width:0}
 .master-ui .planet-order-buttons>.pixel-button{min-height:44px;font-size:14px;padding:6px 10px;flex:none}
 @media(max-width:700px){.px-page-galaxy .px-view[data-panel=detail] .galaxy-command>.workspace-header,.px-page-galaxy .px-view[data-panel=detail] .galaxy-navigation{display:none}}
+/* Compact labels retain 44px hit areas; decorative leaders never capture input. */
+.master-ui .system-workspace .orbital-labels button{background:transparent;border:0;border-left:2px solid transparent;padding:2px 5px;text-shadow:1px 1px #030711,-1px -1px #030711;box-shadow:none}
+.master-ui .system-workspace .orbital-labels button[data-selected=true]{border-left-color:var(--master-cyan);background:#061421d9}
+.orbital-labels button span{color:var(--master-muted)}
+.orbital-leaders{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
+.orbital-leaders polyline{fill:none;stroke:#38576b;stroke-width:1;shape-rendering:crispEdges}
+.orbital-leaders polyline[data-selected=true]{stroke:#79c3c7}
+.galaxy-dust{opacity:1}
+
+.stellar-symbol.stellar-m{fill:#b56847}

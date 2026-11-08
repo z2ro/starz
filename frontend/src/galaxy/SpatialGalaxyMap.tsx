@@ -1,3 +1,4 @@
+import {decorativeStars} from './galaxyVisuals';
 import {PlanetMark} from './PlanetStatus';
 import {systemPlanetSummary} from './planetIdentity';
 import { useEffect, useMemo, useRef } from 'react';
@@ -13,6 +14,7 @@ export function SpatialGalaxyMap({ systems, center, roster, fleets, observedAt, 
   const camera = useRef({ x: 0, y: 0, zoom: 1, width: 1, height: 1 });
   const pointers = useRef(new Map<number, { x: number; y: number }>()), moved = useRef(false), initial = useRef(true);
   const nodes = useMemo(() => systems.map(system => ({ system, ...visualPosition(system) })), [systems]);
+  const dust=useMemo(()=>decorativeStars('starz:galaxy-dust:v2',520),[]);
   const backgroundCenter = visualPosition({x:center[0],y:center[1]});
   const nodesRef = useRef(nodes); nodesRef.current = nodes;
   const selectedRef = useRef(systemKey(selected)); selectedRef.current = systemKey(selected);
@@ -31,7 +33,12 @@ export function SpatialGalaxyMap({ systems, center, roster, fleets, observedAt, 
     const minX = Math.min(...points.map(p => p.x)), maxX = Math.max(...points.map(p => p.x));
     const minY = Math.min(...points.map(p => p.y)), maxY = Math.max(...points.map(p => p.y));
     c.zoom = Math.max(.45, Math.min(1, (c.width - 100) / Math.max(1, maxX - minX), (c.height - 100) / Math.max(1, maxY - minY)));
-    c.x = c.width / 2 - (minX + maxX) / 2 * c.zoom; c.y = c.height / 2 - (minY + maxY) / 2 * c.zoom; apply();
+    c.x = c.width / 2 - (minX + maxX) / 2 * c.zoom; c.y = c.height / 2 - (minY + maxY) / 2 * c.zoom;
+    const selectedPoint=points.find(p=>systemKey(p.system)===selectedRef.current);
+    if(selectedPoint&&(selectedPoint.x*c.zoom+c.x<50||selectedPoint.x*c.zoom+c.x>c.width-50||selectedPoint.y*c.zoom+c.y<50||selectedPoint.y*c.zoom+c.y>c.height-90)){
+      c.x=c.width/2-selectedPoint.x*c.zoom;c.y=c.height/2-selectedPoint.y*c.zoom;
+    }
+    apply();
   };
   const zoom = (factor: number, x = camera.current.width / 2, y = camera.current.height / 2) => {
     const c = camera.current, next = Math.max(.45, Math.min(2.5, c.zoom * factor)), ratio = next / c.zoom;
@@ -65,7 +72,7 @@ export function SpatialGalaxyMap({ systems, center, roster, fleets, observedAt, 
         pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
       }} onPointerUp={e => { pointers.current.delete(e.pointerId); }} onPointerCancel={e => { pointers.current.delete(e.pointerId); moved.current = true; }}>
       <g ref={layer}>
-        <g className="galaxy-dust" transform={`translate(${backgroundCenter.x} ${backgroundCenter.y})`} aria-hidden="true">{Array.from({ length: 220 }, (_, i) => <rect key={i} x={(i * 269 % 3200) - 1600} y={(i * 541 % 2600) - 1300} width={i % 7 === 0 ? 2 : 1} height={i % 7 === 0 ? 2 : 1}/>)}</g>
+        <g className="galaxy-dust" transform={`translate(${backgroundCenter.x} ${backgroundCenter.y})`} aria-hidden="true">{dust.map((p,i)=><rect key={i} x={(p.x-.5)*3600} y={(p.y-.5)*3000} width={p.size*2} height={p.size*2} opacity={p.brightness}/>)}</g>
         {nodes.map(({ system, x, y }) => <g key={systemKey(system)} transform={`translate(${x} ${y})`}>
           <g className={`spatial-system ${system.knowledge_level === 'SURVEYED' ? 'charted' : 'unknown'} ${systemKey(selected) === systemKey(system) ? 'selected' : ''} ${system.home ? 'home' : ''}`} data-system-key={systemKey(system)} role="button" tabIndex={0} onFocus={() => {const point=visualPosition(system),c=camera.current;if(point.x*c.zoom+c.x<40||point.x*c.zoom+c.x>c.width-40||point.y*c.zoom+c.y<40||point.y*c.zoom+c.y>c.height-70){c.x=c.width/2-point.x*c.zoom;c.y=c.height/2-point.y*c.zoom;apply();}}} aria-pressed={systemKey(selected) === systemKey(system)} aria-label={`${system.name ?? 'Localização não identificada'}, coordenadas ${system.x}:${system.y}, ${system.knowledge_level}`} onClick={e => { if(moved.current)e.stopPropagation(); select(system); }} onDoubleClick={() => { if (system.knowledge_level === 'SURVEYED') { onSelect(system); onOpen(); } }} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(system); } }}>
             <rect className="system-hit" x="-23" y="-23" width="46" height="46"/>

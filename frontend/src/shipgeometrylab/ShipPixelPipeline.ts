@@ -88,7 +88,13 @@ export class ShipPixelPipeline {
   width = 1;
   height = 1;
 
-  constructor() { this.quad.frustumCulled = false; this.scene.add(this.quad); }
+  constructor(palette?:readonly string[]) {
+    if(palette){
+      if(palette.length!==PALETTE.length){this.dispose();throw new Error(`Pixel palette must contain ${PALETTE.length} colors.`);}
+      this.material.uniforms.uPalette.value=palette.map(hex=>{const color=new THREE.Color(hex).convertLinearToSRGB();return new THREE.Vector3(color.r,color.g,color.b);});
+    }
+    this.quad.frustumCulled = false; this.scene.add(this.quad);
+  }
 
   resize(width: number, height: number, settings: ShipLabSettings) {
     const size = settings.raw ? 1 : Math.max(1, Math.min(6, settings.pixelSize));
@@ -121,3 +127,5 @@ export class ShipPixelPipeline {
     this.scene.clear();
   }
 }
+
+export {PALETTE as SHIP_PIXEL_PALETTE};

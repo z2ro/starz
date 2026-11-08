@@ -1,4 +1,5 @@
 import type { Catalog, Fleet, GalaxySystem, State } from '../types/game';
+import {seededRandom} from '../planet3d/planetVisual';
 import { seedNumber } from '../planetlab/planetGenerator';
 import { derivePlanetVisual } from '../visual-state/planetVisualMapping';
 import { DEFAULT_PLANET_LAB_SETTINGS } from '../planetlab/planetLabTypes';
@@ -6,9 +7,10 @@ import { DEFAULT_PLANET_LAB_SETTINGS } from '../planetlab/planetLabTypes';
 // Coordinates are the stable system identity exposed before AND after discovery.
 export const systemKey = (system: Pick<GalaxySystem, 'x' | 'y'>) => `${system.x}:${system.y}`;
 export function visualPosition(system: Pick<GalaxySystem, 'x' | 'y'>) {
-  const key = `starz:galaxy-layout:v1:${systemKey(system)}`;
-  return { x: system.x * 320 + system.y * 120 + Math.sin(system.y * 1.1 + system.x * .5) * 80 + (seedNumber(key + ':x') / 0xffffffff - .5) * 100,
-    y: system.y * 300 + system.x * 20 + Math.cos(system.x * .6 - system.y * .4) * 80 + (seedNumber(key + ':y') / 0xffffffff - .5) * 90 };
+  const key = `starz:galaxy-layout:v2:${systemKey(system)}`;
+  const angle=seededRandom(key,'angle')*Math.PI*2,radius=Math.sqrt(seededRandom(key,'radius'))*106;
+  return {x:system.x*360+system.y*175+55*Math.sin(system.x*.4+system.y*.6)+Math.cos(angle)*radius,
+    y:system.y*340+system.x*20+50*Math.cos(system.x*.3-system.y*.5)+Math.sin(angle)*radius};
 }
 export function authorizedSystem(system: GalaxySystem): GalaxySystem {
   if (system.knowledge_level === 'SURVEYED') return system;
