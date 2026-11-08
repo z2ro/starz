@@ -1,9 +1,9 @@
 # STARZ — C3.0-D09: contrato técnico de custódia, recuperação e liquidação estelar
 
-**Estado:** `PROPOSED` — especificação técnica para aprovação futura, **não implementada**.  
+**Estado:** `APPROVED` como contrato de design técnico em 08/11/2026; **D09-A–H e cenários T17–T32 aprovados**. **Não implementado, não testado.**  
 **Autoridade `APPROVED`:** [C3.0-D08 A–H](combat-stellar-disposition.md) (núcleo seguro, custódia disputável, três destinos e matriz apenas experimental), [C3.0-D07 A–H](combat-technical-contracts.md) (versão, atomicidade, vínculo estelar 1:1, adaptador e rollback) e [C3.0-D06 F/G](combat-operational-closures.md) (cinco fases, subsistemas e derrota).  
 **Escopo:** decisões sobre **protocolo**, estados de custódia, contestação, operações logísticas, reembolso/saque, commit idempotente, integração ao mapa, visibilidade e QA.  
-**Limite:** nomes de campos, enums, payloads e entidades são **candidatos**, sem migração, API, frontend, YAML ou gameplay autorizado. Nenhum custo/prazo/HP ou porcentagem é final.
+**Limite da aprovação:** regras funcionais, integridade e metodologia de QA da D09 estão aprovadas; nomes de campos, enums, payloads, tabelas e entidades são **candidatos**, sem migração, API, frontend, YAML ou gameplay autorizado. Nenhum custo/prazo/HP ou porcentagem é final.
 
 ## 1. Invariantes herdadas — não reabrir
 
@@ -16,7 +16,7 @@
 - A matriz numérica C3.0-D08-F foi aprovada **como experimento**, não como valores configuráveis de produção.
 - Não criar segundo resolvedor naval, novo `hull` convencional, duplicação de carga ou mini-jogo de tempo real.
 
-## 2. D09-A — distinguir propriedade, custódia e controle regional (`PROPOSED`)
+## 2. D09-A — distinguir propriedade, custódia e controle regional (`APPROVED` como design)
 
 **Quatro identidades distintas:**
 
@@ -31,7 +31,7 @@ A vitória militar modifica o estado de combate/controle, **não** o `custodian_
 
 **Alternativas ainda `OPEN`:** como coexistem claims de vários impérios, direitos prioritários do dono original, alianças e regiões sem soberania. Proposta inicial: só o império com presença militar efetiva e autorização diplomática pode *iniciar* uma reivindicação; empate/conflito suspende resolução até a contestação militar ser resolvida, sem transferência arbitrária por ID.
 
-## 3. D09-B — estabilização, claim e contestação (`PROPOSED`)
+## 3. D09-B — estabilização, claim e contestação (`APPROVED` como design)
 
 ### 3.1. Ciclo proposto
 
@@ -56,7 +56,7 @@ flowchart TD
 
 **Não fixar números:** 12/24/48 horas da D08 são **três cenários**, e não duração final. Uma pausa por batalha não reinicia indefinidamente esse relógio.
 
-## 4. D09-C — exclusividade de disposição e reservas (`PROPOSED`)
+## 4. D09-C — exclusividade de disposição e reservas (`APPROVED` como design)
 
 **Estados semânticos candidatos** para o processo de custódia/disposição; não são enums aprovados:
 
@@ -80,7 +80,7 @@ flowchart TD
 
 **Questão pendente:** quais mudanças de destino são permitidas depois que uma operação iniciou; esta D09 propõe proibir troca sem cancelamento autorizado e compensação formal, e proibir troca após transação terminal.
 
-## 5. D09-D — três contratos executáveis distintos (`PROPOSED`)
+## 5. D09-D — três contratos operacionais distintos (`APPROVED` como design)
 
 ### 5.1. Reconstrução
 
@@ -104,7 +104,7 @@ A relíquia é **resultado terminal** do vínculo militar; a exclusividade da id
 
 **O destino `sealed_relic` não equivale a retornar estrela a `available`.** Repatriação e relíquia são estados diferentes e mutuamente exclusivos.
 
-## 6. D09-E — atomicidade, versionamento e idempotência (`PROPOSED`)
+## 6. D09-E — atomicidade, versionamento e idempotência (`APPROVED` como design)
 
 **Fronteira transacional futura:** ao obter claim ou comprometer destino, validar sob lock o estado da estrela, do destroço, da custódia e da operação. O commit deve ser único, com controle de versão otimista ou lock de linha e índice único persistente — nunca somente checagem de cliente.
 
@@ -114,7 +114,7 @@ A relíquia é **resultado terminal** do vínculo militar; a exclusividade da id
 
 **Compensação:** falha antes do commit não muda custódia/destino. Falha depois do commit não cria outra transição na recuperação. Não definir um rollback que restaure estrela e devolva a mesma carga em duplicidade.
 
-## 7. D09-F — persistência procedural, privacidade e UI (`PROPOSED`)
+## 7. D09-F — persistência procedural, privacidade e UI (`APPROVED` como design)
 
 - Renderização lê o estado estelar persistido e não supõe que toda estrela procedimentalmente desenhada continua capturável.
 - `origin_system_id` é imutável por viagem, derrota ou troca de custódia; `current_location` representa posição atual do núcleo (destroço/viagem/relíquia), sem adulterar a origem.
@@ -123,7 +123,7 @@ A relíquia é **resultado terminal** do vínculo militar; a exclusividade da id
 - O jogador não recebe pesquisa inimiga, pontos secretos de HP de contenção ou custódia de outros sistemas sem inteligência válida. Eventos de grande impacto podem ser anunciados em termos observáveis, não com payload bruto.
 - Interface deve priorizar uma ação contextual e evitar painel de controle de cinco fases sempre aberto; preservar estética industrial/pixel existente.
 
-## 8. D09-G — cenários técnicos adicionais (`PROPOSED`)
+## 8. D09-G — critérios técnicos adicionais (`APPROVED` como QA planejado)
 
 Complementam [T01–T16](combat-technical-contracts.md) e [B01–B18](combat-balance-plan.md), **sem execução**.
 
@@ -148,7 +148,7 @@ Complementam [T01–T16](combat-technical-contracts.md) e [B01–B18](combat-bal
 
 **QA exigido no futuro:** testes de concorrência transacional, idempotência de worker, reconciliação offline, sigilo de payloads e integridade de FK/IDs, não apenas unidade de UI.
 
-## 9. D09-H — rollout em passos condicionais (`PROPOSED`)
+## 9. D09-H — rollout em passos condicionais (`APPROVED` como planejamento)
 
 1. Verificar gerador e modelo de estrela única, identidade persistente e elegibilidade de sistemas existentes.
 2. Especificar schema e constraints com rollback e tolerância a saves/ordens antigas.
@@ -160,9 +160,9 @@ Complementam [T01–T16](combat-technical-contracts.md) e [B01–B18](combat-bal
 
 **Não iniciar nenhum passo executável** sem autorização independente. A sequência aprovada da D07 continua sendo o marco geral; D09 apenas detalha as dependências posteriores à derrota.
 
-## 10. Decisões D09 para aprovação posterior
+## 10. Registro das decisões D09 aprovadas
 
-| ID | Deliberação **`PROPOSED`** |
+| ID | Deliberação **`APPROVED` como design** |
 |---|---|
 | **D09-A** | Separar proprietário histórico, controlador regional, custodiante e destinatário final; sem transferência por vitória |
 | **D09-B** | Claim após janela de estabilização, contestável, com revalidação militar e sem autodestruição offline |
@@ -175,10 +175,14 @@ Complementam [T01–T16](combat-technical-contracts.md) e [B01–B18](combat-bal
 
 **`OPEN`:** critérios de controle regional, prioridades diplomáticas de reivindicação, interrupções/recurso de claims, propriedade de relíquia, custos, porcentagens, timer, elegibilidade de reconstrução para inimigo, reparo, poder de bombardeio, balanço de energia e política de colonização após repatriação. Números do experimento D08-F continuam **provisórios**.
 
+## 10.1. Estado após aprovação e dependências da D10
+
+**`APPROVED`:** D09-A–H, T17–T32 como futuros cenários de QA, distinção de custódia/controle/posse, exclusividade de destino e compensação material idempotente. **`OPEN`:** eleição de controlador em localização disputada, critérios de legitimidade diplomática, prioridade/resolução de claims concorrentes, duração das janelas, titularidade da relíquia e decisões de schema físico. A [C3.0-D10](combat-custody-adjudication.md) detalha opções e condições de contenda ainda `PROPOSED`, **não** implementadas e não automaticamente aprovadas por este registro.
+
 ## 11. Referências
 
 - [C3.0-D08 aprovada](combat-stellar-disposition.md), [C3.0-D07 aprovada](combat-technical-contracts.md), [C3.0-D06 aprovada](combat-operational-closures.md), [índice geral](README.md).
 - [Stargrave](stargrave.md), [combate](combat.md), [balanceamento](balance.md), [matriz C3.0-D04](combat-balance-plan.md).
 - [Serviço autoritativo](../../starz/persistent/service.py), [modelos persistentes](../../starz/db/models.py), [resolução de combate](../../starz/persistent/combat.py).
 
-**Este documento não implementa nenhuma mecânica e não transforma parâmetros experimentais em números finais.**
+**As decisões D09-A–H e os cenários T17–T32 foram expressamente aprovados como design e critérios de aceitação, sem execução.** Este documento não implementa nenhuma mecânica e não transforma parâmetros experimentais em números finais.
