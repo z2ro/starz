@@ -51,13 +51,17 @@ Os requisitos são científicos; o gate implícito do avanço correspondente (`<
 
 | Item | `APPROVED` | `PROPOSED` ou `OPEN` |
 |---|---|---|
-| `fundamental_tier_5` | Remover dependência obrigatória de `military_tier_4` | Substituí-la por `science_infrastructure:2` ainda precisa aprovação explícita |
+| `fundamental_tier_5` | Remover `military_tier_4` e acrescentar `science_infrastructure:2` em `level_requires` — ambos `APPROVED` pela D06-H | Preservar `fundamental_tier_4`, `energy_engineering` e nível `energy_engineering:4`; custo/duração ainda `OPEN` |
 | `stellar_containment` | Remover `carrier_operations` e respectivo requisito de nível | Preservar demais requisitos e bônus; função como precursora de confinamento; nível 3 como requisito da descoberta nova aprovado na D01, mas custo deve ser simulado |
 | Dominion | Não revogar construção nem hulls existentes | Rever posteriormente o desbloqueio legado da Dominion por `stellar_containment` |
 | Contramedidas | Disponibilidade de `containment_warfare` e `spatial_interdiction` no Tier IV | Eficácia, alcance, consumo e duração aguardam contrato/balanceamento |
 | Stargrave | Unidade móvel excepcional, uma estrela, derrotável por frotas preparadas | Captura, construção, subsistemas, energia, ataque e persistência detalhada aguardam implementação/autorização |
 
 **Não retroagir:** preservar níveis, marcos, trabalhos já pagos, direitos de construção existentes, frotas, saves e identidade da Stargrave fora do catálogo convencional de hulls. `APPROVED` indica decisão de design, não disponibilidade no jogo.
+
+## 3.1. Atualização aprovada C3.0-D06-H (08/11/2026)
+
+`APPROVED`: em `fundamental_tier_5`, substituir a dependência científica cruzada `military_tier_4` por `science_infrastructure:2`. **Não** remover `fundamental_tier_4`, `energy_engineering` nem `energy_engineering:4`. Esta decisão é design, não alteração do catálogo executável, que ainda mantém o gate antigo. O detalhamento está em [C3.0-D06](combat-operational-closures.md). As capacidades militares aprovadas nessa D06 não aprovam automaticamente o restante da [R3.0-D02](research-operational.md).
 
 ## 4. Acessos estratégicos
 
