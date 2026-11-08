@@ -1,6 +1,6 @@
 # STARZ repository instructions
 
-STARZ is a persistent multiplayer space strategy game. Preserve authoritative Python/PostgreSQL gameplay, ownership, authentication and saved data. Use isolated test data; never reset another environment.
+STARZ is a persistent multiplayer space strategy game. Preserve authoritative Python/PostgreSQL gameplay, ownership, authentication and data integrity. **Approved development scope (2026-11-08): compatibility with legacy saves from disposable development environments is NOT required.** New development schemas/fixtures may start clean after identifying the isolated target and receiving explicit authorization for any destructive operation. Never reset shared/production/unknown environments or delete real user data by inference. Use isolated synthetic test data.
 
 Preserve the approved industrial procedural pixel-art identity and follow the [master design system](docs/design/starz-master-design-system.md). Use the shared GameShell/HUD/sidebar for persistent gameplay routes; preserve each workspace’s own composition. Reuse the existing Three.js models, planet generators, pixel pipeline, UI primitives and tokens. Avoid SaaS dashboards, replacement art and unrelated refactoring.
 
@@ -19,7 +19,7 @@ Keep sandbox and approval controls enabled. No automatic skill updates, producti
 
 ## Game Design Authority
 
-For gameplay-related work, read the [central GDD](docs/game-design/STARZ-GDD-v1.md) and the relevant subsystem document in the [design index](docs/game-design/README.md) before changing it. `APPROVED` records design intent, not proof of implementation; `PROPOSED` and `OPEN` are not authoritative requirements. Verify actual behavior against authoritative code and effective executable catalogs, and identify contradictions before implementation. Do not introduce mechanics or balance changes without explicit authorization. Preserve stable IDs, persistence contracts and save compatibility. Update relevant design documents when approved gameplay changes are implemented; keep design documentation separate from executable configuration.
+For gameplay-related work, read the [central GDD](docs/game-design/STARZ-GDD-v1.md) and the relevant subsystem document in the [design index](docs/game-design/README.md) before changing it. `APPROVED` records design intent, not proof of implementation; `PROPOSED` and `OPEN` are not authoritative requirements. Verify actual behavior against authoritative code and effective executable catalogs, and identify contradictions before implementation. Do not introduce mechanics or balance changes without explicit authorization. Preserve approved research/hull IDs, ownership, persistence correctness for new states, idempotency and active-order integrity. **Do not require backward compatibility for obsolete development saves/old dev payloads**; the user has explicitly waived it. This does not authorize deleting shared data or skipping transaction/QA safety. See [design index](docs/game-design/README.md) and [D12 proposal](docs/game-design/combat-implementation-plan.md). Update relevant design documents when approved gameplay changes are implemented; keep design documentation separate from executable configuration.
 
 ## Risk-based local validation
 
