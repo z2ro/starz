@@ -39,7 +39,7 @@ As políticas devem ser simples e contextuais, não uma linguagem programável d
 | `containment_warfare` | `OPERATION` | Com inteligência e oportunidade tática, permite atacar subsistemas de contenção estelar. | Stargrave continua vulnerável a dano convencional; sem explosão/aniquilação automática. |
 | `stellar_armaments` | `UNLOCK` | Permite integrar armamento principal em Stargrave efetivamente comissionada. | Consumo de energia, preparação visível, interrupção e dano não planetocida automático. |
 
-**Refinamento `APPROVED` como design:** [C3.0-D03](combat-countermeasures.md) diferencia aquisição de alvos, perfil de ruptura de escudos, interdição operacional e ataque de contenção. Os contratos funcionais A–G de C3.0-D02/D03 foram aprovados expressamente; emissor EW, números, schema e integração exata seguem `OPEN`. Os demais contratos científicos da R3.0-D02 permanecem em discussão.
+**Refinamento `APPROVED` como design:** [C3.0-D03](combat-countermeasures.md) diferencia aquisição de alvos, perfil de ruptura de escudos, interdição operacional e ataque de contenção. Os contratos funcionais A–G de C3.0-D02/D03 foram aprovados expressamente; a [C3.0-D06-A–H](combat-operational-closures.md) aprovou Odyssey emissora, plataforma de interdição na chegada, perfil antiescudo, construção/derrota Stargrave e gate científico `science_infrastructure:2`. Fórmulas, números, schema e o restante da R3.0-D02 seguem `OPEN`/`PROPOSED`. Os demais contratos científicos da R3.0-D02 permanecem em discussão.
 
 ### Separação de funções
 
@@ -80,7 +80,7 @@ Critérios futuros para revisão e testes direcionados:
 
 ## 7. Lacunas `OPEN` e fronteira de implementação
 
-`APPROVED` como design: três doutrinas e algoritmo funcional de alvo (C3.0-D02), escoltas (C3.0-D01), contratos funcionais EW/antiescudo/interdição/contra-Stargrave (C3.0-D03). `OPEN`: emissor e fórmula EW; geometria/custo/gatilho de interdição; números e armazenamento; detalhes da aquisição de vulnerabilidades e persistência de subsistemas; automação logística; transporte de módulos; elegibilidade estelar; catástrofes/recuperação; duração, custos e fórmulas.
+`APPROVED` como design: três doutrinas e algoritmo funcional de alvo (C3.0-D02), escoltas (C3.0-D01), contratos funcionais EW/antiescudo/interdição/contra-Stargrave (C3.0-D03). `APPROVED` pela [D06](combat-operational-closures.md): Odyssey como emissora EW, `orbital_platform` como unidade de interdição, gatilho único na chegada, cinco etapas de Stargrave e `science_infrastructure:2` para Fundamental V. `OPEN`: fórmula EW; custo/alcance/duração de interdição; números e armazenamento; detalhes de vulnerabilidades e persistência; automação logística; transporte de módulos; elegibilidade em sistemas múltiplos e colonização concorrente; catástrofes/recuperação; duração, custos e fórmulas. [C3.0-D07](combat-technical-contracts.md) propõe contratos técnicos, sem aprovação.
 
 O catálogo atual aceita somente `repeatable` e `breakthrough`; as categorias conceituais acima não podem ser gravadas como `kind` sem alterar o schema. `effects` aceita apenas chaves suportadas por `starz/progression.py`. `unlocks` não implementa habilidades; requisitos conjuntos precisam ser verificáveis na lógica autoritativa. Nenhum YAML é alterado nesta etapa.
 
