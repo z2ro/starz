@@ -160,15 +160,15 @@ Nenhuma dessas etapas foi autorizada como tarefa executável. Seleção de teste
 - **INT-D (`APPROVED` pela D06-C/D):** `orbital_platform` em modo de interdição (sem disparos) afeta uma vez a **chegada** de missão hostil por ordem sucessora idempotente. Duração/teto são experimentais.
 - **INT-E (`APPROVED`):** guarnição usa Equilibrada na primeira versão; escoltas cooperam conforme C3.0-D01.
 
-**Aprovações das C3.0-D01 a D06 não autorizam implementar.** INT-B/D foram fechadas como regra funcional na [D06](combat-operational-closures.md); fórmulas, schema, tempo de interdição e modelo persistente estelar continuam `OPEN`/`PROPOSED` na [D07](combat-technical-contracts.md).
+**Aprovações das C3.0-D01 a D06 não autorizam implementar.** INT-B/D foram fechadas como regra funcional na [D06](combat-operational-closures.md); fórmulas, nomes/schema finais, tempo de interdição e destino do núcleo estelar continuam `OPEN`; os contratos técnicos da [D07](combat-technical-contracts.md) estão `APPROVED` como arquitetura, sem implementação.
 
 ## 8.1. Superação posterior de pendências pela C3.0-D06
 
-`APPROVED` (08/11/2026): [C3.0-D06 A–H](combat-operational-closures.md) escolheu Odyssey como emissora EW, plataforma orbital sem armas no modo interdição, gatilho único na chegada, perfil antiescudo por ordem, Stargrave persistente e gate científico Fundamental V. **Números continuam experimentais**. A [C3.0-D07](combat-technical-contracts.md) propõe payload versionado, sucessoras, estado estelar e regras de unicidade, mas está `PROPOSED`.
+`APPROVED` (08/11/2026): [C3.0-D06 A–H](combat-operational-closures.md) escolheu Odyssey como emissora EW, plataforma orbital sem armas no modo interdição, gatilho único na chegada, perfil antiescudo por ordem, Stargrave persistente e gate científico Fundamental V. **Números continuam experimentais**. A [C3.0-D07](combat-technical-contracts.md) aprova como design payload versionado, sucessoras, estado estelar e regras de unicidade; seus campos/constraints definitivos e a implementação ainda não estão aprovados.
 
 ## 9. Critérios de saída para implementação futura
 
-- D02 e D03 `APPROVED` como design; INT-A–E decididas funcionalmente após D06; schema, fórmulas e revisão da [D07](combat-technical-contracts.md) ainda pendentes.
+- D02 e D03 `APPROVED` como design; INT-A–E decididas funcionalmente após D06; schema final, fórmulas e implementação ainda pendentes; D07-A–H foram aprovados como design.
 - Contrato de persistência de doutrina, consumo antiescudo e interdição formalizado, versionado e compatível.
 - Testes planejados para legado byte/semanticamente equivalente, escolta por salva, escudos de bateria, munição, ownership, replay offline e sigilo de relatórios.
 - Para Stargrave, requisitos de modelo persistente, vínculo único à estrela, subsistemas e recuperação definidos antes de testes de dano.
