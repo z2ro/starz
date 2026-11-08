@@ -29,7 +29,8 @@ O estado aplica-se à afirmação identificada, não a todo o documento citado. 
 | [Research 3.0 — R3.0-D01](research-3.md) | `APPROVED`: 16 descobertas únicas, IDs, tiers, dependências e capacidades; preservar 44 existentes. Não implementado. |
 | [Research 3.0 — R3.0-D02](research-operational.md) | `PROPOSED`: contratos operacionais das 16 descobertas. |
 | [Combat 3.0 — doutrinas e formações](combat-doctrines.md) | `PROPOSED`: contratos de targeting, escolta, guerra eletrônica e contramedidas. |
-| [Combat 3.0 — C3.0-D01](combat-formations.md) | `PROPOSED`: redirecionamento limitado, papéis de escolta e formação defensiva. |
+| [Combat 3.0 — C3.0-D01](combat-formations.md) | `APPROVED` como design: escolta, redirecionamento limitado, três doutrinas e guarnição. Não implementado. |
+| [Combat 3.0 — C3.0-D02](combat-targeting.md) | `PROPOSED`: priorização determinística, fallback, sigilo e persistência da doutrina. |
 | [Economia](economy.md) | Estoques locais, cadeias, população, energia e logística. |
 | [Naves](ships.md) | Hulls, funções, composição e limites dos modelos visuais. |
 | [Defesas](defenses.md) | Estruturas locais, munição e contramedidas. |
@@ -72,4 +73,4 @@ Referências complementares: [pesquisa 2.0](../research-2.md), [universo persist
 
 `APPROVED` — [R3.0-D01](research-3.md): 44 IDs legados preservados, 16 novos IDs de descoberta `breakthrough` únicos aprovados com nomes/domínios/tiers/dependências/capacidades; remover gate Militar IV de Fundamental V e vínculo `carrier_operations` de `stellar_containment`; contramedidas especializadas em Tier IV; não revogar hulls nem bloquear especializações mutuamente.
 
-`PROPOSED` — [R3.0-D02](research-operational.md): políticas, ações, projetos e condições operacionais; [Combat 3.0](combat-doctrines.md): doutrinas, formação e resolução. Essas propostas não autorizam implementação. O inventário *executável* permanece 32 repetíveis e 12 avanços, total de 44; 60 é quantidade *planejada*, não instalada. O histórico de auditoria de 07/11 permanece preservado.
+`APPROVED` — [C3.0-D01](combat-formations.md): sete decisões de escolta e formação, três doutrinas e limite inicial de um redirecionamento por escolta/salva, sujeito a simulação. `PROPOSED` — [R3.0-D02](research-operational.md): contratos operacionais restantes; [C3.0-D02](combat-targeting.md): regras detalhadas de seleção; [Combat 3.0](combat-doctrines.md): outros mecanismos de combate. Essas propostas não autorizam implementação. O inventário *executável* permanece 32 repetíveis e 12 avanços, total de 44; 60 é quantidade *planejada*, não instalada. O histórico de auditoria de 07/11 permanece preservado.
