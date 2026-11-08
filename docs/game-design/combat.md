@@ -22,6 +22,12 @@ Atacantes são naves reais da frota; defensores são naves vinculadas ao planeta
 
 `PROPOSED`: [Doutrinas, formações e resolução de combate](combat-doctrines.md) define a próxima fase de desenho funcional, dependente das descobertas `APPROVED` em [Research 3.0 — R3.0-D01](research-3.md) e dos contratos `PROPOSED` em [R3.0-D02](research-operational.md). Nenhuma doutrina, escolta funcional, guerra eletrônica ou ataque a subsistema proposto foi implementado por este registro.
 
+## 4.2. Autoridade de Combat 3.0 (08/11/2026)
+
+`APPROVED`: [C3.0-D01 — escolta e formações](combat-formations.md) registra as sete decisões explícitas sobre proteção automática, redirecionamento real para HP/escudo da escolta, Vanguard/Sentinel/Aegis, limite inicial de um disparo redirecionado por escolta/salva sujeito a balanceamento, três doutrinas (Equilibrada, Interceptação, Ruptura), guarnição planetária e compatibilidade com salvas simultâneas.
+
+`PROPOSED`: [C3.0-D02 — seleção de alvos](combat-targeting.md) detalha classificação e prioridade de alvos, despacho, sigilo e desempates; não está aprovado nem executado. `IMPLEMENTED` continua sendo o resolvedor descrito na seção 2; não presumir proteção funcional a partir de `role`/nome da nave.
+
 ## 5. Dependências
 
 [Naves](ships.md) fornecem perfis; [pesquisa](research.md), modificadores; [defesas](defenses.md), proteção/munição; [economia](economy.md), custos e carga; [Stargrave](stargrave.md), contratos futuros. Inteligência tem qualidade e validade próprias, não equivale a acesso ao estado privado de outro império.
