@@ -72,6 +72,16 @@ class Stargrave(unittest.TestCase):
         self.session.query_rows = [m.UniverseOrder(payload={
             'parties': sorted((str(self.owner.id), str(self.enemy.id))), 'status': 'war'})]
 
+    def test_report_separates_stellar_survivors_from_conventional_fleets(self):
+        self.powered()
+        ship(self.b, 'vanguard_hull', 'guard')
+        units = sg.combat_units([self.row], self.a, 1000)
+        report = resolve_battle(self.a, [], self.b, self.b.state.planet_id, stellar_attackers=units)
+        self.assertEqual(report['attacking_fleet_before'], [])
+        self.assertEqual(report['attacking_fleet_after'], [])
+        self.assertEqual(len(report['attacker_stellar_before']), 1)
+        self.assertGreater(report['attacker_stellar_after'][0]['hp'], 0)
+
     def test_energy_starts_empty_regenerates_bounded_and_floor_is_protected(self):
         self.assertEqual(sg.settle_energy(self.row, 1000), 0)
         with self.assertRaises(DataValidationError): self.command()

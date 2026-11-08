@@ -1,5 +1,7 @@
 # Combate, missões e PvP
 
+
+**Atualização de execução STARZ 3.0 (08/11/2026):** consultar [implementação e evidências](../development/starz-3-implementation.md) e [aceitação técnica](../development/starz-3-acceptance.md). A descrição histórica abaixo distingue intenção de execução; operações orbitais, pesquisa, contramedidas e destinos agora possuem código/testes no escopo registrado, sem transformar parâmetros experimentais em balanceamento final.
 ## 1. Propósito e escopo
 
 Descrever a resolução autoritativa atual e distinguir propostas de guerra planetária/estelar do [GDD §6–9 e §11](STARZ-GDD-v1.md). Não alterar coeficientes nem implementar combate tático 3D.

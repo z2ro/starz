@@ -91,7 +91,7 @@ Unknown dependencies broaden selection. A changed dependency-map rule must updat
 | visual | Existing fixture-based Playwright runner against the same production build |
 | diff | `git diff --check HEAD`, always executed |
 
-Independent groups use a bounded scheduler. Renderer-heavy Vitest/Playwright groups run serially to avoid competing for rendering resources. Required dependency failures block dependent checks; independent checks still finish. Most commands have a 120-second timeout; PostgreSQL has 240 seconds and the full browser matrix 900 seconds. Timed-out process groups are terminated and required failures produce exit 1; configuration/setup errors exit 2 and interruption exits 130.
+Independent groups use a bounded scheduler. Renderer-heavy Vitest/Playwright groups run serially to avoid competing for rendering resources. Required dependency failures block dependent checks; independent checks still finish. Most commands have a 120-second timeout; PostgreSQL has 900 seconds (expanded real stellar construction/custody integration coverage) and the full browser matrix 900 seconds. Timed-out process groups are terminated and required failures produce exit 1; configuration/setup errors exit 2 and interruption exits 130.
 
 PostgreSQL uses a uniquely labelled temporary container, random test-only credentials, a loopback ephemeral port and tmpfs storage. Only that exact labelled container is removed. No existing database URLs, Compose projects, saves or volumes are used. Backend unittest classes are partitioned so unit tests are not rerun in the database group. Newly detected SQL-backed classes are conservatively assigned to integration validation.
 

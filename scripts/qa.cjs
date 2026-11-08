@@ -17,7 +17,7 @@ function jobsFor(plan){
   frontend:{inputs:frontInputs,command:[NODE,'node_modules/vitest/vitest.mjs','run','--config','vitest.config.ts','--maxWorkers=4','--testTimeout=15000','--reporter=json','--outputFile=@report@',...plan.tests],format:'vitest',resource:'render'},
   assets:{inputs:[...frontInputs,'docs/design'],command:[NODE,'--test','tests/planet_visual.test.cjs','tests/asset_registry.test.cjs','tests/asset_files.test.cjs','tests/icon_system.test.cjs'],format:'tap'},
   'backend-unit':{inputs:pyInputs,command:[PY,'scripts/local-qa/python_checks.py','unit','@report@'],format:'python'},
-  'backend-db':{inputs:pyInputs,command:[PY,'scripts/local-qa/python_checks.py','db','@report@'],format:'python',database:true,timeout:240000},
+  'backend-db':{inputs:pyInputs,command:[PY,'scripts/local-qa/python_checks.py','db','@report@'],format:'python',database:true,timeout:900000},
   content:{inputs:pyInputs,command:[PY,'scripts/local-qa/python_checks.py','content','@report@'],format:'python'},
   skills:{inputs:['.agents','AGENTS.md','docs','scripts/validate_agent_skills.py','tests/visual-qa/skills_test.py'],command:[PY,'-m','unittest','discover','-s','tests/visual-qa','-p','skills_test.py','-v'],format:'unittest'},
   'browser-check':{inputs:['scripts/visual-qa','tests/visual-qa/checks.test.cjs',...CONFIG],command:[NODE,'--test','tests/visual-qa/checks.test.cjs'],format:'tap',resource:'render'},

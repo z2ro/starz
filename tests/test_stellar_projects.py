@@ -275,6 +275,10 @@ class StellarProjects(unittest.TestCase):
     def test_undelivered_module_cannot_advance_and_manufacture_retry_does_not_charge(self):
         project = self.reserve()
         made = self.call(lambda s, a, e: stellar.manufacture(s, a, e, 'containment', 'retry'))
+        view = self.call(lambda s, a, e: stellar.snapshot(s, a, e))
+        module = next(row for row in view['modules'] if row['id'] == made['module_id'])
+        self.assertEqual(module['complete_at'], made['complete_at'])
+        self.assertIsNone(view['projects'][0]['active_phase'])
         before = self.call(lambda s, a, e: dict(e.state.stocks))
         self.assertEqual(self.call(lambda s, a, e: stellar.manufacture(s, a, e, 'containment', 'retry')), made)
         self.assertEqual(self.call(lambda s, a, e: dict(e.state.stocks)), before)

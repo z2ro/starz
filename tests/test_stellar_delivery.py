@@ -49,6 +49,9 @@ class StellarDelivery(unittest.TestCase):
             key=uuid4().hex
             job=store.transaction(a,lambda session,emp,e:stellar.start_phase(session,emp,e,project['project_id'],key))
             self.assertEqual(job,store.transaction(a,lambda session,emp,e:stellar.start_phase(session,emp,e,project['project_id'],key)))
+            snapshot=store.transaction(a,lambda session,emp,e:stellar.snapshot(session,emp,e))
+            active=next(p for p in snapshot['projects'] if p['project_id']==project['project_id'])['active_phase']
+            self.assertEqual(active['phase'],phase);self.assertEqual(active['complete_at'],job['complete_at'])
             now[0]=job['complete_at'];store.tick();store.tick()
             with Session(self.db) as session:
                 p=session.get(m.StellarProject,UUID(project['project_id']));source=session.get(m.StellarSource,p.source_id)

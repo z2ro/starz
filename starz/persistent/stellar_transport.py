@@ -19,6 +19,18 @@ CORE_MASS = 250
 MISSIONS = ('CORE_PICKUP', 'CORE_TRANSPORT', 'CORE_RETURN')
 
 
+def fleet_locked(session, empire, fleetid):
+    """Held carriers cannot be reused by ordinary dispatch or recall."""
+    return any(op.actor_id == empire.id and op.universe_id == empire.universe_id
+               and op.status == 'returning' and op.payload.get('fleet_id') == str(fleetid)
+               and bool(op.payload.get('held_reason'))
+               for op in session.scalars(select(m.StellarOperation).where(
+                   m.StellarOperation.actor_id == empire.id,
+                   m.StellarOperation.universe_id == empire.universe_id,
+                   m.StellarOperation.status == 'returning',
+                   m.StellarOperation.payload['fleet_id'].astext == str(fleetid))))
+
+
 def _context(session, empire, operation_id):
     op = session.get(m.StellarOperation, identifier(operation_id))
     require(op is not None and op.actor_id == empire.id and op.universe_id == empire.universe_id
@@ -143,7 +155,8 @@ def prepare(session, empire, e, data):
     fuel_id = ships[0]['fuel_id']
     require(e.state.stocks.get(fuel_id, 0) >= total, 'Combustível real insuficiente para rota e retorno do núcleo.')
     return {'profile': PROFILE, 'operation_id': str(op.id), 'core_id': str(core.id), 'tug_id': str(tug.id),
-            'ship_ids': list(ids), 'origin_planet_id': str(origin.id), 'pickup_planet_id': str(pickup.id),
+            'ship_ids': list(ids), 'origin_planet_id': str(origin.id), 'origin_system_id': str(origin.system_id),
+            'pickup_planet_id': str(pickup.id),
             'pickup_system_id': str(pickup.system_id), 'destination_planet_id': destination_id,
             'destination_system_id': str(destination_system.id), 'coords': pickup_xy,
             'origin': origin_xy, 'destination': destination_xy, 'leg1': first, 'leg2': second, 'leg3': third,
@@ -216,14 +229,86 @@ def _end(session, op, status, now):
     _record(session, op, 'terminal', status, {}, now)
 
 
-def _return_from_pickup(session, empire, e, op, order, fleet, picked, reason):
+def _safe_return(session, empire, e, op, order, fleet, core, picked, system_id, reason, *, require_route=False):
+    """Choose an affordable owned anchor from the actual arrival, otherwise hold."""
+    system = _system(session, identifier(system_id), empire.universe_id)
+    require([system.x, system.y] == [fleet['x'], fleet['y']], 'Local físico do transporte inconsistente.')
     plan = op.payload['transport']
-    quote = plan['loaded_home'] if picked else {**plan['leg1'], 'origin': plan['coords'],
-                                               'destination': plan['origin']}
+    held_reason = 'no_reachable_owned_anchor'
+    try:
+        ships = _ships(e, fleet['ship_ids'])
+        cargo = _stocks(core, e) if picked else 0
+        capacity = sum(e.catalog.get('ships', s['hull_id']).cargo_capacity for s in ships)*(1+effect(e.catalog, e.state, 'cargo'))
+        require(capacity >= (CORE_CARGO+cargo if picked else MODULE_CARGO), 'Capacidade de retorno insuficiente.')
+    except DataValidationError:
+        held_reason = 'carrier_unavailable'
+        ships = []
+
+    def candidate(planet):
+        if planet is None or planet.empire_id != empire.id:
+            return None
+        destination = session.get(m.StarSystem, planet.system_id)
+        if destination is None or destination.universe_id != empire.universe_id:
+            return None
+        quote = _quote(e, ships, [fleet['x'],fleet['y']], [destination.x,destination.y],
+                       CORE_MASS+cargo if picked else MODULE_CARGO)
+        return (planet, quote) if quote['fuel'] <= fleet['fuel_reserve'] else None
+
+    chosen = None
+    if ships:
+        chosen = candidate(session.get(m.Planet, identifier(plan['origin_planet_id'])))
+        if chosen is None:
+            alternatives = [value for planet in session.scalars(select(m.Planet).join(m.StarSystem).where(
+                m.Planet.empire_id == empire.id, m.StarSystem.universe_id == empire.universe_id))
+                if (value := candidate(planet)) is not None]
+            chosen = min(alternatives, key=lambda value: (value[1]['fuel'], value[1]['duration'], str(value[0].id)), default=None)
+    require(not require_route or chosen is not None, 'Nenhuma âncora própria alcançável com a reserva atual.')
+    if picked:
+        core.system_id = system.id
     op.status = 'returning'
-    op.payload = {**op.payload, 'return_reason': reason}
-    return _queue(session, empire, e, op, order, fleet, quote, 'CORE_RETURN',
-                  core_picked_up=picked, return_stage='home')
+    op.payload = {**op.payload, 'return_reason': op.payload.get('return_reason', reason)}
+    if chosen:
+        destination, quote = chosen
+        op.payload = {k:v for k,v in op.payload.items() if not k.startswith('held_')}
+        return _queue(session, empire, e, op, order, fleet, quote, 'CORE_RETURN',
+            core_picked_up=picked, return_stage='home', return_planet_id=str(destination.id),
+            return_system_id=str(destination.system_id), return_coords=quote['destination'])
+    op.due_at = None
+    op.payload = {**op.payload, 'held_reason': held_reason, 'held_at': e.state.last_updated,
+                  'held_coords': [fleet['x'],fleet['y']], 'held_system_id': str(system.id),
+                  'held_order_id': str(order.id), 'held_core_picked_up': picked}
+    e.state.universe.setdefault('fleet_planets', {})[fleet['id']] = None
+    _record(session, op, 'held:'+str(order.id), 'held',
+            {'reason': held_reason, 'coords': op.payload['held_coords'], 'core_picked_up': picked}, e.state.last_updated)
+    return None
+
+
+def resume_held(store, session, empire, e, op):
+    """Explicit custody retry; an unreachable route leaves the hold unchanged."""
+    checked, core = _context(session, empire, op.id)
+    require(checked.id == op.id and op.status == 'returning' and op.payload.get('held_reason'),
+            'Operação não possui transporte retido.')
+    fleet = next((f for f in e.state.fleets if f['id'] == op.payload['fleet_id']), None)
+    require(fleet is not None, 'Portador físico ausente.')
+    _arrived(e, fleet, op.payload['held_coords'])
+    picked = op.payload['held_core_picked_up']
+    if picked:
+        require(core.state == 'core_transit' and core.payload.get('core_fleet_id') == fleet['id']
+                and core.custodian_empire_id == empire.id and core.custody_version == op.custody_version,
+                'Carga estelar ou custódia inconsistente.')
+    prior = session.get(m.UniverseOrder, identifier(op.payload['held_order_id']))
+    require(prior is not None and prior.empire_id == empire.id and prior.universe_id == empire.universe_id
+            and prior.payload.get('operation_id') == str(op.id), 'Evento de retenção inconsistente.')
+    order = _safe_return(session, empire, e, op, prior, fleet, core, picked,
+                         op.payload['held_system_id'], op.payload.get('return_reason', 'cancelled'), require_route=True)
+    store.save(session, empire.id, e)
+    session.flush()
+    return {'operation_id': str(op.id), 'fleet_id': fleet['id'], 'arrival_at': epoch(order.due_at)}
+
+
+def _return_from_pickup(session, empire, e, op, order, fleet, core, picked, reason):
+    plan = op.payload['transport']
+    return _safe_return(session, empire, e, op, order, fleet, core, picked, plan['pickup_system_id'], reason)
 
 
 def complete(store, session, order, engines):
@@ -255,7 +340,7 @@ def complete(store, session, order, engines):
             capacity = sum(e.catalog.get('ships', s['hull_id']).cargo_capacity for s in ships)*(1+effect(e.catalog, e.state, 'cargo'))
             require(core.stocks == plan['core_stocks'] and capacity >= plan['capacity_cargo'], 'Carga ou capacidade mudou durante a coleta.')
         except DataValidationError:
-            _return_from_pickup(session, empire, e, op, order, fleet, False, 'pickup_authorization_lost')
+            _return_from_pickup(session, empire, e, op, order, fleet, core, False, 'pickup_authorization_lost')
         else:
             tug = session.get(m.StellarModule, identifier(plan['tug_id']))
             require(tug is not None and tug.status == 'transit' and tug.operation_id == op.id
@@ -270,18 +355,28 @@ def complete(store, session, order, engines):
             _queue(session, empire, e, op, order, fleet, plan['leg2'], 'CORE_TRANSPORT', core_picked_up=True)
     elif mission == 'CORE_RETURN' and order.payload.get('return_stage') == 'backtrack':
         _arrived(e, fleet, plan['coords'])
-        _return_from_pickup(session, empire, e, op, order, fleet, True, op.payload.get('return_reason', 'cancelled'))
+        _return_from_pickup(session, empire, e, op, order, fleet, core, True, op.payload.get('return_reason', 'cancelled'))
     else:
         picked = order.payload.get('core_picked_up', False)
         returning = mission == 'CORE_RETURN'
-        _arrived(e, fleet, plan['origin'] if returning else plan['destination'])
+        _arrived(e, fleet, order.payload.get('return_coords', plan['origin']) if returning else plan['destination'])
         if picked:
             require(core.state == 'core_transit' and core.payload.get('core_fleet_id') == fleet['id']
                     and core.custodian_empire_id == empire.id and core.custody_version == op.custody_version,
                     'Carga estelar ou custódia inconsistente.')
         if returning or op.kind == 'withdraw':
-            destination_id = plan['origin_planet_id'] if returning else plan['destination_planet_id']
-            destination, _ = _planet(session, destination_id, empire.universe_id, empire.id)
+            destination_id = order.payload.get('return_planet_id', plan['origin_planet_id']) if returning else plan['destination_planet_id']
+            try:
+                destination, _ = _planet(session, destination_id, empire.universe_id, empire.id)
+            except DataValidationError:
+                system_id = (order.payload.get('return_system_id', plan['origin_system_id'])
+                             if returning else plan['destination_system_id'])
+                _safe_return(session, empire, e, op, order, fleet, core, picked, system_id,
+                             'return_anchor_unavailable' if returning else 'destination_unavailable')
+                order.payload = {**order.payload, 'applied': True}
+                store.save(session, empire.id, e)
+                session.flush()
+                return True
             if picked:
                 core.system_id, core.planet_id, core.state = destination.system_id, destination.id, 'sealed_wreck'
                 p = deepcopy(core.payload)

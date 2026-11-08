@@ -17,6 +17,7 @@ from test_combat3 import engine
 from test_stargrave import MemorySession
 import test_stellar_custody as custody_fixtures
 from starz.persistent import stellar, stellar_custody as custody
+from starz.persistent.service import PersistentStore
 
 
 class StellarTransport(unittest.TestCase):
@@ -249,16 +250,210 @@ class StellarTransport(unittest.TestCase):
         ordinary = m.UniverseOrder(kind='mission', payload={'mission': 'RETURN'})
         self.assertFalse(transport.complete(self.store, self.session, ordinary, {}))
 
+    def test_lost_delivery_destination_schedules_paid_loaded_return_to_recorded_origin(self):
+        self.withdrawal()
+        system = m.StarSystem(id=UUID(int=30), universe_id=self.universe, x=2, y=0)
+        destination = m.Planet(id=UUID(int=31), system_id=system.id, empire_id=self.actor.id)
+        self.session.add(system); self.session.add(destination)
+        self.op.payload['destination_planet_id'] = str(destination.id)
+        plan, fleet, first = self.launch()
+        self.arrive(fleet, first)
+        destination.empire_id = self.sender.id
+        paid = self.e.state.stocks['fusion_fuel']
+        delivery = self.next_order('CORE_TRANSPORT')
+        reserve = fleet['fuel_reserve']
+        self.arrive(fleet, delivery)
+        returning = self.next_order('CORE_RETURN', 'home')
+        quote = transport._quote(self.e, [self.ship], [2,0], [0,0], transport.CORE_MASS+20)
+        self.assertEqual(returning.payload['fuel'], quote['fuel'])
+        self.assertEqual(returning.payload['return_planet_id'], str(self.origin.id))
+        self.assertEqual(fleet['fuel_reserve'], reserve-quote['fuel'])
+        self.assertGreater(epoch(returning.due_at), self.e.state.last_updated)
+        self.assertEqual(self.core.state, 'core_transit'); self.assertIsNone(self.core.planet_id)
+        self.assertEqual(self.core.system_id, system.id)
+        self.assertTrue(delivery.payload['applied'])
+        self.arrive(fleet, returning)
+        self.assertEqual(self.core.planet_id, self.origin.id)
+        self.assertEqual(self.core.state, 'sealed_wreck')
+        self.assertEqual(self.op.status, 'failed')
+        self.assertEqual(self.tug.status, 'consumed')
+        self.assertEqual(paid, self.e.state.stocks['fusion_fuel'])
+
+    def test_lost_return_origin_chooses_reachable_owned_anchor_and_revalidates_arrival(self):
+        plan, fleet, first = self.launch()
+        self.arrive(fleet, first)
+        delivery = self.next_order('CORE_TRANSPORT')
+        self.e.state.last_updated += 1
+        transport.recall(self.store, self.session, self.actor, self.e, delivery)
+        self.origin.empire_id = self.sender.id
+        self.session.query_rows = [self.origin, self.pickup]
+        self.arrive(fleet, self.next_order('CORE_RETURN', 'backtrack'))
+        returning = self.next_order('CORE_RETURN', 'home')
+        self.assertEqual(returning.payload['return_planet_id'], str(self.pickup.id))
+        self.assertIsNone(self.core.planet_id)
+        self.assertGreater(epoch(returning.due_at), self.e.state.last_updated)
+        self.arrive(fleet, returning)
+        self.assertEqual(self.core.planet_id, self.pickup.id)
+        self.assertEqual(self.op.status, 'cancelled')
+
+    def test_no_owned_destination_resolves_arrival_holds_actual_core_and_locks_only_held_fleet(self):
+        self.withdrawal()
+        plan, fleet, first = self.launch()
+        self.arrive(fleet, first)
+        delivery = self.next_order('CORE_TRANSPORT')
+        self.origin.empire_id = self.sender.id
+        paid = self.e.state.stocks['fusion_fuel']
+        self.arrive(fleet, delivery)
+        self.assertTrue(delivery.payload['applied'])
+        self.assertEqual(fleet['status'], 'ARRIVED')
+        self.assertEqual([fleet['x'],fleet['y']], [0,0])
+        self.assertEqual(self.core.state, 'core_transit'); self.assertIsNone(self.core.planet_id)
+        self.assertEqual(self.core.system_id, self.origin_system.id)
+        self.assertEqual(self.core.payload['core_fleet_id'], fleet['id'])
+        self.assertEqual(self.core.payload['energy'], 0)
+        self.assertEqual(self.op.status, 'returning'); self.assertIsNone(self.op.due_at)
+        self.assertEqual(self.op.payload['held_reason'], 'no_reachable_owned_anchor')
+        self.assertEqual(self.core.stocks, {'fusion_fuel': 20})
+        self.assertEqual(self.tug.status, 'consumed')
+        self.session.query_rows = [self.op]
+        self.assertTrue(transport.fleet_locked(self.session, self.actor, fleet['id']))
+        self.assertFalse(transport.fleet_locked(self.session, self.sender, fleet['id']))
+        self.assertFalse(transport.fleet_locked(self.session, self.actor, str(UUID(int=99))))
+        before = copy.deepcopy((self.op.payload, self.core.payload, fleet))
+        transport.complete(self.store, self.session, delivery, {str(self.actor.id): self.e})
+        self.assertEqual(before, (self.op.payload, self.core.payload, fleet))
+        self.assertEqual(paid, self.e.state.stocks['fusion_fuel'])
+        self.op.payload = {**self.op.payload, 'held_reason': None}
+        self.assertFalse(transport.fleet_locked(self.session, self.actor, fleet['id']))
+
+    def test_unaffordable_return_holds_core_without_spending_foreign_or_colony_stock(self):
+        self.withdrawal()
+        plan, fleet, first = self.launch()
+        self.arrive(fleet, first)
+        self.origin.empire_id = self.sender.id
+        self.session.query_rows = [self.pickup]
+        self.pickup.empire_id = self.actor.id
+        fleet['fuel_reserve'] = 0
+        paid = self.e.state.stocks['fusion_fuel']
+        self.arrive(fleet, self.next_order('CORE_TRANSPORT'))
+        self.assertEqual(self.op.payload['held_reason'], 'no_reachable_owned_anchor')
+        self.assertEqual(fleet['fuel_reserve'], 0)
+        self.assertEqual(paid, self.e.state.stocks['fusion_fuel'])
+        self.assertIsNone(self.core.planet_id)
+
+    def test_failed_pickup_with_lost_origin_holds_unconsumed_tug_without_moving_core(self):
+        self.withdrawal()
+        plan, fleet, first = self.launch()
+        self.core.custody_version += 1
+        self.origin.empire_id = self.sender.id
+        self.arrive(fleet, first)
+        self.assertTrue(first.payload['applied'])
+        self.assertEqual(self.core.planet_id, self.pickup.id)
+        self.assertEqual(self.core.state, 'sealed_wreck')
+        self.assertEqual(self.tug.status, 'transit')
+        self.assertEqual(self.tug.fleet_id, UUID(fleet['id']))
+        self.assertEqual(fleet['status'], 'ARRIVED')
+        self.assertEqual(self.op.payload['held_reason'], 'no_reachable_owned_anchor')
+
+    def test_held_carrier_is_blocked_by_real_dispatch_and_recall_without_leaking_foreign_holds(self):
+        self.withdrawal()
+        plan, fleet, first = self.launch()
+        self.arrive(fleet, first)
+        self.origin.empire_id = self.sender.id
+        self.arrive(fleet, self.next_order('CORE_TRANSPORT'))
+        self.session.query_rows = [self.op]
+        store = PersistentStore(None, self.catalog)
+        before = copy.deepcopy((fleet, self.e.state.stocks, self.core.payload))
+        with self.assertRaisesRegex(DataValidationError, 'retida'):
+            store.dispatch(self.session, self.actor, self.e, {'mission': 'MOVE',
+                'ship_ids': [self.ship['id']], 'x': 2, 'y': 0, 'cargo': {}})
+        with self.assertRaisesRegex(DataValidationError, 'retida'):
+            store.recall(self.session, self.actor, self.e, fleet['id'])
+        self.assertEqual(before, (fleet, self.e.state.stocks, self.core.payload))
+        self.assertFalse(transport.fleet_locked(self.session, self.sender, fleet['id']))
+        other_universe = m.Empire(id=self.actor.id, universe_id=UUID(int=99))
+        self.assertFalse(transport.fleet_locked(self.session, other_universe, fleet['id']))
+
+    def test_resume_held_fails_without_route_then_queues_real_return_when_owned_anchor_recovers(self):
+        self.withdrawal()
+        plan, fleet, first = self.launch()
+        self.arrive(fleet, first)
+        self.origin.empire_id = self.sender.id
+        self.arrive(fleet, self.next_order('CORE_TRANSPORT'))
+        before = copy.deepcopy((self.op.payload, self.core.payload, fleet, self.e.state.stocks))
+        with self.assertRaisesRegex(DataValidationError, 'alcançável'):
+            transport.resume_held(self.store, self.session, self.actor, self.e, self.op)
+        self.assertEqual(before, (self.op.payload, self.core.payload, fleet, self.e.state.stocks))
+        with self.assertRaises(DataValidationError):
+            transport.resume_held(self.store, self.session, self.sender, self.e, self.op)
+        self.origin.empire_id = self.actor.id
+        fuel = fleet['fuel_reserve']
+        result = transport.resume_held(self.store, self.session, self.actor, self.e, self.op)
+        self.assertGreater(result['arrival_at'], self.e.state.last_updated)
+        self.assertNotIn('held_reason', self.op.payload)
+        self.assertEqual(fleet['status'], 'TRANSIT')
+        self.assertLess(fleet['fuel_reserve'], fuel)
+        self.assertIsNone(self.core.planet_id)
+        returning = self.next_order('CORE_RETURN', 'home')
+        self.arrive(fleet, returning)
+        self.assertEqual(self.core.planet_id, self.origin.id)
+        self.assertEqual(self.core.state, 'sealed_wreck')
+        self.assertEqual(self.tug.status, 'consumed')
+
+    def test_return_anchor_lost_during_return_is_rechecked_and_holds_without_poisoning_order(self):
+        self.withdrawal()
+        system = m.StarSystem(id=UUID(int=30), universe_id=self.universe, x=2, y=0)
+        destination = m.Planet(id=UUID(int=31), system_id=system.id, empire_id=self.actor.id)
+        self.session.add(system); self.session.add(destination)
+        self.op.payload['destination_planet_id'] = str(destination.id)
+        plan, fleet, first = self.launch()
+        self.arrive(fleet, first)
+        destination.empire_id = self.sender.id
+        self.arrive(fleet, self.next_order('CORE_TRANSPORT'))
+        returning = self.next_order('CORE_RETURN', 'home')
+        self.origin.empire_id = self.sender.id
+        self.arrive(fleet, returning)
+        self.assertTrue(returning.payload['applied'])
+        self.assertEqual(self.op.status, 'returning')
+        self.assertEqual(self.op.payload['held_reason'], 'no_reachable_owned_anchor')
+        self.assertEqual(fleet['status'], 'ARRIVED')
+        self.assertEqual(self.core.system_id, self.origin_system.id)
+        self.assertIsNone(self.core.planet_id)
+
+    def test_custody_cancel_resumes_held_once_without_using_ordinary_recall(self):
+        self.withdrawal()
+        plan, fleet, first = self.launch()
+        self.arrive(fleet, first)
+        self.origin.empire_id = self.sender.id
+        self.arrive(fleet, self.next_order('CORE_TRANSPORT'))
+        self.origin.empire_id = self.actor.id
+        data = {'action': 'cancel', 'unit_id': str(self.core.id), 'operation_id': str(self.op.id),
+                'idempotency_key': 'resume-held-once'}
+        result = custody.command(self.store, self.session, self.actor, self.e, data)
+        reserved = fleet['fuel_reserve']
+        self.assertEqual(result, custody.command(self.store, self.session, self.actor, self.e, data))
+        self.assertEqual(fleet['fuel_reserve'], reserved)
+        self.assertNotIn('held_reason', self.op.payload)
+        self.store.recall.assert_not_called()
+        self.assertEqual(len([r for (kind,_),r in self.session.rows.items()
+            if kind is m.UniverseOrder and r.payload.get('mission') == 'CORE_RETURN']), 1)
+
 
 @unittest.skipUnless(os.getenv('PERSISTENT_TEST_DATABASE_URL'), 'isolated core transport PostgreSQL required')
 class CoreTransportPersistence(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        custody_fixtures.CustodyPersistence.setUpClass.__func__(cls)
+        pass
 
     @classmethod
     def tearDownClass(cls):
-        custody_fixtures.CustodyPersistence.tearDownClass.__func__(cls)
+        pass
+
+    def setUp(self):
+        custody_fixtures.CustodyPersistence.setUp(self)
+
+    def tearDown(self):
+        custody_fixtures.CustodyPersistence.tearDown(self)
 
     prepare = custody_fixtures.CustodyPersistence.prepare
     commission = custody_fixtures.CustodyPersistence.commission
@@ -369,3 +564,72 @@ class CoreTransportPersistence(unittest.TestCase):
             self.assertEqual(session.get(m.StellarOperation, UUID(result['operation_id'])).status, 'completed')
             self.assertIsNone(final.payload.get('core_fleet_id'))
             self.assertEqual(session.get(m.Fleet, UUID(result['fleet']['id'])).status, 'ARRIVED')
+
+    def test_origin_loss_on_loaded_return_holds_carrier_and_does_not_stall_other_events(self):
+        store, now, actor, other, project, unit_id, home = self.claimed_core()
+        ships, tug_id = self.tug_and_ships(store, now, actor)
+        state = store.run(actor, lambda e: e.state.to_dict())
+        # Isolated ownership-loss precondition: a real additional planetary anchor.
+        with Session(self.db) as session, session.begin():
+            store.lock(session)
+            occupied = {(s.x,s.y) for s in session.scalars(select(m.StarSystem))}
+            x,y = next((state['system_x']+dx,state['system_y']+dy) for dx in range(5,10)
+                       for dy in range(5,10) if (state['system_x']+dx,state['system_y']+dy) not in occupied)
+            system = m.StarSystem(universe_id=session.get(m.Empire, actor).universe_id,
+                                 x=x, y=y, created_at=utc(now[0]))
+            session.add(system); session.flush()
+            colony = m.Planet(system_id=system.id, planet_index=0, empire_id=actor, population_total=100,
+                             created_at=utc(now[0]), last_updated=utc(now[0]))
+            session.add(colony); session.flush()
+            colony_id, colony_system = str(colony.id), system.id
+            session.add(m.District(planet_id=colony.id, district_id='civil_district', level=2))
+            session.add(m.District(planet_id=colony.id, district_id='solar_field', level=10))
+            for resource in set(self.catalog.items['resources']) | set(self.catalog.items['fuels']):
+                session.add(m.PlanetStock(planet_id=colony.id, resource_id=resource, amount=100000))
+        # Factory origin stays home: the tug is actually shipped to the new origin.
+        cargo = store.transaction(actor, lambda session, empire, e: store.dispatch(session, empire, e,
+            {'mission': 'TRANSPORT', 'ship_ids': ships, 'module_ids': [tug_id], 'cargo': {},
+             'target_planet_id': colony_id, 'x': x, 'y': y}))
+        now[0] += 2*(cargo['arrival_at']-now[0])+1; store.tick()
+        reinforcement = store.transaction(actor, lambda session, empire, e: store.dispatch(session, empire, e,
+            {'mission': 'REINFORCE', 'ship_ids': ships, 'target_planet_id': colony_id, 'x': x, 'y': y, 'cargo': {}}))
+        now[0] = reinforcement['arrival_at']; store.tick()
+        result = self.act(store, actor, unit_id, 'repatriate', planet_id=colony_id,
+                          ship_ids=ships, module_ids=[tug_id])
+        now[0] = result['fleet']['arrival_at']; store.tick()
+        now[0] += 1
+        recalled = store.transaction(actor, lambda session, empire, e:
+            store.recall(session, empire, e, result['fleet']['id']))
+        now[0] = recalled['arrival_at']; store.tick()
+        with Session(self.db) as session, session.begin():
+            store.lock(session)
+            returning = session.scalar(select(m.UniverseOrder).where(
+                m.UniverseOrder.empire_id == actor, m.UniverseOrder.resolved == False,
+                m.UniverseOrder.payload['operation_id'].astext == result['operation_id']))
+            self.assertEqual(returning.payload['mission'], 'CORE_RETURN')
+            return_id, return_at = returning.id, epoch(returning.due_at)
+            # Losing a non-home origin must not invalidate the empire's home record.
+            session.get(m.Planet, UUID(colony_id)).empire_id = other
+        unrelated = store.transaction(actor, lambda session, empire, e:
+            stellar.manufacture(session, empire, e, 'control', uuid4().hex))
+        now[0] = max(return_at, unrelated['complete_at'])+1
+        store.tick(); store.tick()
+        store.run(other, lambda e: e.state.last_updated)
+        with Session(self.db) as session:
+            arrival = session.get(m.UniverseOrder, return_id)
+            self.assertTrue(arrival.resolved); self.assertTrue(arrival.payload['applied'])
+            op = session.get(m.StellarOperation, UUID(result['operation_id']))
+            self.assertEqual(op.status, 'returning'); self.assertIsNone(op.due_at)
+            self.assertEqual(op.payload['held_reason'], 'no_reachable_owned_anchor')
+            core = session.get(m.StellarUnit, UUID(unit_id))
+            self.assertEqual(core.state, 'core_transit'); self.assertIsNone(core.planet_id)
+            self.assertEqual(core.system_id, colony_system)
+            self.assertEqual(core.payload['core_fleet_id'], result['fleet']['id'])
+            self.assertEqual(core.payload['energy'], 0)
+            self.assertIsNotNone(session.get(m.StellarSource, core.source_id).removed_at)
+            fleet = session.get(m.Fleet, UUID(result['fleet']['id']))
+            self.assertEqual(fleet.status, 'ARRIVED'); self.assertEqual((fleet.x,fleet.y), (x,y))
+            self.assertTrue(transport.fleet_locked(session, session.get(m.Empire, actor), str(fleet.id)))
+            self.assertEqual(session.get(m.StellarModule, UUID(unrelated['module_id'])).status, 'ready')
+            self.assertEqual(session.get(m.StellarModule, UUID(tug_id)).status, 'consumed')
+            self.assertEqual(session.get(m.Planet, UUID(home)).empire_id, actor)

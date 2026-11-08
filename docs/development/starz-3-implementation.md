@@ -59,3 +59,61 @@ Bombardeio reutiliza absorção/dano estratégico, preserva `civil_district`, ex
 Coeficientes de ensaio centralizados em `combat_rules.py`: HP estrutural 5000, módulo 1000, escudo 2000; energia máxima 10000, piso 1000, regeneração 1/s, disparo 100 e sustentação de escudo 20 por salva; dano naval 300, armadura 2; velocidade gravitacional 1, custo 100 de energia/distância; bombardeio custa 2000 de energia e aplica orçamento estratégico 1000. São parâmetros EXPERIMENTAIS, não balanceamento final ou escala física medida.
 
 Evidência: 54 testes CPU direcionados (`.qa/runs/starz3-p4-combat/cpu-final.log`), quatro testes de inteligência/isolamento de observação (`.qa/runs/starz3-p4-intelligence/`), quatro cenários PostgreSQL em `.qa/runs/starz3-p4-db/` e `.qa/runs/starz3-p4-orbital/`. Os cenários SQL constroem a unidade pelas cinco fases e usam ordens reais; não inserem uma Stargrave pronta para fingir a jornada. Espaço profundo continua indisponível: sem combate/claim por proximidade visual ou planeta fictício. UI e matriz de balanceamento seguem para P6.
+
+## Amostras numéricas experimentais (em execução)
+
+Comando reproduzível, sem rede ou banco: `.venv/bin/python scripts/starz3-balance.py --output .qa/runs/starz3-balance/results.json`. O script chama o resolvedor autoritativo; 327 amostras, incluindo 288 repetições idênticas verificadas por igualdade, três intensidades D08, doutrinas, perfis, escoltas, inversão de lado e presença/ausência de escudos. As amostras não substituem testes transacionais B14/B18 nem representam win rate de jogadores.
+
+No cenário intermediário B15, tecnologias convencionais de armas/armadura/escudos nível 2 em ambos os lados, Stargrave inicialmente íntegra e energizada:
+
+| Leviathan | Perfil | Resultado em até seis salvas | Casco Stargrave restante | Naves sobreviventes |
+|---:|---|---|---:|---:|
+| 4 | Convencional | Empate | 3198,60 | 3 |
+| 4 | Antiescudo | Empate | 3398,88 | 3 |
+| 8 | Convencional | Empate | 275,40 | 7 |
+| 8 | Antiescudo | Empate | 1060,32 | 7 |
+| 12 | Ambos, separadamente | Atacante vence na quinta salva | 0 | 11 |
+| 24 | Ambos, separadamente | Atacante vence na terceira salva | 0 | 24 |
+| 48 | Ambos, separadamente | Atacante vence na segunda salva | 0 | 48 |
+
+Isso comprova vulnerabilidade convencional nestas condições, sem `containment_warfare`, e o custo do perfil antiescudo contra casco. Não prova equilíbrio econômico: custos do script somam unidades convencionais e defesas realmente participantes, sem construção da Stargrave; faltam combustível, propulsão, acesso científico e tempo de reposição na comparação econômica completa. Proposta quantitativa inicial: manter 1,25/0,80 apenas como baseline de ensaio, comparar variantes 1,10/0,90 e 1,40/0,70 antes de escolher valores finais; nenhuma promovida a `BALANCED`. Para ETA de 7200 s, os atrasos calculados são 600/1800/2880 s conforme os três perfis, respeitando os tetos.
+
+## P5 — custódia, destinos e transporte do núcleo
+
+`IMPLEMENTED` / `TESTED` no escopo orbital suportado: migration `d06f00000001`, operações exclusivas por núcleo, versão de custódia, ledger de efeitos com proveniência industrial e eventos idempotentes no reconciliador existente. Proprietário operacional/histórico, controlador militar e custodiante são papéis distintos. Vitória não cede custódia; presença militar no próprio planeta, estabilização e nova janela são exigidas. Contestação encerra o claim sem transferência automática; admite nova tentativa manual. Cessão exige oferta e aceite bilateral fora de guerra; snapshots privados só são entregues às partes autorizadas.
+
+Reconstrução usa cinco módulos físicos, pesquisa e trabalho reais, mantendo unidade, estrela e projeto histórico. O transporte de módulos entre colônias usa `TRANSPORT`, capacidade e combustível nativos; conserva origem fabril e registra local atual. Destino que deixa de ser próprio provoca retorno do manifesto. Descomissionamento cria relíquia selada terminal; recuperação experimental de 25% incide somente sobre custos comprovadamente pagos dos módulos originais, uma vez, sem fabricar combustível.
+
+Repatriação e retirada cedida usam frota convencional real, módulo de propulsão consumido na coleta, capacidade de carga e custo de massa/combustível/tempo das pernas físicas. Cessão não move o núcleo nem dá acesso a estoques alheios. Recall anterior à coleta retorna o mesmo módulo; após coleta retorna fisicamente com o mesmo núcleo, sem devolver módulo consumido. Repatriação reinstala a mesma estrela na origem, mantém planetas e coordenadas e não repõe recursos. Núcleos selados não regeneram energia militar.
+
+Perfil `experimental-custody-v1`: estabilização e claim 86400 s cada, reconstrução 86400 s, relíquia 3600 s. Transporte `experimental-core-transport-v1`: volume do núcleo 100 e massa adicional 250, fora estoques físicos. Todos são parâmetros experimentais, não balanceamento final.
+
+Evidência: 13 testes CPU de custódia (0,122 s), dez de transporte (0,117 s), dois de módulos (0,001 s) e sete integrações PostgreSQL (`.qa/runs/starz3-p5-db/`, 339,1 s incluindo ambiente). Integração inclui construção paga→movimento→derrota convencional→claim→relíquia; claims/destinos concorrentes; cessão bilateral privada; colonização real→transporte de módulos→reconstrução; repatriação com retorno; retirada cedida até órbita própria. Os demais casos usam precondições sintéticas explicitamente declaradas, sem simular como prova uma transição não executada.
+
+Espaço profundo, extinção de império e direitos especiais de terceiros permanecem condicionados. A regra inicial exige planeta próprio e forças locais, portanto não representa dois impérios simultaneamente elegíveis para posse numa soberania orbital fictícia.
+
+## P6 — integração de interface e apresentação
+
+Interface funcional em `#/stellar`, dentro do GameShell existente, com entrada contextual pela pesquisa e estaleiro. Projetos, fabricação, unidades e custódia usam subviews e paginação; seleção/revisão/confirmar são explícitas. As fases e módulos exibem somente prazos reais das ordens. Ações usam chaves UUID idempotentes e retornam os bloqueios autoritativos do servidor. Pesquisa distingue descoberta operacional de política civil ainda proposta. O planejador preserva doutrina, perfil, alvo/subsistema, projeto e manifesto nos drafts por planeta e invalida a prévia quando mudam.
+
+A plataforma orbital oferece seus dois modos reais. Reconhecimento só habilita mira dirigida com observação confirmada e vigente. Relatórios mostram doutrina efetiva, redirecionamentos, fallback de mira, dano de subsistemas e snapshots próprios de unidades excepcionais, sem confundi-las com sobreviventes convencionais. O mapa e a órbita ocultam a estrela retirada e sua luz, mantendo identidade e planetas. O modelo aprovado da Stargrave foi reutilizado sem alterar geometria ou paleta.
+
+No mobile, Lista/Detalhes e Ação/Módulos/Frota/Revisão substituem painéis simultâneos. Inspeção real em 390×650 identificou e corrigiu altura nula do conteúdo e botões interceptados; não foi usado clipping, scroll de leitura nem redução de fontes. Modelo, câmeras, navegação e canvas foram exercitados no Chromium local (SwiftShader; não é benchmark de GPU física).
+
+## Gate abrangente e complemento direcionado
+
+`node scripts/qa.cjs full --jobs 2`, com Chromium local explicitamente selecionado, executado em `.qa/runs/2026-11-08T14-33-32-097Z-128194/`: 183 testes CPU Python, 366 frontend, 198 cenários Chromium e demais checks aprovados; zero skips e zero eventos de segurança no navegador. Typecheck e build passaram. **O comando retornou 1**, não um PASS: um teste de paridade esperava rótulos obsoletos de Galáxia já divergentes no commit-base `651fd75`; o lote PostgreSQL atingiu 900 s após 44 aprovações, durante o cenário de chegada hostil simultânea.
+
+Os 13 casos PG restantes foram selecionados por diferença entre descoberta de testes e resultados efetivamente concluídos, sem ocultar cenários nem repetir as 44 aprovações. `.qa/runs/starz3-final-db-remaining/` terminou com **13 PASS, zero falhas, 308,2 s**. O cenário interrompido passou isoladamente. Assim, os 57 casos PostgreSQL do lote foram executados com sucesso em dois escopos. Não confundir essa evidência composta com um `full` de saída zero.
+
+A acumulação de impérios/ordens entre métodos do mesmo fixture tornava o lote estelar excessivamente lento. Os novos fixtures de custódia e transporte passam a usar schema descartável próprio por teste, sem alterar serviços, saves ou bancos existentes. Correções finais de paridade/visibilidade da oferta recebem verificações direcionadas separadas; seus resultados são registrados no fechamento abaixo.
+
+## Limites explícitos
+
+- Nenhum combate, custódia ou presença naval geral em espaço profundo foi inventado; a construção tem o sistema real de captura e as operações militares suportadas usam âncoras planetárias reais.
+- Offline não significa extinção. Custódia órfã, direitos de terceiros neutros e colonização após repatriação aguardam contratos próprios.
+- Automação logística civil, variações operacionais propostas em R3.0-D02 e reparo genérico de unidades não derrotadas não são apresentados como implementados.
+- Transporte retido sem âncora própria alcançável mantém núcleo e portador reais, sem travar a reconciliação nem permitir reaproveitar a frota. Cancelar pela custódia pode retomar retorno físico após regularizar âncora/reserva. Reabastecimento remoto e troca de portador não foram implementados.
+- Custos, HP, energia, tempos, salvamento e contestação EW são experimentais. Reserva de captura não possui limite/expiração novos inventados; esses parâmetros exigem decisão e simulação.
+- Captura não recalcula clima, geografia ou economia planetária por analogia. Não há vitória automática, planetocídio ou explosão estelar temporizada.
+- Capturas são fixtures locais explicitamente identificadas; provam renderização/interação, não execução de partidas reais. O fluxo persistente foi verificado em PostgreSQL sintético descartável. O ambiente do responsável não foi migrado ou reiniciado.

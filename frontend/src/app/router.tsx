@@ -1,3 +1,4 @@
+import {StellarView} from '../universe/StellarView';
 import {DefenseView} from '../universe/DefenseView';
 import { DevelopmentView } from '../universe/DevelopmentView';
 import { OperationsView } from '../universe/OperationsView';
@@ -27,6 +28,7 @@ export function AppRouter() {
     <Route path="/ship-geometry-lab" element={<Suspense fallback={<div>Carregando Ship Geometry Lab…</div>}><ShipGeometryLabView /></Suspense>} />
     <Route path="/planet-lab" element={<Suspense fallback={<div className="planet-lab-loading">Carregando Planet Lab…</div>}><PlanetLabView /></Suspense>} />
     <Route element={<AppShell />}>
+      <Route path="/stellar" element={<StellarView/>}/>
       <Route path="/defenses" element={<DefenseView/>}/>
       <Route path="/development" element={<DevelopmentView />} />
       <Route path="/missions" element={<MissionAlias />} />

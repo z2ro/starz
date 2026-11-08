@@ -10,6 +10,7 @@ const pages=[
  {id:'planet',route:'planet',critical:['.planet-visual-toolbar button'],inspectors:['.planet-inspector']},
  {id:'overview',route:'universe',critical:['.strategy-planet-picker select','.strategy-world-dossier a.px-primary'],inspectors:['.strategy-world-dossier']},
  {id:'installations',route:'development',critical:['.ux-inspector .build-review button'],inspectors:['.ux-inspector']},
+ {id:'stellar',route:'stellar',critical:['.stellar-primary-nav .tabs button'],inspectors:['.stellar-detail','.stellar-custody']},
  {id:'research',route:'research',critical:['.research-inspector .build-review button'],inspectors:['.research-inspector']},
  {id:'defense',route:'defenses',critical:['.ux-inspector .build-review button'],inspectors:['.ux-inspector']},
  {id:'shipyard',route:'shipyard',critical:['.naval-inspector .action.primary'],inspectors:['.naval-inspector']},
@@ -68,7 +69,7 @@ async function main(){
     if(request.method()!=='GET'){security.push({code:'blocked-api-mutation',path:url.pathname});await route.fulfill({status:403,json:{detail:'Visual QA forbids gameplay mutations.'}});return;}
     if(url.pathname==='/api/state'&&profile.id==='error'){await route.fulfill({status:503,json:{detail:'STAGED API FAILURE'}});return;}
     if(url.pathname==='/api/state'&&profile.id==='loading')await new Promise(resolve=>setTimeout(resolve,3000));
-    const f=fixtures[stateName];const responses={'/api/config':{persistent:true},'/api/auth/me':{username:'VISUAL_QA_FIXTURE',empire_id:f.universe.empire_id},'/api/catalog':fixtures.catalog,'/api/state':reviewSnapshots?.[url.searchParams.get('planet_id')??f.state.active_planet.id]??f.state,'/api/universe':f.universe,'/api/galaxy':f.galaxy};
+    const f=fixtures[stateName];const responses={'/api/config':{persistent:true},'/api/auth/me':{username:'VISUAL_QA_FIXTURE',empire_id:f.universe.empire_id},'/api/catalog':fixtures.catalog,'/api/state':reviewSnapshots?.[url.searchParams.get('planet_id')??f.state.active_planet.id]??f.state,'/api/universe':f.universe,'/api/galaxy':f.galaxy,'/api/universe/stellar':f.stellar,'/api/universe/stellar/custody':f.stellar_custody};
     if(!(url.pathname in responses)){security.push({code:'unhandled-api',path:url.pathname});await route.fulfill({status:404,json:{detail:'No QA fixture for this endpoint.'}});return;}
     if(!page.isClosed())await route.fulfill({json:responses[url.pathname]});
    });
@@ -120,6 +121,7 @@ async function main(){
    if(process.env.STARZ_QA_GALAXY_FLOW==='1'&&profile.id==='galaxy'&&stateName==='populated'){try{navigation.push(await require('./visual-qa/galaxy-flow.cjs').galaxyFlow(page,{output,fixture:fixtures[stateName]}));}catch(e){errors.push('Galaxy flow: '+e.message);await page.screenshot({path:path.join(output,`galaxy-flow-error-${width}x${height}.png`),timeout:10000}).catch(()=>{});}}
    if(process.env.STARZ_QA_GALAXY_VISUAL_FLOW==='1'&&profile.id==='galaxy'&&stateName==='populated'&&height!==650){try{navigation.push(await require('./visual-qa/galaxy-visual-flow.cjs').galaxyVisualFlow(page,{output,fixture:fixtures[stateName]}));}catch(e){errors.push('Galaxy visual flow: '+e.message);}}
    if(process.env.STARZ_QA_GALAXY_IDENTITY_FLOW==='1'&&profile.id==='galaxy'&&stateName==='populated'&&((width===1366&&height===768)||(width===390&&height===844))){try{navigation.push(await require('./visual-qa/galaxy-identity-flow.cjs').galaxyIdentityFlow(page,{output,fixture:fixtures[stateName]}));}catch(e){errors.push('Galaxy identity flow: '+e.message);await page.screenshot({path:path.join(output,`identity-error-${width}x${height}.png`),timeout:10000}).catch(()=>{});}}
+   if(profile.id==='stellar'&&stateName==='populated'&&[[1920,1080],[1366,768],[390,844]].some(([w,h])=>w===width&&h===height)){try{navigation.push(await require('./visual-qa/stellar-flow.cjs').stellarFlow(page,{output}));}catch(e){errors.push('Stellar workflow: '+e.message);await page.screenshot({path:path.join(output,`stellar-flow-error-${width}x${height}.png`)}).catch(()=>{});}}
    results.push({view:profile.id,state:stateName,...check,navigation,errors,screenshot});await context.close();
    if(security.length)throw Error('Security boundary triggered; stopped. Inspect sanitized security findings.');
   }

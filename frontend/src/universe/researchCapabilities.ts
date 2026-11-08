@@ -1,0 +1,18 @@
+export const researchCapabilities:Record<string,{text:string;path?:string}>={
+ automated_logistics:{text:'Automação de reabastecimento e rotas ainda pendente. Transportes continuam manuais.'},
+ megastructure_engineering:{text:'Habilita reserva de estrela elegível junto de Extração Estelar.',path:'/stellar'},
+ precision_manufacturing:{text:'Habilita fabricação física de módulos com infraestrutura e recursos locais.',path:'/stellar?tab=modules'},
+ stellar_logistics:{text:'Habilita entrega física de módulos por frotas reais.',path:'/fleets?plan=1&mission=STELLAR_DELIVERY'},
+ fire_control_doctrine:{text:'Habilita as doutrinas ofensivas Interceptação e Ruptura.',path:'/fleets?plan=1&mission=ATTACK'},
+ fleet_coordination:{text:'Escolta automática pela composição de Vanguard, Sentinel e Aegis; proteção limitada por salva.'},
+ electronic_warfare:{text:'Odyssey operacional interfere na aquisição de alvos; pode degradar a doutrina ofensiva.'},
+ spatial_interdiction:{text:'Plataforma orbital em modo Interdição pode atrasar chegadas hostis; exige energia e trabalhadores.',path:'/defenses'},
+ shield_disruption:{text:'Perfil Antiescudo aumenta eficácia contra escudos e reduz dano ao casco.',path:'/fleets?plan=1&mission=ATTACK'},
+ containment_warfare:{text:'Mira em subsistemas exige inteligência atual confirmada. Ataque convencional não exige esta pesquisa.',path:'/fleets?plan=1&mission=ATTACK'},
+ stellar_armaments:{text:'Habilita comissionamento armado e operações de Stargrave autorizadas pelo servidor.',path:'/stellar?tab=units'},
+ gravitational_physics:{text:'Pré-requisito científico de interdição, extração e propulsão gravitacional.'},
+ extreme_materials:{text:'Pré-requisito científico de módulos de escudos e confinamento móvel.',path:'/stellar'},
+ stellar_extraction:{text:'Habilita reserva de estrela descoberta, desabitada, não natal e única, junto de Megaestruturas.',path:'/stellar'},
+ mobile_stellar_confinement:{text:'Habilita integração do controle de um núcleo com uma estrela cativa.',path:'/stellar'},
+ gravitational_propulsion:{text:'Habilita integração da propulsão e movimento estelar com energia e destino reais.',path:'/stellar?tab=units'},
+};

@@ -294,6 +294,9 @@ class PersistentStore(Store):
             duration,fuel=core_plan['leg1']['duration'],core_plan['leg1']['fuel']
         source=next((p for p in s.planets if (p['x'],p['y'])==origin and p['id']==s.planet_id),None)
         old=[f for f in s.fleets if set(ids)&set(f['ship_ids'])]
+        if old:
+            from .stellar_transport import fleet_locked
+            require(not any(fleet_locked(session,empire,f['id']) for f in old),'Frota retida com núcleo selado; âncora e recuperação precisam ser regularizadas.')
         capacity=sum(e.catalog.get('ships',x['hull_id']).cargo_capacity for x in ships)*(1+effect(e.catalog,s,'cargo'))
         if colony_modules:
             from .stellar import MODULE_CARGO
@@ -495,6 +498,8 @@ class PersistentStore(Store):
     def recall(self,session,empire,e,fleet_id):
         fleet=next((f for f in e.state.fleets if f['id']==fleet_id),None)
         require(fleet is not None,'Frota não pertence ao jogador.')
+        from .stellar_transport import fleet_locked
+        require(not fleet_locked(session,empire,fleet_id),'Frota retida com núcleo selado; retorno seguro indisponível.')
         order=next((o for o in session.scalars(select(m.UniverseOrder).where(m.UniverseOrder.empire_id==empire.id,m.UniverseOrder.kind=='mission',m.UniverseOrder.resolved==False)) if o.payload['fleet_id']==fleet_id),None)
         if order:
             if order.payload['mission'] in {'CORE_PICKUP','CORE_TRANSPORT','CORE_RETURN'}:

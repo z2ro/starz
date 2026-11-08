@@ -59,17 +59,76 @@ def _presence(session, empire, engine, row):
 
 
 def contested(store, session, empire, engine, row):
-    """Only actual, combat-capable hostile exceptional units at this exact orbit count."""
+    """Include due hostile arrivals before UUID ordering can award custody ahead of combat."""
     for rival in session.scalars(select(m.StellarUnit).where(
             m.StellarUnit.universe_id == row.universe_id, m.StellarUnit.planet_id == row.planet_id,
             m.StellarUnit.system_id == row.system_id, m.StellarUnit.empire_id != empire.id,
             m.StellarUnit.state.in_(('operational', 'damaged')))):
         p = rival.payload
-        if (rival.id != row.id and p.get('hp', 0) > 0 and
+        if (rival.id != row.id and rival.state in ('operational', 'damaged') and p.get('hp', 0) > 0 and
             all(p.get('subsystems', {}).get(k, 0) > 0 for k in ('containment', 'control', 'weapons')) and
             store.relation(session, empire.id, rival.empire_id)['status'] == 'war'):
             return True
+    return _hostile_arrival_due(store, session, empire, engine, row)
+
+
+def _hostile_arrival_due(store, session, empire, engine, row):
+    now = engine.state.last_updated
+    system = session.get(m.StarSystem, row.system_id)
+    if system is None:
+        return False
+    orders = session.scalars(select(m.UniverseOrder).where(
+        m.UniverseOrder.universe_id == empire.universe_id, m.UniverseOrder.empire_id != empire.id,
+        m.UniverseOrder.resolved == False, m.UniverseOrder.due_at <= utc(now),
+        m.UniverseOrder.kind.in_(('mission', 'stargrave_travel'))))
+    for order in orders:
+        if (order.universe_id != empire.universe_id or order.empire_id == empire.id or order.resolved
+                or order.due_at is None or epoch(order.due_at) > now):
+            continue
+        p = order.payload
+        target = p.get('target') if order.kind == 'mission' else p.get('target_planet_id')
+        attack = p.get('mission') == ('ATTACK' if order.kind == 'mission' else 'attack')
+        if (not attack or target != str(row.planet_id)
+                or store.relation(session, empire.id, order.empire_id)['status'] != 'war'):
+            continue
+        if order.kind == 'stargrave_travel':
+            rival = session.get(m.StellarUnit, identifier(p['unit_id']))
+            if (rival is not None and rival.universe_id == empire.universe_id
+                    and rival.empire_id == order.empire_id and rival.state == 'transit'
+                    and rival.payload.get('active_order_id') == str(order.id)
+                    and rival.payload.get('hp', 0) > 0 and all(rival.payload.get('subsystems', {}).get(k, 0) > 0
+                        for k in ('containment', 'control', 'propulsion', 'weapons'))):
+                return True
+            continue
+        fleet = session.get(m.Fleet, identifier(p['fleet_id']))
+        if fleet is None or fleet.empire_id != order.empire_id:
+            continue
+        location = (fleet.destination_x, fleet.destination_y) if fleet.status == 'TRANSIT' else (fleet.x, fleet.y)
+        if fleet.status not in ('TRANSIT', 'ARRIVED') or location != (system.x, system.y):
+            continue
+        progress = session.get(m.EmpireProgress, order.empire_id)
+        health = progress.payload.get('ship_health', {}) if progress is not None else {}
+        ships = session.scalars(select(m.Ship).join(m.FleetShip, m.FleetShip.ship_id == m.Ship.id).where(
+            m.FleetShip.fleet_id == fleet.id, m.FleetShip.empire_id == order.empire_id,
+            m.Ship.empire_id == order.empire_id, m.Ship.ready_at <= utc(now)))
+        for ship in ships:
+            hull = engine.catalog.get('ships', ship.hull_id)
+            if (ship.empire_id == order.empire_id and epoch(ship.ready_at) <= now
+                    and health.get(str(ship.id), hull.hull_points) > 0
+                    and (hull.weapon_damage > 0 or hull.carrier_capacity > 0)):
+                return True
     return False
+
+
+def _supersede_offer(session, row, now):
+    active_id = session.scalar(select(m.StellarOperation.id).where(
+        m.StellarOperation.unit_id == row.id, m.StellarOperation.status.in_(ACTIVE)).limit(1))
+    if active_id is not None:
+        active = session.get(m.StellarOperation, active_id)
+        require(active.kind == 'offer' and active.status == 'offered',
+                'Conquista não substitui destino ou reivindicação comprometidos.')
+        _terminal(session, active, 'cancelled', now, 'superseded_by_authorized_conquest')
+        session.flush()
 
 
 def _custodian(row, empire):
@@ -89,9 +148,14 @@ def _free(session, row):
         'Núcleo possui operação de custódia incompatível.')
 
 
-def _view(op):
-    return {'operation_id': str(op.id), 'unit_id': str(op.unit_id), 'kind': op.kind, 'status': op.status,
-            'complete_at': epoch(op.due_at), 'profile': PROFILE}
+def _view(op, viewer_id=None):
+    result = {'operation_id': str(op.id), 'unit_id': str(op.unit_id), 'kind': op.kind, 'status': op.status,
+              'complete_at': epoch(op.due_at), 'profile': PROFILE}
+    if op.payload.get('held_reason'):
+        result['held_reason'] = op.payload['held_reason']
+    if viewer_id == op.actor_id and op.payload.get('fleet_id'):
+        result['fleet_id'] = op.payload['fleet_id']
+    return result
 
 
 def record_effect(session, op, event_key, effect, payload, now):
@@ -217,11 +281,14 @@ def command(store, session, empire, e, data):
             require(op.actor_id == empire.id, 'Somente o autor pode cancelar a operação.')
             if op.status in ('transit', 'returning'):
                 require(op.kind in ('withdraw', 'repatriate'), 'Operação não admite recall.')
-                if op.status != 'returning':
+                if op.payload.get('held_reason'):
+                    from .stellar_transport import resume_held
+                    resume_held(store, session, empire, e, op)
+                elif op.status != 'returning':
                     require(op.payload.get('fleet_id'), 'Transporte sem frota.')
                     store.recall(session, empire, e, op.payload['fleet_id'])
                     op.status = 'returning'
-                result = _view(op)
+                result = _view(op, empire.id)
                 _order(session, empire, order_id, request, result)
                 return result
             _release_modules(session, op, now)
@@ -233,7 +300,8 @@ def command(store, session, empire, e, data):
         return result
     require(row.state == 'sealed_wreck', 'Operação exige núcleo selado não terminal.')
     _anchor(session, row)
-    _free(session, row)
+    if action != 'conquer':
+        _free(session, row)
     payload = {'module_ids': module_ids, 'profile': PROFILE}
     modules = []
     duration = None
@@ -247,6 +315,9 @@ def command(store, session, empire, e, data):
                     'Conquista exige custodiante adversário.')
             require(store.relation(session, empire.id, row.custodian_empire_id)['status'] == 'war',
                     'Conquista exige guerra com o custodiante.')
+            require(not row.payload.get('active_order_id'), 'Unidade possui operação militar ativa.')
+            _supersede_offer(session, row, now)
+            _free(session, row)
         duration = CLAIM_SECONDS
     elif action == 'offer':
         _custodian(row, empire)
@@ -413,9 +484,13 @@ def complete(store, session, order, engines):
 def unit_views(session, empire, engine):
     result = []
     own_orbits = select(m.Planet.id).where(m.Planet.empire_id == empire.id)
+    received_offers = select(m.StellarOperation.unit_id).where(
+        m.StellarOperation.universe_id == empire.universe_id,
+        m.StellarOperation.recipient_id == empire.id,
+        m.StellarOperation.kind == 'offer', m.StellarOperation.status == 'offered')
     for row in session.scalars(select(m.StellarUnit).where(m.StellarUnit.universe_id == empire.universe_id,
             or_(m.StellarUnit.empire_id == empire.id, m.StellarUnit.custodian_empire_id == empire.id,
-                m.StellarUnit.planet_id.in_(own_orbits)))
+                m.StellarUnit.planet_id.in_(own_orbits), m.StellarUnit.id.in_(received_offers)))
             .order_by(m.StellarUnit.created_at, m.StellarUnit.id)):
         item = {'id': str(row.id), 'source_id': str(row.source_id), 'system_id': str(row.system_id),
                 'planet_id': str(row.planet_id) if row.planet_id else None, 'state': row.state}
@@ -442,6 +517,15 @@ def unit_views(session, empire, engine):
             'custodian': row.custodian_empire_id == empire.id,
             'controller': controller,
         }
+        visible_location = (item['roles']['operational_owner'] or item['roles']['custodian']
+                            or planet is not None and planet.empire_id == empire.id)
+        if not visible_location:
+            system = session.get(m.StarSystem, row.system_id)
+            visible_location = (system is not None and system.universe_id == empire.universe_id
+                                and engine.knowledge_level(system.x, system.y) == 'SURVEYED')
+        item['location_status'] = 'KNOWN' if visible_location else 'UNKNOWN'
+        if not visible_location:
+            item.update(system_id=None, planet_id=None)
         item['requires_server_validation'] = True
         result.append(item)
     return result
@@ -452,7 +536,7 @@ def snapshot(session, empire, e):
     for op in session.scalars(select(m.StellarOperation).where(m.StellarOperation.universe_id == empire.universe_id,
             or_(m.StellarOperation.actor_id == empire.id, m.StellarOperation.recipient_id == empire.id))
             .order_by(m.StellarOperation.created_at, m.StellarOperation.id)):
-        operations.append({**_view(op), 'actor_id': str(op.actor_id),
+        operations.append({**_view(op, empire.id), 'actor_id': str(op.actor_id),
                            'recipient_id': str(op.recipient_id) if op.recipient_id else None})
     return {'units': unit_views(session, empire, e), 'operations': operations, 'profile': PROFILE,
             'experimental': True, 'stabilization_seconds': STABILIZATION_SECONDS,

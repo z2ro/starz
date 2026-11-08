@@ -89,3 +89,27 @@ O catálogo atual aceita somente `repeatable` e `breakthrough`; as categorias co
 [Combat 3.0 — doutrinas e formações](combat-doctrines.md) detalha o próximo desenho, separando regras propostas de dados e combate atuais. A definição de fórmulas e migração permanece futura e requer aprovação.
 
 Referências: [Research 3.0](research-3.md), [combate](combat.md), [naves](ships.md), [Stargrave](stargrave.md), [economia](economy.md), [balanceamento](balance.md).
+
+## Registro de implementação STARZ 3.0 (08/11/2026)
+
+A tarefa de implementação autorizou R3.0-D01 e os comportamentos fechados posteriormente por C3.0-D01–D11. O status `PROPOSED` histórico deste documento permanece válido para políticas não fechadas; não significa ausência das funções já implementadas abaixo. Ver [evidências](../development/starz-3-implementation.md) e [matriz técnica](../development/starz-3-acceptance.md).
+
+| Descoberta | Função efetiva no servidor |
+|---|---|
+| `automated_logistics` | Identidade e progressão implementadas; políticas automáticas continuam propostas. É requisito real de `stellar_logistics`. |
+| `megastructure_engineering` | Requisito da reserva/projeto estelar e primeira fase. |
+| `precision_manufacturing` / `extreme_materials` | Fabricação de módulos com recursos locais e indústria reais. |
+| `stellar_logistics` | Entrega de módulos/suprimentos e transporte físico do núcleo. |
+| `fire_control_doctrine` | Doutrina congelada no despacho, sem bônus gratuito de dano. |
+| `fleet_coordination` | Redirecionamento limitado para escoltas reais conforme D01. |
+| `electronic_warfare` | Odyssey operacional e contestação por sensores/computação; observações novas, nunca histórico reescrito. |
+| `spatial_interdiction` | Plataforma real em modo exclusivo; uma sucessora por chegada hostil `ATTACK` elegível. |
+| `shield_disruption` | Perfil antiescudo independente, orçamento único e penalidade de casco. |
+| `containment_warfare` | Mira em subsistema com inteligência e exposição elegíveis. Dano convencional continua possível. |
+| `stellar_armaments` | Comissionamento, armas da unidade e bombardeio preparado/revalidado. |
+| `gravitational_physics` | Conhecimento e dependências científicas reais; não concede bônus passivo ou manipulação espacial não especificada. |
+| `stellar_extraction` | Reserva exclusiva de fonte única elegível e captura por fases. |
+| `mobile_stellar_confinement` | Integração da contenção móvel e requisitos do transporte do núcleo. |
+| `gravitational_propulsion` | Montagem de propulsão, deslocamento com energia finita e logística de recuperação. |
+
+Nenhuma linha acima promove coeficientes experimentais a balanceamento definitivo ou autoriza funcionalidades adicionais propostas no restante do documento.

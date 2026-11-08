@@ -40,10 +40,11 @@ describe('React frontend parity', () => {
     render(<App />);
     await screen.findByText('COMANDO IMPERIAL');
     fireEvent.click(screen.getByText('Galáxia'));
-    await screen.findByRole('button', { name: /Sistema desconhecido, coordenadas 1:0/ });
-    fireEvent.click(screen.getByRole('button', { name: /Sistema desconhecido, coordenadas 1:0/ }));
-    expect(screen.getByText('Sistema não mapeado')).toBeInTheDocument();
-    expect(screen.getByText('UNKNOWN')).toBeInTheDocument();
+    await screen.findByRole('button', { name: /Localização não identificada, coordenadas 1:0/ });
+    fireEvent.click(screen.getByRole('button', { name: /Localização não identificada, coordenadas 1:0/ }));
+    expect(screen.getByText('Localização não identificada. Faça um levantamento para revelar a estrela e seus planetas.')).toBeInTheDocument();
+    expect(screen.getByText('Não identificado', { exact: true, selector: '.badge' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Localização não identificada, coordenadas 1:0/ })).toHaveAccessibleName('Localização não identificada, coordenadas 1:0, UNKNOWN');
     expect(screen.queryByText('Gravidade')).not.toBeInTheDocument();
   });
 });

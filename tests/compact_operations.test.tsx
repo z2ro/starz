@@ -1,3 +1,4 @@
+vi.mock('../frontend/src/universe/stellar',async importOriginal=>({...await importOriginal<typeof import('../frontend/src/universe/stellar')>(),useStellar:()=>({data:{projects:[],modules:[],units:[],contacts:[],module_cargo:50}})}));
 import {afterEach,expect,it,vi} from 'vitest';
 import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {MemoryRouter,Outlet,Route,Routes} from 'react-router-dom';

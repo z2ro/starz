@@ -35,7 +35,7 @@ export type State = {
   unlocked_content: string[];
 };
 export type GalaxyPlanet = { planet_index: number; name: string; gravity: number; temperature: number; water: number; radiation: number; viability: 'VIABLE' | 'HOSTILE' | 'UNINHABITABLE'; ownership: 'OWNED' | 'OCCUPIED' | 'UNCLAIMED'; colonization: { eligible: boolean; reason: string | null; population: number; cost: Record<string, number> } };
-export type GalaxySystem = { civilization?: string | null; id: string; name?: string; x: number; y: number; distance: number; home: boolean; knowledge_level: 'UNKNOWN' | 'SURVEYED'; star?: { stellar_class: string; luminosity: number; activity: number }; planet?: { name: string; gravity: number; temperature: number; water: number; radiation: number }; planets?: GalaxyPlanet[] };
+export type GalaxySystem = { civilization?: string | null; id: string; name?: string; x: number; y: number; distance: number; home: boolean; knowledge_level: 'UNKNOWN' | 'SURVEYED'; star?: { present?:boolean; canonical_star_id?:string; lifecycle?:string; reserved?:boolean; stellar_class: string; luminosity: number; activity: number }; planet?: { name: string; gravity: number; temperature: number; water: number; radiation: number }; planets?: GalaxyPlanet[] };
 export type Galaxy = { center: number[]; home: number[]; radius: number; systems: GalaxySystem[] };
 export type TravelPreview = { origin: number[]; destination: number[]; distance: number; eta_seconds: number; fuel_cost: number; heat: number; signature: number };
 export type View = 'overview' | 'planet' | 'economy' | 'research' | 'shipyard' | 'fleets' | 'galaxy';

@@ -83,7 +83,7 @@ export class OrbitalSystemRenderer {
     if (Math.hypot(event.clientX - this.down.x, event.clientY - this.down.y) > 6) return;
     const box = this.host.getBoundingClientRect();
     this.ray.setFromCamera(new THREE.Vector2((event.clientX - box.left) / box.width * 2 - 1, -(event.clientY - box.top) / box.height * 2 + 1), this.camera);
-    const hit = this.ray.intersectObjects([this.star, ...this.planets.map(p => p.model.root), this.ships], true)[0];
+    const hit = this.ray.intersectObjects([...(this.star.visible?[this.star]:[]), ...this.planets.map(p => p.model.root), this.ships], true)[0];
     let object: THREE.Object3D | null = hit?.object ?? null;
     while (object) {
       if (typeof object.userData.planetIndex === 'number') { this.selectPlanet(object.userData.planetIndex); return; }
@@ -97,6 +97,7 @@ export class OrbitalSystemRenderer {
     const changedSystem = !this.system || systemKey(system) !== systemKey(this.system);
     const models = orbitalPlanets(system), key = JSON.stringify(models.map(p => [p.planet.planet_index, p.settings, p.atmosphere]));
     this.system = system; this.dirty = true;
+    this.star.visible=system.star?.present!==false;this.light.intensity=this.star.visible?3.1:0;
     const stellarKey=`${systemKey(system)}:${system.star?.stellar_class??'G'}`;
     const changedStar=stellarKey!==this.stellarKey;
     if(changedStar){
@@ -109,6 +110,7 @@ export class OrbitalSystemRenderer {
         const material=new THREE.PointsMaterial({color:brightness===.8?'#788582':'#304b65',size:brightness===.8?2:1,sizeAttenuation:false,transparent:true,opacity:brightness,depthWrite:false,toneMapped:false});
         const layer=new THREE.Points(geometry,material);layer.frustumCulled=false;this.sky.add(layer);
       }
+      this.star.visible=system.star?.present!==false;
       this.stellarKey=stellarKey;
     }
     if (Number.isFinite(state.observed_at) && (this.lastObserved === undefined || state.observed_at! > this.lastObserved)) { this.lastObserved = state.observed_at; this.epoch = state.observed_at!; this.received = performance.now(); }

@@ -1,0 +1,36 @@
+.pixel-game .universe-command.stellar-command{height:100%;min-height:0;display:flex;flex-direction:column;gap:8px}
+.stellar-command>header{flex:none}.stellar-command>header p{margin:4px 0}
+.stellar-primary-nav{display:flex;align-items:stretch;gap:4px;flex:none}
+.stellar-primary-nav>.tabs{flex:1;min-width:0}.pixel-game .stellar-command .stellar-mobile-toggle{display:none}
+.stellar-workspace,.stellar-unit-workspace{flex:1 1 0;height:0;min-height:0;display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,1.2fr);gap:12px}
+.pixel-game .stellar-roster,.pixel-game .stellar-detail{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid var(--master-line);background:var(--master-surface);padding:12px}
+.stellar-command h2{font-size:1rem;margin:0 0 8px}.stellar-command h3{font-size:1rem}
+.stellar-command .content-pages{flex:1 1 0;height:0;min-height:0}
+.stellar-command label{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}.stellar-command label:has(select),.stellar-command label:has(input[type=number]){flex-direction:column;align-items:stretch}
+.stellar-command select,.stellar-command input[type=number]{min-height:44px;max-width:100%;width:100%;box-sizing:border-box}
+.stellar-command button,.stellar-command a{min-height:44px}.stellar-command .build-review{display:flex;flex-direction:column;gap:8px}.stellar-command .build-review p{margin:0}.stellar-command .page-item button{max-width:100%}
+.stellar-model{flex:1;min-height:0;display:flex;flex-direction:column}.stellar-model .naval-canvas{flex:1;min-height:100px}.stellar-model .naval-angles{flex:none}
+.stellar-confirm{flex:none;display:flex;flex-direction:column;gap:8px;padding-top:8px;border-top:1px solid var(--master-line)}
+.stellar-command>.stellar-profile,.stellar-command>[role=alert],.stellar-roster>h2,.stellar-detail>h2,.stellar-detail>.tabs{flex:none}
+.pixel-game .stellar-command .tabs{min-height:44px;height:44px;padding:0;margin:0;align-items:stretch}
+.pixel-game .stellar-command .tabs>button{min-height:44px;margin:0;padding:4px 8px}
+@media(max-width:760px){
+ .pixel-game .universe-command.stellar-command{gap:4px}
+ .stellar-workspace,.stellar-unit-workspace{display:flex;flex-direction:column;gap:8px}
+ .pixel-game .stellar-roster,.pixel-game .stellar-detail{flex:1 1 0;padding:8px}
+ .stellar-command[data-stellar-panel=detail] .stellar-roster,.stellar-command[data-stellar-panel=selection] .stellar-detail{display:none}
+ .pixel-game .stellar-command .stellar-mobile-toggle{display:block;flex:none;min-height:44px;padding:4px 8px}
+ .stellar-primary-nav>.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+ .pixel-game .stellar-primary-nav>.tabs>button{padding:4px;min-width:0}
+ .pixel-game .stellar-command>.stellar-profile{font-size:12px;line-height:17px;margin:0}
+ .stellar-profile>span{display:none}
+ .stellar-confirm{flex-direction:row;align-items:center;gap:8px;padding-top:4px}
+ .pixel-game .stellar-confirm small{flex:1;margin:0}.stellar-confirm button{flex:1;min-height:44px}
+}
+@media(max-width:760px) and (max-height:720px){
+ .stellar-command>header{display:none}
+ .pixel-game .stellar-roster,.pixel-game .stellar-detail{padding:4px}
+ .stellar-command h2{margin-bottom:4px}
+}
+
+.pixel-game .stellar-command input[type=checkbox]{width:20px;height:20px;flex:none}.pixel-game .stellar-command label:has(input[type=checkbox]){min-height:44px;flex-direction:row;flex-wrap:nowrap;margin:0;align-items:center}

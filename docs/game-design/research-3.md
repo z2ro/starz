@@ -10,7 +10,7 @@ Este registro consolida a aprovação expressa do responsável: preservar os 44 
 
 Também foram aprovados nominalmente os 16 IDs, nomes, domínios, tiers, dependências e propósitos de gameplay desta especificação, com `kind: breakthrough` e **sem** `advances_tier`. Novas pesquisas são de conclusão única, mas continuam sujeitas ao avanço de tier e à capacidade/especialização do respectivo domínio. O contrato operacional detalhado está em [R3.0-D02](research-operational.md) e permanece `PROPOSED`.
 
-**Estado implementado:** 32 pesquisas `repeatable` (até nível 50), 12 avanços `breakthrough`, três domínios, cinco tiers e um programa ativo por domínio. **Estado planejado:** 32 repetíveis + 28 descobertas/projetos únicos = **60 entradas**. Nenhum ID antigo é removido.
+**Estado implementado:** 32 pesquisas `repeatable` (até nível 50), 12 avanços de tier e 16 novas descobertas `breakthrough`, três domínios, cinco tiers e um programa ativo por domínio: **60 entradas**. Operações dependentes são verificadas separadamente no [registro de implementação](../development/starz-3-implementation.md). Nenhum ID antigo é removido.
 
 ## 2. Descobertas únicas aprovadas
 

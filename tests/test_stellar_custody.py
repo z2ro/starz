@@ -46,8 +46,16 @@ class CustodyRules(unittest.TestCase):
         self.session = MagicMock()
         self.session.get.side_effect = lambda model, identity: self.rows.get((model, identity))
         self.session.add.side_effect = lambda row: self.rows.__setitem__((type(row), row.id), row)
-        self.session.scalars.side_effect = lambda query: [row for (model, _), row in self.rows.items()
-                                                        if model is query.column_descriptions[0]['entity']]
+        def scalars(query):
+            entity = query.column_descriptions[0]['entity']
+            rows = [row for (model, _), row in self.rows.items() if model is entity]
+            if entity is m.Ship:
+                fleet_id = query.compile().params['fleet_id_1']
+                members = {link.ship_id for (model, _), link in self.rows.items()
+                           if model is m.FleetShip and link.fleet_id == fleet_id}
+                rows = [row for row in rows if row.id in members]
+            return rows
+        self.session.scalars.side_effect = scalars
         def scalar(query):
             entity = query.column_descriptions[0]['entity']
             if entity is m.StellarOperation:
@@ -129,6 +137,145 @@ class CustodyRules(unittest.TestCase):
         self.e.state.ships.clear()
         self.assertEqual(self.finish(result).status, 'failed')
         self.assertIsNone(self.row.custodian_empire_id)
+
+    def due_attack(self, due_at, order_id, stellar_unit=False):
+        fleet = m.Fleet(id=uuid4(), empire_id=self.other.id, status='TRANSIT',
+            x=9, y=9, destination_x=self.system.x, destination_y=self.system.y)
+        self.rows[m.Fleet, fleet.id] = fleet
+        order = m.UniverseOrder(id=order_id, universe_id=self.actor.universe_id,
+            empire_id=self.other.id, kind='stargrave_travel' if stellar_unit else 'mission',
+            due_at=utc(due_at), resolved=False, payload={
+                'mission': 'attack' if stellar_unit else 'ATTACK',
+                'target_planet_id' if stellar_unit else 'target': str(self.planet.id),
+                'fleet_id': str(fleet.id)})
+        if stellar_unit:
+            rival = m.StellarUnit(id=uuid4(), universe_id=self.actor.universe_id, empire_id=self.other.id,
+                state='transit', planet_id=None, system_id=uuid4(), payload={
+                    'hp': 5000, 'active_order_id': str(order.id),
+                    'subsystems': dict.fromkeys(stellar.MODULE_KINDS, 1000)})
+            self.rows[m.StellarUnit, rival.id] = rival
+            order.payload = {**order.payload, 'unit_id': str(rival.id)}
+        else:
+            ship = m.Ship(id=uuid4(), empire_id=self.other.id, hull_id='leviathan_hull', ready_at=utc(1))
+            link = m.FleetShip(fleet_id=fleet.id, empire_id=self.other.id, ship_id=ship.id)
+            self.rows[m.Ship, ship.id], self.rows[m.FleetShip, ship.id] = ship, link
+        self.rows[m.UniverseOrder, order.id] = order
+        self.store.relation.return_value = {'status': 'war'}
+        return order
+
+    def test_due_real_hostile_fleet_or_stellar_arrival_contests_for_both_uuid_orders(self):
+        for stellar_unit in (False, True):
+            for attack_first in (False, True):
+                with self.subTest(stellar=stellar_unit, attack_first=attack_first):
+                    self.setUp()
+                    result = self.command('claim')
+                    claim = next(row for (model, _), row in self.rows.items()
+                                 if model is m.UniverseOrder and row.kind == 'stellar_custody')
+                    attack_id = UUID(int=1 if attack_first else (1 << 128) - 1)
+                    self.assertEqual(attack_id.int < claim.id.int, attack_first)
+                    self.due_attack(result['complete_at'], attack_id, stellar_unit)
+                    op = self.finish(result)
+                    self.assertEqual(op.status, 'contested')
+                    self.assertIsNone(self.row.custodian_empire_id)
+                    self.assertEqual(self.row.state, 'sealed_wreck')
+                    self.assertFalse(any(row.effect == 'custody' for (model, _), row in self.rows.items()
+                                         if model is m.StellarLedger))
+
+    def test_real_battle_before_or_after_claim_due_never_awards_custody_ahead_of_hostilities(self):
+        from starz.persistent.combat import resolve_battle
+        for attack_first in (False, True):
+            with self.subTest(attack_first=attack_first):
+                self.setUp()
+                result = self.command('claim')
+                attack = self.due_attack(result['complete_at'], UUID(int=1 if attack_first else (1 << 128) - 1))
+                attacker = combat_fixture.engine(self.catalog, str(uuid4()))
+                for index in range(48):
+                    combat_fixture.ship(attacker, 'leviathan_hull', 'attacker-' + str(index))
+                if attack_first:
+                    resolve_battle(attacker, list(attacker.state.ships), self.e, str(self.planet.id))
+                    attack.resolved = True
+                op = self.finish(result)
+                if not attack_first:
+                    resolve_battle(attacker, list(attacker.state.ships), self.e, str(self.planet.id))
+                    attack.resolved = True
+                self.assertIn(op.status, ('contested', 'failed'))
+                self.assertIsNone(self.row.custodian_empire_id)
+
+    def test_arrival_needs_due_alive_real_actor_membership_destination_and_war(self):
+        for invalid in ('future', 'dead', 'missing_fleet', 'empty_fleet', 'wrong_planet', 'peace', 'resolved'):
+            with self.subTest(invalid=invalid):
+                self.setUp()
+                order = self.due_attack(self.e.state.last_updated, uuid4())
+                if invalid == 'future':
+                    order.due_at = utc(self.e.state.last_updated + 1)
+                elif invalid == 'dead':
+                    ids = [str(ship.id) for (model, _), ship in self.rows.items() if model is m.Ship]
+                    self.rows[m.EmpireProgress, self.other.id] = m.EmpireProgress(
+                        empire_id=self.other.id, payload={'ship_health': dict.fromkeys(ids, 0)})
+                elif invalid == 'missing_fleet':
+                    self.rows.pop((m.Fleet, UUID(order.payload['fleet_id'])))
+                elif invalid == 'empty_fleet':
+                    for key in [key for key in self.rows if key[0] is m.FleetShip]:
+                        self.rows.pop(key)
+                elif invalid == 'wrong_planet':
+                    order.payload = {**order.payload, 'target': str(uuid4())}
+                elif invalid == 'peace':
+                    self.store.relation.return_value = {'status': 'neutral'}
+                else:
+                    order.resolved = True
+                self.assertFalse(custody.contested(self.store, self.session, self.actor, self.e, self.row))
+
+    def test_offer_cannot_immunize_core_from_authorized_conquest_in_either_order(self):
+        for offer_first in (False, True):
+            with self.subTest(offer_first=offer_first):
+                self.setUp()
+                recipient = m.Empire(id=uuid4(), universe_id=self.actor.universe_id)
+                self.rows[m.Empire, recipient.id] = recipient
+                self.row.custodian_empire_id = self.other.id
+                self.store.relation.side_effect = lambda session, a, b: {
+                    'status': 'war' if {a, b} == {self.actor.id, self.other.id} else 'neutral'}
+                offered = None
+                if offer_first:
+                    offered = self.command('offer', actor=self.other, recipient_id=str(recipient.id))
+                conquered = self.command('conquer')
+                if offered:
+                    old = self.rows[m.StellarOperation, UUID(offered['operation_id'])]
+                    self.assertEqual(old.status, 'cancelled')
+                    with self.assertRaises(DataValidationError):
+                        self.command('accept', actor=recipient, operation_id=offered['operation_id'])
+                else:
+                    with self.assertRaises(DataValidationError):
+                        self.command('offer', actor=self.other, recipient_id=str(recipient.id))
+                active = [op for (model, _), op in self.rows.items()
+                          if model is m.StellarOperation and op.status in custody.ACTIVE]
+                self.assertEqual([str(op.id) for op in active], [conquered['operation_id']])
+                self.assertEqual(self.row.custodian_empire_id, self.other.id)
+                self.finish(conquered)
+                self.assertEqual(self.row.custodian_empire_id, self.actor.id)
+
+    def test_only_authorized_conquest_can_supersede_unaccepted_offer(self):
+        for invalid in ('peace', 'no_ships', 'unstable', 'wrong_owner', 'working_destination'):
+            with self.subTest(invalid=invalid):
+                self.setUp()
+                recipient = m.Empire(id=uuid4(), universe_id=self.actor.universe_id)
+                self.rows[m.Empire, recipient.id] = recipient
+                self.row.custodian_empire_id = self.other.id
+                offer = self.command('offer', actor=self.other, recipient_id=str(recipient.id))
+                old = self.rows[m.StellarOperation, UUID(offer['operation_id'])]
+                self.store.relation.return_value = {'status': 'war'}
+                if invalid == 'peace':
+                    self.store.relation.return_value = {'status': 'neutral'}
+                elif invalid == 'no_ships':
+                    self.e.state.ships.clear()
+                elif invalid == 'unstable':
+                    self.row.payload = {**self.row.payload, 'defeated_at': self.e.state.last_updated}
+                elif invalid == 'wrong_owner':
+                    self.planet.empire_id = self.other.id
+                else:
+                    old.kind, old.status = 'decommission', 'working'
+                with self.assertRaises(DataValidationError):
+                    self.command('conquer')
+                self.assertEqual(old.status, 'working' if invalid == 'working_destination' else 'offered')
 
     def test_conquest_needs_war_and_its_own_window(self):
         self.row.custodian_empire_id = self.other.id
@@ -237,6 +384,59 @@ class CustodyRules(unittest.TestCase):
         self.assertTrue(view['roles']['controller'])
         self.assertTrue(view['requires_server_validation'])
 
+    def test_historical_non_custodian_cannot_track_unknown_recipient_orbit(self):
+        self.row.custodian_empire_id = self.other.id
+        self.planet.empire_id = self.other.id
+        self.system.x, self.system.y = 91, 92
+        self.e.state.system_knowledge.clear()
+        view = custody.unit_views(self.session, self.actor, self.e)[0]
+        self.assertEqual(view['location_status'], 'UNKNOWN')
+        self.assertIsNone(view['system_id'])
+        self.assertIsNone(view['planet_id'])
+        self.assertEqual(view['id'], str(self.row.id))
+        self.assertEqual(view['source_id'], str(self.source.id))
+        self.assertTrue(view['roles']['historical_owner'])
+        self.assertNotIn('stocks', view)
+        self.e.state.system_knowledge['91:92'] = self.e.state.last_updated
+        known = custody.unit_views(self.session, self.actor, self.e)[0]
+        self.assertEqual(known['location_status'], 'KNOWN')
+        self.assertEqual(known['system_id'], str(self.system.id))
+        self.assertEqual(known['planet_id'], str(self.planet.id))
+        recipient = combat_fixture.engine(self.catalog, str(self.planet.id))
+        authorized = custody.unit_views(self.session, self.other, recipient)[0]
+        self.assertEqual(authorized['location_status'], 'KNOWN')
+        self.assertEqual(authorized['planet_id'], str(self.planet.id))
+        self.assertTrue(authorized['roles']['custodian'])
+
+    def test_received_unaccepted_offer_selects_core_without_private_data_or_unknown_location(self):
+        self.row.custodian_empire_id = self.actor.id
+        offered = self.command('offer', recipient_id=str(self.other.id))
+        self.system.x, self.system.y = 91, 92
+        self.row.stocks = {'fusion_fuel': 30}
+        self.row.payload['private_technology'] = 'must-not-leak'
+        recipient = combat_fixture.engine(self.catalog, str(uuid4()))
+        recipient.state.system_knowledge.clear()
+        view = custody.unit_views(self.session, self.other, recipient)[0]
+        query = self.session.scalars.call_args.args[0]
+        sql, params = str(query), query.compile().params.values()
+        self.assertIn('stellar_unit.id IN (SELECT stellar_operation.unit_id', sql)
+        self.assertIn('stellar_operation.universe_id', sql)
+        self.assertIn('stellar_operation.recipient_id', sql)
+        self.assertIn(self.other.id, params)
+        self.assertIn('offer', params)
+        self.assertIn('offered', params)
+        self.assertEqual(view['id'], str(self.row.id))
+        self.assertEqual(view['state'], 'sealed_wreck')
+        self.assertEqual(view['location_status'], 'UNKNOWN')
+        self.assertIsNone(view['system_id'])
+        self.assertIsNone(view['planet_id'])
+        self.assertFalse(any(view['roles'].values()))
+        for key in ('hp', 'integrity', 'stocks', 'payload', 'technology'):
+            self.assertNotIn(key, view)
+        self.assertNotIn('must-not-leak', json.dumps(view))
+        self.assertEqual(self.row.custodian_empire_id, self.actor.id)
+        self.assertEqual(self.rows[m.StellarOperation, UUID(offered['operation_id'])].status, 'offered')
+
     def test_ledger_provenance_is_once_and_rejects_conflicting_reuse(self):
         result = self.command('claim')
         op = self.rows[m.StellarOperation, UUID(result['operation_id'])]
@@ -244,6 +444,19 @@ class CustodyRules(unittest.TestCase):
         self.assertFalse(custody.record_effect(self.session, op, 'event', 'debit', {'components': 2}, 1000))
         with self.assertRaisesRegex(DataValidationError, 'conflitante'):
             custody.record_effect(self.session, op, 'event', 'debit', {'components': 3}, 1000)
+
+    def test_held_operation_view_exposes_safe_reason_and_only_actor_fleet(self):
+        result = self.command('claim')
+        op = self.rows[m.StellarOperation, UUID(result['operation_id'])]
+        op.kind, op.status = 'withdraw', 'returning'
+        op.payload = {**op.payload, 'held_reason': 'no_safe_owned_anchor', 'fleet_id': str(uuid4()),
+                      'private_transport_manifest': {'technology': 'must-not-leak'}}
+        owner_view = custody._view(op, self.actor.id)
+        recipient_view = custody._view(op, self.other.id)
+        self.assertEqual(owner_view['held_reason'], 'no_safe_owned_anchor')
+        self.assertEqual(owner_view['fleet_id'], op.payload['fleet_id'])
+        self.assertNotIn('fleet_id', recipient_view)
+        self.assertNotIn('must-not-leak', json.dumps(owner_view))
 
     def test_t48_downgrade_guard_and_empty_schema(self):
         migration = runpy.run_path('migrations/versions/d06f00000001_stellar_custody.py')
@@ -268,11 +481,17 @@ class CustodyPersistence(unittest.TestCase):
     # Own-planet eligibility cannot make two foreign empires eligible at once (full T33 is not covered).
     @classmethod
     def setUpClass(cls):
-        construction.StargraveOperations.setUpClass.__func__(cls)
+        pass
 
     @classmethod
     def tearDownClass(cls):
-        construction.StargraveOperations.tearDownClass.__func__(cls)
+        pass
+
+    def setUp(self):
+        construction.StargraveOperations.setUpClass.__func__(type(self))
+
+    def tearDown(self):
+        construction.StargraveOperations.tearDownClass.__func__(type(self))
 
     prepare = construction.StargraveOperations.prepare
     commission = construction.StargraveOperations.commission
@@ -358,6 +577,14 @@ class CustodyPersistence(unittest.TestCase):
         self.assertEqual(result, store.transaction(a, lambda s, actor, e: custody.command(store, s, actor, e, request)))
         now[0] = result['complete_at']; store.tick(); store.tick()
         offered = self.act(store, a, unit, 'offer', recipient_id=str(b))
+        received = store.transaction(b, lambda s, actor, e: custody.snapshot(s, actor, e))
+        descriptor = next(row for row in received['units'] if row['id'] == unit)
+        self.assertEqual(descriptor['state'], 'sealed_wreck')
+        self.assertFalse(descriptor['roles']['custodian'])
+        self.assertTrue(any(op['operation_id'] == offered['operation_id'] and op['status'] == 'offered'
+                            for op in received['operations']))
+        for key in ('hp', 'integrity', 'stocks', 'payload', 'technology'):
+            self.assertNotIn(key, descriptor)
         self.act(store, b, unit, 'accept', operation_id=offered['operation_id'])
         old_view = store.transaction(a, lambda s, actor, e: custody.snapshot(s, actor, e))
         new_view = store.transaction(b, lambda s, actor, e: custody.snapshot(s, actor, e))
@@ -443,22 +670,64 @@ class CustodyPersistence(unittest.TestCase):
                 return None
         with ThreadPoolExecutor(2) as pool:
             attempts = list(pool.map(compete, ('offer', 'conquer')))
-        winners = [result for result in attempts if result is not None]
-        self.assertEqual(len(winners), 1)
+        conquests = [result for result in attempts if result is not None and result['kind'] == 'conquer']
+        self.assertEqual(len(conquests), 1)
+        conquest = conquests[0]
         with Session(self.db) as session:
             row = session.get(m.StellarUnit, UUID(unit))
             self.assertEqual(row.custodian_empire_id, b)
             active = list(session.scalars(select(m.StellarOperation).where(
                 m.StellarOperation.unit_id == row.id, m.StellarOperation.status.in_(custody.ACTIVE))))
-            self.assertEqual([str(op.id) for op in active], [winners[0]['operation_id']])
-        if winners[0]['kind'] == 'conquer':
-            now[0] = winners[0]['complete_at']; store.tick(); store.tick()
-            with Session(self.db) as session:
-                self.assertEqual(session.get(m.StellarUnit, UUID(unit)).custodian_empire_id, a)
-        else:
-            self.act(store, b, unit, 'cancel', operation_id=winners[0]['operation_id'])
-            with Session(self.db) as session:
-                self.assertEqual(session.get(m.StellarUnit, UUID(unit)).custodian_empire_id, b)
+            self.assertEqual([str(op.id) for op in active], [conquest['operation_id']])
+            for result in attempts:
+                if result is not None and result['kind'] == 'offer':
+                    self.assertEqual(session.get(m.StellarOperation, UUID(result['operation_id'])).status, 'cancelled')
+        now[0] = conquest['complete_at']; store.tick(); store.tick()
+        with Session(self.db) as session:
+            self.assertEqual(session.get(m.StellarUnit, UUID(unit)).custodian_empire_id, a)
+
+    def test_same_tick_real_hostile_attack_cannot_lose_contestation_to_claim_uuid(self):
+        for attack_first in (False, True):
+            with self.subTest(attack_first=attack_first):
+                store, now, a, b, project, unit, home = self.wreck()
+                def fleet(e):
+                    e.state.population_total = 5000
+                    e.state.districts.update(civil_district=50, solar_field=100, orbital_shipyard=48)
+                    e.state.stocks.update(refined_alloy=100000, components=100000, fusion_fuel=100000)
+                    return [e.build_ship('leviathan_hull', 'nuclear_drive', 'fusion_fuel',
+                                         now=e.state.last_updated)['id'] for _ in range(48)]
+                ships = store.run(b, fleet)
+                now[0] += 10000; store.tick()
+                store.transaction(b, lambda session, actor, e: store.diplomacy(session, actor, e, str(a), 'war'))
+                claim = self.act(store, a, unit, 'claim')
+                request = {'mission': 'ATTACK', 'ship_ids': ships, 'target_planet_id': home,
+                           'cargo': {}, 'x': 0, 'y': 0}
+                preview = store.transaction(b, lambda session, actor, e: store.dispatch(
+                    session, actor, e, {**request, 'preview': True}))
+                now[0] = claim['complete_at'] - preview['eta_seconds']
+                store.tick()
+                attack_id = UUID(int=1 if attack_first else (1 << 128) - 1)
+                def launch(session, actor, e):
+                    # Control only UUID tie ordering; dispatch still prices/pays/schedules the actual mission.
+                    with patch('starz.persistent.service.uuid4', side_effect=[uuid4(), attack_id]):
+                        return store.dispatch(session, actor, e, request)
+                arrival = store.transaction(b, launch)
+                self.assertEqual(arrival['arrival_at'], claim['complete_at'])
+                with Session(self.db) as session:
+                    claim_order = session.scalar(select(m.UniverseOrder).where(
+                        m.UniverseOrder.kind == 'stellar_custody', m.UniverseOrder.empire_id == a,
+                        m.UniverseOrder.resolved == False))
+                    self.assertEqual(attack_id.int < claim_order.id.int, attack_first)
+                now[0] = claim['complete_at']; store.tick(); store.tick()
+                with Session(self.db) as session:
+                    row = session.get(m.StellarUnit, UUID(unit))
+                    op = session.get(m.StellarOperation, UUID(claim['operation_id']))
+                    self.assertIsNone(row.custodian_empire_id)
+                    self.assertIn(op.status, ('contested', 'failed'))
+                    self.assertEqual(row.state, 'sealed_wreck')
+                    effects = list(session.scalars(select(m.StellarLedger).where(
+                        m.StellarLedger.unit_id == row.id, m.StellarLedger.effect == 'custody')))
+                    self.assertEqual(effects, [])
 
     def test_real_colony_transport_then_rebuild_uses_same_core_and_immutable_factory_origin(self):
         store, now, a, b, project, unit_id, home = self.wreck()

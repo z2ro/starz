@@ -5,6 +5,10 @@
 **Branch:** `experiment/persistent-universe`.  
 **Escopo:** registrar decisões concretas submetidas à aprovação. Não interpretar como licença para implementar gameplay, alterar YAML ou banco, iniciar testes de gameplay, criar PR ou realizar merge.
 
+## Execução posteriormente autorizada
+
+A tarefa STARZ 3.0 autorizou implementar C3.0-D01–D11 e R3.0-D01. O texto inicial acima registra a aprovação documental histórica, não o estado atual do código. Consultar [implementação e evidências](../development/starz-3-implementation.md) para checkpoints, testes, capacidades condicionadas e parâmetros experimentais. Nenhum resultado de balanceamento é definitivo.
+
 ## 1. Especificações aprovadas
 
 | Especificação | Estado | Escopo da aprovação |

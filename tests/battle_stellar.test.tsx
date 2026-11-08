@@ -1,0 +1,21 @@
+import {afterEach,expect,it} from 'vitest';
+import {cleanup,fireEvent,render,screen,within} from '@testing-library/react';
+import {BattleDetails} from '../frontend/src/universe/BattleDetails';
+import type {BattleReport} from '../frontend/src/universe/defenseTypes';
+import catalog from './fixtures/fleet-api-catalog.json';
+afterEach(cleanup);
+it('reports exceptional before/after integrity separately from empty conventional fleets and actual subsystem damage',()=>{
+ const stellar={id:'stellar-unit',kind:'stellar' as const,type:'stargrave' as const,hp:100,shield:80};
+ const side={shots:1,hull_damage:20,shield_absorbed:60,losses:{}};
+ const battle:BattleReport={kind:'fleet',planet_id:'own-orbit',at:100,outcome:'attacker',attacking_fleet_before:[],attacking_fleet_after:[],defending_fleet_before:[],defending_fleet_after:[],attacker_stellar_before:[stellar],attacker_stellar_after:[{...stellar,hp:80,shield:20}],defender_stellar_before:[{...stellar,id:'enemy-unit',hp:50,shield:0}],defender_stellar_after:[],rounds:[{round:1,attacker:{...side,subsystem_damage:12.5},defender:{...side,subsystem_damage:7}}],defenses_before:[],defenses_after:[],ammunition_after:{},loot:{}};
+ render(<BattleDetails battle={battle} catalog={catalog}/>);fireEvent.click(screen.getByRole('button'));
+ const attacker=screen.getByRole('heading',{name:'Stargrave atacante'}).parentElement!;
+ expect(within(attacker).getByText(/Antes: Stargrave stellar-.*casco 100 HP.*escudo 80/)).toBeTruthy();
+ expect(within(attacker).getByText(/Depois: Stargrave stellar-.*casco 80 HP.*escudo 20/)).toBeTruthy();
+ expect(within(attacker).queryByText(/nenhuma unidade/)).toBeNull();
+ const defender=screen.getByRole('heading',{name:'Stargrave defensora'}).parentElement!;
+ expect(within(defender).getByText('Depois: nenhuma unidade.')).toBeTruthy();
+ expect(screen.getByText('Atacante: 12,5 dano em subsistemas.')).toBeTruthy();
+ expect(screen.getByText('Defensor: 7 dano em subsistemas.')).toBeTruthy();
+ expect(screen.getByText(/Frota atacante convencional: nenhuma/)).toBeTruthy();
+});

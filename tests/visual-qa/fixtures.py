@@ -50,7 +50,9 @@ def fixture(populated):
         unknown={'status':'UNKNOWN','value':None}
         universe['intelligence']=[{'id':f'intel-{i}','planet_id':PLANET,'planet_name':'STAGED INTELLIGENCE','coordinates':[1,0,0],'at':NOW-60,'expires_at':NOW+3600,'status':'CURRENT','quality':1,'detected':False,**{k:unknown for k in ['ships','defenses','stocks','ammunition','infrastructure','technology']}} for i in range(3)]
         state['planets'] += [{'id':f'50000000-0000-4000-8000-{i:012d}','name':f'STAGED COLONY {i}','x':i,'y':0,'planet_index':0,'population_total':30,'home':False} for i in range(1,7)]
-    return {'state':state,'universe':universe,'galaxy':galaxy_snapshot(e,(s.system_x,s.system_y),2)}
+    from stellar_fixture import stellar_fixture
+    stellar,custody=stellar_fixture(populated,state,EMPIRE,NOW)
+    return {'state':state,'universe':universe,'galaxy':galaxy_snapshot(e,(s.system_x,s.system_y),2),'stellar':stellar,'stellar_custody':custody}
 
 if __name__=='__main__':
     kinds=('resources','districts','technologies','ships','propulsion','fuels','travel_modes','defenses')

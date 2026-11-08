@@ -2,7 +2,7 @@
 
 ## Autoridade e escopo
 
-**Política de saves durante desenvolvimento — atualização explícita de 08/11/2026:** o responsável dispensou **compatibilidade de saves legados de desenvolvimento**. Isso substitui instruções históricas do GDD e de decisões anteriores que exigiam backfill/dual-read para dados descartáveis. **Não substitui** regras de integridade do multiplayer, autenticação, propriedade, segurança ou proibição de reset de banco compartilhado sem autorização específica. O [plano D12](combat-implementation-plan.md) está `PROPOSED`; nenhuma migração foi executada.
+**Política de saves durante desenvolvimento — atualização explícita de 08/11/2026:** o responsável dispensou **compatibilidade de saves legados de desenvolvimento**. Isso substitui instruções históricas do GDD e de decisões anteriores que exigiam backfill/dual-read para dados descartáveis. **Não substitui** regras de integridade do multiplayer, autenticação, propriedade, segurança ou proibição de reset de banco compartilhado sem autorização específica. O [plano D12](combat-implementation-plan.md) continua `PROPOSED`; a implementação foi autorizada separadamente pela tarefa STARZ 3.0. Migrações novas são validadas somente no PostgreSQL descartável de QA, sem executar mudanças no ambiente do responsável.
 
 
 O [STARZ-GDD-v1.md](STARZ-GDD-v1.md) é a visão central. Seu status é **DRAFT**: contém decisões explícitas, propostas e dúvidas. Não é uma especificação integralmente aprovada nem uma descrição automática do jogo atual.
@@ -23,19 +23,23 @@ O GDD foi fornecido em `docs/game-desing/STARZ-GDD-v1.md`. O original foi preser
 
 O estado aplica-se à afirmação identificada, não a todo o documento citado. Uma funcionalidade pode estar implementada e ainda divergir da intenção aprovada. Não há aposentadoria automática de IDs nesta arquitetura.
 
+## Estado de execução STARZ 3.0
+
+Ver [implementação e evidências P0–P6](../development/starz-3-implementation.md). P0–P5 possuem checkpoints e testes executados; P6 está integrada e em fechamento da validação. A evidência abrangente é composta: `full` encontrou um teste de paridade obsoleto e atingiu o timeout PostgreSQL; os 13 casos PG restantes passaram em complemento direcionado. Não há alegação de `full` com saída zero. As descrições “não implementado” da auditoria histórica abaixo não substituem esse registro de execução. `APPROVED` ≠ `IMPLEMENTED` ≠ `TESTED` ≠ `BALANCED`; custos e coeficientes continuam experimentais.
+
 ## Navegação
 
 | Documento | Responsabilidade |
 |---|---|
 | [Visão central](STARZ-GDD-v1.md) | Identidade, objetivos e direção de evolução. |
 | [Pesquisa](research.md) | Domínios, tiers, níveis, dependências e desbloqueios. |
-| [Research 3.0 — R3.0-D01](research-3.md) | `APPROVED`: 16 descobertas únicas, IDs, tiers, dependências e capacidades; preservar 44 existentes. Não implementado. |
+| [Research 3.0 — R3.0-D01](research-3.md) | `APPROVED`: 16 descobertas únicas, IDs, tiers, dependências e capacidades; preservar 44 existentes. Catálogo de 60 implementado e testado em P1; operações verificadas separadamente. |
 | [Research 3.0 — R3.0-D02](research-operational.md) | `PROPOSED`: contratos operacionais das 16 descobertas. |
 | [Combat 3.0 — doutrinas e formações](combat-doctrines.md) | Visão geral: C3.0-D01–D03 `APPROVED` como design; sem gameplay implementado. |
 | [Combat 3.0 — C3.0-D01](combat-formations.md) | `APPROVED` como design: escolta, redirecionamento limitado, três doutrinas e guarnição. Não implementado. |
 | [Combat 3.0 — C3.0-D02](combat-targeting.md) | `APPROVED` como design: targeting determinístico, doutrinas, fallback e sigilo. |
 | [Combat 3.0 — C3.0-D03](combat-countermeasures.md) | `APPROVED` como design: interferência, antiescudos, interdição e contenção estelar. |
-| [Combat 3.0 — C3.0-D04](combat-balance-plan.md) | `APPROVED` como plano: 18 cenários e gates, sem execução nem resultados. |
+| [Combat 3.0 — C3.0-D04](combat-balance-plan.md) | `APPROVED` como plano: 18 cenários e gates; ensaios e limites no registro de implementação, sem balanceamento final. |
 | [Combat 3.0 — C3.0-D05](combat-integration.md) | `APPROVED` como arquitetura; INT-B/D fechadas funcionalmente pela D06. |
 | [Combat 3.0 — C3.0-D06](combat-operational-closures.md) | `APPROVED`: Odyssey EW, interdição na chegada, antiescudo, Stargrave e Fundamental V independente. Números provisórios. |
 | [Combat 3.0 — C3.0-D07](combat-technical-contracts.md) | `APPROVED` como design técnico: payloads versionados, ordens sucessoras, vínculo estelar e critérios T01–T16; não implementado. |
@@ -44,7 +48,9 @@ O estado aplica-se à afirmação identificada, não a todo o documento citado. 
 | [Combat 3.0 — C3.0-D10](combat-custody-adjudication.md) | `APPROVED` como design: controle militar, claims contestáveis e critérios T33–T48; sem implementação. |
 | [Combat 3.0 — C3.0-D11](combat-custody-transfer.md) | `APPROVED` como design: transferência por conquista, cessão bilateral, núcleo órfão e âncora espacial; T49–T64 aprovados e não executados. |
 | [Combat 3.0 — C3.0-D12](combat-implementation-plan.md) | `PROPOSED`: schema, plano P0–P6 e política de saves de desenvolvimento descartáveis, sem executar código. |
-| [Implementação STARZ 3.0 — P0](../development/starz-3-p0-baseline.md) | Diagnóstico documental parcial de backend, pesquisa, universo procedural, testes existentes e pendências reais de QA; sem implementação. |
+| [Implementação STARZ 3.0 — P0](../development/starz-3-p0-baseline.md) | Baseline executável: 83 testes unitários e 32 PostgreSQL no ambiente isolado, com resultados e limites registrados. |
+| [Execução STARZ 3.0](../development/starz-3-implementation.md) | Checkpoints P0–P6, parâmetros experimentais, resultados reais e limites. |
+| [Aceitação T01–T64 / B01–B18](../development/starz-3-acceptance.md) | Rastreabilidade de testes, evidências e cenários PARTIAL/BLOCKED; não aprova balanceamento. |
 | [Combat 3.0 — Registro de decisões](combat-3-decisions.md) | Aprovações expressas C3.0-D01–D11; D12 `PROPOSED`, números/schema finais `OPEN`. |
 | [Economia](economy.md) | Estoques locais, cadeias, população, energia e logística. |
 | [Naves](ships.md) | Hulls, funções, composição e limites dos modelos visuais. |

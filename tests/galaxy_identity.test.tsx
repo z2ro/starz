@@ -57,3 +57,30 @@ it.each(['occupied','unknown'] as const)('never offers colonization for %s',kind
 });
 
 it('never formats missing physical properties as measured zero',()=>{expect(knownPlanetValue(undefined,'K')).toBe('Não informado');expect(knownPlanetValue(null,'%')).toBe('Não informado');expect(knownPlanetValue(NaN,'g')).toBe('Não informado');expect(knownPlanetValue(0,'%')).toBe('0 %');});
+
+it('labels a known absent star without an ordinary-star marker or live luminosity',()=>{
+ const absent:GalaxySystem={...fixtures.two,star:{...fixtures.two.star!,present:false,canonical_star_id:'captured-source',lifecycle:'absent'}};
+ const {execute}=mount(absent),inspector=screen.getByRole('complementary',{name:'Inspetor do sistema'});
+ expect(within(inspector).getByText(/Astro confinado\/ausente · classe de origem K/)).toBeTruthy();
+ expect(within(inspector).getByText('Estrela ausente · sistema preservado.')).toBeTruthy();
+ expect(within(inspector).queryByText('Luminosidade')).toBeNull();
+ expect(within(inspector).queryByText(/Estrela classe K/)).toBeNull();
+ const marker=screen.getByRole('button',{name:/coordenadas -2:-1, SURVEYED, astro confinado\/ausente/});
+ expect(marker.querySelector('.absent-stellar-symbol')).not.toBeNull();
+ expect(marker.querySelector('.stellar-symbol')).toBeNull();
+ expect(marker).toHaveAttribute('data-system-key','-2:-1');
+ expect(within(marker).getByText('Astro ausente · 2 planetas')).toBeTruthy();
+ expect(execute).not.toHaveBeenCalled();
+});
+
+it('does not reveal absence or historical stellar data from a malformed UNKNOWN system',()=>{
+ const unknown:GalaxySystem={...fixtures.two,knowledge_level:'UNKNOWN',name:'SECRET_SOURCE',star:{...fixtures.two.star!,present:false,canonical_star_id:'SECRET_STAR',lifecycle:'absent'}};
+ mount(unknown);
+ const marker=screen.getByRole('button',{name:/Localização não identificada, coordenadas -2:-1, UNKNOWN/});
+ expect(marker.querySelector('.unidentified-symbol')).not.toBeNull();
+ expect(marker.querySelector('.absent-stellar-symbol')).toBeNull();
+ expect(marker.querySelector('.stellar-symbol')).toBeNull();
+ expect(screen.queryByText(/Astro confinado|Astro ausente|Estrela ausente|classe de origem|Luminosidade/)).toBeNull();
+ expect(screen.queryByText(/SECRET_SOURCE|SECRET_STAR/)).toBeNull();
+ expect(screen.queryByRole('button',{name:'Abrir sistema',exact:true})).toBeNull();
+});

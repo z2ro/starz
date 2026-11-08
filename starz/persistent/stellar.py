@@ -291,9 +291,16 @@ def snapshot(session, empire, engine):
             m.StellarProject.empire_id == empire.id).order_by(m.StellarProject.created_at, m.StellarProject.id)):
         source, system = _source_system(session, project)
         projects.append({**_project_view(project), 'id': str(project.id), 'x': system.x, 'y': system.y,
-                         'phase_records': deepcopy(project.phase_records), 'stocks': dict(project.stocks),
+                         'phase_records': deepcopy(project.phase_records),
+                         'active_phase': next((deepcopy(record) for record in project.phase_records if not record['completed']), None),
+                         'stocks': dict(project.stocks),
                          'star_present': source.removed_at is None})
-    modules = [{'id': str(module.id), 'kind': module.kind, 'status': module.status,
+    def manufacture_due(module):
+        if module.status != 'manufacturing':return None
+        order = session.get(m.UniverseOrder, module.manufacture_order_id)
+        return epoch(order.due_at) if order is not None and order.due_at is not None else None
+
+    modules = [{'id': str(module.id), 'complete_at': manufacture_due(module), 'kind': module.kind, 'status': module.status,
                 'origin_planet_id': str(module.origin_planet_id),
                 'current_planet_id': str(module.current_planet_id) if module.current_planet_id else None,
                 'project_id': str(module.project_id) if module.project_id else None,

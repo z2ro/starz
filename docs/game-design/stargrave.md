@@ -1,5 +1,7 @@
 # Stargrave — contrato de design
 
+
+**Atualização de execução STARZ 3.0 (08/11/2026):** consultar [implementação e evidências](../development/starz-3-implementation.md) e [aceitação técnica](../development/starz-3-acceptance.md). A descrição histórica abaixo distingue intenção de execução; operações orbitais, pesquisa, contramedidas e destinos agora possuem código/testes no escopo registrado, sem transformar parâmetros experimentais em balanceamento final.
 ## 1. Propósito e escopo
 
 Consolidar a decisão do responsável e o [GDD §8–9 e §14](STARZ-GDD-v1.md), sem implementar captura estelar, projetos ou combate Stargrave. Sua existência visual não autoriza gameplay.
