@@ -42,6 +42,10 @@ A [C3.0-D05](combat-integration.md) reúne conflitos de seleção/dano, configur
 
 `APPROVED` como contrato de design técnico: [C3.0-D07](combat-technical-contracts.md) estabelece payload versionado, sucessão idempotente de ordens, exclusividade de estrela e 16 cenários de QA, **não executados**. Schema final e implementação continuam pendentes.
 
+## 4.6. Destino após derrota — D08 e D09
+
+`APPROVED`: [C3.0-D08](combat-stellar-disposition.md) define núcleo selado sem autodestruição, custódia contestável e reconstrução/repatriação/descomissionamento como destinos mutuamente exclusivos, com elegibilidade inicial de estrela única. A matriz D08-F é **experimental, sem valores finais**. `PROPOSED`: [C3.0-D09](combat-stellar-custody.md) detalha contratos de claims, disputa, fluxo material, concorrência e cenários técnicos T17–T32. **Não implementado**.
+
 ## 5. Dependências
 
 [Naves](ships.md) fornecem perfis; [pesquisa](research.md), modificadores; [defesas](defenses.md), proteção/munição; [economia](economy.md), custos e carga; [Stargrave](stargrave.md), contratos futuros. Inteligência tem qualidade e validade próprias, não equivale a acesso ao estado privado de outro império.
