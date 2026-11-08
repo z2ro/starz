@@ -93,6 +93,10 @@ fundamental_tier_5:
 
 Esta representação **preserva** requisitos existentes não removidos e adiciona o requisito científico por nível. A implementação futura deve modificar o arquivo canônico com migração/validação explícitas, sem revogar progressão científica paga, níveis antigos ou acesso a hulls existentes. **`stellar_containment` ainda exige `carrier_operations` no catálogo executável atual:** sua desvinculação já foi aprovada em R3.0-D01, mas continua não implementada.
 
+## 6.1. Refinamento posterior D08 — destino estelar
+
+A [C3.0-D08](combat-stellar-disposition.md) está `APPROVED` como design e estabelece núcleo selado após derrota, custódia disputável, três caminhos (reconstrução, repatriação e relíquia) e captura inicial apenas de estrela única. Os números continuam hipóteses sujeitas a simulação. O detalhamento [D09](combat-stellar-custody.md) de locks, claims e liquidação ainda é `PROPOSED`.
+
 ## 8. Limites de aprovação e próxima especificação
 
 **`APPROVED`:** decisões funcionais D06-A–H descritas acima.  
