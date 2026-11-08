@@ -187,6 +187,10 @@ Não alterar seis salvas, saque, defesa planetária ou condição de vitória po
 
 `PROPOSED`: os casos B11–B18 da [C3.0-D04](combat-balance-plan.md) definem condições de observação, custo de oportunidade, interdição offline, vulnerabilidade convencional e subsistemas Stargrave. Não são resultados executáveis nem aprovação dos algoritmos desta C3.0-D03.
 
+## 10.2. Integração técnica pendente
+
+`PROPOSED`: a [C3.0-D05](combat-integration.md) preserva o estado C3-D03-A–G e registra a necessidade de definir emissor de interferência, política de perfil antiescudo, janela de interdição e modelo persistente da Stargrave antes de implementar. A documentação não autoriza desenvolvimento executável.
+
 ## 11. Decisões para aprovação posterior
 
 | ID | Deliberação `PROPOSED` |
