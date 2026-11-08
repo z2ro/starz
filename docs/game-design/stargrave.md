@@ -36,6 +36,10 @@ A aprovação desses requisitos não aprova custos, duração, dano, limites ope
 
 `PROPOSED`: sistema que perde a estrela conserva identidades e coordenadas de planetas; transformação climática/energética gradual e habitats artificiais precisam de contratos próprios. Não alterar geração determinística atual para fingir captura.
 
+## 4.1. Contramedidas da C3.0-D03
+
+`PROPOSED`: [C3.0-D03](combat-countermeasures.md) organiza os conceitos de contenção, propulsão, armamentos, escudos e controle como subsistemas degradáveis, ainda sem IDs, HP ou modelo de persistência. `containment_warfare` no Tier IV concede uma forma de ataque dirigido, mas não exclusividade de dano: frotas convencionais preparadas continuam aptas a derrotar Stargrave. Interdição não pode paralisar jogadores indefinidamente; escudos e blindagem não são ultrapassados apenas pela conclusão científica. A identidade da estrela cativa e a construção multietapas seguem sem implementação.
+
 ## 5. Dependências
 
 [Pesquisa](research.md): separar ciência estelar e comissionamento militar. [Economia](economy.md): indústria/logística estelar. [Naves](ships.md): escoltas e contrajogo convencional. [Defesas](defenses.md) e [combate](combat.md): interação com módulos e bombardeio. [Balanceamento](balance.md): validar custo de oportunidade, vulnerabilidades e recuperação.
