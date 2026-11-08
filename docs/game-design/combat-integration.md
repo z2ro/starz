@@ -1,6 +1,6 @@
 # STARZ — C3.0-D05: integração técnica e registro de decisões
 
-**Estado:** `APPROVED` como contrato de arquitetura e plano futuro (08/11/2026); **não implementado**. Questões ainda sem escolha definida continuam `OPEN`. Ver [registro consolidado](combat-3-decisions.md).  
+**Estado:** `APPROVED` como arquitetura (08/11/2026), **não implementado**. INT-B/D foram resolvidas funcionalmente pela [C3.0-D06](combat-operational-closures.md); parâmetros e schema ainda `OPEN`. Ver [registro consolidado](combat-3-decisions.md).  
 **Branch de referência:** `experiment/persistent-universe`.  
 **Autoridade:** [C3.0-D01 — formação](combat-formations.md), [C3.0-D02 — targeting](combat-targeting.md) e [C3.0-D03 — contramedidas](combat-countermeasures.md) estão `APPROVED` como design; [C3.0-D04 — balanceamento](combat-balance-plan.md) está aprovado como plano sem execução.  
 **Risco da alteração atual:** baixo, documental. Nenhum comportamento executável ou dado persistido é modificado.
@@ -153,18 +153,22 @@ Nenhuma dessas etapas foi autorizada como tarefa executável. Seleção de teste
 - **F:** vulnerabilidade convencional de Stargrave e subsistemas degradáveis.
 - **G:** simultaneidade, segurança, sigilo, idempotência e logs.
 
-### C3.0-D05: INT-A/C/E definidas; INT-B/D `OPEN`
+### C3.0-D05: INT-A–E resolvidas funcionalmente após C3.0-D06; parâmetros `OPEN`
 - **INT-A (`APPROVED`):** sim, estruturas defensivas atualmente classificadas como `capital` continuam elegíveis ao foco Ruptura. Medir o efeito em balanceamento.
-- **INT-B (`OPEN`):** qual entidade real emite guerra eletrônica: hull existente, instalação, módulo ou operação? Nenhuma alternativa escolhida.
+- **INT-B (`APPROVED` pela D06-A):** Odyssey física operacional emite EW quando habilitada pela pesquisa, sem empilhamento ilimitado. Fórmula e alcance ainda `OPEN`.
 - **INT-C (`APPROVED`):** perfil antiescudo opcional da frota capturado no despacho da ordem `ATTACK`, sem escolha por salva.
-- **INT-D (`OPEN`):** interdição atua no lançamento, entrada regional ou chegada? Qual máximo de adiamentos? Nenhuma alternativa escolhida.
+- **INT-D (`APPROVED` pela D06-C/D):** `orbital_platform` em modo de interdição (sem disparos) afeta uma vez a **chegada** de missão hostil por ordem sucessora idempotente. Duração/teto são experimentais.
 - **INT-E (`APPROVED`):** guarnição usa Equilibrada na primeira versão; escoltas cooperam conforme C3.0-D01.
 
-**Aprovações das C3.0-D01 a D05 não autorizam implementar.** INT-B/D, fórmulas, schemas, parâmetros e modelo persistente da Stargrave continuam `OPEN`, não `IMPLEMENTED`.
+**Aprovações das C3.0-D01 a D06 não autorizam implementar.** INT-B/D foram fechadas como regra funcional na [D06](combat-operational-closures.md); fórmulas, schema, tempo de interdição e modelo persistente estelar continuam `OPEN`/`PROPOSED` na [D07](combat-technical-contracts.md).
+
+## 8.1. Superação posterior de pendências pela C3.0-D06
+
+`APPROVED` (08/11/2026): [C3.0-D06 A–H](combat-operational-closures.md) escolheu Odyssey como emissora EW, plataforma orbital sem armas no modo interdição, gatilho único na chegada, perfil antiescudo por ordem, Stargrave persistente e gate científico Fundamental V. **Números continuam experimentais**. A [C3.0-D07](combat-technical-contracts.md) propõe payload versionado, sucessoras, estado estelar e regras de unicidade, mas está `PROPOSED`.
 
 ## 9. Critérios de saída para implementação futura
 
-- D02 e D03 `APPROVED` como design; INT-A/C/E decididas; INT-B/D ainda precisam de definição expressa.
+- D02 e D03 `APPROVED` como design; INT-A–E decididas funcionalmente após D06; schema, fórmulas e revisão da [D07](combat-technical-contracts.md) ainda pendentes.
 - Contrato de persistência de doutrina, consumo antiescudo e interdição formalizado, versionado e compatível.
 - Testes planejados para legado byte/semanticamente equivalente, escolta por salva, escudos de bateria, munição, ownership, replay offline e sigilo de relatórios.
 - Para Stargrave, requisitos de modelo persistente, vínculo único à estrela, subsistemas e recuperação definidos antes de testes de dano.
