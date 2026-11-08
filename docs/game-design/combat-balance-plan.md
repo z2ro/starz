@@ -1,7 +1,7 @@
 # STARZ — C3.0-D04: matriz de cenários e gates de balanceamento
 
-**Estado:** `PROPOSED` — plano documental, sem validação executada.  
-**Autoridade:** [C3.0-D01](combat-formations.md) está `APPROVED` como design; [C3.0-D02](combat-targeting.md) e [C3.0-D03](combat-countermeasures.md) permanecem `PROPOSED`.  
+**Estado:** `APPROVED` como plano de validação (08/11/2026); **nenhum cenário executado** e nenhum coeficiente aprovado. Ver [registro consolidado](combat-3-decisions.md).  
+**Autoridade:** [C3.0-D01](combat-formations.md), [C3.0-D02](combat-targeting.md) e [C3.0-D03](combat-countermeasures.md) estão `APPROVED` como design. A matriz B01–B18 e seus gates foram aprovados como metodologia, não como resultados.  
 **Escopo:** critérios de decisão, cenários, métricas, parâmetros a simular, riscos de balanceamento e critérios de saída. **Não implementar mecânicas, novos testes, scripts, YAML ou migrations por este documento.**
 
 ## 1. Objetivo
@@ -99,8 +99,8 @@ Não executar produto cartesiano indiscriminado. Usar pares de fatores e cenári
 ### Gate G0 — contratos de design
 
 - `APPROVED`: C3.0-D01 e Research 3.0-D01, nos limites de seus documentos.
-- `PROPOSED`: C3.0-D02 e C3.0-D03; esta C3.0-D04.
-- **Bloqueio:** não autorizar gameplay com suposições que exigem aprovação ainda ausente.
+- `APPROVED` como design/metodologia: C3.0-D02, C3.0-D03 e esta C3.0-D04; parâmetros quantitativos ainda `OPEN`.
+- **Bloqueio:** aprovações de design/metodologia não autorizam automaticamente o gameplay; fórmulas e contratos executáveis ainda não definidos devem ser resolvidos antes de implementação.
 
 ### Gate G1 — especificação técnica
 
@@ -131,21 +131,21 @@ Somente após resultados reais: propor faixas quantitativas para aprovação, re
 
 ## 8.1. Integração e gates operacionais
 
-`PROPOSED`: a [C3.0-D05](combat-integration.md) mapeia os riscos técnicos que devem ser resolvidos antes de executar B01–B18: seletor legado versus absorção real, fonte da doutrina, emissor de interferência, reprogramação offline e entidade Stargrave. Esta referência **não** aprova algoritmos C3.0-D02/D03 nem inicia os testes propostos.
+`APPROVED` como contrato arquitetural: a [C3.0-D05](combat-integration.md) mapeia os riscos técnicos que devem ser resolvidos antes de executar B01–B18: seletor legado versus absorção real, fonte da doutrina, emissor de interferência, reprogramação offline e entidade Stargrave. Os algoritmos funcionais C3.0-D02/D03 estão aprovados como design, mas **nenhum teste foi iniciado** e os detalhes numéricos seguem `OPEN`.
 
-## 9. Decisões que continuam pendentes
+## 9. Decisões aprovadas e lacunas restantes
 
 | Documento | Questão não aprovada | Recomendação de próximo passo |
 |---|---|---|
-| **C3.0-D02 A–G** | Ranking de Interceptação/Ruptura, seleção efetiva, captura de doutrina na ordem, sigilo e replay | Revisão e aprovação explícita das sete decisões |
-| **C3.0-D03 A–G** | Efeito de EW, novas observações, perfil antiescudo, interdição e ataques a módulos | Revisão e aprovação explícita das sete decisões |
+| **C3.0-D02 A–G** | `APPROVED` como design: ranking, redirecionamento, doutrina na ordem, sigilo e replay | Definir schema/valores e validar contra baseline |
+| **C3.0-D03 A–G** | `APPROVED` como design: EW, observações novas, antiescudo, interdição, subsistemas | Definir emissor, parâmetros, gatilho e persistência |
 | **R3.0-D01 detalhe** | Substituição de `military_tier_4` por `science_infrastructure:2` em Fundamental V | Aprovar ou substituir requisito alternativo |
 | **Balanceamento** | Custo, duração, HP/eficácia, combustível, alcance e objetivos de win rate | Fixar somente depois de baselines autorizados |
 | **Stargrave** | Elegibilidade da estrela, módulo persistente, estabilidade e bombardeio | Contrato próprio antes de qualquer teste executável |
 
 ### Política de aprovação
 
-A frase «pode seguir» autoriza continuar a documentação nesta branch, **não** eleva decisões `PROPOSED` a `APPROVED`, não autoriza implementar gameplay, criar PR ou fazer merge. A aprovação futura deve nomear as decisões que mudaram de estado.
+A aprovação explícita «aprovo tudo» em 08/11/2026 elevou C3.0-D02/D03 e este plano C3.0-D04 a `APPROVED` como design/metodologia. Ela não equivale a implementar gameplay, fixar parâmetros ausentes, criar PR ou fazer merge.
 
 ## 10. Referências
 
