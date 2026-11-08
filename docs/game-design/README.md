@@ -6,7 +6,7 @@ O [STARZ-GDD-v1.md](STARZ-GDD-v1.md) é a visão central. Seu status é **DRAFT*
 
 Esta auditoria documental usa o código de `experiment/persistent-universe`, base `e749fb9`, em 07/11/2026. Nenhuma regra executável foi alterada. A aprovação explícita do responsável define intenção; código e catálogos efetivos comprovam implementação. Uma coisa não substitui a outra.
 
-O GDD foi fornecido em `docs/game-desing/STARZ-GDD-v1.md`. O original foi preservado. A cópia canônica normaliza somente quebras de linha e espaços finais; conserva o conteúdo, inclusive os artefatos da exportação Mermaid. SHA-256 do original: `4d874146ed1722c7cc0ab267808d17e5eb0de76c0daa0d375ad610f2445b7a3c`.
+O GDD foi fornecido em `docs/game-desing/STARZ-GDD-v1.md`. O original foi preservado. A cópia canônica conserva as decisões e propostas do original; os artefatos da exportação Mermaid foram reconstruídos como diagramas Mermaid, e tabelas e títulos foram formatados em Markdown. O arquivo original permanece intacto. SHA-256 do original: `4d874146ed1722c7cc0ab267808d17e5eb0de76c0daa0d375ad610f2445b7a3c`.
 
 ## Estados de requisitos
 
