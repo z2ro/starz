@@ -30,6 +30,10 @@
 
 Esses fatos não demonstram que qualquer capacidade desta D03 esteja disponível.
 
+## 2.1. Refinamento aprovado C3.0-D06 (08/11/2026)
+
+`APPROVED` como design: [C3.0-D06](combat-operational-closures.md) define **Odyssey** como emissora presente e operacional de `electronic_warfare`; a `orbital_platform` como emissora de `spatial_interdiction` em modo sem disparos; o gatilho de interdição **uma vez na chegada** por ordem sucessora; o perfil antiescudo por missão; e subsistemas/derrota de Stargrave. Os valores 25%/30 min e 1,25×/0,80× são hipóteses, não números aprovados. [C3.0-D07](combat-technical-contracts.md) propõe persistência e eventos — ainda `PROPOSED`.
+
 ## 3. `electronic_warfare` — interferência eletrônica (Militar III)
 
 **Capacidade principal `APPROVED`:** interferir em sensores e aquisição de alvos.  
@@ -45,7 +49,7 @@ Esses fatos não demonstram que qualquer capacidade desta D03 esteja disponível
 
 - Um império precisa ter concluído `electronic_warfare` para **emitir** interferência.
 - `sensor_array` e `computing` preservam valor como fundamentos de aquisição e resistência, além da função atual; `counter_intelligence` continua especializado em observações.
-- **`OPEN`:** qual nave ou instalação já existente é elegível para sustentar a interferência; não inventar `jamming_strength` ou um novo hull sem contrato. A primeira implementação deve reutilizar um atributo/role comprovado ou explicitar a capacidade em dados validados.
+- **`APPROVED` pela D06-A:** Odyssey real e operacional emite a interferência; **`OPEN`**: fórmula, seleção de fonte, alcance e intensidade, sem novo hull. A primeira implementação deve reutilizar um atributo/role comprovado ou explicitar a capacidade em dados validados.
 - **`PROPOSED`:** resultado contestado por vantagem científica/operacional, com três estados relatáveis: `normal`, `contested`, `degraded`. Esses nomes são de design, **não** novos enums.
 - Um jogador sem `electronic_warfare` ainda pode resistir por `sensor_array` e capacidades existentes; a nova tecnologia não torna espionagem nem doutrinas inutilizáveis.
 
@@ -203,7 +207,7 @@ Não alterar seis salvas, saque, defesa planetária ou condição de vitória po
 | **C3-D03-F** | Stargrave conserva vulnerabilidade convencional; dano degradável aos cinco subsistemas conceituais e interceptador de mísseis continua restrito |
 | **C3-D03-G** | Manter simultaneidade, autoridade, sigilo, idempotência e relatórios como invariantes; nenhum valor numérico aprovado |
 
-**`APPROVED`**: C3-D03-A–G, incluindo o algoritmo funcional de targeting da C3.0-D02. **`OPEN`**: emissor elegível de interferência; fórmula de contestação; coeficientes e penalidade antiescudo; raio, custo e gatilho da interdição; modelo persistente de módulos; janelas de reação e bombardeio; custo de precisão; interfaces e nomes de campos. Nenhum código é autorizado por essa aprovação.
+**`APPROVED`**: C3-D03-A–G, incluindo o algoritmo funcional de targeting da C3.0-D02. **`APPROVED` pela D06:** emissor Odyssey, plataforma orbital em modo de interdição e gatilho único na chegada, perfil opcional e base de construção/derrota da Stargrave. **`OPEN`**: fórmula de contestação EW; coeficientes antiescudo; raio, custo e duração efetiva da interdição; modelo persistente de módulos; janelas de reação e bombardeio; custo de precisão; interfaces e nomes de campos. Nenhum código é autorizado por essa aprovação.
 
 ## 12. Referências
 
