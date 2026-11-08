@@ -1,7 +1,7 @@
 # STARZ — Combat 3.0: registro de aprovações
 
 **Decisão do responsável:** «aprovo tudo» (08/11/2026), emitida após apresentação da [C3.0-D05](combat-integration.md), das C3.0-D02/D03 pendentes e do [plano C3.0-D04](combat-balance-plan.md).  
-**Estado:** `APPROVED` **como design e planejamento** até [C3.0-D08 A–H](combat-stellar-disposition.md), incluindo C3.0-D06/D07; T01–T16 aprovados como critérios técnicos. [C3.0-D09](combat-stellar-custody.md) está `PROPOSED`. `NOT IMPLEMENTED` para novas mecânicas.  
+**Estado:** `APPROVED` **como design e planejamento** até [C3.0-D09 A–H](combat-stellar-custody.md), incluindo C3.0-D06/D07/D08. T01–T32 são critérios técnicos aprovados, não executados. [C3.0-D10](combat-custody-adjudication.md) está `PROPOSED`. `NOT IMPLEMENTED` para novas mecânicas.  
 **Branch:** `experiment/persistent-universe`.  
 **Escopo:** registrar decisões concretas submetidas à aprovação. Não interpretar como licença para implementar gameplay, alterar YAML ou banco, iniciar testes de gameplay, criar PR ou realizar merge.
 
@@ -88,4 +88,10 @@ Permanecem `OPEN` nomes de tabelas/campos/enums, schema final, mecanismo de migr
 
 **`APPROVED` exclusivamente como método:** a matriz D08-F conservador/intermediário/elevado. **`OPEN` quantitativo:** antiescudo 1,10–1,40×, casco 0,70–0,90×, interdição 10–40% do ETA e tetos 10–60 min, preparo 12–24 h, recuperação 10–40% e estabilização 12–48 h são **valores de ensaio**, não constantes de gameplay aprovadas. Nenhum baseline ou simulação foi executado.
 
-**`PROPOSED`:** [C3.0-D09](combat-stellar-custody.md) — detalhamento de transações, disputa de custódia, compensações, três fluxos de destino e critérios T17–T32; não aprova antecipadamente direitos ou prioridades diplomáticas. Nenhuma alteração de gameplay, banco, catálogo ou deploy foi autorizada.
+**`APPROVED` como design:** [C3.0-D09](combat-stellar-custody.md) — contratos A–H de transação, reivindicação, custódia, compensações, três fluxos de destino e critérios T17–T32, ainda sem execução. Prioridades diplomáticas e critérios finos de controle militar permanecem `OPEN` e são analisados na [C3.0-D10](combat-custody-adjudication.md) (`PROPOSED`). Nenhuma alteração de gameplay, banco, catálogo ou deploy foi autorizada.
+
+## 10. Aprovação expressa C3.0-D09 (08/11/2026)
+
+**`APPROVED` como design:** [C3.0-D09-A–H](combat-stellar-custody.md): distinguir proprietário histórico, controlador regional, custodiante e destinatário; claim posterior à estabilização e com revalidação de presença militar; reservar um destino exclusivo com compensação controlada; três operações distintas para reconstrução, repatriação física e relíquia; unicidade transacional, locks/versionamento e idempotência; estado estelar como overlay no mundo procedural sem revelar inteligência privada; cenário de QA `T17–T32` e rollout incremental **apenas planejado**.
+
+**`OPEN`:** regras específicas de presença/controle em espaço livre, concorrência militar e prioridade de claims, transferências de custódia já confirmada, custo/janela/percentuais, schema definitivo, direitos de aliados/neutros e destino pós-repatriação. A [C3.0-D10](combat-custody-adjudication.md) contém recomendações `PROPOSED` e os cenários T33–T48 ainda não aprovados. **Não houve implementação nem execução de QA.**
