@@ -28,6 +28,10 @@ Atacantes são naves reais da frota; defensores são naves vinculadas ao planeta
 
 `PROPOSED`: [C3.0-D02 — seleção de alvos](combat-targeting.md) detalha classificação e prioridade de alvos, despacho, sigilo e desempates; não está aprovado nem executado. `IMPLEMENTED` continua sendo o resolvedor descrito na seção 2; não presumir proteção funcional a partir de `role`/nome da nave.
 
+## 4.3. Contramedidas, aquisição e subsistemas (`PROPOSED`)
+
+A [C3.0-D03](combat-countermeasures.md) propõe guerra eletrônica contestável, perfil antiescudo com trade-off, interdição regional e ataque especializado contra subsistemas de Stargrave, sem modificar o combate naval, interceptador estratégico ou dano atual. `C3.0-D02` e `C3.0-D03` aguardam decisões expressas; o contrato de escolta `C3.0-D01` é `APPROVED` **apenas como design**.
+
 ## 5. Dependências
 
 [Naves](ships.md) fornecem perfis; [pesquisa](research.md), modificadores; [defesas](defenses.md), proteção/munição; [economia](economy.md), custos e carga; [Stargrave](stargrave.md), contratos futuros. Inteligência tem qualidade e validade próprias, não equivale a acesso ao estado privado de outro império.
