@@ -38,7 +38,15 @@ A aprovação desses requisitos não aprova custos, duração, dano, limites ope
 
 ## 4.1. Contramedidas da C3.0-D03
 
-`PROPOSED`: [C3.0-D03](combat-countermeasures.md) organiza os conceitos de contenção, propulsão, armamentos, escudos e controle como subsistemas degradáveis, ainda sem IDs, HP ou modelo de persistência. `containment_warfare` no Tier IV concede uma forma de ataque dirigido, mas não exclusividade de dano: frotas convencionais preparadas continuam aptas a derrotar Stargrave. Interdição não pode paralisar jogadores indefinidamente; escudos e blindagem não são ultrapassados apenas pela conclusão científica. A identidade da estrela cativa e a construção multietapas seguem sem implementação.
+`APPROVED` como design: [C3.0-D03](combat-countermeasures.md) fixa funções de contenção, propulsão, armamentos, escudos e controle como subsistemas degradáveis; seus IDs, HP e modelo de persistência ainda não existem. `containment_warfare` no Tier IV concede uma forma de ataque dirigido, mas não exclusividade de dano: frotas convencionais preparadas continuam aptas a derrotar Stargrave. Interdição não pode paralisar jogadores indefinidamente; escudos e blindagem não são ultrapassados apenas pela conclusão científica. A identidade da estrela cativa e a construção multietapas seguem sem implementação.
+
+## 4.2. Aprovação operacional C3.0-D06-F/G (08/11/2026)
+
+`APPROVED`: [C3.0-D06](combat-operational-closures.md) define captura de estrela em **sistema descoberto, desabitado e não natal**, com reserva exclusiva, bloqueio de colonização posterior à captura comprometida e **cinco fases**: captura, estabilização, montagem, integração e comissionamento. Módulos industriais precisam ser fabricados e transportados fisicamente. Uma Stargrave contém **uma única estrela cativa**, nunca é hull convencional e não concede vitória automática.
+
+`APPROVED`: subsistemas Contenção, Propulsão, Armamentos, Escudos e Controle podem perder capacidades; destroços não movem nem atacam e preservam o vínculo com a estrela até resolução segura. Derrota não apaga planetas, IDs ou coordenadas nem explode automaticamente a estrela.
+
+`PROPOSED`: [C3.0-D07](combat-technical-contracts.md) apresenta fonte estelar, projeto, unidade excepcional, unicidade transacional e ordem de transições. **Ainda não aprovado:** esquema executável, fórmula de dano, estados exatos, destino físico da estrela, recuperação/reparo e efeitos no sistema. A meta de **uma Stargrave em obra ou operacional por império** é limite inicial sujeito a simulação, não hard cap final.
 
 ## 5. Dependências
 
