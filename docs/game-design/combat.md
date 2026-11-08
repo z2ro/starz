@@ -36,6 +36,12 @@ A [C3.0-D03](combat-countermeasures.md) define como design aprovado guerra eletr
 
 A [C3.0-D05](combat-integration.md) reúne conflitos de seleção/dano, configuração de doutrina na ordem `ATTACK`, guerra eletrônica sem emissor definido, guarnição, interdição offline e ausência de entidade Stargrave executável. Trata de **design técnico**, não de implementação; C3.0-D02/D03 estão `APPROVED` como design, C3.0-D04 como plano e C3.0-D05 como arquitetura, sem execução; [registro consolidado](combat-3-decisions.md).
 
+## 4.5. Fechamento operacional D06 e contratos D07
+
+`APPROVED`: [C3.0-D06](combat-operational-closures.md) escolheu Odyssey para EW, `orbital_platform` em modo interdição (sem disparos), gatilho único na chegada por sucessora, perfil antiescudo por `ATTACK` e construção/derrota Stargrave com estado próprio. O gate `science_infrastructure:2` de Fundamental V também foi aprovado. **Nenhuma dessas regras está implementada.** Percentuais e multiplicadores continuam parâmetros de simulação.
+
+`PROPOSED`: [C3.0-D07](combat-technical-contracts.md) especifica contrato de payload, sucessão idempotente de ordens, exclusividade de estrela e 16 cenários de QA técnico, ainda sem aprovação de schema ou execução.
+
 ## 5. Dependências
 
 [Naves](ships.md) fornecem perfis; [pesquisa](research.md), modificadores; [defesas](defenses.md), proteção/munição; [economia](economy.md), custos e carga; [Stargrave](stargrave.md), contratos futuros. Inteligência tem qualidade e validade próprias, não equivale a acesso ao estado privado de outro império.
