@@ -38,6 +38,12 @@ Separar fórmulas executadas de hipóteses do [GDD §10 e §13](STARZ-GDD-v1.md)
 
 Não são prazos forçados, promessas de duração ou limites atuais do servidor.
 
+## 4.1. Matriz de validação de Combat 3.0
+
+`PROPOSED`: a [C3.0-D04 — matriz de cenários e gates de balanceamento](combat-balance-plan.md) organiza 18 casos de base, escolta, doutrina, interferência, escudo, interdição e Stargrave. Inclui composições de hulls com custos **atuais** de liga refinada/componentes e separa a comparação desses custos de ciência, combustível, tripulação, reposição, tempo e acesso por tier.
+
+A [C3.0-D01 — escoltas](combat-formations.md) está `APPROVED` **como design**, inclusive o limite inicial de um redirecionamento por escolta/salva sujeito a simulação; [C3.0-D02 — targeting](combat-targeting.md) e [C3.0-D03 — contramedidas](combat-countermeasures.md) permanecem `PROPOSED`. A C3.0-D04 **não** apresenta resultados de testes, win rates, metas aprovadas ou um simulador executado. Nenhuma implementação foi autorizada.
+
 ## 5. Dependências
 
 Todas as especificações: [pesquisa](research.md), [economia](economy.md), [naves](ships.md), [defesas](defenses.md), [combate](combat.md), [Stargrave](stargrave.md) e [progressão](progression.md). Valores visuais não são dados de balanceamento militar.
