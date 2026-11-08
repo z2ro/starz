@@ -28,12 +28,13 @@ O estado aplica-se à afirmação identificada, não a todo o documento citado. 
 | [Pesquisa](research.md) | Domínios, tiers, níveis, dependências e desbloqueios. |
 | [Research 3.0 — R3.0-D01](research-3.md) | `APPROVED`: 16 descobertas únicas, IDs, tiers, dependências e capacidades; preservar 44 existentes. Não implementado. |
 | [Research 3.0 — R3.0-D02](research-operational.md) | `PROPOSED`: contratos operacionais das 16 descobertas. |
-| [Combat 3.0 — doutrinas e formações](combat-doctrines.md) | `PROPOSED`: contratos de targeting, escolta, guerra eletrônica e contramedidas. |
+| [Combat 3.0 — doutrinas e formações](combat-doctrines.md) | Visão geral: C3.0-D01–D03 `APPROVED` como design; sem gameplay implementado. |
 | [Combat 3.0 — C3.0-D01](combat-formations.md) | `APPROVED` como design: escolta, redirecionamento limitado, três doutrinas e guarnição. Não implementado. |
-| [Combat 3.0 — C3.0-D02](combat-targeting.md) | `PROPOSED`: priorização determinística, fallback, sigilo e persistência da doutrina. |
-| [Combat 3.0 — C3.0-D03](combat-countermeasures.md) | `PROPOSED`: interferência eletrônica, antiescudos, interdição e ataques de contenção estelar. |
-| [Combat 3.0 — C3.0-D04](combat-balance-plan.md) | `PROPOSED`: matriz de 18 cenários, métricas e gates de validação, sem simulador executado. |
-| [Combat 3.0 — C3.0-D05](combat-integration.md) | `PROPOSED`: pontos de integração técnica, conflitos, persistência e decisões para futura implementação. |
+| [Combat 3.0 — C3.0-D02](combat-targeting.md) | `APPROVED` como design: targeting determinístico, doutrinas, fallback e sigilo. |
+| [Combat 3.0 — C3.0-D03](combat-countermeasures.md) | `APPROVED` como design: interferência, antiescudos, interdição e contenção estelar. |
+| [Combat 3.0 — C3.0-D04](combat-balance-plan.md) | `APPROVED` como plano: 18 cenários e gates, sem execução nem resultados. |
+| [Combat 3.0 — C3.0-D05](combat-integration.md) | `APPROVED` como arquitetura e plano; INT-B/D ainda `OPEN`. |
+| [Combat 3.0 — Registro de decisões](combat-3-decisions.md) | Aprovação expressa de C3.0-D02–D05, separando detalhes ainda `OPEN`. |
 | [Economia](economy.md) | Estoques locais, cadeias, população, energia e logística. |
 | [Naves](ships.md) | Hulls, funções, composição e limites dos modelos visuais. |
 | [Defesas](defenses.md) | Estruturas locais, munição e contramedidas. |
@@ -76,4 +77,4 @@ Referências complementares: [pesquisa 2.0](../research-2.md), [universo persist
 
 `APPROVED` — [R3.0-D01](research-3.md): 44 IDs legados preservados, 16 novos IDs de descoberta `breakthrough` únicos aprovados com nomes/domínios/tiers/dependências/capacidades; remover gate Militar IV de Fundamental V e vínculo `carrier_operations` de `stellar_containment`; contramedidas especializadas em Tier IV; não revogar hulls nem bloquear especializações mutuamente.
 
-`APPROVED` — [C3.0-D01](combat-formations.md): sete decisões de escolta e formação, três doutrinas e limite inicial de um redirecionamento por escolta/salva, sujeito a simulação. `PROPOSED` — [R3.0-D02](research-operational.md): contratos operacionais restantes; [C3.0-D02](combat-targeting.md): seleção determinística de alvos; [C3.0-D03](combat-countermeasures.md): contramedidas e guerra eletrônica; [C3.0-D04](combat-balance-plan.md): matriz de cenários e validação; [C3.0-D05](combat-integration.md): integração técnica e decisões pendentes; [Combat 3.0](combat-doctrines.md): visão geral. Nenhuma destas propostas está implementada. Essas propostas não autorizam implementação. O inventário *executável* permanece 32 repetíveis e 12 avanços, total de 44; 60 é quantidade *planejada*, não instalada. O histórico de auditoria de 07/11 permanece preservado.
+**Aprovação expressa de 08/11/2026:** [registro consolidado Combat 3.0](combat-3-decisions.md). C3.0-D01, D02 e D03 estão `APPROVED` como design; D04 como plano de validação; D05 como arquitetura e sequência futura. `OPEN`: emissor EW, gatilho/limite de interdição, números, schema e subsistemas da Stargrave. [R3.0-D02](research-operational.md) mantém `PROPOSED` os contratos científicos além daqueles expressamente refinados pelo Combat 3.0. Nenhuma funcionalidade foi implementada; 44 IDs científicos continuam no catálogo efetivo e 60 são planejados. O histórico da auditoria de 07/11 permanece preservado.
