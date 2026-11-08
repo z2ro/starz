@@ -147,6 +147,10 @@ Somente após resultados reais: propor faixas quantitativas para aprovação, re
 
 A aprovação explícita «aprovo tudo» em 08/11/2026 elevou C3.0-D02/D03 e este plano C3.0-D04 a `APPROVED` como design/metodologia. Ela não equivale a implementar gameplay, fixar parâmetros ausentes, criar PR ou fazer merge.
 
+## 9.1. Continuidade D08/D09
+
+`APPROVED` como metodologia: [C3.0-D08](combat-stellar-disposition.md) detalha os cenários numéricos de antiescudo, interdição, ataque estelar, salvamento e estabilização. **Não** são dados reais nem parâmetros finais. `PROPOSED`: [C3.0-D09](combat-stellar-custody.md) acrescenta cenários T17–T32 de custódia, destino, deduplicação e mundo procedural. Nenhum cenário B/T foi executado nesta etapa.
+
 ## 10. Referências
 
 - [Design e revisão geral](README.md), [Balanceamento atual](balance.md).
