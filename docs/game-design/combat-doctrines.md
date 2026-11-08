@@ -70,6 +70,10 @@ flowchart TD
 
 **Atenção:** a engine atual planeja os dois lados antes de aplicar as perdas; o novo pipeline não autoriza mudar essa simultaneidade silenciosamente. Tampouco se deve introduzir aleatoriedade não reproduzível.
 
+## 6.1. Contrato C3.0-D03 em revisão
+
+`PROPOSED`: [C3.0-D03 — guerra eletrônica, ruptura e contramedidas estelares](combat-countermeasures.md) separa interferência de aquisição, perfil antiescudo e ataque dirigido a módulo. Não acrescenta um bônus universal de dano nem altera o papel aprovado de escoltas. `C3.0-D02` permanece `PROPOSED` e **não foi elevada a `APPROVED` por autorização genérica de continuidade**.
+
 ## 7. Guerra eletrônica e inteligência
 
 - `electronic_warfare` contesta aquisição de alvos e qualidade de relatórios.
