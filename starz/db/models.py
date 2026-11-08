@@ -280,14 +280,17 @@ class StellarProject(Base):
 class StellarModule(Base):
     __tablename__ = 'stellar_module'
     __table_args__ = (
+        UniqueConstraint('id', 'universe_id'),
         ForeignKeyConstraint(['empire_id', 'universe_id'], ['empire.id', 'empire.universe_id']),
         ForeignKeyConstraint(['origin_planet_id', 'empire_id'], ['planet_state.id', 'planet_state.empire_id']),
         ForeignKeyConstraint(['project_id', 'universe_id', 'empire_id'], ['stellar_project.id', 'stellar_project.universe_id', 'stellar_project.empire_id']),
         ForeignKeyConstraint(['fleet_id', 'empire_id'], ['fleet.id', 'fleet.empire_id']),
+        ForeignKeyConstraint(['current_planet_id', 'empire_id'], ['planet_state.id', 'planet_state.empire_id']),
+        ForeignKeyConstraint(['operation_id', 'universe_id', 'empire_id'], ['stellar_operation.id', 'stellar_operation.universe_id', 'stellar_operation.actor_id']),
         CheckConstraint("kind IN ('containment', 'shielding', 'control', 'propulsion', 'weapons')", name='stellar_module_kind'),
         CheckConstraint("status IN ('manufacturing', 'ready', 'transit', 'delivered', 'committed', 'consumed')", name='stellar_module_status'),
         CheckConstraint("(status = 'transit') = (fleet_id IS NOT NULL)", name='stellar_module_fleet'),
-        CheckConstraint("status NOT IN ('transit', 'delivered', 'committed', 'consumed') OR project_id IS NOT NULL", name='stellar_module_project'),
+        CheckConstraint("status NOT IN ('delivered', 'committed', 'consumed') OR project_id IS NOT NULL OR operation_id IS NOT NULL", name='stellar_module_project'),
         CheckConstraint('consumed_phase IS NULL OR consumed_phase BETWEEN 1 AND 5', name='stellar_module_phase'),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -296,6 +299,8 @@ class StellarModule(Base):
     kind: Mapped[str]
     status: Mapped[str]
     origin_planet_id: Mapped[UUID]
+    current_planet_id: Mapped[UUID | None]
+    operation_id: Mapped[UUID | None]
     project_id: Mapped[UUID | None]
     fleet_id: Mapped[UUID | None]
     consumed_phase: Mapped[int | None]
@@ -311,21 +316,78 @@ class StellarUnit(Base):
     __table_args__ = (
         UniqueConstraint('source_id'),
         UniqueConstraint('project_id'),
+        UniqueConstraint('id', 'source_id', 'universe_id'),
+        ForeignKeyConstraint(['custodian_empire_id', 'universe_id'], ['empire.id', 'empire.universe_id']),
+        CheckConstraint('custody_version >= 0', name='stellar_custody_version'),
         ForeignKeyConstraint(['source_id', 'universe_id'], ['stellar_source.id', 'stellar_source.universe_id']),
         ForeignKeyConstraint(['project_id', 'universe_id'], ['stellar_project.id', 'stellar_project.universe_id']),
         ForeignKeyConstraint(['empire_id', 'universe_id'], ['empire.id', 'empire.universe_id']),
         ForeignKeyConstraint(['system_id', 'universe_id'], ['star_system.id', 'star_system.universe_id']),
         ForeignKeyConstraint(['planet_id', 'system_id'], ['planet_state.id', 'planet_state.system_id']),
-        CheckConstraint("state IN ('operational', 'damaged', 'incapacitated', 'sealed_wreck', 'rebuilding', 'repatriating', 'sealed_relic', 'reinstalled', 'transit')", name='stellar_unit_state'),
+        CheckConstraint("state IN ('operational', 'damaged', 'incapacitated', 'sealed_wreck', 'rebuilding', 'repatriating', 'core_transit', 'sealed_relic', 'reinstalled', 'transit')", name='stellar_unit_state'),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     universe_id: Mapped[UUID] = mapped_column(ForeignKey('universe.id'))
     source_id: Mapped[UUID]
     project_id: Mapped[UUID]
     empire_id: Mapped[UUID]
+    custodian_empire_id: Mapped[UUID | None]
+    custody_version: Mapped[int] = mapped_column(default=0, server_default='0')
     system_id: Mapped[UUID]
     planet_id: Mapped[UUID | None]
     state: Mapped[str]
     payload: Mapped[dict] = mapped_column(JSONB)
     created_at: Mapped[datetime]
     stocks: Mapped[dict] = mapped_column(JSONB)
+
+
+class StellarOperation(Base):
+    __tablename__ = 'stellar_operation'
+    __table_args__ = (
+        UniqueConstraint('id', 'universe_id', 'actor_id'),
+        UniqueConstraint('id', 'unit_id', 'universe_id'),
+        ForeignKeyConstraint(['unit_id', 'source_id', 'universe_id'], ['stellar_unit.id', 'stellar_unit.source_id', 'stellar_unit.universe_id']),
+        ForeignKeyConstraint(['actor_id', 'universe_id'], ['empire.id', 'empire.universe_id']),
+        ForeignKeyConstraint(['recipient_id', 'universe_id'], ['empire.id', 'empire.universe_id']),
+        ForeignKeyConstraint(['system_id', 'universe_id'], ['star_system.id', 'star_system.universe_id']),
+        ForeignKeyConstraint(['planet_id', 'system_id'], ['planet_state.id', 'planet_state.system_id']),
+        CheckConstraint("kind IN ('claim', 'conquer', 'offer', 'rebuild', 'repatriate', 'withdraw', 'decommission')", name='stellar_operation_kind'),
+        CheckConstraint("status IN ('pending', 'offered', 'working', 'transit', 'returning', 'completed', 'cancelled', 'contested', 'failed')", name='stellar_operation_status'),
+        Index('stellar_operation_active_unit', 'unit_id', unique=True,
+              postgresql_where=text("status IN ('pending', 'offered', 'working', 'transit', 'returning')")),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    universe_id: Mapped[UUID] = mapped_column(ForeignKey('universe.id'))
+    source_id: Mapped[UUID]
+    unit_id: Mapped[UUID]
+    actor_id: Mapped[UUID]
+    recipient_id: Mapped[UUID | None]
+    kind: Mapped[str]
+    status: Mapped[str]
+    system_id: Mapped[UUID]
+    planet_id: Mapped[UUID | None]
+    custody_version: Mapped[int]
+    payload: Mapped[dict] = mapped_column(JSONB)
+    created_at: Mapped[datetime]
+    due_at: Mapped[datetime | None]
+    completed_at: Mapped[datetime | None]
+
+
+class StellarLedger(Base):
+    __tablename__ = 'stellar_ledger'
+    __table_args__ = (
+        UniqueConstraint('unit_id', 'event_key'),
+        ForeignKeyConstraint(['unit_id', 'source_id', 'universe_id'], ['stellar_unit.id', 'stellar_unit.source_id', 'stellar_unit.universe_id']),
+        ForeignKeyConstraint(['operation_id', 'unit_id', 'universe_id'], ['stellar_operation.id', 'stellar_operation.unit_id', 'stellar_operation.universe_id']),
+        ForeignKeyConstraint(['actor_id', 'universe_id'], ['empire.id', 'empire.universe_id']),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    universe_id: Mapped[UUID] = mapped_column(ForeignKey('universe.id'))
+    source_id: Mapped[UUID]
+    unit_id: Mapped[UUID]
+    operation_id: Mapped[UUID]
+    actor_id: Mapped[UUID]
+    event_key: Mapped[str]
+    effect: Mapped[str]
+    payload: Mapped[dict] = mapped_column(JSONB)
+    created_at: Mapped[datetime]

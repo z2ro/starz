@@ -167,3 +167,7 @@ O responsável dispensou retrocompatibilidade com **saves de desenvolvimento** e
 ## 12. Fechamento operacional inicial autorizado (implementação STARZ 3.0)
 
 `APPROVED`, resposta expressa do responsável em 08/11/2026: na entrega orbital inicial, exigir órbita de planeta próprio e naves militares locais; claims contestados encerram sem transferir custódia e permitem nova tentativa manual. Cessão bilateral só ocorre fora de guerra e não move o núcleo. Conquista de custódia exige uma nova janela e presença válida. Espaço profundo e extinção permanecem indisponíveis enquanto não houver contratos autoritativos correspondentes. Esse fechamento não fixa duração final das janelas ou custos.
+
+### Retirada logística após cessão (`APPROVED`)
+
+Resposta expressa do responsável em 08/11/2026: o novo custodiante pode retirar fisicamente o núcleo cedido até um planeta próprio como etapa logística da reconstrução, sem criar um quarto destino final. Exigir frota real, módulo de propulsão, capacidade de carga, combustível e ETA. A cessão autoriza somente a retirada daquele núcleo; não autoriza acesso a estoques ou instalações do cedente. Revalidar consentimento, localização e custódia antes da retirada e da chegada. Não há teleporte.

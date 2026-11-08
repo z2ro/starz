@@ -304,3 +304,27 @@ class StargraveCommand(BaseModel):
 def stargrave_command(body:StargraveCommand,request:Request):
     from .stargrave import command
     return perform(request,lambda session,empire,e:command(request.app.state.store,session,empire,e,body.model_dump(mode='json')),body.planet_id)
+
+
+class StellarCustodyCommand(BaseModel):
+    model_config={'extra':'forbid'}
+    planet_id:UUID | None=None
+    unit_id:UUID
+    action:Literal['claim','conquer','offer','accept','cancel','rebuild','repatriate','withdraw','decommission']
+    idempotency_key:UUID
+    recipient_id:UUID | None=None
+    operation_id:UUID | None=None
+    module_ids:list[UUID]=Field(default_factory=list,max_length=5)
+    ship_ids:list[str]=Field(default_factory=list,max_length=100)
+
+
+@router.get('/api/universe/stellar/custody')
+def stellar_custody_status(request:Request,planet_id:UUID | None=None):
+    from .stellar_custody import snapshot
+    return perform(request,lambda session,empire,e:snapshot(session,empire,e),planet_id)
+
+
+@router.post('/api/universe/stellar/custody')
+def stellar_custody_command(body:StellarCustodyCommand,request:Request):
+    from .stellar_custody import command
+    return perform(request,lambda session,empire,e:command(request.app.state.store,session,empire,e,body.model_dump(mode='json')),body.planet_id)

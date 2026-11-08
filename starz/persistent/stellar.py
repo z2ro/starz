@@ -189,6 +189,7 @@ def manufacture(session, empire, engine, kind, idempotency_key):
     session.flush()
     session.add(m.StellarModule(id=module_id, universe_id=empire.universe_id, empire_id=empire.id,
                                kind=kind, status='manufacturing', origin_planet_id=planet.id,
+                               current_planet_id=planet.id, operation_id=None,
                                project_id=None, fleet_id=None, consumed_phase=None,
                                manufacture_order_id=order_id, phase_order_id=None, delivery_order_id=None,
                                created_at=utc(now), updated_at=utc(now)))
@@ -294,22 +295,15 @@ def snapshot(session, empire, engine):
                          'star_present': source.removed_at is None})
     modules = [{'id': str(module.id), 'kind': module.kind, 'status': module.status,
                 'origin_planet_id': str(module.origin_planet_id),
+                'current_planet_id': str(module.current_planet_id) if module.current_planet_id else None,
                 'project_id': str(module.project_id) if module.project_id else None,
                 'fleet_id': str(module.fleet_id) if module.fleet_id else None,
                 'consumed_phase': module.consumed_phase}
                for module in session.scalars(select(m.StellarModule).where(
                    m.StellarModule.universe_id == empire.universe_id,
                    m.StellarModule.empire_id == empire.id).order_by(m.StellarModule.created_at, m.StellarModule.id))]
-    owned_units = list(session.scalars(select(m.StellarUnit).where(
-        m.StellarUnit.universe_id == empire.universe_id,
-        m.StellarUnit.empire_id == empire.id).order_by(m.StellarUnit.created_at, m.StellarUnit.id)))
-    if owned_units:
-        from .stargrave import settle_energy
-        for unit in owned_units:settle_energy(unit,engine.state.last_updated)
-    units = [{'id': str(unit.id), 'source_id': str(unit.source_id), 'project_id': str(unit.project_id),
-              'system_id': str(unit.system_id), 'planet_id': str(unit.planet_id) if unit.planet_id else None,
-              'state': unit.state, 'payload': deepcopy(unit.payload), 'stocks': dict(unit.stocks)}
-             for unit in owned_units]
+    from .stellar_custody import unit_views
+    units = unit_views(session, empire, engine)
     contacts = [{'id':str(unit.id),'planet_id':str(unit.planet_id),'system_id':str(unit.system_id),
                  'owner_id':str(unit.empire_id),'state':unit.state}
                 for unit in session.scalars(select(m.StellarUnit).join(m.Planet,m.Planet.id==m.StellarUnit.planet_id).where(
