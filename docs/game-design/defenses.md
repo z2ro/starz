@@ -31,6 +31,10 @@ Registrar defesa local e munição atuais, sem implementar Defense 3.0. Separar 
 
 `PROPOSED`: três camadas defensivas — proximidade, pesada e estratégica. O GDD cita rede de detecção, interdição gravitacional, bateria de ruptura de contenção, matriz de escudos e comando defensivo. São conceitos sem novos IDs ou valores aprovados. Disponibilizar contrajogo antes da primeira Stargrave é proposta de progressão a simular.
 
+## 4.1. Refinamento de contramedidas estelares
+
+`PROPOSED`: [C3.0-D03](combat-countermeasures.md) propõe uma zona de interdição sustentada e tiros dirigidos a subsistemas estelares, com capacidade de combate e custos ainda por definir. Uma eventual matriz de interdição gravitacional ou bateria de ruptura segue **sem ID, números ou regra de construção aprovados**. O `missile_interceptor` existente **somente** intercepta mísseis estratégicos; não é equivalente automático ao contrajogo da Stargrave.
+
 ## 5. Dependências
 
 [Pesquisa](research.md): tiers e níveis. [Economia](economy.md): capacidade industrial, energia, trabalhadores e reposição. [Combate](combat.md): seleção de alvo, dano, escudos e relatórios. [Stargrave](stargrave.md): contramedidas futuras, sem confundir munição atual com ruptura estelar.
