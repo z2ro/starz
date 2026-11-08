@@ -33,7 +33,13 @@ Registrar defesa local e munição atuais, sem implementar Defense 3.0. Separar 
 
 ## 4.1. Refinamento de contramedidas estelares
 
-`PROPOSED`: [C3.0-D03](combat-countermeasures.md) propõe uma zona de interdição sustentada e tiros dirigidos a subsistemas estelares, com capacidade de combate e custos ainda por definir. Uma eventual matriz de interdição gravitacional ou bateria de ruptura segue **sem ID, números ou regra de construção aprovados**. O `missile_interceptor` existente **somente** intercepta mísseis estratégicos; não é equivalente automático ao contrajogo da Stargrave.
+`APPROVED` como design: [C3.0-D03](combat-countermeasures.md) define uma zona de interdição sustentada e ataques dirigidos a subsistemas estelares; capacidade, dano, alcance e custos ainda precisam de cálculo. Uma eventual matriz de interdição gravitacional ou bateria de ruptura segue **sem ID, números ou regra de construção aprovados**. O `missile_interceptor` existente **somente** intercepta mísseis estratégicos; não é equivalente automático ao contrajogo da Stargrave.
+
+## 4.2. C3.0-D06-C/D aprovada: plataforma em modo de interdição
+
+`APPROVED` como design: depois de pesquisar `spatial_interdiction`, uma `orbital_platform` real, energizada e guarnecida pode alternar entre **defesa convencional** (dispara normalmente) e **interdição** (emite zona no sistema, **não dispara armamentos convencionais**). Uma missão `ATTACK` hostil elegível sofre, na chegada, **um atraso limitado por cadeia**, sem interdição de neutros ou de `RETURN`. A [C3.0-D07](combat-technical-contracts.md) propõe ordens sucessoras e transações idempotentes; ainda `PROPOSED`.
+
+**Não implementado:** modo da plataforma, zona, parâmetros e armazenamento. A hipótese **25% do ETA, até 30 min** não é balanceamento final. Nenhuma nova estrutura defensiva é obrigatória na primeira versão. Interceptadores atuais continuam exclusivos contra mísseis estratégicos.
 
 ## 5. Dependências
 
