@@ -48,6 +48,12 @@ A aprovação desses requisitos não aprova custos, duração, dano, limites ope
 
 `APPROVED` como contrato técnico de design: [C3.0-D07](combat-technical-contracts.md) exige fonte estelar, projeto, unidade excepcional, unicidade transacional, máquina de estados e vínculos exclusivos. **Ainda não definido/implementado:** schema executável, fórmulas de dano, nomes finais de estados, destino físico da estrela, recuperação/reparo e efeitos no sistema. A meta de **uma Stargrave em obra ou operacional por império** é limite inicial sujeito a simulação, não hard cap final.
 
+## 4.3. C3.0-D08 aprovada — núcleo selado e destino da estrela
+
+`APPROVED` (08/11/2026): [C3.0-D08](combat-stellar-disposition.md) define confinamento passivo seguro após derrota, destroço desmilitarizado sem autodestruição por inatividade, custódia disputável e **três destinos mutuamente exclusivos**: reconstrução com a mesma estrela, repatriação **física** à origem, ou relíquia estelar selada não militar. Vencedor não recebe Stargrave pronta. Captura inicial fica limitada a sistema **descoberto, desabitado, não natal e de estrela única**; sistemas binários/múltiplos são excluídos da primeira versão. Repatriação não restaura recursos, prédios ou colônias, e nenhuma operação duplica identidade estelar.
+
+`APPROVED` somente como metodologia: [matriz D08-F](combat-stellar-disposition.md) de três faixas numéricas; **nenhum multiplicador ou prazo final aprovado**, nenhuma simulação executada. `PROPOSED`: [C3.0-D09](combat-stellar-custody.md) detalha claims, locks, recompensas, logística, estados e T17–T32. **`OPEN`:** direitos específicos de resgate, disputa, recuperação, reparo, limites, custos e schema; **não implementado**.
+
 ## 5. Dependências
 
 [Pesquisa](research.md): separar ciência estelar e comissionamento militar. [Economia](economy.md): indústria/logística estelar. [Naves](ships.md): escoltas e contrajogo convencional. [Defesas](defenses.md) e [combate](combat.md): interação com módulos e bombardeio. [Balanceamento](balance.md): validar custo de oportunidade, vulnerabilidades e recuperação.
