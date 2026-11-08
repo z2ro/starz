@@ -29,6 +29,7 @@ O estado aplica-se à afirmação identificada, não a todo o documento citado. 
 | [Research 3.0 — R3.0-D01](research-3.md) | `APPROVED`: 16 descobertas únicas, IDs, tiers, dependências e capacidades; preservar 44 existentes. Não implementado. |
 | [Research 3.0 — R3.0-D02](research-operational.md) | `PROPOSED`: contratos operacionais das 16 descobertas. |
 | [Combat 3.0 — doutrinas e formações](combat-doctrines.md) | `PROPOSED`: contratos de targeting, escolta, guerra eletrônica e contramedidas. |
+| [Combat 3.0 — C3.0-D01](combat-formations.md) | `PROPOSED`: redirecionamento limitado, papéis de escolta e formação defensiva. |
 | [Economia](economy.md) | Estoques locais, cadeias, população, energia e logística. |
 | [Naves](ships.md) | Hulls, funções, composição e limites dos modelos visuais. |
 | [Defesas](defenses.md) | Estruturas locais, munição e contramedidas. |
