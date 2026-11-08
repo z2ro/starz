@@ -167,6 +167,12 @@ As setas indicam caminhos **conceituais**; recuperação de `damaged` e `incapac
 - A disposição final da estrela será um evento único, auditável e recuperável de falha, sem apagar `StarSystem`, `Planet` ou colonos.
 - `OPEN`: se salvamento dá direito de posse, se há posse militar do destroço, onde o astro permanece, consequência ambiental, limiar de perda e prazo de reparo.
 
+### 8.4. Decisão posterior C3.0-D08: destino estelar (`APPROVED`)
+
+A [C3.0-D08-A–H](combat-stellar-disposition.md) fechou a direção funcional antes `OPEN`: ao ser derrotada, Stargrave mantém núcleo seguro em destroço, custódia depende de reivindicação e controle militar e os três destinos exclusivos são **reconstrução**, **repatriação física** ou **relíquia selada**. Captura inicial restringe-se a estrela única. A matriz numérica D08-F foi aprovada **somente para ensaios**. A [C3.0-D09](combat-stellar-custody.md) propõe transações/fluxos de custódia e testes T17–T32, mas esses detalhes estão **`PROPOSED`**.
+
+Essa decisão posterior prevalece sobre descrições históricas de destino totalmente `OPEN` nesta D07, sem aprovar nomes de schema, custódia diplomática ou parâmetros finais.
+
 ## 9. Migração, concorrência e rollout futuro
 
 **Documentar antes de qualquer migração executável:**
