@@ -26,7 +26,7 @@ As políticas devem ser simples e contextuais, não uma linguagem programável d
 
 ## 3. Contratos militares propostos
 
-**Autoridade posterior:** a função operacional de escolta/coordenação da pesquisa `fleet_coordination` foi refinada e **aprovada como design** em [C3.0-D01](combat-formations.md). Os algoritmos de seleção das três doutrinas permanecem **propostos** em [C3.0-D02](combat-targeting.md). O restante desta R3.0-D02 não ganha aprovação automática.
+**Autoridade posterior:** a função operacional de escolta/coordenação da pesquisa `fleet_coordination` foi refinada e **aprovada como design** em [C3.0-D01](combat-formations.md). Os algoritmos funcionais de seleção das três doutrinas foram **aprovados como design** em [C3.0-D02](combat-targeting.md), e as contramedidas militares de [C3.0-D03](combat-countermeasures.md) foram aprovadas como design; parâmetros/entidades executáveis continuam `OPEN`. O restante desta R3.0-D02 não ganha aprovação automática.
 
 
 | ID | Modelo | Ativação e comportamento | Limite e evidência exigida |
@@ -39,7 +39,7 @@ As políticas devem ser simples e contextuais, não uma linguagem programável d
 | `containment_warfare` | `OPERATION` | Com inteligência e oportunidade tática, permite atacar subsistemas de contenção estelar. | Stargrave continua vulnerável a dano convencional; sem explosão/aniquilação automática. |
 | `stellar_armaments` | `UNLOCK` | Permite integrar armamento principal em Stargrave efetivamente comissionada. | Consumo de energia, preparação visível, interrupção e dano não planetocida automático. |
 
-**Refinamento `PROPOSED`:** [C3.0-D03](combat-countermeasures.md) diferencia aquisição de alvos, perfil de ruptura de escudos, interdição operacional e ataque de contenção. As capacidades principais aprovadas na R3.0-D01 não implicam aprovação dos algoritmos nem dos números detalhados.
+**Refinamento `APPROVED` como design:** [C3.0-D03](combat-countermeasures.md) diferencia aquisição de alvos, perfil de ruptura de escudos, interdição operacional e ataque de contenção. Os contratos funcionais A–G de C3.0-D02/D03 foram aprovados expressamente; emissor EW, números, schema e integração exata seguem `OPEN`. Os demais contratos científicos da R3.0-D02 permanecem em discussão.
 
 ### Separação de funções
 
@@ -80,7 +80,7 @@ Critérios futuros para revisão e testes direcionados:
 
 ## 7. Lacunas `OPEN` e fronteira de implementação
 
-Ainda não aprovados: doutrinas disponíveis, algoritmo de proteção, resolução de guerra eletrônica, geometria/custo de interdição, aquisição de vulnerabilidades, efeitos de subsistemas, automação logística, transporte de módulos, elegibilidade estelar, catástrofes e recuperação, duração, custo e fórmulas.
+`APPROVED` como design: três doutrinas e algoritmo funcional de alvo (C3.0-D02), escoltas (C3.0-D01), contratos funcionais EW/antiescudo/interdição/contra-Stargrave (C3.0-D03). `OPEN`: emissor e fórmula EW; geometria/custo/gatilho de interdição; números e armazenamento; detalhes da aquisição de vulnerabilidades e persistência de subsistemas; automação logística; transporte de módulos; elegibilidade estelar; catástrofes/recuperação; duração, custos e fórmulas.
 
 O catálogo atual aceita somente `repeatable` e `breakthrough`; as categorias conceituais acima não podem ser gravadas como `kind` sem alterar o schema. `effects` aceita apenas chaves suportadas por `starz/progression.py`. `unlocks` não implementa habilidades; requisitos conjuntos precisam ser verificáveis na lógica autoritativa. Nenhum YAML é alterado nesta etapa.
 
