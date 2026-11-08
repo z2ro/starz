@@ -4,7 +4,7 @@
 **Autoridade:** [C3.0-D01–D07](combat-3-decisions.md), especialmente [D06-F/G](combat-operational-closures.md) e [D07-E/F/H](combat-technical-contracts.md).  
 **Limite da aprovação:** a **matriz numérica é aprovada como instrumento de simulação**, **não** como valores de produção, metas de vitória ou balanceamento verificado.  
 **Desenvolvimento:** nenhum gameplay, YAML, SQL, migration, script de simulação, frontend, PR, merge ou deploy autorizado por este documento.  
-**Próximo contrato:** [C3.0-D09 — custódia e liquidação estelar](combat-stellar-custody.md), `PROPOSED`.
+**Próximo contrato aprovado:** [C3.0-D09 — custódia e liquidação estelar](combat-stellar-custody.md), `APPROVED` como design. **Contrato seguinte:** [C3.0-D10](combat-custody-adjudication.md), `PROPOSED`.
 
 ## 1. Decisões D08 aprovadas
 
@@ -130,6 +130,6 @@ Referenciar a [C3.0-D04 — B01–B18](combat-balance-plan.md) e a [C3.0-D07 —
 
 ## 9. Continuidade D09
 
-A [C3.0-D09](combat-stellar-custody.md) é `PROPOSED`: detalha **como** executar custódia/contestação, sessão transacional, contratos de fluxo e liquidação de materiais com falhas/retries, sem promover automaticamente novas regras comerciais ou militares. Os três destinos e a ausência de autodestruição são `APPROVED`; qualquer prazo, custo ou adjudicação ainda exige decisão.
+A [C3.0-D09](combat-stellar-custody.md) está `APPROVED` como design técnico: define custódia contestável, contratos de destino, compensações e liquidação material idempotente com cenários T17–T32. O refinamento [C3.0-D10](combat-custody-adjudication.md) permanece `PROPOSED` para critérios de controle militar, claims concorrentes e invariantes de schema, sem aprovar antecipadamente novas regras de soberania. Os três destinos e a ausência de autodestruição são `APPROVED`; qualquer prazo, custo ou adjudicação ainda exige decisão.
 
 **Não implementar gameplay.** A C3.0-D08 é uma aprovação de **design e metodologia**, não de números de produção.
