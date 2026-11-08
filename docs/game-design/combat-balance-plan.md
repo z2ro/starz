@@ -129,6 +129,10 @@ Somente após resultados reais: propor faixas quantitativas para aprovação, re
 - **Stargrave fora do modelo:** ainda não existem entidade, subsistemas nem custo operacional; qualquer número de vitória Stargrave obtido de uma simulação de casco fictício é inválido.
 - **Assimetria de defesa:** guarnição composta de várias frotas coopera na escolta por decisão aprovada, mas doutrina defensiva Equilibrada é hipótese da C3.0-D02.
 
+## 8.1. Integração e gates operacionais
+
+`PROPOSED`: a [C3.0-D05](combat-integration.md) mapeia os riscos técnicos que devem ser resolvidos antes de executar B01–B18: seletor legado versus absorção real, fonte da doutrina, emissor de interferência, reprogramação offline e entidade Stargrave. Esta referência **não** aprova algoritmos C3.0-D02/D03 nem inicia os testes propostos.
+
 ## 9. Decisões que continuam pendentes
 
 | Documento | Questão não aprovada | Recomendação de próximo passo |
