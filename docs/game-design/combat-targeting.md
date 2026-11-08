@@ -121,6 +121,10 @@ Na ofensiva, formar o grupo real da ordem `ATTACK`. Na defesa, todas as naves do
 
 `PROPOSED`: os casos B01–B10 e B18 da [C3.0-D04](combat-balance-plan.md) buscam medir custo, desempate, classes, redirecionamento, munição e regressão de saves. Eles **não** aprovam o ranking ou a persistência desta C3.0-D02 e não constituem testes executados.
 
+## 8.3. Registro de integração
+
+A [C3.0-D05](combat-integration.md) mantém as decisões C3-D02-A–G `PROPOSED` e identifica conflitos concretos, incluindo classificação de estruturas pesadas como `capital` e persistência da seleção da missão. Nenhum desses pontos foi aprovado por continuidade documental.
+
 ## 9. Decisões pendentes — C3.0-D02
 
 | ID | Decisão proposta para aprovação |
