@@ -26,6 +26,9 @@ O estado aplica-se à afirmação identificada, não a todo o documento citado. 
 |---|---|
 | [Visão central](STARZ-GDD-v1.md) | Identidade, objetivos e direção de evolução. |
 | [Pesquisa](research.md) | Domínios, tiers, níveis, dependências e desbloqueios. |
+| [Research 3.0 — R3.0-D01](research-3.md) | `APPROVED`: 16 descobertas únicas, IDs, tiers, dependências e capacidades; preservar 44 existentes. Não implementado. |
+| [Research 3.0 — R3.0-D02](research-operational.md) | `PROPOSED`: contratos operacionais das 16 descobertas. |
+| [Combat 3.0 — doutrinas e formações](combat-doctrines.md) | `PROPOSED`: contratos de targeting, escolta, guerra eletrônica e contramedidas. |
 | [Economia](economy.md) | Estoques locais, cadeias, população, energia e logística. |
 | [Naves](ships.md) | Hulls, funções, composição e limites dos modelos visuais. |
 | [Defesas](defenses.md) | Estruturas locais, munição e contramedidas. |
@@ -46,7 +49,7 @@ O [cenário Concordat](../complete-game.md) usa `campaign_data/` e regras própr
 
 | ID | Evidência atual | Intenção ou proposta diferente | Tratamento |
 |---|---|---|---|
-| D01 | `stellar_containment` exige `carrier_operations: 3` e concede energia. | GDD §4 propõe separar ciência estelar da linha de porta-naves. | `PROPOSED`: redesenho; preservar ID e progressão enquanto não autorizado. Ver [pesquisa](research.md). |
+| D01 | `stellar_containment` exige `carrier_operations: 3` e concede energia. | GDD §4 propõe separar ciência estelar da linha de porta-naves. | `APPROVED`: remover requisito de `carrier_operations` em futura implementação; `PROPOSED`: detalhes de migração e operação. Ver [R3.0-D01](research-3.md). |
 | D02 | Roles e coeficientes existem; várias habilidades de classe não existem. | GDD §6 propõe escolta, interceptação, ciência e comando especializados. | `PROPOSED`: não apresentar o rótulo como habilidade executável. Ver [naves](ships.md). |
 | D03 | Indústria habilita construções; não há projeto estelar multietapas. | GDD §5/9 propõe cadeias de megaengenharia e logística estelar. | `PROPOSED`: contratos ainda a definir. Ver [economia](economy.md). |
 | D04 | Stargrave visual e pesquisa preliminar; Concordat tem projeto de vitória próprio. | Contrato aprovado: unidade militar móvel, derrotável, sem vitória automática no multiplayer. | `APPROVED` não implementado no persistente. Ver [Stargrave](stargrave.md). |
@@ -63,3 +66,9 @@ O [cenário Concordat](../complete-game.md) usa `campaign_data/` e regras própr
 5. Atualizar a documentação após implementar uma mudança aprovada, sem transformar Markdown em configuração executável.
 
 Referências complementares: [pesquisa 2.0](../research-2.md), [universo persistente](../persistent-universe.md), [defesa planetária](../planetary-defense.md), [inteligência e combate](../fleet-intelligence-2.md). Relatos de testes nesses documentos são históricos; não constituem validação executada nesta auditoria.
+
+## Aprovações posteriores à auditoria inicial (08/11/2026)
+
+`APPROVED` — [R3.0-D01](research-3.md): 44 IDs legados preservados, 16 novos IDs de descoberta `breakthrough` únicos aprovados com nomes/domínios/tiers/dependências/capacidades; remover gate Militar IV de Fundamental V e vínculo `carrier_operations` de `stellar_containment`; contramedidas especializadas em Tier IV; não revogar hulls nem bloquear especializações mutuamente.
+
+`PROPOSED` — [R3.0-D02](research-operational.md): políticas, ações, projetos e condições operacionais; [Combat 3.0](combat-doctrines.md): doutrinas, formação e resolução. Essas propostas não autorizam implementação. O inventário *executável* permanece 32 repetíveis e 12 avanços, total de 44; 60 é quantidade *planejada*, não instalada. O histórico de auditoria de 07/11 permanece preservado.
