@@ -37,7 +37,7 @@ Relacionar as classes existentes a seus efeitos reais e às funções propostas 
 
 ## 4.2. Odyssey como emissora de guerra eletrônica
 
-`APPROVED` pela [C3.0-D06-A/B](combat-operational-closures.md): a **Odyssey** é a unidade física emissora de `electronic_warfare`, exigindo nave real, presente/operacional e pesquisa concluída. Contribui para contestação de prioridade ofensiva e de novas observações hostis no planeta onde estiver estacionada. Múltiplas Odyssey não somam interferência sem limite; se a emissora cair, reavaliar no próximo snapshot da salva. **Não implementado**; fórmula, intensidade e alcance seguem `OPEN`. A [C3.0-D07](combat-technical-contracts.md) propõe o contrato de snapshots.
+`APPROVED` pela [C3.0-D06-A/B](combat-operational-closures.md): a **Odyssey** é a unidade física emissora de `electronic_warfare`, exigindo nave real, presente/operacional e pesquisa concluída. Contribui para contestação de prioridade ofensiva e de novas observações hostis no planeta onde estiver estacionada. Múltiplas Odyssey não somam interferência sem limite; se a emissora cair, reavaliar no próximo snapshot da salva. **Não implementado**; fórmula, intensidade e alcance seguem `OPEN`. A [C3.0-D07](combat-technical-contracts.md) aprova como design técnico o contrato de snapshots, ainda não implementado.
 
 ## 5. Dependências
 
