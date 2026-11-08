@@ -39,6 +39,8 @@ As políticas devem ser simples e contextuais, não uma linguagem programável d
 | `containment_warfare` | `OPERATION` | Com inteligência e oportunidade tática, permite atacar subsistemas de contenção estelar. | Stargrave continua vulnerável a dano convencional; sem explosão/aniquilação automática. |
 | `stellar_armaments` | `UNLOCK` | Permite integrar armamento principal em Stargrave efetivamente comissionada. | Consumo de energia, preparação visível, interrupção e dano não planetocida automático. |
 
+**Refinamento `PROPOSED`:** [C3.0-D03](combat-countermeasures.md) diferencia aquisição de alvos, perfil de ruptura de escudos, interdição operacional e ataque de contenção. As capacidades principais aprovadas na R3.0-D01 não implicam aprovação dos algoritmos nem dos números detalhados.
+
 ### Separação de funções
 
 - Controle de tiro escolhe prioridades, coordenação organiza proteção, guerra eletrônica contesta informação.
