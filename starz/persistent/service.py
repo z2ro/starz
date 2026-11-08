@@ -6,7 +6,7 @@ empire/planet locks before scaling to a public population.
 from copy import deepcopy
 from math import ceil
 from time import time
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
 
 from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert
@@ -21,6 +21,7 @@ from ..progression import effect, level, research_quote, building_quote
 from ..defenses import defense_quote
 from .combat import resolve_battle, resolve_missiles, local_defenders
 from .intelligence import gather_intelligence, intel_view, known_threat
+from .combat_rules import interdiction_delay
 from ..travel import preview_travel
 
 
@@ -209,6 +210,13 @@ class PersistentStore(Store):
 
     def dispatch(self, session, empire, e, data):
         s=e.state; ids=data['ship_ids']; mission=data['mission']
+        doctrine=data.get('doctrine','balanced');profile=data.get('weapon_profile','standard')
+        require(doctrine in {'balanced','interception','rupture'},'Doutrina desconhecida.')
+        require(profile in {'standard','anti_shield'},'Perfil de armamento desconhecido.')
+        require(mission=='ATTACK' or (doctrine=='balanced' and profile=='standard'),'Configuração militar exige missão de ataque.')
+        require(doctrine=='balanced' or level(s,'fire_control_doctrine')>=1,'Requer Doutrina de Controle de Tiro.')
+        require(profile=='standard' or level(s,'shield_disruption')>=1,'Requer Ruptura de Escudos.')
+        combat={'version':1,'doctrine':doctrine,'weapon_profile':profile,'experiment':'intermediate'}
         require(mission in {'MOVE','REINFORCE','SURVEY','COLONIZE','TRANSPORT','ATTACK','ESPIONAGE','RECON','EXPEDITION'},'Missão desconhecida.')
         require(0 < len(ids) <= 100 and len(ids)==len(set(ids)), 'Selecione de 1 a 100 naves únicas.')
         ships=[next((x for x in s.ships if x['id']==id),None) for id in ids]
@@ -252,7 +260,7 @@ class PersistentStore(Store):
         capacity=sum(e.catalog.get('ships',x['hull_id']).cargo_capacity for x in ships)*(1+effect(e.catalog,s,'cargo'))
         if mission=='EXPEDITION': require(capacity>0, 'Expedição exige capacidade de carga; use uma Odyssey científica.')
         if data.get('preview'):
-            return {'eta_seconds':duration,'fuel_id':ships[0]['fuel_id'],'fuel_cost':fuel,'launch_fuel':2*fuel if source or mission not in {'MOVE','REINFORCE','COLONIZE'} else fuel,'cargo_capacity':capacity,'ship_count':len(ships),'origin':list(origin),'destination':[tx,ty],'departure_at':s.last_updated,'arrival_at':s.last_updated+duration,'return_at':None if mission in {'MOVE','REINFORCE','COLONIZE'} else s.last_updated+2*duration,'threat':known_threat(s,str(target.id),s.last_updated) if target else {'status':'UNKNOWN','message':'Sem alvo planetário.'}}
+            return {'eta_seconds':duration,'fuel_id':ships[0]['fuel_id'],'fuel_cost':fuel,'launch_fuel':2*fuel if source or mission not in {'MOVE','REINFORCE','COLONIZE'} else fuel,'cargo_capacity':capacity,'ship_count':len(ships),'origin':list(origin),'destination':[tx,ty],'departure_at':s.last_updated,'arrival_at':s.last_updated+duration,'return_at':None if mission in {'MOVE','REINFORCE','COLONIZE'} else s.last_updated+2*duration,'combat':combat,'escort_enabled':level(s,'fleet_coordination')>=1,'threat':known_threat(s,str(target.id),s.last_updated) if target else {'status':'UNKNOWN','message':'Sem alvo planetário.'}}
         if mission=='COLONIZE':
             e._pay(e.colonization_rules.cost);s.population_total-=e.colonization_rules.population
         if source: e._pay({ships[0]['fuel_id']:2*fuel})
@@ -274,10 +282,11 @@ class PersistentStore(Store):
         f={'id':fid,'name':f'{mission} · {len(ids)} naves','ship_ids':ids,'x':origin[0],'y':origin[1],'destination_x':tx,'destination_y':ty,'status':'TRANSIT','mission':'SURVEY' if mission=='SURVEY' else 'COLONIZE' if mission=='COLONIZE' else 'MOVE','target_planet_index':data.get('planet_index') if mission=='COLONIZE' else None,'colonization_population':e.colonization_rules.population if mission=='COLONIZE' else None,'colonization_origin_planet_id':s.planet_id if mission=='COLONIZE' else None,'origin_planet_id':source['id'] if source else next((f.get('origin_planet_id') for f in old if f.get('origin_planet_id')),None),'fuel_reserve':reserve,'departure_at':now,'arrival_at':now+duration,'propulsion':ships[0]['propulsion_id'],'mode':'NORMAL','fuel_cost':fuel}
         s.fleets.append(f)
         s.universe.setdefault('fleet_planets',{})[fid]=None
-        session.add(m.UniverseOrder(universe_id=empire.universe_id,empire_id=empire.id,kind='mission',payload={'fleet_id':fid,'mission':mission,'target':str(target.id) if target else None,'cargo':cargo,'origin':list(origin),'origin_planet':source['id'] if source else next((f.get('origin_planet_id') for f in old if f.get('origin_planet_id')),None),'duration':duration,'fuel':fuel},due_at=utc(now+duration),resolved=False))
+        session.add(m.UniverseOrder(universe_id=empire.universe_id,empire_id=empire.id,kind='mission',payload={'fleet_id':fid,'mission':mission,'target':str(target.id) if target else None,'cargo':cargo,'origin':list(origin),'origin_planet':source['id'] if source else next((f.get('origin_planet_id') for f in old if f.get('origin_planet_id')),None),'duration':duration,'fuel':fuel,'combat':combat,'chain_id':fid,'interdiction_applied':False},due_at=utc(now+duration),resolved=False))
         return f
 
     def resolve(self, session, order, engines):
+        if getattr(order,'resolved',False):return
         e=engines.get(str(order.empire_id));p=order.payload
         if e is None:return
         if order.kind=='trade_delivery':
@@ -295,7 +304,7 @@ class PersistentStore(Store):
                 local=Engine(self.catalog,load(session,session.get(m.Empire,target.empire_id),planet_id=target.id,catalog=self.catalog))
                 battle=resolve_missiles(e,local,p['count'],p.get('target_type'))
                 battle.update(attacker_name=session.get(m.Empire,order.empire_id).name,defender_name=session.get(m.Empire,target.empire_id).name,attacker=str(order.empire_id),defender=str(target.empire_id),planet_name=local.system().planet.name,coordinates=[local.state.system_x,local.state.system_y,local.state.planet_index])
-                self.battle_report(e,battle);self.battle_report(local,battle)
+                self.battle_report(e,battle,str(order.empire_id));self.battle_report(local,battle,str(target.empire_id))
                 self.save(session,target.empire_id,local);session.flush()
                 engines[str(target.empire_id)]=Engine(self.catalog,load(session,session.get(m.Empire,target.empire_id),catalog=self.catalog))
             else:self.report(e,'Mísseis autodestruídos: destino sem guerra ativa. Munição lançada não é devolvida.')
@@ -320,9 +329,12 @@ class PersistentStore(Store):
         elif mission=='ATTACK' and target:
             # A peace accepted during transit prevents combat; vessels return intact.
             if self.relation(session,order.empire_id,target.empire_id)['status']=='war':
-                battle=resolve_battle(e,ships,target_engine,str(target.id))
+                if self.interdict(session,order,e,target_engine,fleet):
+                    self.save(session,order.empire_id,e)
+                    return
+                battle=resolve_battle(e,ships,target_engine,str(target.id),config=p.get('combat'))
                 battle.update(attacker_name=session.get(m.Empire,order.empire_id).name,defender_name=session.get(m.Empire,target.empire_id).name,attacker=str(order.empire_id),defender=str(target.empire_id),planet_name=target_engine.system().planet.name,coordinates=[target_engine.state.system_x,target_engine.state.system_y,target_engine.state.planet_index])
-                self.battle_report(e,battle);self.battle_report(target_engine,battle)
+                self.battle_report(e,battle,str(order.empire_id));self.battle_report(target_engine,battle,str(target.empire_id))
                 p=deepcopy(p);p['cargo']=battle['loot']
         elif mission=='EXPEDITION':
             reward=ceil(20*(1+effect(self.catalog,e.state,'expedition'))*(1+sum(self.catalog.get('ships',s['hull_id']).science_bonus for s in ships)))
@@ -347,6 +359,30 @@ class PersistentStore(Store):
             fleet.update(status='TRANSIT',mission='MOVE',destination_x=p['origin'][0],destination_y=p['origin'][1],departure_at=e.state.last_updated,arrival_at=e.state.last_updated+p['duration'],fuel_reserve=max(0,fleet.get('fuel_reserve',0)-p['fuel']))
             session.add(m.UniverseOrder(universe_id=order.universe_id,empire_id=order.empire_id,kind='mission',payload={**p,'mission':'RETURN','cargo':p.get('cargo',{}) if mission in {'ATTACK','EXPEDITION'} else {}},due_at=utc(fleet['arrival_at']),resolved=False))
         self.save(session,order.empire_id,e)
+
+    def interdict(self,session,order,attacker,defender,fleet):
+        p=order.payload
+        if p.get('interdiction_applied') or level(defender.state,'spatial_interdiction')<1:return False
+        providers=[defender]
+        for world in defender.state.planets:
+            if world['id']!=defender.state.planet_id and (world['x'],world['y'])==(defender.state.system_x,defender.state.system_y):
+                owner=session.get(m.Empire,session.get(m.Planet,UUID(defender.state.planet_id)).empire_id)
+                providers.append(Engine(self.catalog,load(session,owner,planet_id=world['id'],catalog=self.catalog)))
+        def active(local):
+            cap=local.capacities()
+            return min(cap['energy_coverage'],cap['workforce_coverage'])>=1 and any(u['type']=='orbital_platform' and u.get('mode')=='interdiction' and u['hp']>0 for u in local.state.defenses['units'])
+        if not any(active(local) for local in providers):return False
+        delay=interdiction_delay(p['duration'],p.get('combat',{}).get('experiment','intermediate'))
+        if delay<=0:return False
+        successor=uuid5(NAMESPACE_URL,f'starz-interdiction:{order.id}')
+        due=epoch(order.due_at)+delay
+        payload={**deepcopy(p),'interdiction_applied':True,'predecessor_id':str(order.id),'interdiction_delay':delay}
+        if session.get(m.UniverseOrder,successor) is None:
+            session.add(m.UniverseOrder(id=successor,universe_id=order.universe_id,empire_id=order.empire_id,kind='mission',payload=payload,due_at=utc(due),resolved=False))
+        fleet.update(status='TRANSIT',arrival_at=due)
+        order.resolved=True
+        self.report(attacker,f'Interdição na chegada: atraso único de {delay}s. Reserva de retorno preservada.')
+        return True
 
     def recall(self,session,empire,e,fleet_id):
         fleet=next((f for f in e.state.fleets if f['id']==fleet_id),None)
@@ -412,7 +448,15 @@ class PersistentStore(Store):
         return {'empire_id':str(empire.id),'name':empire.name,'players':players,'defenses':self.defense_details(session,empire,e),'battles':e.state.universe.get('battles',[]),'intelligence':intel_view(e.state,e.state.last_updated),'research':[research_quote(self.catalog,e.state,t) for t in self.catalog.items['technologies']], 'buildings':[building_quote(self.catalog,e.state,t) for t in self.catalog.items['districts'] if e.state.districts.get(t,0)<50], 'reports':e.state.universe.get('reports',[]),'fleet_limit':2+int(effect(self.catalog,e.state,'fleet_slots')),'colony_limit':1+int(effect(self.catalog,e.state,'colonies')),'market':[{'id':str(o.id),'owner':str(o.empire_id),**o.payload} for o in orders if o.kind=='market' and o.payload['status']=='open'], 'missions':[{'id':str(o.id),'due_at':epoch(o.due_at),**o.payload} for o in orders if o.kind=='mission' and o.empire_id==empire.id and not o.resolved]}
 
 
-    def battle_report(self,engine,battle):
+    def battle_report(self,engine,battle,viewer_id=None):
+        battle=deepcopy(battle)
+        if viewer_id:
+            own='attacker' if viewer_id==battle.get('attacker') else 'defender'
+            battle['technology']={own:battle.get('technology',{}).get(own,{})}
+            enemy='defending' if own=='attacker' else 'attacking'
+            for suffix in ('before','after'):
+                key=f'{enemy}_fleet_{suffix}'
+                if key in battle:battle[key]=[{k:u[k] for k in ('id','type','hp','kind','class') if k in u} for u in battle[key]]
         engine.state.universe['battles']=[battle,*engine.state.universe.get('battles',[])][:30]
         outcome={'attacker':'vitória do atacante','defender':'vitória do defensor','draw':'sem vencedor','resolved':'salva resolvida'}.get(battle['outcome'],battle['outcome'])
         self.report(engine,f"Batalha em {battle.get('planet_name','planeta alvo')}: {outcome}. Consulte o relatório detalhado.")

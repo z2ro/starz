@@ -99,9 +99,23 @@ def validate_defenses(catalog,state):
     for u in state.defenses.get('units',[]):
         item=catalog.get('defenses',u['type'])
         if item.kind!='structure' or u['id'] in ids or not isfinite(u['hp']) or not 0<u['hp']<=item.hull_points or not isfinite(u.get('charge',0)) or u.get('charge',0)<0:raise DataValidationError('Durabilidade defensiva inválida.')
+        if u.get('mode','defense') not in {'defense','interdiction'} or (u.get('mode')=='interdiction' and u['type']!='orbital_platform'):raise DataValidationError('Modo defensivo inválido.')
         ids.add(u['id'])
     for key,n in state.defenses.get('ammunition',{}).items():
         if catalog.get('defenses',key).kind!='ammunition' or not isinstance(n,int) or not 0<=n<=10000:raise DataValidationError('Munição inválida.')
     for j in state.defenses.get('queue',[]):
         catalog.get('defenses',j['type'])
         if not 1<=j['count']<=50 or not isfinite(j['complete_at']) or j['complete_at']<j['started_at']:raise DataValidationError('Fila defensiva inválida.')
+
+
+def set_platform_mode(engine,unit_id,mode):
+    ensure_defenses(engine.catalog,engine.state)
+    unit=next((u for u in engine.state.defenses['units'] if u['id']==unit_id and u['type']=='orbital_platform' and u['hp']>0),None)
+    if unit is None:raise DataValidationError('Plataforma não pertence ao planeta selecionado.')
+    if mode not in {'defense','interdiction'}:raise DataValidationError('Modo defensivo inválido.')
+    if mode=='interdiction':
+        if level(engine.state,'spatial_interdiction')<1:raise DataValidationError('Requer Interdição Espacial.')
+        cap=engine.capacities()
+        if min(cap['energy_coverage'],cap['workforce_coverage'])<1:raise DataValidationError('Interdição exige energia e trabalhadores completos.')
+    unit['mode']=mode
+    return {'unit_id':unit_id,'mode':mode}

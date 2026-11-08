@@ -1,6 +1,7 @@
 """Deterministic, simultaneous salvos over actual persistent units (six rounds)."""
 from copy import deepcopy
-from ..progression import effect
+from ..progression import effect, level
+from .combat_rules import combat_config, ew_contest, experiment_rules
 
 
 def local_defenders(engine,planet_id):
@@ -27,52 +28,96 @@ def fleet_units(engine,ships):
     return units
 
 
-def defense_units(engine):
+def defense_units(engine, *, respect_modes=True):
     c,s=engine.catalog,engine.state;cap=engine.capacities();factor=min(cap['energy_coverage'],cap['workforce_coverage'])
     units=[]
     for unit in sorted(s.defenses['units'],key=lambda u:u['id']):
         d=c.get('defenses',unit['type'])
         units.append({'id':unit['id'],'type':d.id,'kind':'defense','class':'capital' if d.hull_points>=300 else 'medium','hp':unit['hp'],'shield':0,'damage':d.damage*(1+effect(c,s,'weapons'))*(1+effect(c,s,'defense'))*factor,'modifiers':d.modifiers,'armor':1+effect(c,s,'armor'),'ammunition':d.ammunition,'charge_initial':unit.get('charge',0),'pool_initial':min(unit.get('charge',0),d.shield*(1+effect(c,s,'shields')))*factor,'pool':min(unit.get('charge',0),d.shield*(1+effect(c,s,'shields')))*factor})
+        if respect_modes and d.id=='orbital_platform' and unit.get('mode')=='interdiction':
+            units[-1]['damage']=0
     return units
 
 
-def plans(shooters,targets,ammo):
+ESCORTS = {
+    'vanguard_hull': ('scout_hull', 'wayfarer_hull', 'odyssey_hull'),
+    'sentinel_hull': ('scout_hull', 'wayfarer_hull', 'odyssey_hull', 'atlas_hull'),
+    'aegis_hull': ('atlas_hull', 'dominion_hull'),
+}
+
+
+def plans(shooters,targets,ammo, *, doctrine='balanced', escorts=False, profile=(1,1), telemetry=None):
     result=[];projected={t['id']:t['hp']+t['shield'] for t in targets};pool_left=sum(t.get('pool',0) for t in targets)
+    enhanced=doctrine!='balanced' or escorts or profile!=(1,1)
+    projection={t['id']:t for t in deepcopy(targets)} if enhanced else {}
+    used=set()
     for source in shooters:
-        eligible=[t for t in targets if projected[t['id']]>0]
+        eligible=[t for t in targets if (projection[t['id']]['hp'] if enhanced else projected[t['id']])>0]
         if source['damage']<=0 or not eligible:continue
         ammunition=source.get('ammunition')
         if ammunition:
             if ammo.get(ammunition,0)<1:continue
             ammo[ammunition]-=1
-        target=max(eligible,key=lambda t:(source['modifiers'].get(t['class'],1),-t['hp'],t['id']))
+        preferred=[]
+        if doctrine=='interception':preferred=[t for t in eligible if t['class']=='light']
+        elif doctrine=='rupture':
+            preferred=next(([t for t in eligible if t['class']==cls] for cls in ('capital','medium','light') if any(t['class']==cls for t in eligible)),[])
+        target=max(preferred or eligible,key=lambda t:(source['modifiers'].get(t['class'],1),-t['hp'],t['id']))
+        intended=target
+        if escorts and target['kind']=='ship':
+            covering=[t for t in eligible if t['kind']=='ship' and t['id']!=target['id'] and t['id'] not in used
+                      and target['type'] in ESCORTS.get(t['type'],())
+                      and (t['type']!='sentinel_hull' or source['kind']=='ship' and source['class']=='light')]
+            if covering:
+                # Experimental deterministic specialty order, then stable ID.
+                target=min(covering,key=lambda t:(('sentinel_hull','vanguard_hull','aegis_hull').index(t['type']),t['id']))
+                used.add(target['id'])
         damage=source['damage']*source['modifiers'].get(target['class'],1)
-        result.append((target,damage));absorbed=min(pool_left,damage);pool_left-=absorbed;projected[target['id']]-=(damage-absorbed)/target['armor']
+        result.append((target,damage))
+        if telemetry is not None:
+            telemetry.append({'source_id':source['id'],'intended_target_id':intended['id'],
+                              'effective_target_id':target['id'],'redirected':target is not intended})
+        if enhanced:
+            apply_hits([(projection[target['id']],damage)],list(projection.values()),
+                       [t for t in projection.values() if t.get('pool',0)>0],profile=profile)
+        else:
+            absorbed=min(pool_left,damage);pool_left-=absorbed;projected[target['id']]-=(damage-absorbed)/target['armor']
     return result
 
 
-def apply_hits(hits,targets,pool):
+def apply_hits(hits,targets,pool, *, profile=(1,1)):
     result={'shots':len(hits),'damage':0,'shield_absorbed':0,'hull_damage':0,'losses':{}}
     for target,damage in hits:
         result['damage']+=damage
         for generator in pool:
-            absorbed=min(generator.get('pool',0),damage);generator['pool']-=absorbed;damage-=absorbed;result['shield_absorbed']+=absorbed
+            absorbed=min(generator.get('pool',0),damage*profile[0]);generator['pool']-=absorbed;damage=max(0,damage-absorbed/profile[0]);result['shield_absorbed']+=absorbed
             if damage<=0:break
-        absorbed=min(target['shield'],damage);target['shield']-=absorbed;damage-=absorbed;result['shield_absorbed']+=absorbed
-        dealt=min(target['hp'],damage/target['armor']);target['hp']-=dealt;result['hull_damage']+=dealt
+        absorbed=min(target['shield'],damage*profile[0]);target['shield']-=absorbed;damage=max(0,damage-absorbed/profile[0]);result['shield_absorbed']+=absorbed
+        dealt=min(target['hp'],damage*profile[1]/target['armor']);target['hp']-=dealt;result['hull_damage']+=dealt
     for unit in targets:
         if unit['hp']<=0:result['losses'][unit['type']]=result['losses'].get(unit['type'],0)+1
     return result
 
 
-def resolve_battle(attacker,ships,defender,planet_id):
-    a=fleet_units(attacker,ships);d=fleet_units(defender,local_defenders(defender,planet_id))+defense_units(defender)
+def resolve_battle(attacker,ships,defender,planet_id, *, config=None):
+    config=combat_config(config)
+    doctrine=config['doctrine'] if level(attacker.state,'fire_control_doctrine')>0 else 'balanced'
+    weapon_profile=config['weapon_profile'] if level(attacker.state,'shield_disruption')>0 else 'standard'
+    rules=experiment_rules(config['experiment']);profile=(rules['shield'],rules['hull']) if weapon_profile=='anti_shield' else (1,1)
+    a=[u for u in fleet_units(attacker,ships) if u['hp']>0]
+    d=[u for u in fleet_units(defender,local_defenders(defender,planet_id))+defense_units(defender) if u['hp']>0]
     ammo=deepcopy(defender.state.defenses['ammunition']);ammo_before=deepcopy(ammo);before=deepcopy(d);attacking_before=deepcopy(a);rounds=[]
     for turn in range(1,7):
         if not a or not d:break
-        ahits=plans(a,d,{});dhits=plans(d,a,ammo)
-        received_d=apply_hits(ahits,d,[u for u in d if u.get('pool',0)>0]);received_a=apply_hits(dhits,a,[])
-        rounds.append({'round':turn,'attacker':received_a,'defender':received_d})
+        degraded=ew_contest(defender,d,attacker,config['experiment'])
+        effective='balanced' if degraded else doctrine
+        atelemetry=[];dtelemetry=[]
+        ahits=plans(a,d,{},doctrine=effective,escorts=level(defender.state,'fleet_coordination')>0,profile=profile,telemetry=atelemetry)
+        dhits=plans(d,a,ammo,escorts=level(attacker.state,'fleet_coordination')>0,telemetry=dtelemetry)
+        received_d=apply_hits(ahits,d,[u for u in d if u.get('pool',0)>0],profile=profile);received_a=apply_hits(dhits,a,[])
+        rounds.append({'round':turn,'attacker':received_a,'defender':received_d,
+                       'targeting':{'attacker':{'doctrine':effective,'shots':atelemetry},
+                                    'defender':{'doctrine':'balanced','shots':dtelemetry}}})
         a=[u for u in a if u['hp']>0];d=[u for u in d if u['hp']>0]
     for engine,units in ((attacker,a),(defender,d)):
         engine.state.universe.setdefault('ship_health',{}).update({u['id']:u['hp'] for u in units if u['kind']=='ship'})
@@ -92,14 +137,15 @@ def resolve_battle(attacker,ships,defender,planet_id):
         for r,n in sorted(defender.state.stocks.items()):
             take=min(n*.25,capacity);defender.state.stocks[r]-=take;capacity-=take
             if take:loot[r]=take
-    return {'kind':'fleet','planet_id':planet_id,'at':attacker.state.last_updated,'attacking_fleet_before':attacking_before,'defending_fleet_before':[u for u in before if u['kind']=='ship'],'attacking_fleet_after':a,'defending_fleet_after':[u for u in d if u['kind']=='ship'],'outcome':'attacker' if won else 'defender' if not a and d else 'draw','rounds':rounds,'attacker_losses':sorted(lost_a),'defender_losses':sorted(lost_d),'defenses_before':[{k:u[k] for k in ('id','type','hp')} for u in before if u['kind']=='defense'],'defenses_after':deepcopy(defender.state.defenses['units']),'ammunition_before':ammo_before,'ammunition_consumed':{k:v-ammo.get(k,0) for k,v in ammo_before.items()},'ammunition_after':ammo,'technology':{'attacker':technology_snapshot(attacker,combat_effect_keys(attacker,attacking_before)),'defender':technology_snapshot(defender,combat_effect_keys(defender,before))},'economic_losses':{'attacker':loss_cost(attacker,attacking_before,a),'defender':loss_cost(defender,before,d)},'loot':loot}
+    return {'combat_config':{**config,'doctrine':doctrine,'weapon_profile':weapon_profile},'kind':'fleet','planet_id':planet_id,'at':attacker.state.last_updated,'attacking_fleet_before':attacking_before,'defending_fleet_before':[u for u in before if u['kind']=='ship'],'attacking_fleet_after':a,'defending_fleet_after':[u for u in d if u['kind']=='ship'],'outcome':'attacker' if won else 'defender' if not a and d else 'draw','rounds':rounds,'attacker_losses':sorted(lost_a),'defender_losses':sorted(lost_d),'defenses_before':[{k:u[k] for k in ('id','type','hp')} for u in before if u['kind']=='defense'],'defenses_after':deepcopy(defender.state.defenses['units']),'ammunition_before':ammo_before,'ammunition_consumed':{k:v-ammo.get(k,0) for k,v in ammo_before.items()},'ammunition_after':ammo,'technology':{'attacker':technology_snapshot(attacker,combat_effect_keys(attacker,attacking_before)),'defender':technology_snapshot(defender,combat_effect_keys(defender,before))},'economic_losses':{'attacker':loss_cost(attacker,attacking_before,a),'defender':loss_cost(defender,before,d)},'loot':loot}
 
 
 def resolve_missiles(attacker,defender,count,target_type=None):
     c,s=defender.catalog,defender.state;cap=defender.capacities();factor=min(cap['energy_coverage'],cap['workforce_coverage'])
     interceptors=sum(c.get('defenses',u['type']).intercept_capacity for u in s.defenses['units']);ammo=s.defenses['ammunition'];intercepted=min(count,ammo.get('interceptor_missile',0),int(interceptors*factor));ammo['interceptor_missile']=ammo.get('interceptor_missile',0)-intercepted
     ammo_before=deepcopy(ammo);ammo_before['interceptor_missile']=ammo.get('interceptor_missile',0)+intercepted
-    units=defense_units(defender);before=deepcopy(s.defenses['units']);shield=damage=0;infrastructure=0
+    # Missile target ranking retains conventional damage regardless of platform mode.
+    units=defense_units(defender,respect_modes=False);before=deepcopy(s.defenses['units']);shield=damage=0;infrastructure=0
     for _ in range(count-intercepted):
         alive=[u for u in units if u['hp']>0];power=c.get('defenses','strategic_missile').damage*(1+effect(attacker.catalog,attacker.state,'weapons'))
         for generator in [u for u in alive if u.get('pool',0)>0]:

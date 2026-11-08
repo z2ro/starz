@@ -102,6 +102,8 @@ class Mission(BaseModel):
     y:int=Field(default=0,ge=-100,le=100)
     planet_index:int | None=Field(default=None,ge=0,le=20)
     cargo:dict[str,float]=Field(default_factory=dict,max_length=10)
+    doctrine:Literal['balanced','interception','rupture']='balanced'
+    weapon_profile:Literal['standard','anti_shield']='standard'
 
 
 def perform(request,call,planet_id=None):
@@ -213,3 +215,16 @@ class FleetRecall(BaseModel):
 @router.post('/api/universe/recall')
 def recall(body:FleetRecall,request:Request):
     return perform(request,lambda session,empire,e:request.app.state.store.recall(session,empire,e,str(body.fleet_id)),body.planet_id)
+
+
+class DefenseMode(BaseModel):
+    model_config={'extra':'forbid'}
+    planet_id:UUID | None=None
+    unit_id:UUID
+    mode:Literal['defense','interdiction']
+
+
+@router.post('/api/universe/defense-mode')
+def defense_mode(body:DefenseMode,request:Request):
+    from ..defenses import set_platform_mode
+    return perform(request,lambda session,empire,e:set_platform_mode(e,str(body.unit_id),body.mode),body.planet_id)

@@ -2,7 +2,8 @@
 from collections import Counter
 from uuid import uuid4
 from ..progression import effect, level
-from .combat import local_defenders
+from .combat import local_defenders, fleet_units
+from .combat_rules import ew_contest
 
 
 def gather_intelligence(attacker, defender, ships, mission):
@@ -12,13 +13,16 @@ def gather_intelligence(attacker, defender, ships, mission):
     protection=1+effect(c,b,'counter_intelligence')+.25*effect(c,b,'sensors')
     ratio=strength/protection
     quality=3 if ratio>=2 else 2 if ratio>=1.3 else 1 if ratio>=.7 else 0
+    # EW contests only this observation; counter-intelligence already affected ratio.
+    jammed=ew_contest(defender,fleet_units(defender,local_defenders(defender,b.planet_id)),attacker)
+    if jammed:quality=max(0,quality-1)
     detected=ratio<1.5
     def field(values,required):
         if quality<required:return {'status':'UNKNOWN','value':None}
         if quality>=required+1:return {'status':'CONFIRMED','value':values}
         return {'status':'ESTIMATED','value':{k:{'min':max(0,int(v*.5)), 'max':int(v*1.5)+1} for k,v in values.items()}}
     report={'id':str(uuid4()),'at':a.last_updated,'expires_at':a.last_updated+300+quality*300,
-        'mission':mission,'planet_id':b.planet_id,'planet_name':defender.system().planet.name,
+        'interference':jammed,'mission':mission,'planet_id':b.planet_id,'planet_name':defender.system().planet.name,
         'coordinates':[b.system_x,b.system_y,b.planet_index],'quality':quality,'detected':detected,
         'ships':field(dict(Counter(s['hull_id'] for s in local_defenders(defender,b.planet_id))),1),
         'defenses':field(dict(Counter(u['type'] for u in b.defenses['units'])),1),
