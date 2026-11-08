@@ -158,7 +158,7 @@ Nenhuma dessas atividades executáveis está autorizada apenas por esta D10.
 
 ## 10.1. Proposta posterior — transferência de custódia
 
-A [C3.0-D11](combat-custody-transfer.md) está **`PROPOSED`** e busca fechar as lacunas que não foram escolhidas pela D10: transferência legítima de custódia já confirmada, cessão consensual, império extinto, espaço livre e neutralidade. As regras **D10-A–H e T33–T48** estão aprovadas; **D11 não está automaticamente aprovada**.
+A [C3.0-D11](combat-custody-transfer.md) está **`APPROVED` como design** e fecha funcionalmente as lacunas que não foram escolhidas pela D10: transferência legítima de custódia já confirmada, cessão consensual, império extinto, espaço livre e neutralidade. As regras **D10-A–H e T33–T48** estão aprovadas; **D11 foi aprovada expressamente pelo responsável**; persiste revisão do schema e parâmetros.
 
 ## 11. Referências
 
