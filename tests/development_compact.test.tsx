@@ -40,10 +40,11 @@ it('shows the four concept artworks for the selected installation and keeps othe
  mocks.universe={data:{buildings:districts.map(d=>({id:d.id,level:0,next_level:1,cost:{},duration:10,production_multiplier:1}))},isFetching:false};
  render(<MemoryRouter><DevelopmentView/></MemoryRouter>);
  const list=screen.getByRole('region',{name:'Instalações disponíveis'});
- for(const id of ['ore_extractor','civil_district','research_lab','orbital_shipyard']){
+ for(const [id,file] of Object.entries({ore_extractor:'ferrite_extractor.webp',civil_district:'civil_district.webp',research_lab:'planetary_research_center.webp',orbital_shipyard:'orbital_shipyard.webp'})){
   const item=districts.find(d=>d.id===id)!;
   const button=within(list).getByRole('button',{name:new RegExp(item.name)});
   expect(button.querySelector('.installation-art')?.getAttribute('data-building')).toBe(id);
+  expect(button.querySelector('.installation-art')?.getAttribute('src')).toContain(file);
   fireEvent.click(button);
   expect(screen.getByRole('region',{name:'Detalhe da instalação'}).querySelector('.installation-art')?.getAttribute('data-building')).toBe(id);
  }
