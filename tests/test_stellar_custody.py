@@ -287,6 +287,32 @@ class CustodyRules(unittest.TestCase):
         self.finish(result)
         self.assertEqual(self.row.custodian_empire_id, self.actor.id)
 
+    def test_t39_third_empire_cannot_accept_cancel_or_claim_another_offer(self):
+        third = m.Empire(id=uuid4(), universe_id=self.actor.universe_id)
+        self.rows[m.Empire, third.id] = third
+        self.row.custodian_empire_id = self.actor.id
+        key = uuid4().hex
+        offered = self.command('offer', recipient_id=str(self.other.id), key=key)
+        operation = self.rows[m.StellarOperation, UUID(offered['operation_id'])]
+        before_ids = set(self.rows)
+        before_payload = deepcopy(self.row.payload)
+        before_stocks = deepcopy(self.e.state.stocks)
+        before_core_stocks = deepcopy(self.row.stocks)
+        before_version = self.row.custody_version
+        for action in ('accept', 'cancel', 'claim', 'conquer', 'offer'):
+            with self.subTest(action=action):
+                with self.assertRaises(DataValidationError):
+                    self.command(action, actor=third, operation_id=offered['operation_id'],
+                                 recipient_id=str(self.other.id), key=key)
+                self.assertEqual(self.row.custodian_empire_id, self.actor.id)
+                self.assertEqual(self.row.custody_version, before_version)
+                self.assertEqual(self.row.payload, before_payload)
+                self.assertEqual(self.row.stocks, before_core_stocks)
+                self.assertEqual(self.e.state.stocks, before_stocks)
+                self.assertEqual(operation.status, 'offered')
+                self.assertEqual(set(self.rows), before_ids)
+                self.assertFalse(any(model is m.StellarLedger for model, _ in self.rows))
+
     def test_cession_requires_acceptance_peace_and_grants_only_core_pickup(self):
         self.row.custodian_empire_id = self.actor.id
         offered = self.command('offer', recipient_id=str(self.other.id))
