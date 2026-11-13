@@ -741,6 +741,96 @@ class CustodyPersistence(unittest.TestCase):
         with patch.object(api.app.state, 'store', store, create=True), patch.object(api.app.state, 'persistent', True, create=True):
             asyncio.run(exercise())
 
+    def test_t64_browser_cession_privacy(self):
+        import socket
+        import subprocess
+        import tempfile
+        import time
+        import urllib.request
+        from pathlib import Path
+        from starz.persistent.security import password_hash
+
+        store, now, a, b, project, unit, home = self.wreck()
+        names = ['t64' + uuid4().hex[:12] for _ in range(3)]
+        with Session(self.db) as session, session.begin():
+            store.lock(session)
+            c = store.create_player(session, names[2]).id
+            encoded = password_hash('synthetic-test-password')
+            for actor, name in zip((a, b, c), names):
+                session.add(m.PlayerAccount(username=name, password_hash=encoded,
+                                            empire_id=actor, created_at=utc(time.time())))
+        claim = self.act(store, a, unit, 'claim')
+        now[0] = claim['complete_at']; store.tick()
+        offer = self.act(store, a, unit, 'offer', recipient_id=str(b))
+
+        def custody_state():
+            with Session(self.db) as session:
+                row = session.get(m.StellarUnit, UUID(unit))
+                return (row.custodian_empire_id, row.custody_version, deepcopy(row.payload), deepcopy(row.stocks),
+                        *[sorted((tuple(r) for r in session.execute(select(model.__table__))), key=repr)
+                          for model in (m.StellarOperation, m.StellarLedger)])
+
+        before = custody_state()
+        with socket.socket() as sock:
+            sock.bind(('127.0.0.1', 0))
+            port = sock.getsockname()[1]
+        env = {**os.environ, 'DATABASE_URL': os.environ['PERSISTENT_TEST_DATABASE_URL'],
+               'PGOPTIONS': '-csearch_path=' + self.schema, 'STARZ_PERSISTENT': '1',
+               'T64_URL': f'http://127.0.0.1:{port}', 'T64_NAMES': json.dumps(names),
+               'T64_UNIT': unit, 'T64_OPERATION': offer['operation_id'], 'T64_HOME': home}
+        server = subprocess.Popen(['.venv/bin/python', '-m', 'uvicorn', 'starz.api:app',
+                                   '--host', '127.0.0.1', '--port', str(port)],
+                                  env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            for _ in range(100):
+                if server.poll() is not None:
+                    self.fail('Servidor isolado encerrou antes de ficar pronto.')
+                try:
+                    with urllib.request.urlopen(env['T64_URL'] + '/health', timeout=1):
+                        break
+                except OSError:
+                    time.sleep(.1)
+            else:
+                self.fail('Servidor isolado não ficou pronto.')
+            with tempfile.TemporaryDirectory(prefix='starz-t64-') as directory:
+                sync = Path(directory)
+                env['T64_SYNC'] = directory
+                with subprocess.Popen(['node', 'tests/visual-qa/t64-custody.cjs'], env=env,
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as browser:
+                    def wait_for(name):
+                        for _ in range(6000):
+                            if (sync / name).exists():
+                                return
+                            if browser.poll() is not None:
+                                stdout, stderr = browser.communicate()
+                                self.fail(stdout + stderr)
+                            time.sleep(.01)
+                        browser.kill()
+                        self.fail('Tempo esgotado na sincronização do navegador.')
+                    try:
+                        wait_for('ready')
+                        def affected_state():
+                            with Session(self.db) as session:
+                                return [sorted((tuple(r) for r in session.execute(select(model.__table__))), key=repr)
+                                        for model in (m.StellarOperation, m.StellarLedger, m.PlanetStock, m.UniverseOrder)]
+                        prior = affected_state()
+                        (sync / 'proceed').touch()
+                        wait_for('done')
+                        self.assertEqual(affected_state(), prior)
+                        (sync / 'checked').touch()
+                        stdout, stderr = browser.communicate(timeout=30)
+                        self.assertEqual(browser.returncode, 0, stdout + stderr)
+                    finally:
+                        if browser.poll() is None:
+                            browser.kill(); browser.wait()
+            self.assertEqual(custody_state(), before)
+        finally:
+            server.terminate()
+            try:
+                server.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                server.kill(); server.wait()
+
     def test_same_actor_concurrent_claims_and_destinations_have_one_effect(self):
         store, now, a, b, project, unit, home = self.wreck()
         def claim(_):

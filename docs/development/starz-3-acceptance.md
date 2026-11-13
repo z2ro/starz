@@ -148,7 +148,7 @@ As referências abaixo usam `alias.method` e apontam para a classe exata de unit
 | T61 | PASS | CR.test_hostile_real_stellar_contest_terminates_without_transfer_and_allows_manual_retry | Reivindicação vencida e contestada torna-se terminal sem conceder custódia; nova tentativa manual recebe nova janela. |
 | T62 | PASS | CR.test_claim_is_timed_replayed_once_and_conflicting_key_is_rejected; CR.test_ledger_provenance_is_once_and_rejects_conflicting_reuse | Uma única custódia ou efeito sob reprocessamento; sem segunda titularidade ou recompensa. |
 | T63 | PARTIAL | SP.test_source_foreign_universe_fk_and_snapshot_privacy | Existem constraints de mesmo universo, mas o caso PG negativo citado verifica vínculo da fonte, não todos os caminhos de transferência para destinatário de custódia. |
-| T64 | PARTIAL | CR.test_historical_non_custodian_cannot_track_unknown_recipient_orbit; CR.test_historical_owner_view_has_roles_but_no_private_payload_stocks_or_offers; CP.test_actual_tick_claim_cession_private_views_and_cancel_replay | Operações restritas às partes e visualização histórica segura cobertas; falta teste específico no navegador de terceiro sem relação consultando cessão privada. |
+| T64 | PASS | CP.test_t64_browser_cession_privacy | Chromium com três contextos autenticados, FastAPI real e PostgreSQL temporário: A e B veem os controles autorizados; C não vê oferta nem núcleo ao navegar, trocar conta ou usar IDs conhecidos. Recusas preservam operações, ledger, estoques e ordens. |
 
 ## B01–B18 — invariantes funcionais e evidências de balanceamento
 
