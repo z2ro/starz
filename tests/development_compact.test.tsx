@@ -32,3 +32,20 @@ it('selects an installation and preserves the build action and shortage blocking
  expect(screen.getByText(/Recursos insuficientes:/)).toBeTruthy();
  expect(execute).not.toHaveBeenCalled();
 });
+it('shows the four concept artworks for the selected installation and keeps other icons',()=>{
+ const state=planetSnapshot();state.persistent=true;state.population.available=100;state.stocks={raw_ore:100};
+ const source=rawCatalog as Catalog;
+ const districts=source.districts.map(d=>({...d,requires:[],workforce:0,energy_consumption:0}));
+ mocks.context={state,catalog:{...source,districts,technologies:[]},activePlanetId:'planet-test',execute:vi.fn(),busy:false,setFeedback:vi.fn()};
+ mocks.universe={data:{buildings:districts.map(d=>({id:d.id,level:0,next_level:1,cost:{},duration:10,production_multiplier:1}))},isFetching:false};
+ render(<MemoryRouter><DevelopmentView/></MemoryRouter>);
+ const list=screen.getByRole('region',{name:'Instalações disponíveis'});
+ for(const id of ['ore_extractor','civil_district','research_lab','orbital_shipyard']){
+  const item=districts.find(d=>d.id===id)!;
+  const button=within(list).getByRole('button',{name:new RegExp(item.name)});
+  expect(button.querySelector('.installation-art')?.getAttribute('data-building')).toBe(id);
+  fireEvent.click(button);
+  expect(screen.getByRole('region',{name:'Detalhe da instalação'}).querySelector('.installation-art')?.getAttribute('data-building')).toBe(id);
+ }
+ expect(within(list).getByRole('button',{name:/Campo solar/}).querySelector('.installation-art')).toBeNull();
+});
