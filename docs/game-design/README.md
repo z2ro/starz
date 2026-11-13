@@ -25,7 +25,7 @@ O estado aplica-se à afirmação identificada, não a todo o documento citado. 
 
 ## Estado de execução STARZ 3.0
 
-Ver [implementação e evidências P0–P6](../development/starz-3-implementation.md). P0–P5 possuem checkpoints e testes executados; P6 está integrada e em fechamento da validação. A evidência abrangente é composta: `full` encontrou um teste de paridade obsoleto e atingiu o timeout PostgreSQL; os 13 casos PG restantes passaram em complemento direcionado. Não há alegação de `full` com saída zero. As descrições “não implementado” da auditoria histórica abaixo não substituem esse registro de execução. `APPROVED` ≠ `IMPLEMENTED` ≠ `TESTED` ≠ `BALANCED`; custos e coeficientes continuam experimentais.
+Ver [implementação e evidências P0–P6](../development/starz-3-implementation.md). P0–P6 possuem checkpoints e evidências registradas, dentro do escopo orbital suportado. O fechamento documental de 13/11 preserva o checkpoint integrado `15dc3c2`. A evidência abrangente é composta: `full` encontrou um teste de paridade obsoleto e atingiu o timeout PostgreSQL; os 13 casos PG restantes passaram em complemento direcionado, seguidos de três regressões PG finais e da suíte de paridade corrigida (quatro PASS). Não há alegação de `full` com saída zero. As descrições “não implementado” da auditoria histórica abaixo não substituem esse registro de execução. `APPROVED` ≠ `IMPLEMENTED` ≠ `TESTED` ≠ `BALANCED`; custos e coeficientes continuam experimentais.
 
 ## Navegação
 

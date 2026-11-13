@@ -30,7 +30,7 @@ Evidência: `.qa/runs/starz3-p2-combat/unit-final.log` (31 testes); `.qa/runs/st
 
 ## Pendências funcionais delimitadas
 
-P3–P6 continuam em implementação. Espaço profundo depende de presença/âncora e combate suportados pelo servidor; não será falsificado como alvo planetário. Extinção de império não existe como estado autoritativo; offline não habilita custódia órfã. Direitos especiais de terceiros neutros e os contratos civis não aprovados permanecem fora das operações habilitadas.
+O escopo orbital P3–P6 foi implementado; o fechamento e seus limites estão registrados adiante. Espaço profundo depende de presença/âncora e combate suportados pelo servidor; não será falsificado como alvo planetário. Extinção de império não existe como estado autoritativo; offline não habilita custódia órfã. Direitos especiais de terceiros neutros e os contratos civis não aprovados permanecem fora das operações habilitadas.
 
 ## P3 — captura, módulos e construção
 
@@ -58,9 +58,9 @@ Bombardeio reutiliza absorção/dano estratégico, preserva `civil_district`, ex
 
 Coeficientes de ensaio centralizados em `combat_rules.py`: HP estrutural 5000, módulo 1000, escudo 2000; energia máxima 10000, piso 1000, regeneração 1/s, disparo 100 e sustentação de escudo 20 por salva; dano naval 300, armadura 2; velocidade gravitacional 1, custo 100 de energia/distância; bombardeio custa 2000 de energia e aplica orçamento estratégico 1000. São parâmetros EXPERIMENTAIS, não balanceamento final ou escala física medida.
 
-Evidência: 54 testes CPU direcionados (`.qa/runs/starz3-p4-combat/cpu-final.log`), quatro testes de inteligência/isolamento de observação (`.qa/runs/starz3-p4-intelligence/`), quatro cenários PostgreSQL em `.qa/runs/starz3-p4-db/` e `.qa/runs/starz3-p4-orbital/`. Os cenários SQL constroem a unidade pelas cinco fases e usam ordens reais; não inserem uma Stargrave pronta para fingir a jornada. Espaço profundo continua indisponível: sem combate/claim por proximidade visual ou planeta fictício. UI e matriz de balanceamento seguem para P6.
+Evidência: 54 testes CPU direcionados (`.qa/runs/starz3-p4-combat/cpu-final.log`), quatro testes de inteligência/isolamento de observação (`.qa/runs/starz3-p4-intelligence/`), quatro cenários PostgreSQL em `.qa/runs/starz3-p4-db/` e `.qa/runs/starz3-p4-orbital/`. Os cenários SQL constroem a unidade pelas cinco fases e usam ordens reais; não inserem uma Stargrave pronta para fingir a jornada. Espaço profundo continua indisponível: sem combate/claim por proximidade visual ou planeta fictício. A integração de UI e as amostras numéricas estão registradas em P6.
 
-## Amostras numéricas experimentais (em execução)
+## Amostras numéricas experimentais executadas
 
 Comando reproduzível, sem rede ou banco: `.venv/bin/python scripts/starz3-balance.py --output .qa/runs/starz3-balance/results.json`. O script chama o resolvedor autoritativo; 327 amostras, incluindo 288 repetições idênticas verificadas por igualdade, três intensidades D08, doutrinas, perfis, escoltas, inversão de lado e presença/ausência de escudos. As amostras não substituem testes transacionais B14/B18 nem representam win rate de jogadores.
 
@@ -117,3 +117,24 @@ A acumulação de impérios/ordens entre métodos do mesmo fixture tornava o lot
 - Custos, HP, energia, tempos, salvamento e contestação EW são experimentais. Reserva de captura não possui limite/expiração novos inventados; esses parâmetros exigem decisão e simulação.
 - Captura não recalcula clima, geografia ou economia planetária por analogia. Não há vitória automática, planetocídio ou explosão estelar temporizada.
 - Capturas são fixtures locais explicitamente identificadas; provam renderização/interação, não execução de partidas reais. O fluxo persistente foi verificado em PostgreSQL sintético descartável. O ambiente do responsável não foi migrado ou reiniciado.
+
+
+## Fechamento da entrega (13/11/2026)
+
+Retomada documental com checkout limpo em `15dc3c2`; esse commit já reúne a interface P6 e as correções finais preparadas em 08/11. Nenhuma suíte foi repetida nessa retomada, nenhum ambiente existente foi migrado e nenhum dado foi resetado.
+
+O complemento final `.qa/runs/starz3-final-closures/` aprovou três casos PostgreSQL em 58,468 s: visualização mínima de oferta antes do aceite, retirada física após cessão e perda da origem sem travar o reconciliador. Também passaram os checks estáticos de skills e diff. Sua tentativa frontend ainda falhou por seletor ambíguo; a correção restrita ao badge foi validada depois em `.qa/runs/starz3-final-parity-fixed/`: quatro testes PASS, zero falhas, 1,992 s. Os 57 casos PG do lote foram cobertos pelo `full` interrompido e seu complemento; o `full` histórico continua com saída 1. Não somar reexecuções como testes distintos.
+
+As correções de segurança incluem chegada hostil no mesmo timestamp independente da ordenação de UUID, conquista autorizada que invalida oferta ainda não aceita, ocultação de órbita desconhecida para o proprietário histórico e transporte retido com nova tentativa de retorno físico. O destinatário de oferta recebe somente o descritor mínimo necessário para selecionar o núcleo e aceitar; não recebe estoques, integridade privada ou localização desconhecida.
+
+| Fase | Estado entregue | Checkpoints | Evidência principal |
+|---|---|---|---|
+| P0 | IMPLEMENTED | `e2c67a4` | Baseline reproduzível: CPU 83 / PG 32, ambiente descartável. |
+| P1 | IMPLEMENTED para catálogo e gates aprovados | `56e05ee`, `5791735` | 60 IDs, grafo acíclico, dez hulls preservados; operações civis ainda propostas não são simuladas. |
+| P2 | IMPLEMENTED no combate e missões suportados | `01a279e` | Seis salvas, doutrinas, escoltas, EW, perfil e interdição única; testes CPU e PG. |
+| P3 | IMPLEMENTED | `f2d4aab` | Fonte exclusiva, reserva versus colonização concorrente, módulos entregues e cinco fases reais. |
+| P4 | PARTIAL | `6197a09`, `15dc3c2` | Operação orbital, energia, subsistemas, derrota e bombardeio; espaço profundo bloqueado. |
+| P5 | PARTIAL | `a32db4f`, `15dc3c2` | Custódia, cessão, reconstrução, repatriação e relíquia; extinção e adjudicação geral fora das âncoras suportadas bloqueadas. |
+| P6 | IMPLEMENTED para as funções disponíveis | `15dc3c2` | Interface integrada, 198 cenários Chromium aprovados e capturas revisadas; isso não equivale a aprovação artística ou lançamento. |
+
+R3.0-D01 e C3.0-D01–D11 são rastreadas na [matriz T01–T64/B01–B18](starz-3-acceptance.md). Os estados PARTIAL/BLOCKED/WAIVED permanecem explícitos; não houve promoção automática a PASS. O resumo de ensaios numéricos permanece experimental: `balanced: false`.
