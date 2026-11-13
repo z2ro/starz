@@ -14,7 +14,13 @@ import ferrite from '../../assets/buildings/concepts/ferrite_extractor.webp';
 import civil from '../../assets/buildings/concepts/civil_district.webp';
 import research from '../../assets/buildings/concepts/planetary_research_center.webp';
 import shipyard from '../../assets/buildings/concepts/orbital_shipyard.webp';
-const buildingArt:Record<string,string>={ore_extractor:ferrite,civil_district:civil,research_lab:research,orbital_shipyard:shipyard};
+import civilLab from '../../assets/buildings/concepts/civil_engineering_lab.webp';
+import refinery from '../../assets/buildings/concepts/fuel_refinery.webp';
+import fundamentalLab from '../../assets/buildings/concepts/fundamental_science_institute.webp';
+import manufacturing from '../../assets/buildings/concepts/advanced_manufacturing.webp';
+import militaryLab from '../../assets/buildings/concepts/military_research_complex.webp';
+import processor from '../../assets/buildings/concepts/materials_processor.webp';
+const buildingArt:Record<string,string>={ore_extractor:ferrite,civil_district:civil,research_lab:research,orbital_shipyard:shipyard,civil_lab:civilLab,fuel_refinery:refinery,fundamental_lab:fundamentalLab,manufacturing,military_lab:militaryLab,processor};
 export function DevelopmentView(){
  const {state,catalog,activePlanetId,execute,busy,setFeedback}=useOutletContext<ShellContext>();const q=useUniverse(activePlanetId);const [params]=useSearchParams();const [id,select]=useState(params.get('building')??'ore_extractor');const [filter,setFilter]=useState('all');const [recruiting,setRecruiting]=useState(false);const [shortView,setShortView]=useState(()=>window.matchMedia?.('(max-height: 850px), (max-width: 700px)').matches??false);const client=useQueryClient();
  useEffect(()=>{const media=window.matchMedia?.('(max-height: 850px), (max-width: 700px)');if(!media)return;const update=()=>setShortView(media.matches);media.addEventListener('change',update);return()=>media.removeEventListener('change',update);},[]);

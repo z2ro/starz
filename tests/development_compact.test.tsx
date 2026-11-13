@@ -66,3 +66,19 @@ it('keeps selection and construction available when browsing another grid page',
  fireEvent.click(screen.getByRole('button',{name:'Construir Instalação de teste'}));
  expect(execute).toHaveBeenCalledWith('build',{id:'test_district',planet_id:'planet-test'});
 });
+it('maps the six additional installations to their own artwork',()=>{
+ const files={civil_lab:'civil_engineering_lab.webp',fuel_refinery:'fuel_refinery.webp',fundamental_lab:'fundamental_science_institute.webp',manufacturing:'advanced_manufacturing.webp',military_lab:'military_research_complex.webp',processor:'materials_processor.webp'};
+ const state=planetSnapshot();state.persistent=true;state.population.available=100;state.stocks={raw_ore:100};
+ const source=rawCatalog as Catalog;
+ const districts=Object.keys(files).map(id=>({...source.districts[0],id,name:id,requires:[],workforce:0,energy_consumption:0}));
+ mocks.context={state,catalog:{...source,districts,technologies:[]},activePlanetId:'planet-test',execute:vi.fn(),busy:false,setFeedback:vi.fn()};
+ mocks.universe={data:{buildings:districts.map(d=>({id:d.id,level:0,next_level:1,cost:{},duration:10,production_multiplier:1}))},isFetching:false};
+ render(<MemoryRouter><DevelopmentView/></MemoryRouter>);
+ const list=screen.getByRole('region',{name:'Instalações disponíveis'});
+ for(const [id,file] of Object.entries(files)){
+  const button=within(list).getByRole('button',{name:new RegExp(id)});
+  expect(button.querySelector('.installation-art')?.getAttribute('src')).toContain(file);
+  fireEvent.click(button);
+  expect(screen.getByRole('region',{name:'Detalhe da instalação'}).querySelector('.installation-art')?.getAttribute('src')).toContain(file);
+ }
+});
