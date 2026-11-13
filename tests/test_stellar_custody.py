@@ -831,6 +831,139 @@ class CustodyPersistence(unittest.TestCase):
             except subprocess.TimeoutExpired:
                 server.kill(); server.wait()
 
+    def test_t63_postgres_cross_universe_custody_isolation(self):
+        from sqlalchemy import update
+        from sqlalchemy.exc import IntegrityError
+        from starz.persistent.service import PersistentStore
+
+        store, now, a, b, project, unit, home = self.wreck()
+        foreign_id = uuid4()
+        other = PersistentStore(self.db, self.catalog, clock=lambda: now[0])
+        with Session(self.db) as session, session.begin():
+            session.add(m.Universe(id=foreign_id, name='t63-' + uuid4().hex, seed='T63', created_at=utc(now[0])))
+        with patch.object(other, 'universe', side_effect=lambda session: session.get(m.Universe, foreign_id)):
+            with Session(self.db) as session, session.begin():
+                foreign = other.create_player(session, 'foreign_' + uuid4().hex[:12]).id
+                self.assertEqual(session.get(m.Empire, foreign).universe_id, foreign_id)
+                self.assertNotEqual(session.get(m.Empire, a).universe_id, foreign_id)
+            claim = self.act(store, a, unit, 'claim')
+            now[0] = claim['complete_at']; store.tick()
+
+            def snapshot():
+                with Session(self.db) as session:
+                    return [sorted((tuple(r) for r in session.execute(select(model.__table__))), key=repr)
+                            for model in (m.StellarSource, m.StellarUnit, m.StellarOperation,
+                                          m.StellarLedger, m.UniverseOrder, m.PlanetStock)]
+
+            before = snapshot()
+            with self.assertRaises(DataValidationError):
+                self.act(store, a, unit, 'offer', recipient_id=str(foreign))
+            with self.assertRaises(DataValidationError):
+                self.act(store, foreign, unit, 'claim')
+            for action in ('claim', 'conquer', 'offer'):
+                with self.subTest(action=action), self.assertRaises(DataValidationError):
+                    self.act(other, foreign, unit, action, recipient_id=str(b))
+            self.assertEqual(snapshot(), before)
+            offered = self.act(store, a, unit, 'offer', recipient_id=str(b))
+            before = snapshot()
+            for action in ('accept', 'cancel'):
+                with self.subTest(action=action), self.assertRaises(DataValidationError):
+                    self.act(other, foreign, unit, action, operation_id=offered['operation_id'])
+            self.assertEqual(snapshot(), before)
+            result = self.act(store, b, unit, 'accept', operation_id=offered['operation_id'])
+            self.assertEqual(result['status'], 'completed')
+            with Session(self.db) as session:
+                self.assertEqual(session.get(m.StellarUnit, UUID(unit)).custodian_empire_id, b)
+            before = snapshot()
+
+            with Session(self.db) as session:
+                core = session.get(m.StellarUnit, UUID(unit))
+                operation = session.get(m.StellarOperation, UUID(offered['operation_id']))
+                ledger = session.scalar(select(m.StellarLedger).where(m.StellarLedger.unit_id == core.id))
+                order = session.scalar(select(m.UniverseOrder).where(m.UniverseOrder.empire_id == a,
+                                       m.UniverseOrder.kind == 'stellar_custody'))
+                core_id, op_id, ledger_id, order_id = core.id, operation.id, ledger.id, order.id
+            invalid_updates = (
+                (m.StellarUnit, core_id, {'custodian_empire_id': foreign}),
+                (m.StellarUnit, core_id, {'universe_id': foreign_id}),
+                (m.StellarOperation, op_id, {'recipient_id': foreign}),
+                (m.StellarOperation, op_id, {'actor_id': foreign}),
+                (m.StellarOperation, op_id, {'universe_id': foreign_id}),
+                (m.StellarLedger, ledger_id, {'actor_id': foreign}),
+                (m.StellarLedger, ledger_id, {'universe_id': foreign_id}),
+                (m.UniverseOrder, order_id, {'universe_id': foreign_id}),
+            )
+            for model, identity, values in invalid_updates:
+                with self.subTest(table=model.__tablename__, values=values), self.assertRaises(IntegrityError):
+                    with Session(self.db) as session, session.begin():
+                        session.execute(update(model).where(model.id == identity).values(**values))
+                        session.rollback()
+            self.assertEqual(snapshot(), before)
+
+    def test_t63_order_fk_migration_preserves_valid_orders_and_downgrade(self):
+        from alembic import command
+        from alembic.config import Config
+        from sqlalchemy import inspect, text
+        from starz.persistent.service import PersistentStore
+
+        store = PersistentStore(self.db, self.catalog, clock=lambda: 1000)
+        with Session(self.db) as session, session.begin():
+            empire = store.create_player(session, 'migration_' + uuid4().hex[:12])
+            order = m.UniverseOrder(id=uuid4(), universe_id=empire.universe_id, empire_id=empire.id,
+                                    kind='migration_test', payload={'preserve': 42}, resolved=True)
+            session.add(order); order_id = order.id
+
+        def constraints(connection):
+            return {item['name'] for item in inspect(connection).get_foreign_keys('universe_order')}
+
+        def migrate(revision, upgrade):
+            config = Config('alembic.ini')
+            with self.db.begin() as connection:
+                config.attributes['connection'] = connection
+                (command.upgrade if upgrade else command.downgrade)(config, revision)
+
+        with self.db.connect() as connection:
+            initial = constraints(connection)
+            original = tuple(connection.execute(select(m.UniverseOrder.__table__).where(m.UniverseOrder.id == order_id)).one())
+            self.assertIn('fk_universe_order_empire_universe', initial)
+            self.assertTrue(connection.scalar(text("SELECT convalidated FROM pg_constraint WHERE conname = 'fk_universe_order_empire_universe' AND conrelid = 'universe_order'::regclass")))
+        migrate('d06f00000001', False)
+        with self.db.connect() as connection:
+            self.assertEqual(constraints(connection), initial - {'fk_universe_order_empire_universe'})
+        migrate('head', True)
+        with self.db.connect() as connection:
+            self.assertEqual(constraints(connection), initial)
+            self.assertEqual(tuple(connection.execute(select(m.UniverseOrder.__table__).where(m.UniverseOrder.id == order_id)).one()), original)
+
+    def test_t63_order_fk_migration_rejects_inconsistent_existing_order(self):
+        from alembic import command
+        from alembic.config import Config
+        from sqlalchemy import inspect
+        from starz.persistent.service import PersistentStore
+
+        config = Config('alembic.ini')
+        with self.db.begin() as connection:
+            config.attributes['connection'] = connection
+            command.downgrade(config, 'd06f00000001')
+        store = PersistentStore(self.db, self.catalog, clock=lambda: 1000)
+        with Session(self.db) as session, session.begin():
+            empire = store.create_player(session, 'migration_' + uuid4().hex[:12])
+            foreign = m.Universe(id=uuid4(), name='migration_' + uuid4().hex, seed='T63', created_at=utc(1000))
+            session.add(foreign); session.flush()
+            order = m.UniverseOrder(id=uuid4(), universe_id=foreign.id, empire_id=empire.id,
+                                    kind='migration_test', payload={'preserve': 42}, resolved=True)
+            session.add(order); order_id, foreign_id, empire_id = order.id, foreign.id, empire.id
+        with self.assertRaisesRegex(RuntimeError, 'Inconsistent universe_order empire/universe'):
+            with self.db.begin() as connection:
+                config.attributes['connection'] = connection
+                command.upgrade(config, 'head')
+        with Session(self.db) as session:
+            order = session.get(m.UniverseOrder, order_id)
+            self.assertEqual((order.universe_id, order.empire_id, order.payload),
+                             (foreign_id, empire_id, {'preserve': 42}))
+            self.assertNotIn('fk_universe_order_empire_universe',
+                             {item['name'] for item in inspect(session.connection()).get_foreign_keys('universe_order')})
+
     def test_same_actor_concurrent_claims_and_destinations_have_one_effect(self):
         store, now, a, b, project, unit, home = self.wreck()
         def claim(_):

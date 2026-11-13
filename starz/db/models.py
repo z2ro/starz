@@ -224,6 +224,10 @@ class EmpireProgress(Base):
 
 class UniverseOrder(Base):
     __tablename__ = 'universe_order'
+    __table_args__ = (
+        ForeignKeyConstraint(['empire_id', 'universe_id'], ['empire.id', 'empire.universe_id'],
+                             name='fk_universe_order_empire_universe'),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     universe_id: Mapped[UUID] = mapped_column(ForeignKey('universe.id'), index=True)
     empire_id: Mapped[UUID] = mapped_column(ForeignKey('empire.id'), index=True)
