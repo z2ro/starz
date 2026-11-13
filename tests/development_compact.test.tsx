@@ -49,3 +49,19 @@ it('shows the four concept artworks for the selected installation and keeps othe
  }
  expect(within(list).getByRole('button',{name:/Campo solar/}).querySelector('.installation-art')).toBeNull();
 });
+it('keeps selection and construction available when browsing another grid page',()=>{
+ const state=planetSnapshot();state.persistent=true;state.population.available=100;state.stocks={raw_ore:100};
+ const source=rawCatalog as Catalog;
+ const districts=source.districts.map(d=>({...d,requires:[],workforce:0,energy_consumption:0}));
+ districts.push({...districts[0],id:'test_district',name:'Instalação de teste'});
+ const execute=vi.fn().mockResolvedValue({});
+ mocks.context={state,catalog:{...source,districts,technologies:[]},activePlanetId:'planet-test',execute,busy:false,setFeedback:vi.fn()};
+ mocks.universe={data:{buildings:districts.map(d=>({id:d.id,level:0,next_level:1,cost:{},duration:10,production_multiplier:1}))},isFetching:false};
+ render(<MemoryRouter><DevelopmentView/></MemoryRouter>);
+ fireEvent.click(screen.getByRole('button',{name:'Próxima página · Instalações'}));
+ fireEvent.click(screen.getByRole('button',{name:/Instalação de teste/}));
+ expect(screen.getByRole('heading',{name:'Instalação de teste'})).toBeTruthy();
+ expect(within(screen.getByRole('region',{name:'Instalações disponíveis'})).getByRole('button',{name:/Instalação de teste/})).toHaveAttribute('aria-pressed','true');
+ fireEvent.click(screen.getByRole('button',{name:'Construir Instalação de teste'}));
+ expect(execute).toHaveBeenCalledWith('build',{id:'test_district',planet_id:'planet-test'});
+});
