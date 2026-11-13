@@ -1,32 +1,38 @@
-# STARZ 3.0 — Planetary building visual concepts (alpha v0.1)
+# STARZ 3.0 — Planetary Building Visual Assets · Alpha v0.1
 
-**Art only.** Initial AI-generated isometric pixel-art concepts for four distinct facilities, intended for UX evaluation on the `Instalações` screen. Not integrated into the game and not the complete building catalog.
+Four original 224×224 transparent RGBA building sprites, in PNG and WebP, for the `Instalações` UI. This is an art-only branch — it does not change game rules, frontend code or the persistent database.
 
-## Assets
+## Download
 
-- `buildings-atlas-64.webp`: RGBA WebP atlas, 128 × 128 px; four 64 × 64 cells (transparent backgrounds). This is a lightweight, low-resolution preview for Codex to inspect.
-- High-resolution working originals were prepared separately and are not committed to this branch.
+- **Complete ZIP**: [STARZ_3_building_assets_alpha_v01.zip](./STARZ_3_building_assets_alpha_v01.zip) — contains four PNGs, four WebPs and a preview.
+- **WebP individually** (recommended for frontend): [ferrite_extractor.webp](./ferrite_extractor.webp), [civil_district.webp](./civil_district.webp), [planetary_research_center.webp](./planetary_research_center.webp), [orbital_shipyard.webp](./orbital_shipyard.webp).
+- PNG originals with identical basenames are also provided for image-editing work.
+- [Old 64×64 atlas](./buildings-atlas-64.webp) remains solely for visual comparison; **do not upscale it**.
 
-| Building | Code | Atlas cell (x, y, w, h) |
-| --- | --- | --- |
-| Ferrite Extractor | `ferrite_extractor` | `0, 0, 64, 64` |
-| Civil District | `civil_district` | `64, 0, 64, 64` |
-| Planetary Research Center | `planetary_research_center` | `0, 64, 64, 64` |
-| Orbital Shipyard | `orbital_shipyard` | `64, 64, 64, 64` |
+## Sprite mapping
 
-![Four STARZ building concepts](./buildings-atlas-64.webp)
+| Gameplay object | Asset basename |
+| --- | --- |
+| Ferrite Extractor | `ferrite_extractor` |
+| Civil District | `civil_district` |
+| Planetary Research Center | `planetary_research_center` |
+| Orbital Shipyard | `orbital_shipyard` |
 
-## Visual direction
+All individual files are 224×224 pixels with transparency; isometric, dark industrial sci-fi, cyan and amber illumination, no embedded text.
 
-3/4 isometric pixel art; dark gunmetal sci-fi architecture, readable silhouettes, cyan lighting, warm amber utility lights, no baked-in labels. Preserve current STARZ gameplay and data contracts. No recommendations for what the player should build.
+## Safe integration into the newer local development checkout
 
-## Implementation guidance for Codex
+The branch `art/building-assets-alpha-v1` was created from an older GitHub checkpoint because the owner's working branch contains newer **unpushed** Codex commits. Do **not** merge or reset a development branch against this older art branch.
 
-This branch is based on an older remote checkpoint **only to share art safely**. The local `experiment/persistent-universe` checkout has newer, unpushed commits. Do **not** reset or merge the older branch into the working checkout. Instead:
+From the current local `experiment/persistent-universe` checkout:
 
-1. `git fetch origin art/building-assets-alpha-v1`
-2. Inspect `frontend/public/assets/buildings/concepts/buildings-atlas-64.webp` and this README.
-3. If the visual concept is approved, extract atlas cells or cherry-pick just the asset commit onto the local development branch.
-4. Do not alter mechanics, database or existing UI until explicitly requested.
+```bash
+git fetch origin art/building-assets-alpha-v1
+git restore --source=origin/art/building-assets-alpha-v1 -- frontend/public/assets/buildings/concepts
+```
 
-This is an art reference/prototype, **not** a complete UX implementation.
+If the current frontend uses `frontend/assets/buildings/concepts/` rather than `frontend/public/assets/buildings/concepts/`, copy only the four high-resolution WebP files to its active asset directory and update paths in the current UI; do not overwrite local source code.
+
+Test in the current `#/development` view with `object-fit: contain` / stable aspect ratio. Do not enlarge cards or redesign the approved grid. Keep icon fallback for buildings without art. Run only frontend typecheck, build and targeted Chromium visual check. Do not change economy or mechanics.
+
+Before committing local frontend changes, inspect `git status`, preserve unpushed work and avoid committing the ZIP unless a bundled download is intentionally needed.
