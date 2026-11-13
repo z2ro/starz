@@ -629,6 +629,38 @@ class CustodyPersistence(unittest.TestCase):
             self.assertEqual(str(row.project_id), project['project_id'])
             self.assertEqual(row.payload['withdrawal_grant']['recipient_id'], str(b))
 
+    def test_t39_postgres_third_party_cannot_change_custody(self):
+        store, now, a, b, project, unit, home = self.wreck()
+        with Session(self.db) as session, session.begin():
+            store.lock(session)
+            c = store.create_player(session, 'custody-third-' + uuid4().hex[:12]).id
+            self.assertEqual(session.get(m.Empire, c).universe_id, session.get(m.Empire, a).universe_id)
+            self.assertEqual(session.get(m.Empire, b).universe_id, session.get(m.Empire, a).universe_id)
+        claim = self.act(store, a, unit, 'claim')
+        now[0] = claim['complete_at']; store.tick()
+        offer = self.act(store, a, unit, 'offer', recipient_id=str(b))
+
+        def snapshot():
+            with Session(self.db) as session:
+                row = session.get(m.StellarUnit, UUID(unit))
+                return (row.custodian_empire_id, row.custody_version, deepcopy(row.stocks),
+                        deepcopy(row.payload),
+                        *[sorted((tuple(r) for r in session.execute(select(model.__table__))), key=repr)
+                          for model in (m.StellarOperation, m.StellarLedger, m.PlanetStock, m.UniverseOrder)])
+
+        before = snapshot()
+        self.assertEqual(before[0], a)
+        for action in ('accept', 'cancel', 'claim', 'offer'):
+            with self.subTest(action=action):
+                with self.assertRaises(DataValidationError):
+                    self.act(store, c, unit, action, operation_id=offer['operation_id'], recipient_id=str(b))
+                self.assertEqual(snapshot(), before)
+        result = self.act(store, b, unit, 'accept', operation_id=offer['operation_id'])
+        self.assertEqual(result['status'], 'completed')
+        with Session(self.db) as session:
+            self.assertEqual(session.get(m.StellarUnit, UUID(unit)).custodian_empire_id, b)
+            self.assertEqual(session.get(m.StellarOperation, UUID(offer['operation_id'])).status, 'completed')
+
     def test_same_actor_concurrent_claims_and_destinations_have_one_effect(self):
         store, now, a, b, project, unit, home = self.wreck()
         def claim(_):
