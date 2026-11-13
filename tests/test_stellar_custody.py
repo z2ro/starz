@@ -661,6 +661,86 @@ class CustodyPersistence(unittest.TestCase):
             self.assertEqual(session.get(m.StellarUnit, UUID(unit)).custodian_empire_id, b)
             self.assertEqual(session.get(m.StellarOperation, UUID(offer['operation_id'])).status, 'completed')
 
+    def test_t47_authenticated_http_custody_privacy(self):
+        import asyncio
+        from time import time
+        import httpx
+        from starz import api
+        from starz.persistent.security import password_hash
+
+        store, now, a, b, project, unit, home = self.wreck()
+        with Session(self.db) as session, session.begin():
+            store.lock(session)
+            c = store.create_player(session, 'third_' + uuid4().hex[:12]).id
+            names = ['t47' + uuid4().hex[:12] for _ in range(3)]
+            encoded = password_hash('synthetic-test-password')
+            for actor, name in zip((a, b, c), names):
+                session.add(m.PlayerAccount(username=name, password_hash=encoded,
+                                            empire_id=actor, created_at=utc(time())))
+        claim = self.act(store, a, unit, 'claim')
+        now[0] = claim['complete_at']; store.tick()
+        offer = self.act(store, a, unit, 'offer', recipient_id=str(b))
+
+        def persistent_state():
+            with Session(self.db) as session:
+                row = session.get(m.StellarUnit, UUID(unit))
+                return (row.custodian_empire_id, row.custody_version, deepcopy(row.payload), deepcopy(row.stocks),
+                        *[sorted((tuple(r) for r in session.execute(select(model.__table__))), key=repr)
+                          for model in (m.StellarOperation, m.StellarLedger, m.PlanetStock, m.UniverseOrder)])
+
+        async def exercise():
+            transport = httpx.ASGITransport(app=api.app)
+            clients = [httpx.AsyncClient(transport=transport, base_url='http://test',
+                       headers={'x-starz-request': '1'}) for _ in range(3)]
+            try:
+                for client, name, actor in zip(clients, names, (a, b, c)):
+                    response = await client.post('/api/auth/login', json={'username': name, 'password': 'synthetic-test-password'})
+                    self.assertEqual(response.status_code, 200, response.text)
+                    self.assertEqual(response.json()['empire_id'], str(actor))
+                self.assertEqual(len({client.cookies.get('starz_universe_session') for client in clients}), 3)
+                views = []
+                for client in clients:
+                    response = await client.get('/api/universe/stellar/custody')
+                    self.assertEqual(response.status_code, 200, response.text)
+                    views.append(response.json())
+                owner = next(item for item in views[0]['units'] if item['id'] == unit)
+                recipient = next(item for item in views[1]['units'] if item['id'] == unit)
+                self.assertTrue(owner['roles']['custodian'])
+                self.assertIn('stocks', owner)
+                self.assertFalse(recipient['roles']['custodian'])
+                for field in ('stocks', 'integrity', 'payload', 'technology', 'hp', 'subsystems'):
+                    self.assertNotIn(field, recipient)
+                self.assertEqual(recipient['location_status'], 'UNKNOWN')
+                self.assertIsNone(recipient['system_id'])
+                self.assertIsNone(recipient['planet_id'])
+                for view in views[:2]:
+                    op = next(item for item in view['operations'] if item['operation_id'] == offer['operation_id'])
+                    for field in ('payload', 'stocks', 'integrity', 'technology'):
+                        self.assertNotIn(field, op)
+                self.assertNotIn(unit, json.dumps(views[2]))
+                self.assertNotIn(offer['operation_id'], json.dumps(views[2]))
+                other = await clients[2].get('/api/universe/stellar')
+                self.assertEqual(other.status_code, 200, other.text)
+                self.assertNotIn(unit, json.dumps(other.json()))
+                before = persistent_state()
+                for client in (clients[1], clients[2]):
+                    response = await client.get('/api/universe/stellar/custody', params={'planet_id': home})
+                    self.assertEqual(response.status_code, 400)
+                    self.assertNotIn(unit, response.text)
+                for action in ('accept', 'cancel'):
+                    response = await clients[2].post('/api/universe/stellar/custody', json={
+                        'action': action, 'unit_id': unit, 'operation_id': offer['operation_id'],
+                        'idempotency_key': str(uuid4())})
+                    self.assertEqual(response.status_code, 400, response.text)
+                    self.assertNotIn(offer['operation_id'], response.text)
+                self.assertEqual(persistent_state(), before)
+            finally:
+                for client in clients:
+                    await client.aclose()
+
+        with patch.object(api.app.state, 'store', store, create=True), patch.object(api.app.state, 'persistent', True, create=True):
+            asyncio.run(exercise())
+
     def test_same_actor_concurrent_claims_and_destinations_have_one_effect(self):
         store, now, a, b, project, unit, home = self.wreck()
         def claim(_):
