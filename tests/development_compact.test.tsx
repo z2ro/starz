@@ -40,6 +40,9 @@ it('shows the four concept artworks for the selected installation and keeps othe
  mocks.universe={data:{buildings:districts.map(d=>({id:d.id,level:0,next_level:1,cost:{},duration:10,production_multiplier:1}))},isFetching:false};
  render(<MemoryRouter><DevelopmentView/></MemoryRouter>);
  const list=screen.getByRole('region',{name:'Instalações disponíveis'});
+ expect(list.querySelector('.extractor-animation')).toBeNull();
+ expect(screen.getByRole('region',{name:'Detalhe da instalação'}).querySelector('.extractor-animation .extractor-drill')).toBeTruthy();
+ expect(screen.getByRole('region',{name:'Detalhe da instalação'}).querySelector('.extractor-animation .extractor-lights')).toBeTruthy();
  for(const [id,file] of Object.entries({ore_extractor:'ferrite_extractor.webp',civil_district:'civil_district.webp',research_lab:'planetary_research_center.webp',orbital_shipyard:'orbital_shipyard.webp'})){
   const item=districts.find(d=>d.id===id)!;
   const button=within(list).getByRole('button',{name:new RegExp(item.name)});
@@ -47,6 +50,7 @@ it('shows the four concept artworks for the selected installation and keeps othe
   expect(button.querySelector('.installation-art')?.getAttribute('src')).toContain(file);
   fireEvent.click(button);
   expect(screen.getByRole('region',{name:'Detalhe da instalação'}).querySelector('.installation-art')?.getAttribute('data-building')).toBe(id);
+  expect(!!screen.getByRole('region',{name:'Detalhe da instalação'}).querySelector('.extractor-animation')).toBe(id==='ore_extractor');
  }
  expect(within(list).getByRole('button',{name:/Campo solar/}).querySelector('.installation-art')).toBeNull();
 });
