@@ -1,13 +1,16 @@
 import { useState, type ReactNode, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '../api/client';
+import { ApiError,apiRequest } from '../api/client';
 import './universe.css';
 export function SessionGate({children}:{children:ReactNode}) {
  const config=useQuery({queryKey:['config'],queryFn:()=>apiRequest<{persistent:boolean}>('/api/config'),retry:false,staleTime:Infinity});
  const me=useQuery({queryKey:['account'],queryFn:()=>apiRequest<{username:string}>('/api/auth/me'),enabled:config.data?.persistent===true,retry:false,refetchInterval:30000});
  if(config.isPending || (config.data?.persistent && me.isPending))return <div className="boot">Conectando ao universo…</div>;
  if(config.error)return <div className="fatal">Servidor indisponível. <button onClick={()=>void config.refetch()}>Reconectar</button></div>;
- if(config.data?.persistent && me.error)return <Login />;
+ if(config.data?.persistent && me.error){
+  if(me.error instanceof ApiError && me.error.status===401)return <Login />;
+  return <div className="fatal" role="alert">Não foi possível verificar sua sessão. <button onClick={()=>void me.refetch()}>Tentar novamente</button></div>;
+ }
  return <>{children}</>;
 }
 function Login(){

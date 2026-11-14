@@ -12,7 +12,7 @@ it('protects mutations with an explicit CSRF header without changing GET callers
  await apiRequest('/api/state');expect(fetcher.mock.calls[1][1]).toBeUndefined();
 });
 it('shows independent account registration instead of gameplay after a 401',async()=>{
- vi.stubGlobal('fetch',vi.fn(async(url:string)=>({ok:url==='/api/config',json:async()=>url==='/api/config'?{persistent:true}:{detail:'Entre na sua conta'}})));
+ vi.stubGlobal('fetch',vi.fn(async(url:string)=>({ok:url==='/api/config',status:url==='/api/config'?200:401,json:async()=>url==='/api/config'?{persistent:true}:{detail:'Entre na sua conta'}})));
  const client=new QueryClient({defaultOptions:{queries:{retry:false}}});
  render(<QueryClientProvider client={client}><SessionGate><p>PRIVATE EMPIRE</p></SessionGate></QueryClientProvider>);
  await screen.findByRole('button',{name:'Entrar',exact:true});expect(screen.queryByText('PRIVATE EMPIRE')).toBeNull();
@@ -20,6 +20,22 @@ it('shows independent account registration instead of gameplay after a 401',asyn
  expect(screen.getByRole('button',{name:'Criar conta e império'})).toBeTruthy();
  expect(screen.getByLabelText('Senha (mínimo 12 caracteres)')).toHaveAttribute('minlength','12');
  client.clear();
+});
+it.each(['server','network'])('keeps account failures recoverable without presenting login: %s',async failure=>{
+ const fetcher=vi.fn(async(url:string)=>{
+  if(url==='/api/config')return {ok:true,status:200,json:async()=>({persistent:true})};
+  if(failure==='network')throw new TypeError('offline');
+  return {ok:false,status:503,json:async()=>({detail:'temporariamente indisponível'})};
+ });
+ vi.stubGlobal('fetch',fetcher);
+ const client=new QueryClient({defaultOptions:{queries:{retry:false}}});
+ render(<QueryClientProvider client={client}><SessionGate><p>PRIVATE EMPIRE</p></SessionGate></QueryClientProvider>);
+ await screen.findByText('Não foi possível verificar sua sessão.');
+ expect(screen.queryByRole('button',{name:'Entrar',exact:true})).toBeNull();
+ expect(screen.queryByText('PRIVATE EMPIRE')).toBeNull();
+ fetcher.mockImplementation(async()=>({ok:true,status:200,json:async()=>({username:'test'})}));
+ fireEvent.click(screen.getByRole('button',{name:'Tentar novamente'}));
+ await screen.findByText('PRIVATE EMPIRE');client.clear();
 });
 it('preserves the optional legacy scenario when persistent mode is disabled',async()=>{
  vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>({persistent:false})})));

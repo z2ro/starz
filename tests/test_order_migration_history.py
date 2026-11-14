@@ -16,9 +16,20 @@ from starz.db.store import utc
 @unittest.skipUnless(os.getenv('PERSISTENT_TEST_DATABASE_URL'), 'disposable PostgreSQL required')
 class OrderMigrationHistory(unittest.TestCase):
     def setUp(self):
-        self.db = create_engine(os.environ['PERSISTENT_TEST_DATABASE_URL'])
-        self.addCleanup(self.db.dispose)
-        self.assertEqual(inspect(self.db).get_table_names(), [], 'test requires an empty disposable database')
+        url = os.environ['PERSISTENT_TEST_DATABASE_URL']
+        self.schema = 'order_migration_test_' + uuid4().hex
+        self.admin = create_engine(url)
+        with self.admin.begin() as connection:
+            connection.execute(text('CREATE SCHEMA ' + self.schema))
+        self.db = create_engine(url, connect_args={'options': '-csearch_path=' + self.schema})
+        self.addCleanup(self.cleanup_schema)
+        self.assertEqual(inspect(self.db).get_table_names(), [], 'test requires an empty isolated schema')
+
+    def cleanup_schema(self):
+        self.db.dispose()
+        with self.admin.begin() as connection:
+            connection.execute(text('DROP SCHEMA ' + self.schema + ' CASCADE'))
+        self.admin.dispose()
 
     def migrate(self, revision):
         config = Config('alembic.ini')
