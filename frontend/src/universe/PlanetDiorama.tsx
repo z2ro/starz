@@ -1,3 +1,4 @@
+import {createColonyBuilding} from './ColonyBuilding';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
@@ -37,14 +38,14 @@ type Scene = {update:(sites:Site[], selected:string|null)=>void; reset:()=>void;
 
 function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSelect:(id:string)=>void, onError:()=>void):Scene {
   const renderer=new THREE.WebGLRenderer({antialias:false,alpha:false});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1,2));
+  renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.BasicShadowMap;
   renderer.setClearColor(0x101c28); renderer.outputColorSpace=THREE.SRGBColorSpace;
   host.appendChild(renderer.domElement);
   const scene=new THREE.Scene();
   const camera=new THREE.OrthographicCamera(-5,5,5,-5,.1,100);
-  camera.position.set(8,10,9); camera.lookAt(0,0,0);
+  camera.position.set(8,10.8,9); camera.lookAt(0,.8,0);
   const controls=new OrbitControls(camera,renderer.domElement);
-  controls.enableRotate=false; controls.enableDamping=false; controls.screenSpacePanning=false; controls.minZoom=.7; controls.maxZoom=2.3;
+  controls.target.set(0,.8,0);controls.enableRotate=false; controls.enableDamping=false; controls.screenSpacePanning=false; controls.minZoom=.7; controls.maxZoom=2.3;
   controls.touches.TWO=THREE.TOUCH.DOLLY_PAN;
   const family=derivePlanetFamily(planet.temperature,planet.water);
   const palette=family==='frozen'?['#738f91','#91a9a4','#b2c1b0','#d0d3bb']:family==='desert'?['#6c6049','#887454','#a38a60','#b19a6f']:family==='oceanic'?['#435f59','#526f62','#6a826b','#82917b']:family==='terran'?['#454c47','#505952','#5e675d','#6a7266']:['#555e58','#68716a','#7c8275','#95968a'];
@@ -78,14 +79,17 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
     position.set(x,edge*terrainSample(`${planetId}:relief`,(x+14)/4,(z+14)/4)*.12+size*.18,z);scale.set(size,size*.7,size*.8);matrix.compose(position,rotation,scale);rocks.setMatrixAt(i,matrix);
   }
   scene.add(rocks);
-  const light=new THREE.DirectionalLight(0xffe3ad,1.5);light.position.set(-5,10,7);scene.add(light);
+  const light=new THREE.DirectionalLight(0xffe3ad,2.4);light.position.set(-5,10,7);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.camera.left=-8;light.shadow.camera.right=8;light.shadow.camera.top=8;light.shadow.camera.bottom=-8;light.shadow.bias=-.002;scene.add(light);ground.receiveShadow=true;rocks.castShadow=true;
   const objects=new THREE.Group();scene.add(objects);
   const infrastructure=new THREE.Group();scene.add(infrastructure);
-  const textures=new Map<string,THREE.Texture>();const loader=new THREE.TextureLoader();
-  let frame=0, disposed=false;
-  const render=()=>{if(!disposed&&!frame)frame=requestAnimationFrame(()=>{frame=0;renderer.render(scene,camera);});};
-  for(const b of buildings){const texture=loader.load(b.image,()=>render()); texture.colorSpace=THREE.SRGBColorSpace;texture.magFilter=THREE.NearestFilter;texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;textures.set(b.id,texture);}
-  const clear=()=>{for(const object of [...objects.children]){objects.remove(object);if(object instanceof THREE.Sprite){object.material.dispose();if(object.userData.label) object.material.map?.dispose();}else if(object instanceof THREE.Mesh){object.geometry.dispose();(object.material as THREE.Material).dispose();}}};
+  let models:ReturnType<typeof createColonyBuilding>[]=[];
+  const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
+  let frame=0,disposed=false;
+  const render=()=>{if(!disposed&&!frame)frame=requestAnimationFrame(tick);};
+  function tick(time:number){frame=0;if(disposed)return;if(!motion.matches&&!document.hidden)models.forEach(m=>m.animate(time/1000));renderer.render(scene,camera);if(!motion.matches&&!document.hidden&&models.length)render();}
+  const wake=()=>{cancelAnimationFrame(frame);frame=0;render();};
+  motion.addEventListener('change',wake);document.addEventListener('visibilitychange',wake);
+  const clear=()=>{models.forEach(m=>{objects.remove(m.group);m.dispose();});models=[];};
   const clearInfrastructure=()=>{for(const object of [...infrastructure.children]){infrastructure.remove(object);if(object instanceof THREE.Mesh){object.geometry.dispose();(object.material as THREE.Material).dispose();}}};
   const update=(list:Site[], selected:string|null)=>{clear();clearInfrastructure();
   // Connect only occupied sectors through an unobstructed central service junction.
@@ -97,22 +101,20 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
     if(b.id==='civil_district'){detail(-1.35,-.65,.08,.08,0x73c9ce);detail(-.15,-1.2,.08,.08,0xd69c55);detail(-1.1,-1.1,1.15,.08,0x78827b);}
     if(b.id==='ore_extractor'){for(let n=0;n<5;n++)detail(-1.55+n*.18,-1.15,.12,.14,n%2?0x878271:0x6c6c60);detail(-.7,-1.45,1.1,.12,0x817568);}
     if(b.id==='fuel_refinery'){detail(-1.2,-1.25,1.35,.1,0x9b8164);detail(-.55,-.85,.1,.8,0x77918b);detail(-1.45,-.8,.1,.1,0xd69c55);}
-    if(b.id===selected){const outline=new THREE.Sprite(new THREE.SpriteMaterial({map:textures.get(b.id),color:0x77d4db,transparent:true,alphaTest:.05,depthWrite:false,depthTest:false}));outline.position.set(b.position[0],.04,b.position[1]);outline.center.set(.5,0);outline.scale.set(3.35,3.35,1);outline.renderOrder=1;objects.add(outline);}
-    const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:textures.get(b.id),transparent:true,alphaTest:.05,depthWrite:false}));sprite.position.set(b.position[0],.05,b.position[1]);sprite.center.set(.5,0);sprite.scale.set(3.15,3.15,1);sprite.userData.id=b.id;sprite.renderOrder=2;objects.add(sprite);
-    if(b.id===selected){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=40;const ctx=canvas.getContext('2d');if(ctx){ctx.fillStyle='#101c28';ctx.fillRect(0,0,256,40);ctx.fillStyle='#e9ead8';ctx.textAlign='center';ctx.font='bold 20px sans-serif';ctx.fillText(`${b.name} · Nv ${b.level}`,128,27,248);const tex=new THREE.CanvasTexture(canvas);tex.minFilter=THREE.NearestFilter;tex.magFilter=THREE.NearestFilter;const label=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));label.position.set(b.position[0],3.45,b.position[1]);label.scale.set(3,.47,1);label.renderOrder=3;label.userData.label=true;label.userData.id=b.id;objects.add(label);}}
+    const model=createColonyBuilding(b.id,b.id===selected);model.group.position.set(b.position[0]-.75,.03,b.position[1]-.75);models.push(model);objects.add(model.group);
   }render();};
-  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;const aspect=w/h;const half=4.9;camera.left=-half*aspect;camera.right=half*aspect;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();renderer.setSize(w,h,false);render();};
+  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;const aspect=w/h;const half=3.8;camera.left=-half*aspect;camera.right=half*aspect;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();renderer.setSize(w,h,false);render();};
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
   const change=()=>{const x=THREE.MathUtils.clamp(controls.target.x,-2,2),z=THREE.MathUtils.clamp(controls.target.z,-2,2);camera.position.x+=x-controls.target.x;camera.position.z+=z-controls.target.z;controls.target.x=x;controls.target.z=z;render();};
   controls.addEventListener('change',change);controls.update();
   let down:{x:number;y:number}|null=null;
   const pointerDown=(e:PointerEvent)=>{down={x:e.clientX,y:e.clientY};};
-  const pointerUp=(e:PointerEvent)=>{if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7){down=null;return;}down=null;const rect=renderer.domElement.getBoundingClientRect();const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1),camera);const hit=ray.intersectObjects(objects.children).find(item=>item.object.userData.id);if(hit)onSelect(hit.object.userData.id as string);};
+  const pointerUp=(e:PointerEvent)=>{if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7){down=null;return;}down=null;const rect=renderer.domElement.getBoundingClientRect();const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1),camera);const hit=ray.intersectObjects(objects.children,true).find(item=>item.object.userData.id);if(hit)onSelect(hit.object.userData.id as string);};
   const contextLost=(event:Event)=>{event.preventDefault();onError();};
   renderer.domElement.addEventListener('webglcontextlost',contextLost);
   renderer.domElement.addEventListener('pointerdown',pointerDown);renderer.domElement.addEventListener('pointerup',pointerUp);
-  const reset=()=>{controls.target.set(0,0,0);camera.position.set(8,10,9);camera.zoom=1;camera.updateProjectionMatrix();controls.update();render();};
-  return {update,reset,dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.removeEventListener('change',change);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);clear();clearInfrastructure();ground.geometry.dispose();(ground.material as THREE.Material).dispose();groundTexture.dispose();rocks.geometry.dispose();(rocks.material as THREE.Material).dispose();textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();}};
+  const reset=()=>{controls.target.set(0,.8,0);camera.position.set(8,10.8,9);camera.zoom=1;camera.updateProjectionMatrix();controls.update();render();};
+  return {update,reset,dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.removeEventListener('change',change);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);clear();clearInfrastructure();ground.geometry.dispose();(ground.material as THREE.Material).dispose();groundTexture.dispose();rocks.geometry.dispose();(rocks.material as THREE.Material).dispose();motion.removeEventListener('change',wake);document.removeEventListener('visibilitychange',wake);light.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();}};
 }
 
 export function PlanetDiorama({planetId,planet,levels,onFallback}:{planetId:string;planet:Planet;levels:Record<string,number>;onFallback:()=>void}) {
