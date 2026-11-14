@@ -46,7 +46,7 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
   controls.enableRotate=false; controls.enableDamping=false; controls.screenSpacePanning=false; controls.minZoom=.7; controls.maxZoom=2.3;
   controls.touches.TWO=THREE.TOUCH.DOLLY_PAN;
   const family=derivePlanetFamily(planet.temperature,planet.water);
-  const palette=family==='frozen'?['#738f91','#91a9a4','#b2c1b0','#d0d3bb']:family==='desert'?['#6c6049','#887454','#a38a60','#b19a6f']:family==='oceanic'?['#435f59','#526f62','#6a826b','#82917b']:family==='terran'?['#4c604b','#617056','#778063','#909174']:['#555e58','#68716a','#7c8275','#95968a'];
+  const palette=family==='frozen'?['#738f91','#91a9a4','#b2c1b0','#d0d3bb']:family==='desert'?['#6c6049','#887454','#a38a60','#b19a6f']:family==='oceanic'?['#435f59','#526f62','#6a826b','#82917b']:family==='terran'?['#424d49','#56615b','#70776a','#8c8d7c']:['#555e58','#68716a','#7c8275','#95968a'];
   const canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;
   const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas indisponível');
   for(let z=0;z<128;z++)for(let x=0;x<128;x++){
@@ -57,23 +57,24 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
   const groundGeometry=new THREE.PlaneGeometry(12,12,32,32);groundGeometry.rotateX(-Math.PI/2);
   const vertices=groundGeometry.attributes.position;
   for(let i=0;i<vertices.count;i++){
-    const x=vertices.getX(i),z=vertices.getZ(i);
-    // Keep the industrial center level; low ridges frame rather than obscure sprites.
-    const edge=THREE.MathUtils.clamp((Math.max(Math.abs(x),Math.abs(z))-3.8)/2.2,0,1);
-    vertices.setY(i,edge*terrainSample(`${planetId}:relief`,(x+6)/3,(z+6)/3)*.36);
+    const u=vertices.getX(i)/6,v=vertices.getZ(i)/6;
+    const x=u*Math.sqrt(1-v*v/2)*6, z=v*Math.sqrt(1-u*u/2)*6;
+    const radius=Math.hypot(x,z)/6, angle=Math.atan2(z,x);
+    const edge=THREE.MathUtils.smoothstep(radius,.55,1);
+    const boundary=1-edge*(.05+.08*terrainSample(`${planetId}:rim`,Math.cos(angle)*2+4,Math.sin(angle)*2+4));
+    vertices.setXYZ(i,x*boundary,edge*(terrainSample(`${planetId}:relief`,(x+6)/2,(z+6)/2)*.65-.2),z*boundary);
   }
   groundGeometry.computeVertexNormals();
-  const ground=new THREE.Mesh(groundGeometry,new THREE.MeshLambertMaterial({map:groundTexture}));scene.add(ground,new THREE.HemisphereLight(0xd8e8dc,0x394048,2));
-  const base=new THREE.Mesh(new THREE.BoxGeometry(12,.24,12),new THREE.MeshLambertMaterial({color:0x39443d}));base.position.y=-.13;scene.add(base);
+  const ground=new THREE.Mesh(groundGeometry,new THREE.MeshLambertMaterial({map:groundTexture,side:THREE.DoubleSide}));scene.add(ground,new THREE.HemisphereLight(0xbcd5d5,0x27353b,2));
   const rocks=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1,0),new THREE.MeshLambertMaterial({color:family==='frozen'?0x8da1a0:0x5b5e52,flatShading:true}),36);
   const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
   for(let i=0;i<36;i++){
-    const angle=terrainHash(`${planetId}:rock-angle:${i}`)/4294967295*Math.PI*2;
+    const cluster=i%5;const angle=cluster*Math.PI*2/5+(terrainHash(`${planetId}:rock-angle:${i}`)/4294967295-.5)*.65;
     const radius=4.8+terrainHash(`${planetId}:rock-radius:${i}`)/4294967295*1.1;
-    const size=.07+terrainHash(`${planetId}:rock-size:${i}`)/4294967295*.11;
+    const size=.13+terrainHash(`${planetId}:rock-size:${i}`)/4294967295*.28;
     const x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
-    const edge=THREE.MathUtils.clamp((Math.max(Math.abs(x),Math.abs(z))-3.8)/2.2,0,1);
-    position.set(x,edge*terrainSample(`${planetId}:relief`,(x+6)/3,(z+6)/3)*.36+.04,z);scale.set(size,size*.6,size*.8);matrix.compose(position,rotation,scale);rocks.setMatrixAt(i,matrix);
+    const edge=THREE.MathUtils.smoothstep(Math.hypot(x,z)/6,.55,1);
+    position.set(x,edge*(terrainSample(`${planetId}:relief`,(x+6)/2,(z+6)/2)*.65-.2)+size*.18,z);scale.set(size,size*.7,size*.8);matrix.compose(position,rotation,scale);rocks.setMatrixAt(i,matrix);
   }
   scene.add(rocks);
   const light=new THREE.DirectionalLight(0xffe3ad,1.5);light.position.set(-5,10,7);scene.add(light);
@@ -93,12 +94,16 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
     road.rotation.x=-Math.PI/2;road.rotation.z=-Math.atan2(bz-az,bx-ax);road.position.set((ax+bx)/2-.75,.018,(az+bz)/2-.75);infrastructure.add(road);
   }
   for(const b of list){
-    const pad=new THREE.Mesh(new THREE.PlaneGeometry(2.35,1.75),new THREE.MeshBasicMaterial({color:0x59645d,side:THREE.DoubleSide}));pad.rotation.x=-Math.PI/2;pad.position.set(b.position[0]-.75,.025,b.position[1]-.75);infrastructure.add(pad);
-    if(b.id===selected){const outline=new THREE.Sprite(new THREE.SpriteMaterial({map:textures.get(b.id),color:0x77d4db,transparent:true,alphaTest:.05,depthWrite:false,depthTest:false}));outline.position.set(b.position[0],.04,b.position[1]);outline.center.set(.5,0);outline.scale.set(3,3,1);outline.renderOrder=1;objects.add(outline);}
-    const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:textures.get(b.id),transparent:true,alphaTest:.05,depthWrite:false}));sprite.position.set(b.position[0],.05,b.position[1]);sprite.center.set(.5,0);sprite.scale.set(2.8,2.8,1);sprite.userData.id=b.id;sprite.renderOrder=2;objects.add(sprite);
-    const canvas=document.createElement('canvas');canvas.width=256;canvas.height=40;const ctx=canvas.getContext('2d');if(ctx){ctx.fillStyle='#101c28';ctx.fillRect(0,0,256,40);ctx.fillStyle='#e9ead8';ctx.textAlign='center';ctx.font='bold 20px sans-serif';ctx.fillText(`${b.name} · Nv ${b.level}`,128,27,248);const tex=new THREE.CanvasTexture(canvas);tex.minFilter=THREE.NearestFilter;tex.magFilter=THREE.NearestFilter;const label=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));label.position.set(b.position[0],3.2,b.position[1]);label.scale.set(3,.47,1);label.renderOrder=3;label.userData.label=true;label.userData.id=b.id;objects.add(label);}
+    const pad=new THREE.Mesh(new THREE.CircleGeometry(1.1,8),new THREE.MeshBasicMaterial({color:0x485653,side:THREE.DoubleSide}));pad.rotation.x=-Math.PI/2;pad.position.set(b.position[0]-.75,.025,b.position[1]-.75);infrastructure.add(pad);
+    const detail=(x:number,z:number,w:number,h:number,color:number)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,.06,h),new THREE.MeshLambertMaterial({color}));mesh.position.set(b.position[0]+x,.05,b.position[1]+z);infrastructure.add(mesh);};
+    if(b.id==='civil_district'){detail(-1.35,-.65,.08,.08,0x73c9ce);detail(-.15,-1.2,.08,.08,0xd69c55);detail(-1.1,-1.1,1.15,.08,0x78827b);}
+    if(b.id==='ore_extractor'){for(let n=0;n<5;n++)detail(-1.55+n*.18,-1.15,.12,.14,n%2?0x878271:0x6c6c60);detail(-.7,-1.45,1.1,.12,0x817568);}
+    if(b.id==='fuel_refinery'){detail(-1.2,-1.25,1.35,.1,0x9b8164);detail(-.55,-.85,.1,.8,0x77918b);detail(-1.45,-.8,.1,.1,0xd69c55);}
+    if(b.id===selected){const outline=new THREE.Sprite(new THREE.SpriteMaterial({map:textures.get(b.id),color:0x77d4db,transparent:true,alphaTest:.05,depthWrite:false,depthTest:false}));outline.position.set(b.position[0],.04,b.position[1]);outline.center.set(.5,0);outline.scale.set(3.35,3.35,1);outline.renderOrder=1;objects.add(outline);}
+    const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:textures.get(b.id),transparent:true,alphaTest:.05,depthWrite:false}));sprite.position.set(b.position[0],.05,b.position[1]);sprite.center.set(.5,0);sprite.scale.set(3.15,3.15,1);sprite.userData.id=b.id;sprite.renderOrder=2;objects.add(sprite);
+    if(b.id===selected){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=40;const ctx=canvas.getContext('2d');if(ctx){ctx.fillStyle='#101c28';ctx.fillRect(0,0,256,40);ctx.fillStyle='#e9ead8';ctx.textAlign='center';ctx.font='bold 20px sans-serif';ctx.fillText(`${b.name} · Nv ${b.level}`,128,27,248);const tex=new THREE.CanvasTexture(canvas);tex.minFilter=THREE.NearestFilter;tex.magFilter=THREE.NearestFilter;const label=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));label.position.set(b.position[0],3.45,b.position[1]);label.scale.set(3,.47,1);label.renderOrder=3;label.userData.label=true;label.userData.id=b.id;objects.add(label);}}
   }render();};
-  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;const aspect=w/h;const half=6.1;camera.left=-half*aspect;camera.right=half*aspect;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();renderer.setSize(w,h,false);render();};
+  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;const aspect=w/h;const half=5.4;camera.left=-half*aspect;camera.right=half*aspect;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();renderer.setSize(w,h,false);render();};
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
   const change=()=>{const x=THREE.MathUtils.clamp(controls.target.x,-2,2),z=THREE.MathUtils.clamp(controls.target.z,-2,2);camera.position.x+=x-controls.target.x;camera.position.z+=z-controls.target.z;controls.target.x=x;controls.target.z=z;render();};
   controls.addEventListener('change',change);controls.update();
@@ -109,7 +114,7 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
   renderer.domElement.addEventListener('webglcontextlost',contextLost);
   renderer.domElement.addEventListener('pointerdown',pointerDown);renderer.domElement.addEventListener('pointerup',pointerUp);
   const reset=()=>{controls.target.set(0,0,0);camera.position.set(8,10,9);camera.zoom=1;camera.updateProjectionMatrix();controls.update();render();};
-  return {update,reset,dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.removeEventListener('change',change);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);clear();clearInfrastructure();ground.geometry.dispose();(ground.material as THREE.Material).dispose();groundTexture.dispose();base.geometry.dispose();(base.material as THREE.Material).dispose();rocks.geometry.dispose();(rocks.material as THREE.Material).dispose();textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();}};
+  return {update,reset,dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.removeEventListener('change',change);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);clear();clearInfrastructure();ground.geometry.dispose();(ground.material as THREE.Material).dispose();groundTexture.dispose();rocks.geometry.dispose();(rocks.material as THREE.Material).dispose();textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();}};
 }
 
 export function PlanetDiorama({planetId,planet,levels,onFallback}:{planetId:string;planet:Planet;levels:Record<string,number>;onFallback:()=>void}) {
