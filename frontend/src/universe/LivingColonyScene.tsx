@@ -1,3 +1,4 @@
+import {useEffect,useState} from 'react';
 import environment from '../../assets/buildings/living-colony/environment.png';
 import civil from '../../assets/buildings/living-colony/civil_district.png';
 import ferrite from '../../assets/buildings/living-colony/ferrite_extractor.png';
@@ -10,11 +11,13 @@ const buildings = [
 ] as const;
 
 export function LivingColonyScene({levels,onSelect}:{levels:Record<string,number>;onSelect:(id:string)=>void}) {
-  return <section className="living-colony" aria-label="Colônia em camadas">
+  const [visible,setVisible]=useState(!document.hidden);
+  useEffect(()=>{const update=()=>setVisible(!document.hidden);document.addEventListener('visibilitychange',update);return()=>document.removeEventListener('visibilitychange',update);},[]);
+  return <section className="living-colony" data-motion={visible?'active':'paused'} aria-label="Colônia em camadas">
     <div className="living-colony-stage">
       <div className="living-colony-background" style={{backgroundImage:`url(${environment})`}} aria-hidden="true"/>
       <div className="living-colony-terrain" aria-hidden="true"/>
-      <div className="living-colony-buildings">{buildings.filter(b=>(levels[b.id]??0)>0).map(b=><button key={b.id} className="living-colony-building" style={{left:`${b.x}%`,top:`${b.y}%`}} onClick={()=>onSelect(b.id)} aria-label={`${b.name}, nível ${levels[b.id]} — inspecionar`}><span className={`living-colony-effects living-colony-effects-${b.id}`} aria-hidden="true">{b.id==='ore_extractor'&&<><i/><i/><i/></>}{b.id==='fuel_refinery'&&<><i/><i/><i/></>}{b.id==='civil_district'&&<><i/><i/><i/></>}</span><img src={b.image} alt=""/><span>{b.name} · Nv {levels[b.id]}</span></button>)}</div>
+      <div className="living-colony-buildings">{buildings.filter(b=>(levels[b.id]??0)>0).map(b=><button key={b.id} className="living-colony-building" style={{left:`${b.x}%`,top:`${b.y}%`}} onClick={()=>onSelect(b.id)} aria-label={`${b.name}, nível ${levels[b.id]} — inspecionar`}><b className={`living-colony-effects living-colony-effects-${b.id}`} aria-hidden="true"><i/><i/><i/></b><img src={b.image} alt=""/><span>{b.name} · Nv {levels[b.id]}</span></button>)}</div>
       <div className="living-colony-foreground" aria-hidden="true"/>
       <div className="living-colony-effects" aria-hidden="true"/>
     </div>

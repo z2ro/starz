@@ -142,13 +142,13 @@
 /* Localized operational pixels; building sprites remain stationary. */
 .pixel-game .living-colony-building{isolation:isolate}
 .pixel-game .living-colony-building .living-colony-effects{position:absolute;inset:0;z-index:1;pointer-events:none}
-.pixel-game .living-colony-building .living-colony-effects i{position:absolute;display:block;width:3px;height:3px;background:#72dce2;opacity:0;image-rendering:pixelated}
+.pixel-game .living-colony-building .living-colony-effects i{position:absolute;display:block;width:1%;height:1%;background:#72dce2;opacity:0;image-rendering:pixelated}
 .pixel-game .living-colony-effects-ore_extractor i:nth-child(1){left:18%;top:76%;animation:colony-drill 4.8s steps(2,end) infinite}
 .pixel-game .living-colony-effects-ore_extractor i:nth-child(2){left:23%;top:72%;animation:colony-drill 4.8s steps(2,end) 1.2s infinite}
 .pixel-game .living-colony-effects-ore_extractor i:nth-child(3){left:28%;top:77%;background:#e6b65f;animation:colony-drill 4.8s steps(2,end) 2.4s infinite}
 .pixel-game .living-colony-effects-fuel_refinery i{background:#e4aa53}
 .pixel-game .living-colony-effects-fuel_refinery i:nth-child(1){left:70%;top:36%;animation:colony-lamp 6s steps(2,end) infinite}
-.pixel-game .living-colony-effects-fuel_refinery i:nth-child(2){left:77%;top:30%;animation:colony-vapor 8s ease-out 2s infinite}
+.pixel-game .living-colony-effects-fuel_refinery i:nth-child(2){left:77%;top:30%;background:#b9d1d1;animation:colony-vapor 8s steps(5,end) 2s infinite}
 .pixel-game .living-colony-effects-fuel_refinery i:nth-child(3){left:62%;top:62%;background:#66d4dc;animation:colony-lamp 7s steps(2,end) 2s infinite}
 .pixel-game .living-colony-effects-civil_district i:nth-child(1){left:42%;top:45%;animation:colony-lamp 7s steps(2,end) 1s infinite}
 .pixel-game .living-colony-effects-civil_district i:nth-child(2){left:58%;top:51%;animation:colony-lamp 9s steps(2,end) 3s infinite}
@@ -157,3 +157,5 @@
 @keyframes colony-lamp{0%,68%,100%{opacity:.12}72%,82%{opacity:.75}77%{opacity:.32}}
 @keyframes colony-vapor{0%,72%,100%{opacity:0;transform:translate(0,3px) scale(.6)}78%{opacity:.35}90%{opacity:0;transform:translate(1px,-8px) scale(1)}}
 @media(prefers-reduced-motion:reduce){.pixel-game .living-colony-effects i{display:none!important;animation:none!important}}
+
+.pixel-game .living-colony[data-motion=paused] .living-colony-effects i{animation-play-state:paused}
