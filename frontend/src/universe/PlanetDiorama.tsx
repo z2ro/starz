@@ -15,6 +15,16 @@ const buildings = [
 const sites = [[-2, -1.4], [1.9, -1.4], [0, 2]] as const;
 
 function hash(value:string) { let h=2166136261; for(const c of value) h=Math.imul(h^c.charCodeAt(0),16777619); return h>>>0; }
+function terrainHash(value:string) { let h=hash(value);h^=h>>>16;h=Math.imul(h,0x7feb352d);h^=h>>>15;h=Math.imul(h,0x846ca68b);return (h^(h>>>16))>>>0; }
+// Interpolated seeded values form broad, repeatable patches rather than isolated tiles.
+export function terrainSample(seed:string, x:number, z:number) {
+  const ix=Math.floor(x), iz=Math.floor(z), fx=x-ix, fz=z-iz;
+  const smooth=(t:number)=>t*t*(3-2*t);
+  const value=(a:number,b:number)=>terrainHash(`${seed}:${a}:${b}`)/4294967295;
+  const a=THREE.MathUtils.lerp(value(ix,iz),value(ix+1,iz),smooth(fx));
+  const b=THREE.MathUtils.lerp(value(ix,iz+1),value(ix+1,iz+1),smooth(fx));
+  return THREE.MathUtils.lerp(a,b,smooth(fz));
+}
 export function dioramaBuildings(planetId:string, levels:Record<string,number>) {
   const offsets = [...sites];
   // Shuffle every site before filtering, so constructing a building never moves another.
@@ -35,20 +45,55 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
   const controls=new OrbitControls(camera,renderer.domElement);
   controls.enableRotate=false; controls.enableDamping=false; controls.screenSpacePanning=false; controls.minZoom=.7; controls.maxZoom=2.3;
   controls.touches.TWO=THREE.TOUCH.DOLLY_PAN;
-  const tiles=new THREE.InstancedMesh(new THREE.BoxGeometry(.99,.22,.99),new THREE.MeshLambertMaterial(),144);
   const family=derivePlanetFamily(planet.temperature,planet.water);
-  const palette=family==='frozen'?['#a0b8b8','#809d9d','#becbba']:family==='desert'?['#967d54','#ad9364','#75674a']:family==='oceanic'?['#4e7772','#648c80','#3d6264']:['#667b57','#7e895f','#526b55'];
-  const matrix=new THREE.Matrix4();
-  for(let i=0;i<144;i++){const x=i%12-5.5,z=Math.floor(i/12)-5.5; matrix.makeTranslation(x, -.12,z);tiles.setMatrixAt(i,matrix);tiles.setColorAt(i,new THREE.Color(palette[hash(`${planetId}:terrain:${i}`)%palette.length]));}
-  scene.add(tiles,new THREE.HemisphereLight(0xd8e8dc,0x394048,2));
+  const palette=family==='frozen'?['#738f91','#91a9a4','#b2c1b0','#d0d3bb']:family==='desert'?['#6c6049','#887454','#a38a60','#b19a6f']:family==='oceanic'?['#435f59','#526f62','#6a826b','#82917b']:family==='terran'?['#4c604b','#617056','#778063','#909174']:['#555e58','#68716a','#7c8275','#95968a'];
+  const canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;
+  const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas indisponível');
+  for(let z=0;z<128;z++)for(let x=0;x<128;x++){
+    const patch=terrainSample(planetId,x/23,z/23)*.8+terrainSample(`${planetId}:detail`,x/7,z/7)*.2;
+    ctx.fillStyle=palette[Math.min(3,Math.floor(patch*4))];ctx.fillRect(x,z,1,1);
+  }
+  const groundTexture=new THREE.CanvasTexture(canvas);groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.magFilter=THREE.NearestFilter;groundTexture.minFilter=THREE.NearestFilter;
+  const groundGeometry=new THREE.PlaneGeometry(12,12,32,32);groundGeometry.rotateX(-Math.PI/2);
+  const vertices=groundGeometry.attributes.position;
+  for(let i=0;i<vertices.count;i++){
+    const x=vertices.getX(i),z=vertices.getZ(i);
+    // Keep the industrial center level; low ridges frame rather than obscure sprites.
+    const edge=THREE.MathUtils.clamp((Math.max(Math.abs(x),Math.abs(z))-3.8)/2.2,0,1);
+    vertices.setY(i,edge*terrainSample(`${planetId}:relief`,(x+6)/3,(z+6)/3)*.36);
+  }
+  groundGeometry.computeVertexNormals();
+  const ground=new THREE.Mesh(groundGeometry,new THREE.MeshLambertMaterial({map:groundTexture}));scene.add(ground,new THREE.HemisphereLight(0xd8e8dc,0x394048,2));
+  const base=new THREE.Mesh(new THREE.BoxGeometry(12,.24,12),new THREE.MeshLambertMaterial({color:0x39443d}));base.position.y=-.13;scene.add(base);
+  const rocks=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1,0),new THREE.MeshLambertMaterial({color:family==='frozen'?0x8da1a0:0x5b5e52,flatShading:true}),36);
+  const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
+  for(let i=0;i<36;i++){
+    const angle=terrainHash(`${planetId}:rock-angle:${i}`)/4294967295*Math.PI*2;
+    const radius=4.8+terrainHash(`${planetId}:rock-radius:${i}`)/4294967295*1.1;
+    const size=.07+terrainHash(`${planetId}:rock-size:${i}`)/4294967295*.11;
+    const x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
+    const edge=THREE.MathUtils.clamp((Math.max(Math.abs(x),Math.abs(z))-3.8)/2.2,0,1);
+    position.set(x,edge*terrainSample(`${planetId}:relief`,(x+6)/3,(z+6)/3)*.36+.04,z);scale.set(size,size*.6,size*.8);matrix.compose(position,rotation,scale);rocks.setMatrixAt(i,matrix);
+  }
+  scene.add(rocks);
   const light=new THREE.DirectionalLight(0xffe3ad,1.5);light.position.set(-5,10,7);scene.add(light);
   const objects=new THREE.Group();scene.add(objects);
+  const infrastructure=new THREE.Group();scene.add(infrastructure);
   const textures=new Map<string,THREE.Texture>();const loader=new THREE.TextureLoader();
   let frame=0, disposed=false;
   const render=()=>{if(!disposed&&!frame)frame=requestAnimationFrame(()=>{frame=0;renderer.render(scene,camera);});};
   for(const b of buildings){const texture=loader.load(b.image,()=>render()); texture.colorSpace=THREE.SRGBColorSpace;texture.magFilter=THREE.NearestFilter;texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;textures.set(b.id,texture);}
   const clear=()=>{for(const object of [...objects.children]){objects.remove(object);if(object instanceof THREE.Sprite){object.material.dispose();if(object.userData.label) object.material.map?.dispose();}else if(object instanceof THREE.Mesh){object.geometry.dispose();(object.material as THREE.Material).dispose();}}};
-  const update=(list:Site[], selected:string|null)=>{clear();for(const b of list){
+  const clearInfrastructure=()=>{for(const object of [...infrastructure.children]){infrastructure.remove(object);if(object instanceof THREE.Mesh){object.geometry.dispose();(object.material as THREE.Material).dispose();}}};
+  const update=(list:Site[], selected:string|null)=>{clear();clearInfrastructure();
+  // Tracks are presentation only and connect constructed installations, never empty sites.
+  for(let i=1;i<list.length;i++){
+    const [ax,az]=list[i-1].position,[bx,bz]=list[i].position;
+    const road=new THREE.Mesh(new THREE.PlaneGeometry(Math.hypot(bx-ax,bz-az),.35),new THREE.MeshBasicMaterial({color:0x777a68,side:THREE.DoubleSide}));
+    road.rotation.x=-Math.PI/2;road.rotation.z=-Math.atan2(bz-az,bx-ax);road.position.set((ax+bx)/2-.75,.018,(az+bz)/2-.75);infrastructure.add(road);
+  }
+  for(const b of list){
+    const pad=new THREE.Mesh(new THREE.PlaneGeometry(2.35,1.75),new THREE.MeshBasicMaterial({color:0x59645d,side:THREE.DoubleSide}));pad.rotation.x=-Math.PI/2;pad.position.set(b.position[0]-.75,.025,b.position[1]-.75);infrastructure.add(pad);
     if(b.id===selected){const outline=new THREE.Sprite(new THREE.SpriteMaterial({map:textures.get(b.id),color:0x77d4db,transparent:true,alphaTest:.05,depthWrite:false,depthTest:false}));outline.position.set(b.position[0],.04,b.position[1]);outline.center.set(.5,0);outline.scale.set(3,3,1);outline.renderOrder=1;objects.add(outline);}
     const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:textures.get(b.id),transparent:true,alphaTest:.05,depthWrite:false}));sprite.position.set(b.position[0],.05,b.position[1]);sprite.center.set(.5,0);sprite.scale.set(2.8,2.8,1);sprite.userData.id=b.id;sprite.renderOrder=2;objects.add(sprite);
     const canvas=document.createElement('canvas');canvas.width=256;canvas.height=40;const ctx=canvas.getContext('2d');if(ctx){ctx.fillStyle='#101c28';ctx.fillRect(0,0,256,40);ctx.fillStyle='#e9ead8';ctx.textAlign='center';ctx.font='bold 20px sans-serif';ctx.fillText(`${b.name} · Nv ${b.level}`,128,27,248);const tex=new THREE.CanvasTexture(canvas);tex.minFilter=THREE.NearestFilter;tex.magFilter=THREE.NearestFilter;const label=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));label.position.set(b.position[0],3.2,b.position[1]);label.scale.set(3,.47,1);label.renderOrder=3;label.userData.label=true;label.userData.id=b.id;objects.add(label);}
@@ -64,7 +109,7 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
   renderer.domElement.addEventListener('webglcontextlost',contextLost);
   renderer.domElement.addEventListener('pointerdown',pointerDown);renderer.domElement.addEventListener('pointerup',pointerUp);
   const reset=()=>{controls.target.set(0,0,0);camera.position.set(8,10,9);camera.zoom=1;camera.updateProjectionMatrix();controls.update();render();};
-  return {update,reset,dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.removeEventListener('change',change);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);clear();tiles.geometry.dispose();(tiles.material as THREE.Material).dispose();textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();}};
+  return {update,reset,dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.removeEventListener('change',change);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);clear();clearInfrastructure();ground.geometry.dispose();(ground.material as THREE.Material).dispose();groundTexture.dispose();base.geometry.dispose();(base.material as THREE.Material).dispose();rocks.geometry.dispose();(rocks.material as THREE.Material).dispose();textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();}};
 }
 
 export function PlanetDiorama({planetId,planet,levels,onFallback}:{planetId:string;planet:Planet;levels:Record<string,number>;onFallback:()=>void}) {
