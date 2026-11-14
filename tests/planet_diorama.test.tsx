@@ -16,5 +16,10 @@ describe('planetary diorama',()=>{
     expect(dioramaBuildings('planet-a',{civil_district:1})).toEqual(dioramaBuildings('planet-a',{civil_district:1}));
     expect(dioramaBuildings('planet-b',{})).toEqual([]);
     expect(new Set(next.map(b=>b.position.join(','))).size).toBe(3);
+    expect(next[0].position[0]).toBeLessThan(0);
+    expect(next[0].position[1]).toBeLessThan(0);
+    expect(next[1].position[1]).toBeGreaterThan(0);
+    expect(next[2].position[0]).toBeGreaterThan(0);
+    expect(dioramaBuildings('planet-b',{civil_district:1,ore_extractor:1})).not.toEqual(first);
   });
 });
