@@ -14,7 +14,7 @@ export function LivingColonyScene({levels,onSelect}:{levels:Record<string,number
     <div className="living-colony-stage">
       <div className="living-colony-background" style={{backgroundImage:`url(${environment})`}} aria-hidden="true"/>
       <div className="living-colony-terrain" aria-hidden="true"/>
-      <div className="living-colony-buildings">{buildings.filter(b=>(levels[b.id]??0)>0).map(b=><button key={b.id} className="living-colony-building" style={{left:`${b.x}%`,top:`${b.y}%`}} onClick={()=>onSelect(b.id)} aria-label={`${b.name}, nível ${levels[b.id]} — inspecionar`}><img src={b.image} alt=""/><span>{b.name} · Nv {levels[b.id]}</span></button>)}</div>
+      <div className="living-colony-buildings">{buildings.filter(b=>(levels[b.id]??0)>0).map(b=><button key={b.id} className="living-colony-building" style={{left:`${b.x}%`,top:`${b.y}%`}} onClick={()=>onSelect(b.id)} aria-label={`${b.name}, nível ${levels[b.id]} — inspecionar`}><span className={`living-colony-effects living-colony-effects-${b.id}`} aria-hidden="true">{b.id==='ore_extractor'&&<><i/><i/><i/></>}{b.id==='fuel_refinery'&&<><i/><i/><i/></>}{b.id==='civil_district'&&<><i/><i/><i/></>}</span><img src={b.image} alt=""/><span>{b.name} · Nv {levels[b.id]}</span></button>)}</div>
       <div className="living-colony-foreground" aria-hidden="true"/>
       <div className="living-colony-effects" aria-hidden="true"/>
     </div>
