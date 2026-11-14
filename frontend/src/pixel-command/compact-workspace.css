@@ -131,3 +131,10 @@
 @media(max-width:700px){.pixel-game .living-colony-stage .living-colony-building span{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
 .pixel-game .living-colony-stage .living-colony-building{border-color:transparent!important}
 .pixel-game .living-colony-stage .living-colony-building:hover,.pixel-game .living-colony-stage .living-colony-building:focus-visible{border-color:#77d4db!important}
+
+/* Illustrated empty site: gameplay buildings remain independent DOM sprites. */
+.pixel-game .living-colony-background{background-size:100% 100%;background-repeat:no-repeat}
+.pixel-game .living-colony-terrain{background:none;clip-path:none}
+.pixel-game .living-colony-stage .living-colony-building{width:27%;transform:translate(-50%,-82%)}
+.pixel-game .living-colony-stage .living-colony-building span{position:absolute;top:83%;width:auto;min-width:65%;padding:3px 7px;background:#10212ee8;border-bottom:1px solid #5f8f95;white-space:nowrap;font-size:12px}
+@media(max-width:700px){.pixel-game .living-colony-stage{aspect-ratio:1672/941}.pixel-game .living-colony-stage .living-colony-building span{width:1px;min-width:0;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}}
