@@ -110,7 +110,7 @@
 .pixel-game .planet-diorama-controls>div{display:flex;flex-wrap:wrap;gap:4px}
 .pixel-game .planet-diorama-controls button{min-height:40px;padding:5px 8px}
 .pixel-game .planet-diorama-controls button[aria-pressed=true]{border-color:#77d4db;color:#c7f1ed}
-@media(max-width:700px){.pixel-game .planet-diorama-controls>span:first-of-type{display:none}.pixel-game .planet-diorama-controls button{min-height:44px}.pixel-game .planet-diorama-controls{gap:3px}}
+@media(max-width:700px){.pixel-game .planet-diorama-controls>span:first-of-type{display:none}.pixel-game .planet-diorama-controls button{min-height:44px}.pixel-game .planet-diorama-controls{gap:3px}.pixel-game .planet-diorama-controls>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.pixel-game .planet-diorama-controls>div button{white-space:normal;padding:4px;line-height:1.2;font-size:12px}}
 
 .pixel-game .living-colony{display:flex;flex:1;min-height:0;flex-direction:column;align-items:center;justify-content:center;gap:8px}
 .pixel-game .living-colony-stage{position:relative;aspect-ratio:1672/941;width:min(100%,calc((100vh - 330px)*1.777));max-height:100%;overflow:hidden;border:1px solid #405766;background:#182936}

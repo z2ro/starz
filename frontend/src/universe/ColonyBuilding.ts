@@ -3,9 +3,9 @@ import * as THREE from 'three';
 /** Decorative geometry only; visibility and levels belong to the planet snapshot. */
 export function createColonyBuilding(id:string,selected:boolean) {
   const group=new THREE.Group();const moving:THREE.Object3D[]=[];
-  const steel=new THREE.MeshStandardMaterial({color:0x435969,roughness:.8});
-  const edge=new THREE.MeshStandardMaterial({color:0x91a2a5,roughness:.7});
-  const dark=new THREE.MeshStandardMaterial({color:0x1c303e,roughness:.9});
+  const steel=new THREE.MeshStandardMaterial({color:id==='civil_district'?0xc5d4d0:id==='ore_extractor'?0xc18043:0x598f9b,roughness:.8});
+  const edge=new THREE.MeshStandardMaterial({color:0xc1c9bf,roughness:.7});
+  const dark=new THREE.MeshStandardMaterial({color:0x273d55,roughness:.9});
   const amber=new THREE.MeshBasicMaterial({color:0xe9ad52});
   const cyan=new THREE.MeshBasicMaterial({color:0x69d4df});
   const materials=[steel,edge,dark,amber,cyan];
@@ -35,6 +35,23 @@ export function createColonyBuilding(id:string,selected:boolean) {
     const beacon=mesh(new THREE.OctahedronGeometry(.09),cyan,-.25,1.83,-.6);moving.push(beacon);
     for(const z of [.62,.79]){const pipe=mesh(new THREE.CylinderGeometry(.045,.045,1.85,6),z===.62?amber:edge,0,.4,z);pipe.rotation.z=Math.PI/2;}
     const fan=box(.65,1.5,-.45,.3,.04,.08,edge);moving.push(fan);
+  }
+  // Contrasting roof plates, ribs and stairs make each silhouette readable at game scale.
+  if(id==='civil_district'){
+    for(const x of [-.89,-.22])box(x,.9,-.3,.055,1.1,.75,edge);
+    box(-.55,1.61,-.3,.56,.06,.62,cyan);
+    for(let n=0;n<3;n++)box(.1,.12+n*.055,1.21-n*.12,.65,.08,.2,edge);
+    const dish=mesh(new THREE.ConeGeometry(.24,.12,10),edge,-.55,1.99,-.3);dish.rotation.z=.5;
+  }
+  if(id==='ore_extractor'){
+    for(const z of [-.69,.45])for(const x of [-.8,-.25])box(x,.55,z,.09,.65,.09,dark);
+    box(.45,1.17,-.18,.9,.08,.8,amber);
+    for(let n=0;n<5;n++)box(.15+n*.15,1.23,-.18,.05,.04,.65,dark);
+  }
+  if(id==='fuel_refinery'){
+    for(const x of [-.65,.05])box(x,1.43,.18,.12,.15,.12,cyan);
+    for(let n=0;n<5;n++)box(.91,.46+n*.17,-.45,.035,.035,.4,amber);
+    box(.65,1.3,-.45,.62,.07,.65,edge);
   }
   // Panel seams and footings share the same industrial scale across all three designs.
   for(const x of [-1,0,1])box(x,.285,.95,.06,.025,.18,amber);
