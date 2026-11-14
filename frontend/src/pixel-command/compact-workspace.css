@@ -111,3 +111,23 @@
 .pixel-game .planet-diorama-controls button{min-height:40px;padding:5px 8px}
 .pixel-game .planet-diorama-controls button[aria-pressed=true]{border-color:#77d4db;color:#c7f1ed}
 @media(max-width:700px){.pixel-game .planet-diorama-controls>span:first-of-type{display:none}.pixel-game .planet-diorama-controls button{min-height:44px}.pixel-game .planet-diorama-controls{gap:3px}}
+
+.pixel-game .living-colony{display:flex;flex:1;min-height:0;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.pixel-game .living-colony-stage{position:relative;aspect-ratio:1672/941;width:min(100%,calc((100vh - 330px)*1.777));max-height:100%;overflow:hidden;border:1px solid #405766;background:#182936}
+.pixel-game .living-colony-stage>div{position:absolute;inset:0}
+.pixel-game .living-colony-background{background:#182936}
+.pixel-game .living-colony-terrain{background:#26383b;clip-path:polygon(0 48%,100% 36%,100% 100%,0 100%)}
+.pixel-game .living-colony-foreground,.pixel-game .living-colony-effects{pointer-events:none}
+.pixel-game .living-colony-building{position:absolute;transform:translate(-50%,-100%);width:24%;height:auto;min-width:44px;min-height:44px;padding:0;border:2px solid transparent;background:transparent;cursor:pointer}
+.pixel-game .living-colony-building img{display:block;width:100%;height:auto;image-rendering:pixelated}
+.pixel-game .living-colony-building span{display:block;color:#e8eee0;background:#162a35;padding:2px 4px;font:12px/1.2 system-ui;text-align:center}
+.pixel-game .living-colony-building:hover,.pixel-game .living-colony-building:focus-visible{border-color:#77d4db;outline:2px solid #77d4db;outline-offset:2px}
+.pixel-game .living-colony-notice{margin:0;color:#b8c7c3;font:13px/1.3 system-ui}
+@media(max-width:700px){.pixel-game .surface-switch{flex-wrap:wrap}.pixel-game .living-colony-stage{width:100%;max-height:none;flex:none}.pixel-game .living-colony-building{width:29%}.pixel-game .living-colony-building span{font-size:11px}}
+.pixel-game .living-colony-stage .living-colony-building{all:unset;position:absolute;display:flex!important;flex-direction:column;align-items:center;box-sizing:border-box;transform:translate(-50%,-75%);width:24%;min-width:44px;min-height:44px;cursor:pointer;border:2px solid transparent;box-shadow:none!important;background:transparent!important}
+.pixel-game .living-colony-stage .living-colony-building img{width:100%;height:auto;flex:none}
+.pixel-game .living-colony-stage .living-colony-building span{width:100%;box-sizing:border-box;white-space:normal;overflow-wrap:normal}
+.pixel-game .living-colony-stage .living-colony-building:hover,.pixel-game .living-colony-stage .living-colony-building:focus-visible{border-color:#77d4db;outline:2px solid #77d4db;outline-offset:2px}
+@media(max-width:700px){.pixel-game .living-colony-stage .living-colony-building span{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
+.pixel-game .living-colony-stage .living-colony-building{border-color:transparent!important}
+.pixel-game .living-colony-stage .living-colony-building:hover,.pixel-game .living-colony-stage .living-colony-building:focus-visible{border-color:#77d4db!important}
