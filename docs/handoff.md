@@ -1,7 +1,7 @@
 # STARZ — Handoff atualizado
 
-Atualizado em **15/11/2026**. Branch: `experiment/persistent-universe`.
-Checkpoint de implementação mais recente: **`b3fa7c3`**. Este documento resume o trabalho acumulado e o ponto de retomada; não substitui contratos, código ou evidências de execução.
+Atualizado em **15/11/2026** (segunda atualização do dia). Branch: `experiment/persistent-universe`.
+Checkpoint de implementação mais recente: **`d6a6cdc`** (Superfície 2.5D reescrita; ver seção 5). Este documento resume o trabalho acumulado e o ponto de retomada; não substitui contratos, código ou evidências de execução.
 
 ## 1. Orientação para a próxima sessão
 
@@ -96,10 +96,10 @@ Não há registro de aprovação de uma normalização pixel-perfect de todo o c
 | Seletor | Implementação | Comportamento |
 |---|---|---|
 | Instalações | `DevelopmentView.tsx` | Grade, filtros, paginação, detalhes e construção com dados/ações existentes. |
-| Superfície 2.5D | `PlanetDiorama.tsx` + `ColonyBuilding.ts` | Cena Three.js agora com geometria 3D procedural, câmera ortográfica fixa, pan/zoom/reset, seleção e fallback para grade. O rótulo histórico foi mantido. |
+| Superfície 2.5D | `PlanetDiorama.tsx` + `ColonyBuilding.ts` | Recorte da superfície do próprio planeta, com doze instalações em setores fixos, pipeline de pixel aprovado, câmera dimétrica fixa, pan/zoom/reset, seleção e fallback para grade. |
 | Colônia 2D | `LivingColonyScene.tsx` | Fundo ilustrado sem prédios permanentes, três PNGs independentes e efeitos CSS; seleção retorna à grade com instalação escolhida. |
 
-Todas usam `state.districts`: `civil_district`, `ore_extractor`, `fuel_refinery` só aparecem com nível positivo. Não expandimos automaticamente para as demais instalações.
+Todas usam `state.districts` e só mostram instalações com nível positivo. A Colônia 2D continua limitada a `civil_district`, `ore_extractor` e `fuel_refinery`; a Superfície 2.5D cobre doze instalações (seção abaixo).
 
 ### Colônia 2D aprovada
 
@@ -108,26 +108,39 @@ Todas usam `state.districts`: `civil_district`, `ore_extractor`, `fuel_refinery`
 - Microefeitos de iluminação, partículas e vapor (`1766456`), com isolamento e pausa ao ocultar (`a12c360`).
 - Não foi inventado um recorte grosseiro da perfuratriz para movimentar a imagem achatada. A cena 2D e a grade continuam disponíveis.
 
-### Cena 3D: trabalho mais recente
+### Superfície 2.5D: reescrita em 15/11/2026 (`d6a6cdc`)
 
-Histórico: MVP (`be037a7`), ambientação (`0d6aa04`), direção artística (`e94b1be`), organização em setores (`7f9fb46`), edifícios geométricos animados (`52fa446`), cores/ambiente (`0fe938b`) e última passagem (`b3fa7c3`).
+A versão `b3fa7c3` foi rejeitada pelo responsável ("muito feio"). Uma primeira tentativa de ilha flutuante com céu, inspirada diretamente em `referencias/Water-Polo.html`, também foi rejeitada ("não parece mais o planeta") e não foi commitada. O responsável então entregou um briefing de direção artística ("Planetary Surface 2.5D — A Civilization Taking Shape") e aprovou a proposta resultante. O briefing não está no repositório.
 
-O responsável rejeitou a aparência de demonstração técnica e autorizou reinvenção artística, pedindo inspiração em `referencias/Water Polo.html`. A referência foi aberta no Chromium; não foi copiada como aplicação nem foram adicionadas dependências.
+Direção aprovada, em resumo: o planeta é o protagonista; nada de ilha flutuante, tabuleiro, sprites "adesivo" ou demonstração técnica; setores reconhecíveis; progresso visual derivado apenas de dados reais; sem novo gameplay, backend ou persistência.
 
-Última passagem:
+O que está implementado:
 
-- Distrito civil: torre escalonada, cúpula nervurada, janelas, acessos e antena móvel.
-- Extrator: pórtico contraventado, perfuratriz localizada e esteira; estrutura principal imóvel.
-- Refinaria: tanques, coluna de processamento, tubulações, escada e vapor ocasional.
-- Terreno claro com detalhe fino determinístico, vegetação em grupos, bancos rochosos baixos e vias com bordas/marcações.
-- Pequena bacia de água **decorativa** apenas para famílias planetárias temperadas/oceânicas derivadas dos dados existentes. Não é depósito, recurso, instalação ou nova mecânica.
-- Renderização reduzida no desktop e ampliação nítida por CSS; sem novo pipeline de efeitos pesado.
-- Movimento reduzido e documento oculto interrompem animação contínua; geometrias/materiais são liberados ao desmontar.
-- Posições continuam estáveis por planeta/ID. Atualizar nível não redistribui as instalações.
+- **Terreno do planeta real.** `DevelopmentView` deriva semente, família e parâmetros com `createVisualDescriptor` e passa `generation` ao diorama. O chão é amostrado com `samplePlanet`/`planetSurfaceColor`, os mesmos do globo da Visão geral. Sem identidade ou família, usa o preset da família derivada (ou `terran`) com o ID do planeta como semente.
+- **Local de pouso determinístico**: primeira planície de terra firme entre candidatos semeados. A pegada da colônia é sempre terra; fora dela valem costa, oceano e biomas do gerador.
+- **Relevo em colunas de 0,25**, plano sob a colônia, em terraços ao fundo e limitado entre a câmera e os edifícios. As bordas escurecem até o fundo `#020711`.
+- **Pipeline de pixel aprovado** (`ShipPixelPipeline`, paleta padrão, contorno e dither), mirando cerca de 240 linhas de baixa resolução.
+- **Câmera dimétrica 2:1** (azimute 45°, elevação 30°), sem rotação; zoom contínuo de 0,6× a 3×.
+- **Natureza por bioma da célula** (árvores, arbustos, rochas, formações minerais, gelo), nunca sobre setores, vias ou à frente dos edifícios.
+- **Doze instalações com modelo procedural e microanimação**: as três anteriores mais `solar_field`, `processor`, `volatile_well`, `manufacturing`, `orbital_shipyard` (terminal em solo), `research_lab`, `civil_lab`, `military_lab` e `fundamental_lab`. `orbital_battery` não tem modelo, pois Instalações a oculta no modo persistente.
+- **Setores fixos** (`sites`): indústria na fileira da frente, núcleo civil, refinaria, energia e terminal orbital no meio, ciência ao fundo. As três posições originais foram preservadas.
+- **Vias só entre o que existe**: via principal, via de fundo para a fileira científica, ligação entre elas e praça com mastro de sinal.
+- **Seleção**: moldura ciano no solo; com mais de quatro instalações os botões viram um `<select>`.
 
-**A qualidade artística ainda não recebeu aprovação final.** O usuário aprovou a composição 2D anterior, não a equivalência da cena 3D à referência Water Polo. A última entrega mostra melhoria, sem declarar essa equivalência.
+Decisões assumidas por recomendação, sem resposta explícita do responsável: edifícios em geometria 3D em vez de sprites; estaleiro orbital como terminal em solo. O responsável viu o resultado e aprovou ("ficou muito bom").
+
+Ainda **não** implementado da proposta aprovada: versões artísticas por faixa de nível (sugestão 1–3, 4–7, 8+, a confirmar; não foi encontrado nível máximo no código), estágios da colônia (posto, colônia, centro), zoom em três degraus, água animada, visual vulcânico derivado de `geological_activity` e modelo da bateria defensiva.
 
 ## 6. Validação recente e evidências locais
+
+### Sessão de 15/11/2026 (`d6a6cdc`)
+
+- `tsc --noEmit`: aprovado.
+- Revisão visual no navegador, pelo servidor de desenvolvimento, com a conta de teste local: planeta Z457-2 com três instalações reais e, por um modo de pré-visualização temporário já removido, com as doze. Sem erros no console.
+- **Vitest não foi executado**: o worker não iniciou no ambiente do agente. `tests/planet_diorama.test.tsx` foi alterado (o exemplo de instalação sem modelo passou de `processor` para `orbital_battery`) e precisa ser rodado, junto de `tests/colony_building.test.tsx`, que ainda cobre só os três modelos originais.
+- Não houve `qa:full`, captura em 390×844, teste de movimento reduzido nem medição de desempenho nesta sessão. O terreno gera cerca de 26 mil células na criação da cena.
+
+### Sessão anterior (`b3fa7c3`), histórico
 
 Risco médio, frontend localizado. Usamos ferramentas existentes com filtros direcionados porque o runner geral ampliaria desnecessariamente o escopo. Não houve `qa:full`, PostgreSQL, alteração de backend ou benchmark de GPU nesta passagem.
 
@@ -174,11 +187,33 @@ docker cp frontend/dist/. starz-persistent-universe-universe-app-1:/app/frontend
 
 Isso preserva o backend existente, mas é uma atualização no filesystem do container: recriá-lo perde essa cópia. O código-fonte permanece versionado; reconstruir a imagem exige tratar migrations separadamente. Não afirmar que o backend local corresponde a todos os commits atuais apenas porque o frontend está atualizado.
 
+### Ambiente no Windows (Docker Desktop), criado em 15/11/2026
+
+O ambiente descrito acima vive no Docker do WSL e não foi tocado. Com autorização do responsável, foi criado um segundo ambiente no Docker Desktop do Windows a partir de `C:\Users\zero\Documents\repos\starz`:
+
+```powershell
+docker compose -f compose.persistent.yaml up -d --build --wait
+```
+
+- Banco **novo e vazio** (volume `universe-save` do Docker Desktop), já na revisão `d07000000001`. Não contém a partida do WSL.
+- Mesmas portas (8030 e 5545): os dois ambientes não sobem ao mesmo tempo.
+- Conta de teste `qa_claude`; a senha está em `.qa/local-test-account.txt` (ignorado pelo Git).
+- Servidor de desenvolvimento com hot reload, apontando para o app em 8030, em `http://localhost:5173/static/`:
+
+```powershell
+docker run --rm -it -p 5173:5173 -e STARZ_API=http://host.docker.internal:8030 -v "${PWD}:/app" -w /app node:22-bookworm-slim sh -c "npm ci && npx vite --config .qa/vite.dev.config.ts"
+```
+
+`.qa/vite.dev.config.ts` é local e ignorado pelo Git. O comando instala `node_modules` com binários Linux na pasta do repositório; rodar `npm` direto no Windows exige novo `npm ci`. A imagem do app não recebe as mudanças de frontend até ser reconstruída.
+
+No checkout do Windows, usar `git -c core.autocrlf=true` (ou configurar `core.autocrlf`) quando o Git rodar em Linux sobre essa pasta; sem isso todos os arquivos aparecem modificados por fim de linha.
+
 ## 8. Arquivos para retomar o trabalho visual
 
 - [DevelopmentView](../frontend/src/universe/DevelopmentView.tsx): alternância das três apresentações e construção existente.
-- [PlanetDiorama](../frontend/src/universe/PlanetDiorama.tsx): terreno, ambiente, câmera, seleção, render loop e descarte.
-- [ColonyBuilding](../frontend/src/universe/ColonyBuilding.ts): modelos e animações dos três edifícios.
+- [PlanetDiorama](../frontend/src/universe/PlanetDiorama.tsx): terreno do planeta, setores (`sites`), vias, natureza, câmera, seleção, render loop e descarte.
+- [ColonyBuilding](../frontend/src/universe/ColonyBuilding.ts): modelos e animações dos doze edifícios.
+- [planetGenerator](../frontend/src/planetlab/planetGenerator.ts) e [VisualStateAdapter](../frontend/src/visual-state/VisualStateAdapter.ts): fonte do terreno e da semente; não foram alterados.
 - [LivingColonyScene](../frontend/src/universe/LivingColonyScene.tsx): composição ilustrada independente.
 - [Estilos compactos](../frontend/src/pixel-command/compact-workspace.css).
 - [Testes do diorama](../tests/planet_diorama.test.tsx) e [testes dos modelos](../tests/colony_building.test.tsx).
@@ -187,6 +222,8 @@ A pasta `referencias/` está **não rastreada** e pertence ao responsável. Não
 
 ## 9. Próximo passo recomendado, sem autorização implícita
 
-Abrir a cena local com o responsável e colher avaliação artística da versão `b3fa7c3`, comparando com Water Polo. Se houver nova solicitação, trabalhar problemas visíveis específicos de composição, materiais ou movimento. Não expandir catálogo, gameplay ou arquitetura para compensar direção artística ainda insatisfatória.
+1. Rodar os dois testes do diorama e corrigir o que aparecer.
+2. Seguir a proposta aprovada na Superfície 2.5D, uma fatia por vez e com avaliação do responsável a cada uma: versões por faixa de nível (confirmar as faixas antes), estágios da colônia e zoom em degraus.
+3. Confirmar com o responsável as duas decisões assumidas (geometria 3D; estaleiro como terminal em solo) e as pendentes (vulcânico, bateria defensiva).
 
-A tarefa deste handoff é somente documentação e publicação dos commits locais autorizados. Não inicia outra fase de desenvolvimento ou migração do ambiente persistente.
+Não expandir gameplay, backend ou persistência para sustentar a cena. O commit `d6a6cdc` e este handoff são locais: **não houve push**.
