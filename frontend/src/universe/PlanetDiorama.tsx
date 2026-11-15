@@ -48,73 +48,108 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
   controls.target.set(-.75,.5,-.75);controls.enableRotate=false; controls.enableDamping=false; controls.screenSpacePanning=false; controls.minZoom=.7; controls.maxZoom=2.3;
   controls.touches.TWO=THREE.TOUCH.DOLLY_PAN;
   const family=derivePlanetFamily(planet.temperature,planet.water);
-  const palette=family==='frozen'?['#738f91','#91a9a4','#b2c1b0','#d0d3bb']:family==='desert'?['#6c6049','#887454','#a38a60','#b19a6f']:family==='oceanic'?['#435f59','#526f62','#6a826b','#82917b']:family==='terran'?['#906c7a','#9b7580','#a68087','#b08a8e']:['#555e58','#68716a','#7c8275','#95968a'];
-  const canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;
+  const cold=family==='frozen',dry=family==='desert';
+  const palette=cold?['#7c9fab','#89a9b3','#9ab5ba','#adc5c5']:dry?['#ac8062','#b88e6a','#c69c76','#d1aa82']:['#b8a98b','#c0b294','#cabda1','#d4c9ae'];
+  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
   const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas indisponível');
-  for(let z=0;z<128;z++)for(let x=0;x<128;x++){
-    const patch=terrainSample(planetId,x/23,z/23)*.8+terrainSample(`${planetId}:detail`,x/7,z/7)*.2;
-    ctx.fillStyle=palette[Math.min(3,Math.floor(patch*4))];ctx.fillRect(x,z,1,1);
+  for(let z=0;z<256;z++)for(let x=0;x<256;x++){
+    const broad=terrainSample(planetId,x/70,z/70);
+    const grain=(terrainHash(`${planetId}:grain:${x}:${z}`)%11)/50;
+    ctx.fillStyle=palette[Math.min(3,Math.floor((broad*.65+grain)*4))];ctx.fillRect(x,z,1,1);
   }
   const groundTexture=new THREE.CanvasTexture(canvas);groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.magFilter=THREE.NearestFilter;groundTexture.minFilter=THREE.NearestFilter;
-  // Extend the ground beyond the camera and darken its perimeter into the scene background.
-  const groundGeometry=new THREE.PlaneGeometry(28,28,48,48);groundGeometry.rotateX(-Math.PI/2);
+  const groundGeometry=new THREE.PlaneGeometry(28,28,64,64);groundGeometry.rotateX(-Math.PI/2);
   const vertices=groundGeometry.attributes.position;const colors:number[]=[];
   for(let i=0;i<vertices.count;i++){
     const x=vertices.getX(i),z=vertices.getZ(i),distance=Math.hypot(x,z);
     const edge=THREE.MathUtils.smoothstep(distance,4,12);
-    vertices.setY(i,edge*terrainSample(`${planetId}:relief`,(x+14)/4,(z+14)/4)*.12);
-    const tint=new THREE.Color(0xffffff).lerp(new THREE.Color(0x182d36),edge*.87);colors.push(tint.r,tint.g,tint.b);
+    vertices.setY(i,edge*terrainSample(`${planetId}:relief`,(x+14)/4,(z+14)/4)*.22);
+    const tint=new THREE.Color(0xffffff).lerp(new THREE.Color(0x263e4d),edge*.85);colors.push(tint.r,tint.g,tint.b);
   }
   groundGeometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));groundGeometry.computeVertexNormals();
-  groundTexture.wrapS=groundTexture.wrapT=THREE.RepeatWrapping;groundTexture.repeat.set(2,2);
-  const ground=new THREE.Mesh(groundGeometry,new THREE.MeshLambertMaterial({map:groundTexture,vertexColors:true,side:THREE.DoubleSide}));scene.add(ground,new THREE.HemisphereLight(0xa9dce8,0x493653,1.5));
-  const rocks=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1,0),new THREE.MeshLambertMaterial({color:family==='frozen'?0x8da1a0:0x655374,flatShading:true}),36);
-  const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
-  for(let i=0;i<36;i++){
-    const cluster=i%5;const angle=cluster*Math.PI*2/5+(terrainHash(`${planetId}:rock-angle:${i}`)/4294967295-.5)*.65;
-    const radius=4.4+terrainHash(`${planetId}:rock-radius:${i}`)/4294967295*1.1;
-    const size=.3+terrainHash(`${planetId}:rock-size:${i}`)/4294967295*.7;
-    const x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
-    const edge=THREE.MathUtils.smoothstep(Math.hypot(x,z),4,12);
-    position.set(x,edge*terrainSample(`${planetId}:relief`,(x+14)/4,(z+14)/4)*.12+size*.18,z);scale.set(size,size*1.3,size*.8);matrix.compose(position,rotation,scale);rocks.setMatrixAt(i,matrix);
-  }
-  scene.add(rocks);
-  // Peripheral outcrops and low alien ground cover frame the occupied sectors.
+  const ground=new THREE.Mesh(groundGeometry,new THREE.MeshLambertMaterial({map:groundTexture,vertexColors:true}));scene.add(ground,new THREE.HemisphereLight(0xbadce6,0x514b59,1.3));
+  // Two low geological banks frame the settlement; the foreground stays open.
   const scenery=new THREE.Group();scene.add(scenery);
-  const rockMaterial=new THREE.MeshLambertMaterial({color:0x766080,flatShading:true});
-  const foliageMaterial=new THREE.MeshLambertMaterial({color:family==='frozen'?0x8dc9cd:0x378e92,flatShading:true});
-  const crystalMaterial=new THREE.MeshLambertMaterial({color:0x85cecf,emissive:0x14353c,flatShading:true});
-  const rockGeometry=new THREE.DodecahedronGeometry(1);
-  const leafGeometry=new THREE.IcosahedronGeometry(1);
-  const crystalGeometry=new THREE.ConeGeometry(.13,.65,5);
-  for(let i=0;i<54;i++){
-    const r=(key:string)=>terrainHash(`${planetId}:environment:${i}:${key}`)/4294967295;
-    const angle=r('angle')*Math.PI*2;
-    const radius=4.3+r('radius')*2.5;
-    const x=Math.cos(angle)*radius-.7,z=Math.sin(angle)*radius-.7;
-    const rear=x+z<-5;
-    const stone=i%5===0||rear;
-    const m=new THREE.Mesh(stone?rockGeometry:leafGeometry,stone?rockMaterial:foliageMaterial);
-    const size=stone?.45+r('size')*.8:.14+r('size')*.28;
-    m.scale.set(size,stone?size*(rear?1.35:.8):size*.65,size*.8);
-    m.position.set(x,m.scale.y*.55,z);m.rotation.y=r('rotation')*Math.PI;m.castShadow=true;m.receiveShadow=true;scenery.add(m);
-    if(i%7===0){const crystal=new THREE.Mesh(crystalGeometry,crystalMaterial);crystal.position.set(x+.35,.3,z);crystal.rotation.z=.2;scenery.add(crystal);}
+  const landscapeMaterials=[0x697987,0x879193,0xb6b8a4,0x297a67,0x4d9c79,0x8fb78b,0x504b54].map(color=>new THREE.MeshLambertMaterial({color,flatShading:true}));
+  const landscapeGeometries:THREE.BufferGeometry[]=[new THREE.DodecahedronGeometry(1),new THREE.CylinderGeometry(1,1.15,1,6),new THREE.CylinderGeometry(.045,.075,1,5),new THREE.IcosahedronGeometry(1)];
+  const prop=(geo:number,mat:number,x:number,y:number,z:number,sx:number,sy:number,sz:number)=>{
+    const m=new THREE.Mesh(landscapeGeometries[geo],landscapeMaterials[mat]);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;scenery.add(m);return m;
+  };
+  for(let i=0;i<12;i++){
+    const r=terrainHash(`${planetId}:ridge:${i}`)/4294967295;
+    const x=i<6?-5.1+i*.75:3.4+(i-6)*.32;
+    const z=i<6?-3.7-r*.6:-4.5+(i-6)*.7;
+    const height=.35+r*.65;
+    prop(1,0,x,height/2,z,.65,height,.6).rotation.y=.25;
+    prop(1,1,x,height+.08,z,.6,.16,.55).rotation.y=.25;
+    prop(0,2,x+.4,.12,z+.5,.32,.18,.28);
   }
-  const light=new THREE.DirectionalLight(0xffd8ad,3);light.position.set(-5,10,7);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.camera.left=-8;light.shadow.camera.right=8;light.shadow.camera.top=8;light.shadow.camera.bottom=-8;light.shadow.bias=-.002;scene.add(light);ground.receiveShadow=true;rocks.castShadow=true;
+  // Small groves have distinct trunks and canopies instead of a ring of random boulders.
+  for(let i=0;i<19;i++){
+    const r=(key:string)=>terrainHash(`${planetId}:grove:${i}:${key}`)/4294967295;
+    const bank=i%3;
+    const x=bank===0?-4.9-r('x')*.6:bank===1?3.9+r('x')*1.2:-3.2+r('x')*1.8;
+    const z=bank===0?-1+r('z')*4:bank===1?-2+r('z')*4.5:-5.2-r('z');
+    const height=(cold||dry?.35:.65)+r('height')*.5;
+    prop(2,6,x,height/2,z,1,height,1);
+    for(let tier=0;tier<3;tier++){
+      const width=(.48-tier*.1)*(dry?.65:1);
+      prop(3,3+tier,x+(tier%2)*.14,height+tier*.12,z,width,.23,width*.8).rotation.y=r('rotation')*Math.PI;
+    }
+    prop(0,4,x+.2,.07,z+.25,.24,.12,.2);
+  }
+  // Fine mineral fragments give the ground scale without obscuring the facilities.
+  for(let i=0;i<40;i++){
+    const x=(terrainHash(`${planetId}:grit-x:${i}`)/4294967295-.5)*13;
+    const z=(terrainHash(`${planetId}:grit-z:${i}`)/4294967295-.5)*12;
+    if(Math.abs(x)<4&&Math.abs(z)<4)continue;
+    prop(0,i%3,x,.04,z,.09,.07,.12);
+  }
+  // A decorative shallow basin is restricted to the already-known wet planet families.
+  // It is scenery, never a new resource deposit or a gameplay object.
+  const ripples:THREE.Mesh[]=[];
+  if(family==='terran'||family==='oceanic'){
+    const outline=new THREE.Shape();
+    for(let i=0;i<24;i++){
+      const angle=i/24*Math.PI*2,r=1+(terrainHash(`${planetId}:shore:${i}`)%100)/600;
+      const x=Math.cos(angle)*r,z=Math.sin(angle)*r;
+      if(i===0)outline.moveTo(x,z);else outline.lineTo(x,z);
+    }
+    outline.closePath();const basinGeometry=new THREE.ShapeGeometry(outline);landscapeGeometries.push(basinGeometry);
+    for(const [scale,color,y] of [[1.12,0x8e9b91,.012],[1.05,0xe0d5ac,.018],[1,0x3d9294,.025],[.84,0x347e8b,.03]]){
+      const material=new THREE.MeshLambertMaterial({color});landscapeMaterials.push(material);
+      const pool=new THREE.Mesh(basinGeometry,material);pool.rotation.x=-Math.PI/2;pool.scale.set(scale*1.65,scale*.85,1);pool.position.set(1.5,y,2.4);pool.receiveShadow=true;scenery.add(pool);
+    }
+    const rippleGeometry=new THREE.PlaneGeometry(.3,.018);landscapeGeometries.push(rippleGeometry);
+    const rippleMaterial=new THREE.MeshLambertMaterial({color:0x9fd9ce,transparent:true,opacity:.55});landscapeMaterials.push(rippleMaterial);
+    for(let i=0;i<9;i++){
+      const m=new THREE.Mesh(rippleGeometry,rippleMaterial);m.rotation.x=-Math.PI/2;m.position.set(.5+(i%3)*.65,.04,2+(Math.floor(i/3))*.28);scenery.add(m);ripples.push(m);
+    }
+    for(let i=0;i<9;i++)prop(0,i%3,2.9-i*.27,.07,3.22+(i%2)*.08,.2,.12,.14);
+  }
+  const light=new THREE.DirectionalLight(0xffecce,3);light.position.set(-5,10,7);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.camera.left=-8;light.shadow.camera.right=8;light.shadow.camera.top=8;light.shadow.camera.bottom=-8;light.shadow.bias=-.002;scene.add(light);ground.receiveShadow=true;
   const objects=new THREE.Group();scene.add(objects);
   const infrastructure=new THREE.Group();scene.add(infrastructure);
   let models:ReturnType<typeof createColonyBuilding>[]=[];
   const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
   let frame=0,disposed=false;
   const render=()=>{if(!disposed&&!frame)frame=requestAnimationFrame(tick);};
-  function tick(time:number){frame=0;if(disposed)return;if(!motion.matches&&!document.hidden)models.forEach(m=>m.animate(time/1000));renderer.render(scene,camera);if(!motion.matches&&!document.hidden&&models.length)render();}
+  function tick(time:number){frame=0;if(disposed)return;if(!motion.matches&&!document.hidden){models.forEach(m=>m.animate(time/1000));ripples.forEach((r,i)=>{r.scale.x=.7+Math.sin(time*.0007+i)*.3;});}renderer.render(scene,camera);if(!motion.matches&&!document.hidden&&models.length)render();}
   const wake=()=>{cancelAnimationFrame(frame);frame=0;render();};
   motion.addEventListener('change',wake);document.addEventListener('visibilitychange',wake);
   const clear=()=>{models.forEach(m=>{objects.remove(m.group);m.dispose();});models=[];};
   const clearInfrastructure=()=>{for(const object of [...infrastructure.children]){infrastructure.remove(object);if(object instanceof THREE.Mesh){object.geometry.dispose();(object.material as THREE.Material).dispose();}}};
   const update=(list:Site[], selected:string|null)=>{clear();clearInfrastructure();
   // Connect only occupied sectors through an unobstructed central service junction.
-  const road=(ax:number,az:number,bx:number,bz:number)=>{const length=Math.hypot(bx-ax,bz-az);if(length<.01)return;const segment=new THREE.Mesh(new THREE.PlaneGeometry(length,.48),new THREE.MeshBasicMaterial({color:0x39485d,side:THREE.DoubleSide}));segment.rotation.x=-Math.PI/2;segment.rotation.z=-Math.atan2(bz-az,bx-ax);segment.position.set((ax+bx)/2,.018,(az+bz)/2);infrastructure.add(segment);};
+  const road=(ax:number,az:number,bx:number,bz:number)=>{
+    const length=Math.hypot(bx-ax,bz-az);if(length<.01)return;
+    const plane=(l:number,w:number,color:number,y:number,x:number,z:number)=>{
+      const m=new THREE.Mesh(new THREE.PlaneGeometry(l,w),new THREE.MeshLambertMaterial({color}));m.rotation.x=-Math.PI/2;m.rotation.z=-Math.atan2(bz-az,bx-ax);m.position.set(x,y,z);m.receiveShadow=true;infrastructure.add(m);
+    };
+    plane(length,.68,0xc3c1a5,.015,(ax+bx)/2,(az+bz)/2);
+    plane(length,.5,0x596c73,.022,(ax+bx)/2,(az+bz)/2);
+    for(let d=.3;d<length-.1;d+=.5)plane(.18,.035,0xd6cda5,.026,ax+(bx-ax)*d/length,az+(bz-az)*d/length);
+  };
   if(list.length>1)for(const b of list){const [x,z]=b.position;const px=x-.75,pz=z-.75;road(px,pz,px,0);road(px,0,0,0);}
   for(const b of list){
     const pad=new THREE.Mesh(new THREE.PlaneGeometry(2.3,1.75),new THREE.MeshBasicMaterial({color:b.id==='ore_extractor'?0x655e53:b.id==='fuel_refinery'?0x455257:0x65706a,side:THREE.DoubleSide}));pad.rotation.x=-Math.PI/2;pad.position.set(b.position[0]-.75,.025,b.position[1]-.75);infrastructure.add(pad);
@@ -124,7 +159,7 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
     if(b.id==='fuel_refinery'){detail(-1.2,-1.25,1.35,.1,0x9b8164);detail(-.55,-.85,.1,.8,0x77918b);detail(-1.45,-.8,.1,.1,0xd69c55);}
     const model=createColonyBuilding(b.id,b.id===selected);model.group.position.set(b.position[0]-.75,.03,b.position[1]-.75);models.push(model);objects.add(model.group);
   }render();};
-  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;const aspect=w/h;const half=3.8;camera.left=-half*aspect;camera.right=half*aspect;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();renderer.setSize(w,h,false);render();};
+  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;const aspect=w/h;const half=3.8;camera.left=-half*aspect;camera.right=half*aspect;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();renderer.setSize(Math.ceil(w/(w>700?2:1)),Math.ceil(h/(w>700?2:1)),false);render();};
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
   const change=()=>{const x=THREE.MathUtils.clamp(controls.target.x,-2,2),z=THREE.MathUtils.clamp(controls.target.z,-2,2);camera.position.x+=x-controls.target.x;camera.position.z+=z-controls.target.z;controls.target.x=x;controls.target.z=z;render();};
   controls.addEventListener('change',change);controls.update();
@@ -135,7 +170,7 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, onSele
   renderer.domElement.addEventListener('webglcontextlost',contextLost);
   renderer.domElement.addEventListener('pointerdown',pointerDown);renderer.domElement.addEventListener('pointerup',pointerUp);
   const reset=()=>{controls.target.set(-.75,.5,-.75);camera.position.set(7.25,10.5,8.25);camera.zoom=1;camera.updateProjectionMatrix();controls.update();render();};
-  return {update,reset,dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.removeEventListener('change',change);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);clear();clearInfrastructure();rockGeometry.dispose();leafGeometry.dispose();crystalGeometry.dispose();rockMaterial.dispose();foliageMaterial.dispose();crystalMaterial.dispose();ground.geometry.dispose();(ground.material as THREE.Material).dispose();groundTexture.dispose();rocks.geometry.dispose();(rocks.material as THREE.Material).dispose();motion.removeEventListener('change',wake);document.removeEventListener('visibilitychange',wake);light.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();}};
+  return {update,reset,dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.removeEventListener('change',change);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);clear();clearInfrastructure();landscapeGeometries.forEach(g=>g.dispose());landscapeMaterials.forEach(m=>m.dispose());ground.geometry.dispose();(ground.material as THREE.Material).dispose();groundTexture.dispose();motion.removeEventListener('change',wake);document.removeEventListener('visibilitychange',wake);light.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();}};
 }
 
 export function PlanetDiorama({planetId,planet,levels,onFallback}:{planetId:string;planet:Planet;levels:Record<string,number>;onFallback:()=>void}) {
