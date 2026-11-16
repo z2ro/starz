@@ -1,7 +1,7 @@
 # STARZ — Handoff atualizado
 
-Atualizado em **15/11/2026** (terceira atualização do dia). Branch: `experiment/persistent-universe`.
-Checkpoint de implementação mais recente: **`432ebc8`** (Instalações unificada, demolição, loading e Galáxia; ver seção 5). Este documento resume o trabalho acumulado e o ponto de retomada; não substitui contratos, código ou evidências de execução.
+Atualizado em **16/11/2026**. Branch: `experiment/persistent-universe`.
+Checkpoint de implementação mais recente: **`17ee6ce`** (paleta única, Defesas, Pesquisa e Produção; ver seção 5). Este documento resume o trabalho acumulado e o ponto de retomada; não substitui contratos, código ou evidências de execução.
 
 ## 1. Orientação para a próxima sessão
 
@@ -147,7 +147,38 @@ Resultado de uma análise visual geral pedida pelo responsável, que aprovou com
 - **Abas**: um estilo único para todo `.tabs[role=tablist]` em `master-ui.css`. Afeta todas as telas.
 - Barra lateral: o selo "Universo persistente" é ocultado abaixo de 960 px de altura, onde cobria o item Mercado.
 
-Recomendações da análise ainda não feitas: diagrama de cadeias em Produção; linhas, ícones e cores por domínio na árvore de Pesquisa; levar o padrão de painel de detalhe a Estaleiro e Pesquisa; estilo único para selects, campos e barras de rolagem; arte de `solar_field` e `volatile_well`.
+Recomendações da análise ainda não feitas: levar o padrão de painel de detalhe ao Estaleiro; estilo único para selects, campos e barras de rolagem; arte de `solar_field` e `volatile_well`.
+
+### Paleta, Defesas, Pesquisa e Produção (`17ee6ce`, 16/11/2026)
+
+**Paleta e cores**
+- Uma paleta de 48 cores em [pixelPalette](../frontend/src/visual/pixelPalette.ts), usada pelo globo, pelas naves e pela superfície. O índice 22 precisa continuar `#4e3875` (`tests/galaxy_visual.test.tsx`).
+- Tokens de categoria em `master-tokens.css` (`--cat-industry`, `--cat-energy`, `--cat-civil`, `--cat-science`, `--cat-orbit`, `--cat-military`), usados nos cartões de Instalações, nos domínios de Pesquisa e nos papéis do Estaleiro.
+- Superfície: local de pouso escolhido por pontuação de 64 candidatos (terra em volta, sem rocha, baixa elevação).
+
+**Defesas**
+- Aba "Construir": cena própria no topo, cartões de Estruturas e Munição embaixo, detalhe à direita.
+- A cena das defesas é separada da de Instalações por decisão do responsável ("senão fica muito poluído"). Usa o mesmo terreno; `defenseLevels(state)` conta só unidades com HP > 0.
+- Seis modelos procedurais em [ColonyBuilding](../frontend/src/universe/ColonyBuilding.ts); canhão pontual e bateria de mísseis escalam com a quantidade.
+- Sprites 16×16 das nove defesas em [ResearchSprite](../frontend/src/universe/ResearchSprite.tsx) (`DefenseSprite`).
+
+**Pesquisa**
+- Conexões acesas na cor do domínio, tracejadas se o requisito falta, âmbar no caminho da tecnologia selecionada. As linhas do "Avanço" para os cartões da própria coluna não são desenhadas.
+- Um sprite 16×16 por tecnologia (`ResearchSprite`); os Avanços dividem a medalha.
+- Cartões com estado legível, marcos em pontinhos e barra animada quando em pesquisa. Cabeçalho de patamar com a capacidade exigida comparada à atual.
+- Painel de detalhe: resumo em blocos, custo e botão na primeira página; planejador de nível alvo nas páginas finais.
+
+**Produção**
+- Tela única, sem abas: capacidade no topo, diagrama da cadeia em colunas (`economyLayers`), detalhe à direita.
+- Cada recurso mostra produção, consumo e saldo líquido. A taxa antiga (`nominalRate`) é bruta.
+- Processador com insumo abaixo de 1 unidade fica marcado como sem insumo.
+- Os números são nominais: não descontam cobertura de energia ou de trabalhadores. Mostrar produção efetiva por instalação exigiria dado novo do servidor.
+- `buildingArt` saiu de DevelopmentView para [buildingArt](../frontend/src/universe/buildingArt.ts).
+
+**Não verificado nesta leva**
+- Vitest não rodou (não inicia na VM); só `tsc --noEmit` passou. `tests/economy_command.test.tsx` foi reescrito em parte para a tela nova e nunca executado.
+- A conta de teste não tem defesas, pesquisa concluída nem saldo negativo: esses estados foram vistos só por prévia temporária (já removida) ou não foram vistos.
+- Celular, domínios Civil e Militar da Pesquisa, planetas desérticos e congelados.
 
 ## 6. Validação recente e evidências locais
 
@@ -245,7 +276,7 @@ No checkout do Windows, usar `git -c core.autocrlf=true` (ou configurar `core.au
 - [SpatialGalaxyMap](../frontend/src/galaxy/SpatialGalaxyMap.tsx), [galaxyVisuals](../frontend/src/galaxy/galaxyVisuals.ts), [PlanetThumb](../frontend/src/galaxy/PlanetThumb.tsx) e [galaxy.css](../frontend/src/galaxy/galaxy.css).
 - [BootScreen](../frontend/src/components/shell/BootScreen.tsx).
 - [planetGenerator](../frontend/src/planetlab/planetGenerator.ts) e [VisualStateAdapter](../frontend/src/visual-state/VisualStateAdapter.ts): fonte do terreno e da semente; não foram alterados.
-- [LivingColonyScene](../frontend/src/universe/LivingColonyScene.tsx): composição ilustrada independente.
+- [DefenseView](../frontend/src/universe/DefenseView.tsx), [LevelResearch](../frontend/src/universe/LevelResearch.tsx), [ResearchSprite](../frontend/src/universe/ResearchSprite.tsx) e [EconomyView](../frontend/src/views/EconomyView.tsx); estilos no fim de `compact-workspace.css` e de `master-ui.css`.
 - [Estilos compactos](../frontend/src/pixel-command/compact-workspace.css).
 - [Testes do diorama](../tests/planet_diorama.test.tsx) e [testes dos modelos](../tests/colony_building.test.tsx).
 
@@ -253,12 +284,13 @@ A pasta `referencias/` está **não rastreada** e pertence ao responsável. Não
 
 ## 9. Próximo passo recomendado, sem autorização implícita
 
-1. Reconstruir a imagem do app e testar a demolição de ponta a ponta na conta de teste.
-2. Rodar os testes de frontend listados na seção 6 e corrigir o que aparecer.
-3. Conferir as telas não revisadas com o novo estilo de abas.
-4. Continuar a análise visual, uma tela por vez e com avaliação do responsável: Produção, Pesquisa, painéis de Estaleiro e Pesquisa.
-5. Na Superfície 2.5D: versões por faixa de nível (confirmar faixas), estágios da colônia, obra em andamento visível no lote, zoom em degraus.
+1. Rodar os testes de frontend: `economy_command`, `defense_view`, `research_domains`, `research_connections`, `planet_diorama`, `colony_building`, `galaxy_visual`, `development_compact`. Corrigir o que aparecer.
+2. Reconstruir a imagem do app e testar a demolição de ponta a ponta na conta de teste.
+3. Conferir Defesas, Pesquisa e Produção com dados reais (defesa construída, pesquisa em andamento, saldo negativo) e no celular.
+4. Continuar a análise visual, uma tela por vez e com avaliação do responsável: Estaleiro, Frotas, Diplomacia, Colônias, Mercado.
+5. Pendências pequenas: painel de detalhe da Produção ainda no visual antigo; sprites mais fracos (Economia de combustível, Extração estelar, Armamentos estelares, Computação); os dois canhões de defesa têm silhueta parecida.
+6. Na Superfície 2.5D: versões por faixa de nível (confirmar faixas), estágios da colônia, obra em andamento visível no lote, zoom em degraus.
 
-Decisões ainda sem resposta explícita do responsável: edifícios em geometria 3D; estaleiro como terminal em solo; visual vulcânico; bateria defensiva na superfície.
+Decisões ainda sem resposta explícita do responsável: edifícios em geometria 3D; estaleiro como terminal em solo; visual vulcânico; defesas num ponto diferente do planeta (hoje usam o mesmo terreno da colônia).
 
-Os commits `d6a6cdc` e `0b51421` foram publicados pelo responsável. `ce9f547`, `432ebc8` e esta atualização do handoff são locais: **não houve push**.
+Os commits `ce9f547`, `432ebc8`, `be8f979`, `2c80688`, `17ee6ce` e esta atualização do handoff são locais: **não houve push** (sem rede para o GitHub neste ambiente). O responsável publica com `git push origin experiment/persistent-universe`.
