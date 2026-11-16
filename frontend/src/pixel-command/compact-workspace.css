@@ -150,3 +150,4 @@
 .pixel-game .ux-development .installation-demolish-open{align-self:flex-start;min-height:36px;padding:4px 10px;border:1px solid #7a4a3a;background:transparent;color:#e0a48f;font-size:13px}
 .pixel-game .ux-development .installation-demolish{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border:1px solid #a8621f;background:#2a1d18;font-size:13px;color:#f1d6b0}
 .pixel-game .ux-development .installation-demolish>span{flex:1 1 180px}.pixel-game .ux-development .installation-demolish>button{min-height:36px;padding:4px 12px}.pixel-game .ux-development .installation-demolish>button:first-of-type{border-color:#e0a48f;color:#ffd9c9}
+.master-ui .system-workspace .ux-development .build-review>button.installation-demolish-open:not(:disabled){align-self:flex-start;width:auto;background:transparent;border-color:#7a4a3a;color:#e0a48f;font-weight:400;box-shadow:none}
