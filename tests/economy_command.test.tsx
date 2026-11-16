@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { EconomyView } from '../frontend/src/views/EconomyView';
+import { EconomyView, economyLayers } from '../frontend/src/views/EconomyView';
 import type { ShellContext } from '../frontend/src/components/shell/AppShell';
 import type { Catalog, State } from '../frontend/src/types/game';
 
@@ -62,15 +62,13 @@ describe('Industrial Command Network', () => {
   it('keeps the flow stable when no economic district is active', () => {
     renderEconomy({ ...state, districts: { ore_extractor: 0, processor: 0 } });
     expect(screen.getByText('Nenhuma cadeia industrial ativa')).toBeInTheDocument();
-    expect(screen.getByText('Sem infraestrutura econômica')).toBeInTheDocument();
   });
 
-  it('exposes both resources and installations in the compact detail selector', () => {
+  it('shows the net balance of a resource and lays the chain out from extraction to products', () => {
     renderEconomy();
-    fireEvent.click(screen.getByRole('tab', { name: 'Detalhe' }));
-    fireEvent.change(screen.getByRole('combobox', { name: 'Inspecionar recurso ou instalação' }), { target: { value: 'district:processor' } });
-    expect(within(screen.getByLabelText('Detalhe da infraestrutura')).getByText('Processador de materiais')).toBeInTheDocument();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Inspecionar recurso ou instalação' }), { target: { value: 'resource:raw_ore' } });
-    expect(within(screen.getByLabelText('Detalhe do recurso')).getByText('Ferrita bruta')).toBeInTheDocument();
+    // 2 extractors × 2 minus 1 processor × 1.5.
+    expect(screen.getByLabelText('Saldo de Ferrita bruta')).toHaveTextContent(/\+2[.,]5\/min/);
+    const layers = economyLayers(catalog.districts, catalog.resources);
+    expect(layers.map(layer => layer.map(node => node.item.id))).toEqual([['ore_extractor'], ['raw_ore', 'volatiles'], ['processor'], ['refined_alloy', 'components']]);
   });
 });

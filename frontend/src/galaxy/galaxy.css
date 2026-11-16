@@ -150,3 +150,16 @@
 .master-ui .galaxy-spatial-detail .galaxy-planet>.planet-thumb{grid-row:1/4}.master-ui .galaxy-spatial-detail .galaxy-planet>:not(.planet-thumb){grid-column:2}
 .master-ui .galaxy-spatial-detail .selected-planet-heading{border-left:0;padding-left:0;gap:6px 12px}
 .master-ui .galaxy-spatial-detail>.travel-planner{margin-top:auto}.master-ui .galaxy-spatial-detail>.travel-planner .button{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;box-sizing:border-box}
+/* System markers: a four-point pixel star with a white core and sparks; a dim signal with a slow scan ring for unidentified locations; corner brackets instead of a ring for selection and focus. */
+.spatial-system{outline:none}
+.galaxy-space .system-selection{stroke-dasharray:none;stroke-linecap:square;stroke-width:2}
+.galaxy-space .spatial-system.selected .system-selection{animation:galaxy-bracket 1.6s steps(2) infinite}
+.stellar-core{fill:#fff;opacity:.9;shape-rendering:crispEdges;pointer-events:none}
+.stellar-sparks{fill:currentColor;opacity:.7;shape-rendering:crispEdges;pointer-events:none;animation:galaxy-twinkle 2.8s steps(3) infinite}
+.galaxy-space .unidentified-symbol{fill:#6497a8;stroke:none;opacity:.75;shape-rendering:crispEdges}
+.unidentified-scan{fill:#0b1c2b;fill-opacity:.6;stroke:#305363;stroke-width:1.5;stroke-dasharray:4 5;pointer-events:none;animation:galaxy-scan 9s linear infinite}
+.spatial-system:hover .unidentified-symbol{fill:#83e5e5;opacity:1}.spatial-system:hover .unidentified-scan{stroke:#6497a8}
+.spatial-system:hover :is(.stellar-glow){opacity:.22}
+@keyframes galaxy-bracket{50%{opacity:.55}}
+@keyframes galaxy-scan{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.stellar-sparks,.unidentified-scan,.galaxy-space .spatial-system.selected .system-selection{animation:none}}

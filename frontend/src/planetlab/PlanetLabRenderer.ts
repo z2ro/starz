@@ -1,19 +1,11 @@
+import { PIXEL_PALETTE } from '../visual/pixelPalette';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { createLabPlanet, disposeLabObject } from './PlanetModel';
 import type { CameraPreset, PlanetGenerationDiagnostics, PlanetLabSettings, PlanetLabStats } from './planetLabTypes';
 export { disposeLabObject } from './PlanetModel';
 
-const PALETTE = [
-  '#020711', '#081425', '#102a40', '#183f55', '#0b4a63', '#14728a',
-  '#214f43', '#3e7150', '#6f8b4a', '#9b874f', '#b69e62', '#6a4c34',
-  '#5d5e5a', '#9ab7aa', '#c9e1e4', '#f3fbf8', '#496d95', '#78a9bf',
-  '#2a7897', '#8bb8c7', '#d3d9cc', '#e5edf0', '#4e3875', '#c0a75b',
-  '#061019', '#0c202c', '#123948', '#19536b', '#1c5d78', '#33899a',
-  '#172f2c', '#2f5940', '#55754b', '#7c925b', '#b7a77c', '#d0bc8e',
-  '#333d3d', '#788582', '#acc8ca', '#dcecef', '#304b65', '#587c95',
-  '#306172', '#6699a6', '#8a938d', '#b4c2bf', '#25304a', '#e0cd9a',
-];
+const PALETTE = PIXEL_PALETTE;
 
 const POST_VERTEX = `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_FRAGMENT = `

@@ -1,15 +1,17 @@
 import * as THREE from 'three';
 
-const PAINT:Record<string,number>={civil_district:0xe4dfc7,ore_extractor:0xd8974c,fuel_refinery:0x6ba9a6,solar_field:0x304b65,processor:0x9aa39b,research_lab:0xd3d9cc,orbital_shipyard:0xc9cfc4,volatile_well:0xb69e62,manufacturing:0x8a938d,civil_lab:0xe0cd9a,military_lab:0x6f8b4a,fundamental_lab:0xbcd6d8};
+// Body colour by role: warm for extraction and industry, cream for civil, cool for energy and orbit, violet for science, red for military.
+const PAINT:Record<string,number>={civil_district:0xf7e6a8,ore_extractor:0xd9632b,fuel_refinery:0x3aa3a8,solar_field:0x1b4060,processor:0xa8683c,research_lab:0xc9b6f2,orbital_shipyard:0xb3c4c9,volatile_well:0xe8c170,manufacturing:0xf29a38,civil_lab:0xa9c466,military_lab:0x9c3a2e,fundamental_lab:0x8a6fd1,
+  point_defense:0x6f8fae,heavy_em_cannon:0x3d5a78,orbital_missile_battery:0x9c3a2e,missile_interceptor:0x6f8fae,planetary_shield:0x3aa3a8,orbital_platform:0xb3c4c9};
 
 /** Presentation only: the planet snapshot determines which installations exist. */
-export function createColonyBuilding(id:string,selected:boolean) {
+export function createColonyBuilding(id:string,selected:boolean,count=1) {
   const group=new THREE.Group();
   const materials:THREE.Material[]=[];
   const matte=(color:number)=>{const m=new THREE.MeshLambertMaterial({color,flatShading:true});materials.push(m);return m;};
   const paint=matte(PAINT[id]??0x6ba9a6);
   const ivory=matte(0xddd8bf),dark=matte(0x2b4555),metal=matte(0x7c9397),glass=matte(0x287e94),rust=matte(0x98634d);
-  const cyan=new THREE.MeshBasicMaterial({color:0x9be7dc});const amber=new THREE.MeshBasicMaterial({color:0xffca75});materials.push(cyan,amber);
+  const cyan=new THREE.MeshBasicMaterial({color:0x9be7dc});const amber=new THREE.MeshBasicMaterial({color:0xffca75}),alert=new THREE.MeshBasicMaterial({color:0xf06a6a});materials.push(cyan,amber,alert);
   const mesh=(geo:THREE.BufferGeometry,mat:THREE.Material,x:number,y:number,z:number)=>{
     const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;m.userData.id=id;group.add(m);return m;
   };
@@ -168,6 +170,51 @@ export function createColonyBuilding(id:string,selected:boolean) {
     for(const a of [.8,2.9,5])beam(new THREE.Vector3(Math.cos(a)*.3,.85,Math.sin(a)*.3),new THREE.Vector3(Math.cos(a)*.12,1.2,Math.sin(a)*.12),.04,dark);
     box(-1,.45,.78,.5,.46,.36,ivory);box(-1,.7,.78,.56,.05,.42,metal);
     animate=time=>{core.position.y=1.25+Math.sin(time*1.2)*.06;core.rotation.y=time;};
+  }else if(id==='point_defense'){
+    // One turret per installed unit, up to four, around an ammunition bunker.
+    box(0,.4,0,.7,.36,.7,dark);box(0,.6,0,.78,.06,.78,metal);
+    const turrets:THREE.Group[]=[];
+    for(const [x,z] of [[-.8,-.6],[.8,.6],[.8,-.6],[-.8,.6]].slice(0,Math.max(1,Math.min(4,count)))){
+      box(x,.36,z,.42,.28,.42);
+      const head=new THREE.Group();head.position.set(x,.6,z);group.add(head);turrets.push(head);
+      head.add(cylinder(0,0,0,.17,.2,dark),box(.32,.04,0,.6,.07,.07,metal),box(.6,.04,0,.08,.1,.1,alert));
+    }
+    animate=time=>{turrets.forEach((head,i)=>{head.rotation.y=Math.sin(time*.5+i*1.7)*1.2;});};
+  }else if(id==='heavy_em_cannon'){
+    // Twin-rail accelerator on a traversing mount, with capacitor coils that cycle.
+    box(-.2,.5,0,1.3,.56,1.1,dark);box(-.2,.82,0,1.1,.1,.9);
+    const gun=new THREE.Group();gun.position.set(-.2,1,0);gun.rotation.z=.35;group.add(gun);
+    gun.add(box(.5,0,-.16,1.9,.12,.1,metal),box(.5,0,.16,1.9,.12,.1,metal),box(-.2,0,0,.5,.3,.5));
+    const coils=[.2,.6,1].map(x=>{const coil=box(x,0,0,.08,.3,.5,cyan);gun.add(coil);return coil;});
+    box(.9,.4,.7,.5,.36,.4,metal);box(.9,.62,.7,.56,.05,.46,dark);
+    animate=time=>{coils.forEach((coil,i)=>{coil.visible=Math.floor(time*3)%4!==i;});};
+  }else if(id==='orbital_missile_battery'){
+    // Silo block: two launch tubes per installed battery, up to six, and a warning mast.
+    box(0,.45,-.1,1.6,.46,1.2,dark);box(0,.7,-.1,1.7,.06,1.3,metal);
+    for(const [x,z] of [[-.5,-.4],[0,-.4],[.5,-.4],[-.5,.2],[0,.2],[.5,.2]].slice(0,Math.max(2,Math.min(6,count*2)))){cylinder(x,.95,z,.14,.5);mesh(new THREE.ConeGeometry(.12,.2,8),alert,x,1.3,z);}
+    box(1.05,.8,.75,.06,1.2,.06,metal);const lamp=box(1.05,1.44,.75,.1,.1,.1,alert);
+    box(-.9,.4,.8,.5,.36,.4);
+    animate=time=>{lamp.visible=time%1.4<.7;};
+  }else if(id==='missile_interceptor'){
+    // Slanted interceptor rack with a fast tracking dish.
+    box(-.4,.45,0,.9,.46,.9,dark);
+    const rack=new THREE.Group();rack.position.set(-.4,.85,0);rack.rotation.z=.6;group.add(rack);
+    rack.add(box(0,0,0,.9,.36,.7));for(const z of [-.2,.2])for(const y of [-.08,.08])rack.add(box(.46,y,z,.04,.1,.2,alert));
+    cylinder(.8,.7,.3,.05,1,metal);const dish=mesh(new THREE.SphereGeometry(.3,12,5,0,Math.PI*2,0,Math.PI/3),ivory,.8,1.3,.3);dish.rotation.z=.8;
+    box(.8,.36,-.6,.5,.3,.4,metal);
+    animate=time=>{dish.rotation.y=time*.9;};
+  }else if(id==='planetary_shield'){
+    // Field generator: a pulsing core over a ring of emitter pylons.
+    cylinder(0,.4,0,.7,.36,dark);cylinder(0,.62,0,.5,.1,metal);cylinder(0,1,0,.14,.7,ivory);
+    const core=mesh(new THREE.IcosahedronGeometry(.3,1),cyan,0,1.6,0),halo=ring(0,1.6,0,.5,cyan);
+    for(const a of [0,1.57,3.14,4.71]){const x=Math.cos(a)*.95,z=Math.sin(a)*.8;box(x,.55,z,.16,.7,.16);box(x,.94,z,.1,.1,.1,cyan);}
+    animate=time=>{core.scale.setScalar(1+Math.sin(time*1.6)*.12);halo.scale.setScalar(1+((time*.5)%1)*.8);};
+  }else if(id==='orbital_platform'){
+    // Ground control of the orbital platform: command bunker, uplink dish and a beacon mast.
+    box(-.4,.5,-.2,1.3,.56,1);box(-.4,.82,-.2,1.4,.06,1.1,dark);for(let n=0;n<4;n++)box(-.85+n*.3,.55,.31,.16,.14,.02,cyan);
+    cylinder(.75,.6,.35,.07,.8,metal);const dish=mesh(new THREE.SphereGeometry(.5,14,6,0,Math.PI*2,0,Math.PI/3),ivory,.75,1.5,.35);dish.rotation.x=Math.PI;
+    box(-.9,1.2,-.5,.05,.7,.05,metal);const lamp=box(-.9,1.58,-.5,.09,.09,.09,alert);
+    animate=time=>{dish.rotation.y=time*.2;lamp.visible=time%2<1;};
   }
   return {group,animate,dispose:()=>{
     group.traverse(object=>{if(object instanceof THREE.Mesh)object.geometry.dispose();});

@@ -7,7 +7,8 @@ import {ShipPixelPipeline} from '../shipgeometrylab/ShipPixelPipeline';
 import {DEFAULT_SHIP_SETTINGS} from '../shipgeometrylab/shipLabTypes';
 import {planetSurfaceColor,samplePlanet,seedNumber,type PlanetBiome,type PlanetGenerationSettings} from '../planetlab/planetGenerator';
 import {PLANET_PRESETS} from '../planetlab/planetLabTypes';
-import type {Planet} from '../types/game';
+import type {Catalog,Planet,State} from '../types/game';
+import {createVisualDescriptor} from '../visual-state/VisualStateAdapter';
 import civil from '../../assets/buildings/concepts/civil_district.webp';
 import ferrite from '../../assets/buildings/concepts/ferrite_extractor.webp';
 import refinery from '../../assets/buildings/concepts/fuel_refinery.webp';
@@ -25,6 +26,12 @@ const buildings = [
   {id:'civil_lab', name:'Laboratório de Engenharia Civil'},
   {id:'fundamental_lab', name:'Instituto de Ciência Fundamental'},
   {id:'military_lab', name:'Complexo de Pesquisa Militar'},
+  {id:'point_defense', name:'Canhão de defesa pontual'},
+  {id:'heavy_em_cannon', name:'Canhão eletromagnético pesado'},
+  {id:'orbital_missile_battery', name:'Bateria orbital de mísseis'},
+  {id:'missile_interceptor', name:'Sistema de interceptação de mísseis'},
+  {id:'planetary_shield', name:'Gerador de escudo planetário'},
+  {id:'orbital_platform', name:'Plataforma orbital de defesa'},
 ] as const;
 // Fixed sectors: industry along the front row, civil core, energy and the orbital terminal in the
 // middle row, science on the back row. A sector stays natural ground until its installation exists.
@@ -32,9 +39,25 @@ const sites:Record<string,readonly [number,number]> = {
   civil_district:[-1.9,-1.9],ore_extractor:[-2.1,2],fuel_refinery:[2,-2.1],
   processor:[2,2],volatile_well:[-5.9,2],manufacturing:[5.8,2],solar_field:[5.8,-2],orbital_shipyard:[-5.9,-2],
   civil_lab:[-5.9,-5.7],research_lab:[-2,-5.7],fundamental_lab:[2,-5.7],military_lab:[5.8,-5.7],
+  // Defences have their own scene (the Defesas screen), so they reuse the central sectors: shield in the middle, guns around it.
+  planetary_shield:[-1.9,-1.9],point_defense:[-2.1,2],heavy_em_cannon:[2,2],orbital_missile_battery:[2,-2.1],
+  missile_interceptor:[-5.9,-2],orbital_platform:[5.8,-2],
 };
+/** Installed defence structures, counted by type, for the surface scene. */
+export const DEFENSE_SITES=['point_defense','heavy_em_cannon','orbital_missile_battery','missile_interceptor','planetary_shield','orbital_platform'] as const;
+/** Operational defence structures of each type, for the defence scene. Installations are shown separately. */
+export function defenseLevels(state:Pick<State,'defenses'>):Record<string,number> {
+  const levels:Record<string,number>={};
+  for(const unit of state.defenses?.units??[])if(unit.hp>0)levels[unit.type]=(levels[unit.type]??0)+1;
+  return levels;
+}
+/** Seed, family and parameters of the planet globe, so the surface is generated from the same planet. */
+export function surfaceGeneration(state:State,catalog:Catalog):PlanetGenerationSettings|null {
+  const visual=createVisualDescriptor(state,catalog);
+  return visual.identity.seed&&visual.planet.family?{seed:visual.identity.seed,family:visual.planet.family,...visual.planet.parameters}:null;
+}
 // Service roads: a main spine, a rear lane for the science row and the link between them.
-const SPINE=0,REAR=-4.6,LINK=-.78;
+const SPINE=0,REAR=-4.6,FRONT=3.05,LINK=-.78;
 
 function hash(value:string) { let h=2166136261; for(const c of value) h=Math.imul(h^c.charCodeAt(0),16777619); return h>>>0; }
 function terrainHash(value:string) { let h=hash(value);h^=h>>>16;h=Math.imul(h,0x7feb352d);h^=h>>>15;h=Math.imul(h,0x846ca68b);return (h^(h>>>16))>>>0; }
@@ -64,8 +87,8 @@ const CX=-.75,CZ=-.75,CELL=.25,REACH=20,SPAN=.017;
 type Ground={top:number;colour:THREE.Color;biome:PlanetBiome|'water'};
 // Scenery tones taken from the generator's biome colours and the approved pixel palette.
 const TONES={
-  canopy:['#214f43','#2b694a','#3e7150'],trunk:'#6a4c34',bush:['#3e7150','#5b854e','#6f8b4a'],shrub:['#617471','#55754b'],
-  tuft:['#9b874f','#b69e62'],rock:['#5d5e5a','#788582','#333d3d'],mineral:['#6a5740','#6a4c34','#9b874f'],ice:['#c9e1e4','#acc8ca','#f3fbf8'],
+  canopy:['#1c4a3c','#2c6b3f','#4b8743'],trunk:'#7a4638',bush:['#2c6b3f','#4b8743','#78a04a'],shrub:['#5f8a4c','#8d8b8a'],
+  tuft:['#cf9450','#e8c170'],rock:['#4a5a68','#8d8b8a','#6b6a6e'],mineral:['#7a4638','#a8683c','#8a6fd1'],ice:['#d6eff5','#9fd4ea','#ffffff'],
 } as const;
 
 function createScene(host:HTMLDivElement, planetId:string, planet:Planet, generation:PlanetGenerationSettings|null, onSelect:(id:string)=>void, onError:()=>void):Scene {
@@ -77,7 +100,7 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, genera
   const settings={...DEFAULT_SHIP_SETTINGS};
   const family=generation?.family??derivePlanetFamily(planet.temperature,planet.water)??'terran';
   const world:PlanetGenerationSettings=generation??{seed:planetId,family,...PLANET_PRESETS[family].parameters};
-  const scene=new THREE.Scene();scene.background=new THREE.Color('#020711');
+  const scene=new THREE.Scene();scene.background=new THREE.Color('#0c1224');
   // Fixed 2:1 dimetric view: azimuth 45 degrees, elevation 30 degrees.
   const home=new THREE.Vector3(CX,.4,CZ),offset=new THREE.Vector3(14.7,12,14.7);
   const camera=new THREE.OrthographicCamera(-5,5,5,-5,2,46);
@@ -90,21 +113,29 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, genera
   const rnd=()=>{state=(state+0x6D2B79F5)>>>0;let t=state;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};
   const pick=(list:readonly string[])=>list[Math.floor(rnd()*list.length)];
   const noise=(a:number,b:number)=>{const s=Math.sin(a*127.1+b*311.7+state%977)*43758.5453;return s-Math.floor(s);};
-  // The landing site is a deterministic lowland of this planet; the first candidate is the fallback.
-  let site={x:1,y:0,z:0};
+  // Local east/north axes of a point on the globe, to walk across its surface.
+  const axes=(d:{x:number;y:number;z:number})=>{
+    const length=Math.hypot(d.z,d.x)||1,east={x:d.z/length,y:0,z:-d.x/length};
+    return {east,north:{x:d.y*east.z-d.z*east.y,y:d.z*east.x-d.x*east.z,z:d.x*east.y-d.y*east.x}};
+  };
+  const offsetFrom=(d:{x:number;y:number;z:number},u:number,v:number)=>{
+    const {east,north}=axes(d),px=d.x+east.x*u+north.x*v,py=d.y+east.y*u+north.y*v,pz=d.z+east.z*u+north.z*v,length=Math.hypot(px,py,pz);
+    return {x:px/length,y:py/length,z:pz/length};
+  };
+  // The landing site is the best of a deterministic set of candidates: dry land all around, fertile or
+  // sandy ground rather than bare rock, low elevation. The first candidate is the fallback.
+  let site={x:1,y:0,z:0},best=-1;
   for(let n=0;n<64;n++){
     const latitude=(rnd()-.5)*1.4,longitude=rnd()*Math.PI*2;
     const candidate={x:Math.cos(latitude)*Math.cos(longitude),y:Math.sin(latitude),z:Math.cos(latitude)*Math.sin(longitude)};
     const sample=samplePlanet(candidate,world);
     if(n===0)site=candidate;
-    if(sample.land&&sample.elevation<.45&&(family==='frozen'||!sample.ice)){site=candidate;break;}
+    if(!sample.land||(sample.ice&&family!=='frozen'))continue;
+    let around=0;for(let k=0;k<8;k++)if(samplePlanet(offsetFrom(candidate,Math.cos(k*Math.PI/4)*9*SPAN,Math.sin(k*Math.PI/4)*9*SPAN),world).land)around++;
+    const score=around/4+(sample.biome==='rock'||sample.biome==='mineral'?0:1)+(sample.elevation<.45?.5:0);
+    if(score>best){best=score;site=candidate;}
   }
-  const eastLength=Math.hypot(site.z,site.x)||1,east={x:site.z/eastLength,y:0,z:-site.x/eastLength};
-  const north={x:site.y*east.z-site.z*east.y,y:site.z*east.x-site.x*east.z,z:site.x*east.y-site.y*east.x};
-  const directionAt=(x:number,z:number)=>{
-    const u=(x-CX)*SPAN,v=-(z-CZ)*SPAN,px=site.x+east.x*u+north.x*v,py=site.y+east.y*u+north.y*v,pz=site.z+east.z*u+north.z*v,length=Math.hypot(px,py,pz);
-    return {x:px/length,y:py/length,z:pz/length};
-  };
+  const directionAt=(x:number,z:number)=>offsetFrom(site,(x-CX)*SPAN,-(z-CZ)*SPAN);
   const centre=samplePlanet(site,world);
 
   // ---- terrain: voxel columns coloured by the planet generator, flat under the colony, terraced toward the horizon ----
@@ -115,18 +146,21 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, genera
     const x=CX+i*CELL,z=CZ+j*CELL,distance=Math.hypot(i,j)*CELL;
     let sample=samplePlanet(directionAt(x,z),world);
     // The settlement footprint is always dry land, with an irregular edge.
-    if(!sample.land&&distance<11+terrainSample(planetId,x/2+40,z/2+40)*3)sample=centre;
-    const open=THREE.MathUtils.smoothstep(distance,10.5,15.5);
+    if(!sample.land&&distance<12.5+terrainSample(planetId,x/2+40,z/2+40)*3)sample=centre;
+    const open=THREE.MathUtils.smoothstep(distance,12,16.5);
     // Relief stays low between the camera and the colony so it never hides a building.
     const cap=THREE.MathUtils.lerp(3.5,.5,THREE.MathUtils.smoothstep((i+j)*CELL/Math.SQRT2,-2,3));
     const top=sample.land?Math.min(cap,Math.round(Math.max(0,sample.elevation-centre.elevation)*7*open/CELL)*CELL):sample.ice?-.1:-.25;
-    const [r,g,b]=planetSurfaceColor(sample),jitter=(noise(i,j)-.5)*14,fade=(1-.65*THREE.MathUtils.smoothstep(distance,13,REACH))/255;
+    const [r,g,b]=planetSurfaceColor(sample),jitter=(noise(i,j)-.5)*8,fade=(1-.65*THREE.MathUtils.smoothstep(distance,14.5,REACH))/255;
     const channel=(value:number)=>Math.max(0,Math.min(1,(value+jitter)*fade));
     grid[(i+N)*SIZE+j+N]={top,colour:new THREE.Color().setRGB(channel(r),channel(g),channel(b),THREE.SRGBColorSpace),biome:sample.land?sample.biome:'water'};
   }
   const positions:number[]=[],colours:number[]=[];
+  // Exposed walls darken toward violet instead of plain black: the shadow shifts hue as well as value.
+  const shadow=new THREE.Color('#2b1f4d');
   const quad=(a:number[],b:number[],c:number[],d:number[],colour:THREE.Color,shade:number)=>{
-    for(const p of [a,b,c,a,c,d]){positions.push(p[0],p[1],p[2]);colours.push(colour.r*shade,colour.g*shade,colour.b*shade);}
+    const tint=shade===1?0:shade>.5?.3:.5,keep=shade*(1-tint);
+    for(const p of [a,b,c,a,c,d]){positions.push(p[0],p[1],p[2]);colours.push(colour.r*keep+shadow.r*tint,colour.g*keep+shadow.g*tint,colour.b*keep+shadow.b*tint);}
   };
   const half=CELL/2;
   for(let i=-N;i<=N;i++)for(let j=-N;j<=N;j++){
@@ -161,7 +195,7 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, genera
   // Nothing natural stands on a sector, in front of it, on a road or on the junction.
   const blocked=(x:number,z:number)=>
     Object.values(sites).some(([sx,sz])=>x-sx+.75>-1.8&&x-sx+.75<3&&z-sz+.75>-1.6&&z-sz+.75<2.8)
-    ||((Math.abs(z-SPINE)<.7||Math.abs(z-REAR)<.7)&&x>-8.4&&x<6.8)||(Math.abs(x-LINK)<.7&&z>REAR-.6&&z<.6)||Math.hypot(x,z)<1.4;
+    ||((Math.abs(z-SPINE)<.7||Math.abs(z-REAR)<.7||Math.abs(z-FRONT)<.7)&&x>-11.4&&x<10)||(Math.abs(x-LINK)<.7&&z>REAR-.6&&z<FRONT+.6)||Math.hypot(x,z)<1.4;
   const rock=(tones:readonly string[],x:number,y:number,z:number,s:number)=>{shape(1,pick(tones),s,s*.7,s,x,y+s*.3,z).rotation.set(rnd()*3,rnd()*3,0);};
   const bush=(tones:readonly string[],x:number,y:number,z:number)=>{const w=.2+rnd()*.2,h=.12+rnd()*.12;shape(0,pick(tones),w,h,w,x,y+h/2,z);};
   const tree=(x:number,y:number,z:number)=>{
@@ -180,8 +214,8 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, genera
     else if(ground.biome==='rock'){if(roll<.45)rock(TONES.rock,x,y,z,size*1.4);}
     else if(roll<.3)shape(2,pick(TONES.ice),size*.6,size*2.4,size*.6,x,y+size*1.2,z);
   }
-  const hemisphere=new THREE.HemisphereLight(PLANET_PRESETS[family].atmosphereColor,'#333d3d',1.9);
-  const light=new THREE.DirectionalLight(0xfff0cf,3);light.position.set(-5,10,7);light.castShadow=true;light.shadow.mapSize.set(2048,2048);
+  const hemisphere=new THREE.HemisphereLight(PLANET_PRESETS[family].atmosphereColor,'#4e3a8c',1.9);
+  const light=new THREE.DirectionalLight(0xffe2a8,3);light.position.set(-5,10,7);light.castShadow=true;light.shadow.mapSize.set(2048,2048);
   light.shadow.camera.left=-17;light.shadow.camera.right=17;light.shadow.camera.top=17;light.shadow.camera.bottom=-17;light.shadow.camera.near=.5;light.shadow.camera.far=40;light.shadow.bias=-.002;
   scene.add(hemisphere,light);
 
@@ -213,25 +247,26 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, genera
     const plane=(l:number,w:number,color:number,y:number,x:number,z:number)=>{
       const m=new THREE.Mesh(new THREE.PlaneGeometry(l,w),new THREE.MeshLambertMaterial({color}));m.rotation.x=-Math.PI/2;m.rotation.z=-Math.atan2(bz-az,bx-ax);m.position.set(x,y,z);m.receiveShadow=true;infrastructure.add(m);
     };
-    plane(length+.7,.7,0x788582,.015,(ax+bx)/2,(az+bz)/2);
-    plane(length+.5,.5,0x333d3d,.022,(ax+bx)/2,(az+bz)/2);
-    for(let d=.3;d<length-.1;d+=.5)plane(.18,.04,0xc0a75b,.028,ax+(bx-ax)*d/length,az+(bz-az)*d/length);
+    plane(length+.7,.7,0x7d909b,.015,(ax+bx)/2,(az+bz)/2);
+    plane(length+.5,.5,0x2a3340,.022,(ax+bx)/2,(az+bz)/2);
+    for(let d=.3;d<length-.1;d+=.5)plane(.18,.04,0xffd166,.028,ax+(bx-ax)*d/length,az+(bz-az)*d/length);
   };
   if(list.length>1){
-    let rear=false;
-    for(const b of list){const px=b.position[0]-.75,pz=b.position[1]-.75,lane=pz<REAR?REAR:SPINE;rear=rear||lane===REAR;road(px,pz,px,lane);road(px,lane,LINK,lane);}
+    let rear=false,front=false;
+    for(const b of list){const px=b.position[0]-.75,pz=b.position[1]-.75,lane=pz<REAR?REAR:pz>FRONT?FRONT:SPINE;rear=rear||lane===REAR;front=front||lane===FRONT;road(px,pz,px,lane);road(px,lane,LINK,lane);}
     if(rear)road(LINK,REAR,LINK,SPINE);
+    if(front)road(LINK,FRONT,LINK,SPINE);
     road(LINK,SPINE,0,SPINE);
     // The junction is a small plaza with a signal mast.
-    const plaza=new THREE.Mesh(new THREE.CylinderGeometry(.85,.85,.06,8),new THREE.MeshLambertMaterial({color:0x788582,flatShading:true}));plaza.position.set(0,.03,0);plaza.receiveShadow=true;infrastructure.add(plaza);
-    slab(.5,.04,.5,0x333d3d,0,.07,0);slab(.07,1.1,.07,0x102a40,0,.6,0).castShadow=true;
+    const plaza=new THREE.Mesh(new THREE.CylinderGeometry(.85,.85,.06,8),new THREE.MeshLambertMaterial({color:0x7d909b,flatShading:true}));plaza.position.set(0,.03,0);plaza.receiveShadow=true;infrastructure.add(plaza);
+    slab(.5,.04,.5,0x2a3340,0,.07,0);slab(.07,1.1,.07,0x16294a,0,.6,0).castShadow=true;
     beacon=slab(.13,.13,.13,0xffc465,0,1.2,0,false);
   }
   for(const b of list){
     const x=b.position[0]-.75,z=b.position[1]-.75;
-    slab(3.1,.04,2.7,0x5d5e5a,x,.02,z);slab(2.9,.02,2.5,0x788582,x,.045,z);
+    slab(3.1,.04,2.7,0x4a5a68,x,.02,z);slab(2.9,.02,2.5,0x7d909b,x,.045,z);
     if(b.id===selected)for(const [w,d,ox,oz] of [[3.3,.07,0,1.42],[3.3,.07,0,-1.42],[.07,2.9,1.62,0],[.07,2.9,-1.62,0]])slab(w,.07,d,0x83e5e5,x+ox,.06,z+oz,false);
-    const model=createColonyBuilding(b.id,b.id===selected);model.group.position.set(x,.05,z);models.push(model);objects.add(model.group);
+    const model=createColonyBuilding(b.id,b.id===selected,b.level);model.group.position.set(x,.05,z);models.push(model);objects.add(model.group);
   }render();};
   const resize=()=>{
     const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;
@@ -241,7 +276,7 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, genera
     settings.pixelSize=Math.max(1,Math.min(4,Math.round(h/240)));renderer.setSize(w,h,false);pipeline.resize(w,h,settings);render();
   };
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
-  const change=()=>{const x=THREE.MathUtils.clamp(controls.target.x,CX-6,CX+6),z=THREE.MathUtils.clamp(controls.target.z,CZ-6,CZ+6);camera.position.x+=x-controls.target.x;camera.position.z+=z-controls.target.z;controls.target.x=x;controls.target.z=z;render();};
+  const change=()=>{const x=THREE.MathUtils.clamp(controls.target.x,CX-8,CX+8),z=THREE.MathUtils.clamp(controls.target.z,CZ-8,CZ+8);camera.position.x+=x-controls.target.x;camera.position.z+=z-controls.target.z;controls.target.x=x;controls.target.z=z;render();};
   controls.addEventListener('change',change);controls.update();
   let down:{x:number;y:number}|null=null;
   const pointerDown=(e:PointerEvent)=>{down={x:e.clientX,y:e.clientY};};
@@ -259,6 +294,7 @@ export function PlanetDiorama({planetId,planet,generation=null,levels,selected,o
   const list=useMemo(()=>dioramaBuildings(planetId,levels),[planetId,levels]);
   // Without WebGL the caller falls back to the installation grid.
   useEffect(()=>{if(!host.current)return;try{scene.current=createScene(host.current,planetId,planet,generation,id=>select.current(id),()=>fallback.current());}catch{fallback.current();return;}return()=>{scene.current?.dispose();scene.current=null;};},[planetId,generation?.seed,generation?.family]);
-  useEffect(()=>{scene.current?.update(list,selected);},[list,selected]);
-  return <section className="planet-diorama" aria-label="Superfície planetária"><div ref={host} className="planet-diorama-canvas"/><div className="planet-diorama-controls"><button onClick={()=>scene.current?.reset()}>Restaurar visão</button><span>Arraste para mover · roda ou pinça para aproximar · clique em uma construção</span>{!list.length&&<span>Nenhuma instalação construída neste planeta ainda.</span>}</div></section>;
+  // Re-applied whenever the scene itself is rebuilt, so a new scene never starts empty.
+  useEffect(()=>{scene.current?.update(list,selected);},[list,selected,planetId,generation?.seed,generation?.family]);
+  return <section className="planet-diorama" aria-label="Superfície planetária"><div ref={host} className="planet-diorama-canvas"/><div className="planet-diorama-controls"><button onClick={()=>scene.current?.reset()}>Restaurar visão</button><span>Arraste para mover · roda ou pinça para aproximar · clique em uma construção</span>{!list.length&&<span>{planetId.endsWith(':defense')?'Nenhuma defesa instalada neste planeta.':'Nenhuma instalação construída neste planeta ainda.'}</span>}</div></section>;
 }
