@@ -1,7 +1,7 @@
 # STARZ — Handoff atualizado
 
-Atualizado em **15/11/2026** (segunda atualização do dia). Branch: `experiment/persistent-universe`.
-Checkpoint de implementação mais recente: **`d6a6cdc`** (Superfície 2.5D reescrita; ver seção 5). Este documento resume o trabalho acumulado e o ponto de retomada; não substitui contratos, código ou evidências de execução.
+Atualizado em **15/11/2026** (terceira atualização do dia). Branch: `experiment/persistent-universe`.
+Checkpoint de implementação mais recente: **`432ebc8`** (Instalações unificada, demolição, loading e Galáxia; ver seção 5). Este documento resume o trabalho acumulado e o ponto de retomada; não substitui contratos, código ou evidências de execução.
 
 ## 1. Orientação para a próxima sessão
 
@@ -91,22 +91,19 @@ Assets usados pela interface ficam em `frontend/assets/buildings/concepts/`, imp
 
 Não há registro de aprovação de uma normalização pixel-perfect de todo o catálogo. Não assumir que o tamanho 224×224 garante uma grade de pixels artisticamente consistente.
 
-## 5. Três visualizações coexistem
+## 5. Instalações e superfície unificadas
 
-| Seletor | Implementação | Comportamento |
+Desde `ce9f547` a rota `#/development` tem **uma única tela**, no formato pedido pelo responsável (referência: tela de Recursos do OGame):
+
+| Região | Implementação | Comportamento |
 |---|---|---|
-| Instalações | `DevelopmentView.tsx` | Grade, filtros, paginação, detalhes e construção com dados/ações existentes. |
-| Superfície 2.5D | `PlanetDiorama.tsx` + `ColonyBuilding.ts` | Recorte da superfície do próprio planeta, com doze instalações em setores fixos, pipeline de pixel aprovado, câmera dimétrica fixa, pan/zoom/reset, seleção e fallback para grade. |
-| Colônia 2D | `LivingColonyScene.tsx` | Fundo ilustrado sem prédios permanentes, três PNGs independentes e efeitos CSS; seleção retorna à grade com instalação escolhida. |
+| Superfície | `PlanetDiorama.tsx` + `ColonyBuilding.ts` | Cena 2.5D no topo da coluna principal; clicar numa construção seleciona a instalação. |
+| Faixa de itens | `DevelopmentView.tsx` (`installation-strip`) | Miniaturas de tudo que pode ser construído, respeitando os filtros: nível em âmbar, canto verde quando pronto, cinza quando falta requisito. |
+| Detalhe | `DevelopmentView.tsx` (`ux-inspector`) | Painel à direita com arte emoldurada, etiqueta de nível, ganhos, blocos de demanda, custos, construir e demolir. |
 
-Todas usam `state.districts` e só mostram instalações com nível positivo. A Colônia 2D continua limitada a `civil_district`, `ore_extractor` e `fuel_refinery`; a Superfície 2.5D cobre doze instalações (seção abaixo).
-
-### Colônia 2D aprovada
-
-- Estrutura em camadas (`34384fd`) e ambiente ilustrado vazio com edifícios dinâmicos (`931487a`).
-- Assets em `frontend/assets/buildings/living-colony/`; `environment.png` não foi alterado nas tarefas 3D recentes.
-- Microefeitos de iluminação, partículas e vapor (`1766456`), com isolamento e pausa ao ocultar (`a12c360`).
-- Não foi inventado um recorte grosseiro da perfuratriz para movimentar a imagem achatada. A cena 2D e a grade continuam disponíveis.
+- O seletor de visualização e a **Colônia 2D foram removidos** a pedido do responsável. `LivingColonyScene.tsx` e seu teste foram apagados; a arte em `frontend/assets/buildings/living-colony/` continua no repositório, sem uso.
+- A grade de cartões antiga permanece apenas como **fallback automático sem WebGL** (é também o caminho exercitado pelos testes em jsdom).
+- `solar_field` e `volatile_well` não têm arte de conceito e aparecem com ícone genérico na faixa.
 
 ### Superfície 2.5D: reescrita em 15/11/2026 (`d6a6cdc`)
 
@@ -125,13 +122,42 @@ O que está implementado:
 - **Doze instalações com modelo procedural e microanimação**: as três anteriores mais `solar_field`, `processor`, `volatile_well`, `manufacturing`, `orbital_shipyard` (terminal em solo), `research_lab`, `civil_lab`, `military_lab` e `fundamental_lab`. `orbital_battery` não tem modelo, pois Instalações a oculta no modo persistente.
 - **Setores fixos** (`sites`): indústria na fileira da frente, núcleo civil, refinaria, energia e terminal orbital no meio, ciência ao fundo. As três posições originais foram preservadas.
 - **Vias só entre o que existe**: via principal, via de fundo para a fileira científica, ligação entre elas e praça com mastro de sinal.
-- **Seleção**: moldura ciano no solo; com mais de quatro instalações os botões viram um `<select>`.
+- **Seleção**: controlada por `DevelopmentView`; moldura ciano no solo para a instalação aberta no painel, quando construída.
 
 Decisões assumidas por recomendação, sem resposta explícita do responsável: edifícios em geometria 3D em vez de sprites; estaleiro orbital como terminal em solo. O responsável viu o resultado e aprovou ("ficou muito bom").
 
 Ainda **não** implementado da proposta aprovada: versões artísticas por faixa de nível (sugestão 1–3, 4–7, 8+, a confirmar; não foi encontrado nível máximo no código), estágios da colônia (posto, colônia, centro), zoom em três degraus, água animada, visual vulcânico derivado de `geological_activity` e modelo da bateria defensiva.
 
+### Demolição de instalações (`ce9f547`)
+
+Mecânica nova, pedida e parametrizada pelo responsável: **um nível por vez, imediata, sem reembolso**, com confirmação na tela. `Engine.demolish` e `POST /api/demolish`; contrato em [economy.md](game-design/economy.md).
+
+Recusas no servidor (travas escolhidas na implementação, comunicadas ao responsável): instalação não construída; obra em andamento nela; último nível do Distrito civil; equipes de construção ou vagas de estaleiro fornecidas por ela em uso; habitação restante menor que a população. Energia e trabalhadores não bloqueiam. `orbital_battery` é recusada no modo persistente. Não há migration: o nível zero já era aceito pelo schema.
+
+### Tela de loading (`ce9f547`)
+
+`BootScreen` (planeta em pixel art com lua em órbita, logo, barra de varredura e fundo estrelado) substitui as duas telas de espera, em `SessionGate` e `AppShell`. Estilos em `frontend/styles.css`.
+
+### Galáxia, abas e barra lateral (`432ebc8`)
+
+Resultado de uma análise visual geral pedida pelo responsável, que aprovou começar pela Galáxia.
+
+- Mapa: nebulosa gerada por código (`nebulaImage`), poeira com tons e cintilação, estrelas coloridas por classe com halo, anel pulsante no sistema natal e rota tracejada das frotas em trânsito.
+- Inspetor do sistema: blocos de dados, linhas de planeta com miniatura (`PlanetThumb`, mesmo gerador e semente da cena orbital) e ação no rodapé.
+- **Abas**: um estilo único para todo `.tabs[role=tablist]` em `master-ui.css`. Afeta todas as telas.
+- Barra lateral: o selo "Universo persistente" é ocultado abaixo de 960 px de altura, onde cobria o item Mercado.
+
+Recomendações da análise ainda não feitas: diagrama de cadeias em Produção; linhas, ícones e cores por domínio na árvore de Pesquisa; levar o padrão de painel de detalhe a Estaleiro e Pesquisa; estilo único para selects, campos e barras de rolagem; arte de `solar_field` e `volatile_well`.
+
 ## 6. Validação recente e evidências locais
+
+### Sessão de 15/11/2026, noite (`ce9f547`, `432ebc8`)
+
+- `tsc --noEmit`: aprovado após cada etapa.
+- `tests/test_demolish.py`: 3 testes aprovados rodando só o motor (Python 3.13, fora do Docker). **A rota `/api/demolish` não foi exercitada com banco**, porque a imagem do app no Docker Desktop ainda não foi reconstruída; até lá o botão de demolir retorna erro.
+- Revisão visual no navegador em 1456×900/960: Instalações, painel de detalhe, prévia da tela de loading, Galáxia e abas de Produção.
+- **Vitest continua sem rodar** no ambiente do agente. Precisam rodar: `planet_diorama`, `colony_building`, `development_compact` (depende do fallback sem WebGL) e os testes `galaxy_*`.
+- Não revisados: Frotas, Defesas, Diplomacia e Colônias com o novo estilo de abas; celular; painel de Instalações abaixo de 850 px de altura (conteúdo paginado); cores de estrela além da classe G; rotas de frota (sem frota em trânsito na conta de teste).
 
 ### Sessão de 15/11/2026 (`d6a6cdc`)
 
@@ -204,6 +230,8 @@ docker compose -f compose.persistent.yaml up -d --build --wait
 docker run --rm -it -p 5173:5173 -e STARZ_API=http://host.docker.internal:8030 -v "${PWD}:/app" -w /app node:22-bookworm-slim sh -c "npm ci && npx vite --config .qa/vite.dev.config.ts"
 ```
 
+Mudanças de backend (por exemplo `/api/demolish`) só valem depois de reconstruir a imagem com o comando `docker compose ... up -d --build --wait` acima.
+
 `.qa/vite.dev.config.ts` é local e ignorado pelo Git. O comando instala `node_modules` com binários Linux na pasta do repositório; rodar `npm` direto no Windows exige novo `npm ci`. A imagem do app não recebe as mudanças de frontend até ser reconstruída.
 
 No checkout do Windows, usar `git -c core.autocrlf=true` (ou configurar `core.autocrlf`) quando o Git rodar em Linux sobre essa pasta; sem isso todos os arquivos aparecem modificados por fim de linha.
@@ -213,6 +241,9 @@ No checkout do Windows, usar `git -c core.autocrlf=true` (ou configurar `core.au
 - [DevelopmentView](../frontend/src/universe/DevelopmentView.tsx): alternância das três apresentações e construção existente.
 - [PlanetDiorama](../frontend/src/universe/PlanetDiorama.tsx): terreno do planeta, setores (`sites`), vias, natureza, câmera, seleção, render loop e descarte.
 - [ColonyBuilding](../frontend/src/universe/ColonyBuilding.ts): modelos e animações dos doze edifícios.
+- [DevelopmentView](../frontend/src/universe/DevelopmentView.tsx) (tela unificada, faixa de itens, detalhe, demolição) e seus estilos no fim de [compact-workspace.css](../frontend/src/pixel-command/compact-workspace.css).
+- [SpatialGalaxyMap](../frontend/src/galaxy/SpatialGalaxyMap.tsx), [galaxyVisuals](../frontend/src/galaxy/galaxyVisuals.ts), [PlanetThumb](../frontend/src/galaxy/PlanetThumb.tsx) e [galaxy.css](../frontend/src/galaxy/galaxy.css).
+- [BootScreen](../frontend/src/components/shell/BootScreen.tsx).
 - [planetGenerator](../frontend/src/planetlab/planetGenerator.ts) e [VisualStateAdapter](../frontend/src/visual-state/VisualStateAdapter.ts): fonte do terreno e da semente; não foram alterados.
 - [LivingColonyScene](../frontend/src/universe/LivingColonyScene.tsx): composição ilustrada independente.
 - [Estilos compactos](../frontend/src/pixel-command/compact-workspace.css).
@@ -222,8 +253,12 @@ A pasta `referencias/` está **não rastreada** e pertence ao responsável. Não
 
 ## 9. Próximo passo recomendado, sem autorização implícita
 
-1. Rodar os dois testes do diorama e corrigir o que aparecer.
-2. Seguir a proposta aprovada na Superfície 2.5D, uma fatia por vez e com avaliação do responsável a cada uma: versões por faixa de nível (confirmar as faixas antes), estágios da colônia e zoom em degraus.
-3. Confirmar com o responsável as duas decisões assumidas (geometria 3D; estaleiro como terminal em solo) e as pendentes (vulcânico, bateria defensiva).
+1. Reconstruir a imagem do app e testar a demolição de ponta a ponta na conta de teste.
+2. Rodar os testes de frontend listados na seção 6 e corrigir o que aparecer.
+3. Conferir as telas não revisadas com o novo estilo de abas.
+4. Continuar a análise visual, uma tela por vez e com avaliação do responsável: Produção, Pesquisa, painéis de Estaleiro e Pesquisa.
+5. Na Superfície 2.5D: versões por faixa de nível (confirmar faixas), estágios da colônia, obra em andamento visível no lote, zoom em degraus.
 
-Não expandir gameplay, backend ou persistência para sustentar a cena. O commit `d6a6cdc` e este handoff são locais: **não houve push**.
+Decisões ainda sem resposta explícita do responsável: edifícios em geometria 3D; estaleiro como terminal em solo; visual vulcânico; bateria defensiva na superfície.
+
+Os commits `d6a6cdc` e `0b51421` foram publicados pelo responsável. `ce9f547`, `432ebc8` e esta atualização do handoff são locais: **não houve push**.
