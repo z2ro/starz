@@ -99,63 +99,54 @@
 @keyframes extractor-lights{0%,100%{opacity:.15}50%{opacity:.6}}
 @media(prefers-reduced-motion:reduce){.pixel-game .ux-development .extractor-drill,.pixel-game .ux-development .extractor-lights{display:none;animation:none}}
 
-.pixel-game .ux-development .surface-switch{display:flex;gap:6px;flex:none}
-.pixel-game .ux-development .surface-switch button{min-height:40px;padding:6px 12px}
-.pixel-game .ux-development .surface-switch button[aria-pressed=true]{border-color:#77d4db;color:#c7f1ed}
-.pixel-game .ux-development.surface-active>.compact-filter,.pixel-game .ux-development.surface-active>.universe-tabs,.pixel-game .ux-development.surface-active>.ux-choice-layout,.pixel-game .ux-development.surface-active>.ux-recruit{display:none}
+.pixel-game .ux-development .ux-surface{display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;align-self:stretch}
+@media(max-width:700px){.px-page-development .px-view[data-panel=detail] .ux-surface{display:none}.pixel-game .ux-development .ux-surface{min-height:320px}}
+.pixel-game .ux-development .installation-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,80px));gap:6px;flex:none;padding:8px;border:1px solid #405766;background:#101c28}
+.pixel-game .ux-development .installation-strip button{position:relative;aspect-ratio:1;min-width:0;min-height:0!important;padding:0!important;overflow:hidden;border:2px solid #425c6d!important;background:#172b3a!important}
+.pixel-game .ux-development .installation-strip button[aria-pressed=true]{border-color:#86d4d5!important;background:#294858!important}
+.pixel-game .ux-development .installation-strip :is(img,.px-icon){display:block;width:100%;height:100%;margin:0;object-fit:contain;image-rendering:pixelated}
+.pixel-game .ux-development .installation-strip .px-icon{width:60%;height:60%;margin:20%}
+.pixel-game .ux-development .installation-strip button[data-state=locked] :is(img,.px-icon){filter:grayscale(1) brightness(.55)}
+.pixel-game .ux-development .installation-strip button>span{position:absolute;right:4px;bottom:1px;margin:0;font:700 13px/1.4 system-ui;color:#ffc465;text-shadow:0 0 3px #020912,0 0 3px #020912}
+.pixel-game .ux-development .installation-strip button[data-state=ready]::before{content:'';position:absolute;left:0;top:0;border:8px solid transparent;border-top-color:#6fd18c;border-left-color:#6fd18c}
+/* Installations: the surface on top, the buildable items in a strip below it, the detail on the right. */
+@media(min-width:701px){.pixel-game .ux-development .ux-choice-layout:has(.ux-surface){display:grid!important;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);grid-template-rows:minmax(0,1fr) auto;gap:8px 16px}.pixel-game .ux-development .ux-surface{display:contents}.pixel-game .ux-development .ux-surface>:is(.planet-diorama,p){grid-column:1;grid-row:1;min-height:0;overflow:hidden;align-self:stretch}.pixel-game .ux-development .ux-surface>.installation-strip{grid-column:1;grid-row:2}.pixel-game .ux-development .ux-choice-layout:has(.ux-surface)>.ux-inspector{grid-column:2;grid-row:1/3;align-self:stretch}}
 .pixel-game .planet-diorama{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid #405766;background:#101c28}
 .pixel-game .planet-diorama-canvas{position:relative;flex:1;min-height:0;touch-action:none}
-.pixel-game .planet-diorama-canvas canvas{display:block;width:100%;height:100%;touch-action:none;image-rendering:pixelated}
+.pixel-game .planet-diorama-canvas canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;image-rendering:pixelated}
 .pixel-game .planet-diorama-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px;background:#101c28;font:13px system-ui}
 .pixel-game .planet-diorama-controls>div{display:flex;flex-wrap:wrap;gap:4px}
 .pixel-game .planet-diorama-controls button{min-height:40px;padding:5px 8px}
 .pixel-game .planet-diorama-controls button[aria-pressed=true]{border-color:#77d4db;color:#c7f1ed}
 @media(max-width:700px){.pixel-game .planet-diorama-controls>span:first-of-type{display:none}.pixel-game .planet-diorama-controls button{min-height:44px}.pixel-game .planet-diorama-controls{gap:3px}.pixel-game .planet-diorama-controls>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.pixel-game .planet-diorama-controls>div button{white-space:normal;padding:4px;line-height:1.2;font-size:12px}}
 
-.pixel-game .living-colony{display:flex;flex:1;min-height:0;flex-direction:column;align-items:center;justify-content:center;gap:8px}
-.pixel-game .living-colony-stage{position:relative;aspect-ratio:1672/941;width:min(100%,calc((100vh - 330px)*1.777));max-height:100%;overflow:hidden;border:1px solid #405766;background:#182936}
-.pixel-game .living-colony-stage>div{position:absolute;inset:0}
-.pixel-game .living-colony-background{background:#182936}
-.pixel-game .living-colony-terrain{background:#26383b;clip-path:polygon(0 48%,100% 36%,100% 100%,0 100%)}
-.pixel-game .living-colony-foreground,.pixel-game .living-colony-effects{pointer-events:none}
-.pixel-game .living-colony-building{position:absolute;transform:translate(-50%,-100%);width:24%;height:auto;min-width:44px;min-height:44px;padding:0;border:2px solid transparent;background:transparent;cursor:pointer}
-.pixel-game .living-colony-building img{display:block;width:100%;height:auto;image-rendering:pixelated}
-.pixel-game .living-colony-building span{display:block;color:#e8eee0;background:#162a35;padding:2px 4px;font:12px/1.2 system-ui;text-align:center}
-.pixel-game .living-colony-building:hover,.pixel-game .living-colony-building:focus-visible{border-color:#77d4db;outline:2px solid #77d4db;outline-offset:2px}
-.pixel-game .living-colony-notice{margin:0;color:#b8c7c3;font:13px/1.3 system-ui}
-@media(max-width:700px){.pixel-game .surface-switch{flex-wrap:wrap}.pixel-game .living-colony-stage{width:100%;max-height:none;flex:none}.pixel-game .living-colony-building{width:29%}.pixel-game .living-colony-building span{font-size:11px}}
-.pixel-game .living-colony-stage .living-colony-building{all:unset;position:absolute;display:flex!important;flex-direction:column;align-items:center;box-sizing:border-box;transform:translate(-50%,-75%);width:24%;min-width:44px;min-height:44px;cursor:pointer;border:2px solid transparent;box-shadow:none!important;background:transparent!important}
-.pixel-game .living-colony-stage .living-colony-building img{width:100%;height:auto;flex:none}
-.pixel-game .living-colony-stage .living-colony-building span{width:100%;box-sizing:border-box;white-space:normal;overflow-wrap:normal}
-.pixel-game .living-colony-stage .living-colony-building:hover,.pixel-game .living-colony-stage .living-colony-building:focus-visible{border-color:#77d4db;outline:2px solid #77d4db;outline-offset:2px}
-@media(max-width:700px){.pixel-game .living-colony-stage .living-colony-building span{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
-.pixel-game .living-colony-stage .living-colony-building{border-color:transparent!important}
-.pixel-game .living-colony-stage .living-colony-building:hover,.pixel-game .living-colony-stage .living-colony-building:focus-visible{border-color:#77d4db!important}
 
 /* Illustrated empty site: gameplay buildings remain independent DOM sprites. */
-.pixel-game .living-colony-background{background-size:100% 100%;background-repeat:no-repeat}
-.pixel-game .living-colony-terrain{background:none;clip-path:none}
-.pixel-game .living-colony-stage .living-colony-building{width:27%;transform:translate(-50%,-82%)}
-.pixel-game .living-colony-stage .living-colony-building span{position:absolute;top:83%;width:auto;min-width:65%;padding:3px 7px;background:#10212ee8;border-bottom:1px solid #5f8f95;white-space:nowrap;font-size:12px}
-@media(max-width:700px){.pixel-game .living-colony-stage{aspect-ratio:1672/941}.pixel-game .living-colony-stage .living-colony-building span{width:1px;min-width:0;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}}
 
 /* Localized operational pixels; building sprites remain stationary. */
-.pixel-game .living-colony-building{isolation:isolate}
-.pixel-game .living-colony-building .living-colony-effects{position:absolute;inset:0;z-index:1;pointer-events:none}
-.pixel-game .living-colony-building .living-colony-effects i{position:absolute;display:block;width:1%;height:1%;background:#72dce2;opacity:0;image-rendering:pixelated}
-.pixel-game .living-colony-effects-ore_extractor i:nth-child(1){left:18%;top:76%;animation:colony-drill 4.8s steps(2,end) infinite}
-.pixel-game .living-colony-effects-ore_extractor i:nth-child(2){left:23%;top:72%;animation:colony-drill 4.8s steps(2,end) 1.2s infinite}
-.pixel-game .living-colony-effects-ore_extractor i:nth-child(3){left:28%;top:77%;background:#e6b65f;animation:colony-drill 4.8s steps(2,end) 2.4s infinite}
-.pixel-game .living-colony-effects-fuel_refinery i{background:#e4aa53}
-.pixel-game .living-colony-effects-fuel_refinery i:nth-child(1){left:70%;top:36%;animation:colony-lamp 6s steps(2,end) infinite}
-.pixel-game .living-colony-effects-fuel_refinery i:nth-child(2){left:77%;top:30%;background:#b9d1d1;animation:colony-vapor 8s steps(5,end) 2s infinite}
-.pixel-game .living-colony-effects-fuel_refinery i:nth-child(3){left:62%;top:62%;background:#66d4dc;animation:colony-lamp 7s steps(2,end) 2s infinite}
-.pixel-game .living-colony-effects-civil_district i:nth-child(1){left:42%;top:45%;animation:colony-lamp 7s steps(2,end) 1s infinite}
-.pixel-game .living-colony-effects-civil_district i:nth-child(2){left:58%;top:51%;animation:colony-lamp 9s steps(2,end) 3s infinite}
-.pixel-game .living-colony-effects-civil_district i:nth-child(3){left:51%;top:36%;animation:colony-lamp 8s steps(2,end) 4s infinite}
-@keyframes colony-drill{0%,72%,100%{opacity:0;transform:translate(0,0)}76%,84%{opacity:.8;transform:translate(1px,-1px)}80%{opacity:.25;transform:translate(-1px,0)}}
-@keyframes colony-lamp{0%,68%,100%{opacity:.12}72%,82%{opacity:.75}77%{opacity:.32}}
-@keyframes colony-vapor{0%,72%,100%{opacity:0;transform:translate(0,3px) scale(.6)}78%{opacity:.35}90%{opacity:0;transform:translate(1px,-8px) scale(1)}}
-@media(prefers-reduced-motion:reduce){.pixel-game .living-colony-effects i{display:none!important;animation:none!important}}
-
-.pixel-game .living-colony[data-motion=paused] .living-colony-effects i{animation-play-state:paused}
+/* Installation detail panel: framed art, level chip, labelled sections, stat tiles and the action pinned to the bottom. */
+.pixel-game .ux-development .ux-inspector{padding:16px!important}
+.pixel-game .ux-development .px-building-heading{align-items:center;gap:16px;margin:0 0 12px;padding-bottom:12px;border-bottom:1px solid #305363}
+.pixel-game .ux-development .px-building-heading .installation-art{width:96px;height:96px;padding:6px;box-sizing:border-box;background:#0b1622;border:2px solid #305363}
+.pixel-game .ux-development .px-building-heading .px-icon{width:48px;height:48px;margin:24px}
+.pixel-game .ux-development .px-building-heading h2{margin:0 0 8px;font-size:17px!important;line-height:1.3;letter-spacing:.06em}
+.pixel-game .ux-development .px-building-heading .eyebrow{display:inline-block;margin:0;padding:3px 8px;border:1px solid #6497a8;background:#17394b;color:#83e5e5;font-size:11px;letter-spacing:.08em}
+.pixel-game .ux-development .ux-inspector>.build-review{display:flex;flex-direction:column;flex:1;min-height:0;gap:10px}
+.pixel-game .ux-development .build-review .px-industry-recipe{padding:0;gap:6px;font-size:13px;color:#b5ccd2}
+.pixel-game .ux-development .build-review h3,.pixel-game .ux-development .ux-inspector .build-review h3.installation-cost-title{margin:4px 0 0;font:700 11px/1.4 system-ui;letter-spacing:.1em;text-transform:uppercase;color:#83e5e5}
+.pixel-game .ux-development .build-review .ux-benefits{display:grid;gap:4px;margin:0}
+.pixel-game .ux-development .build-review .ux-benefits li{padding:6px 10px;background:#12303a;border-left:3px solid #6fd18c;color:#d6ecd0;font-size:13px}
+.pixel-game .ux-development .installation-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0}
+.pixel-game .ux-development .installation-stats>div{padding:6px 8px;border:1px solid #305363;background:#0b1622}
+.pixel-game .ux-development .installation-stats dt{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#b5ccd2}
+.pixel-game .ux-development .installation-stats dd{margin:2px 0 0;font:700 15px system-ui;font-variant-numeric:tabular-nums;color:#f1f1df}
+.pixel-game .ux-development .build-review .ux-costs{margin:0;gap:6px}
+.pixel-game .ux-development .build-review .ux-costs li{align-items:center;padding:8px 10px;border:1px solid #305363;background:#0b1622}
+.pixel-game .ux-development .build-review .ux-costs li strong{font-size:17px;color:#ffc465}
+.pixel-game .ux-development .build-review .ux-costs li small{color:#8fb7a0}
+.pixel-game .ux-development .build-review .ux-costs li.ux-missing{border-color:#a8621f}.pixel-game .ux-development .build-review .ux-costs li.ux-missing small{color:#edb969}
+.pixel-game .ux-development .installation-ready{margin:0;font-size:13px;color:#8fd6a4}.pixel-game .ux-development .installation-ready::before{content:'✓ '}
+.pixel-game .ux-development .ux-inspector>.build-review>button.button{margin-top:auto;min-height:48px;font-size:15px}
+.pixel-game .ux-development .installation-demolish-open{align-self:flex-start;min-height:36px;padding:4px 10px;border:1px solid #7a4a3a;background:transparent;color:#e0a48f;font-size:13px}
+.pixel-game .ux-development .installation-demolish{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border:1px solid #a8621f;background:#2a1d18;font-size:13px;color:#f1d6b0}
+.pixel-game .ux-development .installation-demolish>span{flex:1 1 180px}.pixel-game .ux-development .installation-demolish>button{min-height:36px;padding:4px 12px}.pixel-game .ux-development .installation-demolish>button:first-of-type{border-color:#e0a48f;color:#ffd9c9}

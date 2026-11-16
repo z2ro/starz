@@ -2,10 +2,11 @@ import { useState, type ReactNode, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ApiError,apiRequest } from '../api/client';
 import './universe.css';
+import { BootScreen } from '../components/shell/BootScreen';
 export function SessionGate({children}:{children:ReactNode}) {
  const config=useQuery({queryKey:['config'],queryFn:()=>apiRequest<{persistent:boolean}>('/api/config'),retry:false,staleTime:Infinity});
  const me=useQuery({queryKey:['account'],queryFn:()=>apiRequest<{username:string}>('/api/auth/me'),enabled:config.data?.persistent===true,retry:false,refetchInterval:30000});
- if(config.isPending || (config.data?.persistent && me.isPending))return <div className="boot">Conectando ao universo…</div>;
+ if(config.isPending || (config.data?.persistent && me.isPending))return <BootScreen message="Conectando ao universo…"/>;
  if(config.error)return <div className="fatal">Servidor indisponível. <button onClick={()=>void config.refetch()}>Reconectar</button></div>;
  if(config.data?.persistent && me.error){
   if(me.error instanceof ApiError && me.error.status===401)return <Login />;

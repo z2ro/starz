@@ -359,6 +359,35 @@ class Engine:
         self.state.construction.append({"id": district_id, "complete_at": complete_at, "job_id": str(uuid4()), "started_at": self.state.last_updated})
         return {"id": district_id, "complete_at": complete_at}
 
+    def demolish(self, district_id: str, now: float | None = None) -> dict[str, Any]:
+        """Remove one level of an installation at once, without refund."""
+        self.advance(now)
+        district: District = self.catalog.get("districts", district_id)  # type: ignore[assignment]
+        level = self.state.districts.get(district_id, 0)
+        if district_id == 'orbital_battery' and self.state.universe is not None:
+            raise DataValidationError('baterias são gerenciadas em Defesas')
+        if level < 1:
+            raise DataValidationError('instalação não construída')
+        if any(job['id'] == district_id for job in self.state.construction):
+            raise DataValidationError('há uma obra em andamento nesta instalação')
+        if district_id == 'civil_district' and level == 1:
+            raise DataValidationError('o último distrito civil sustenta a colônia')
+        before = self.capacities()
+        self.state.districts[district_id] = level - 1
+        after = self.capacities()
+        housing = (100 + sum(self.catalog.get('districts', key).population_capacity * n for key, n in self.state.districts.items())) * (1 + effect(self.catalog, self.state, 'population'))
+        # Capacity already committed to running work or to residents cannot be removed.
+        reason = (
+            'equipes de construção em uso' if after['construction_slots'] < before['construction_slots'] - before['construction_slots_available'] else
+            'estaleiro em uso' if after['shipyard_slots'] < before['shipyard_slots'] - before['shipyard_slots_available'] else
+            'a habitação restante não comporta a população' if district.population_capacity > 0 and self.state.population_total > housing else None
+        )
+        if reason:
+            self.state.districts[district_id] = level
+            raise DataValidationError(reason)
+        self.state.notices.insert(0, f'{district.name}: nível {level} demolido.')
+        return {'id': district_id, 'level': level - 1}
+
     def research(self, technology_id: str, now: float | None = None) -> dict[str, Any]:
         self.advance(now)
         technology: Technology = self.catalog.get("technologies", technology_id)  # type: ignore[assignment]

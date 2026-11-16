@@ -40,4 +40,4 @@ export type Galaxy = { center: number[]; home: number[]; radius: number; systems
 export type TravelPreview = { origin: number[]; destination: number[]; distance: number; eta_seconds: number; fuel_cost: number; heat: number; signature: number };
 export type View = 'overview' | 'planet' | 'economy' | 'research' | 'shipyard' | 'fleets' | 'galaxy';
 export type PlanetTab = 'overview' | 'districts' | 'orbit' | 'data';
-export type ActionName = 'build' | 'research' | 'build-ship' | 'travel-preview' | 'travel' | 'campaign/order' | 'campaign/new' | 'campaign/load';
+export type ActionName = 'build' | 'demolish' | 'research' | 'build-ship' | 'travel-preview' | 'travel' | 'campaign/order' | 'campaign/new' | 'campaign/load';

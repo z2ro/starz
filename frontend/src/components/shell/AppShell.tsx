@@ -1,3 +1,4 @@
+import { BootScreen } from './BootScreen';
 import { PixelShell } from '../../pixel-command/PixelShell';
 import { SessionExperience } from '../../universe/SessionExperience';
 import '../../universe/experience.css';
@@ -33,10 +34,10 @@ export function AppShell() {
   const state = snapshotReady ? stateQuery.data : isPlanet ? retained.current?.state : stateQuery.data;
   const execute = async (action: ActionName, body: Record<string, unknown>) => {
     setFeedback(undefined);
-    try { const result = await mutation.mutateAsync({ action, body }); setFeedback({ kind: 'success', message: action === 'campaign/order' ? 'Ordem de campanha executada.' : action === 'build' ? 'Construção iniciada.' : action === 'research' ? 'Programa de pesquisa iniciado.' : action === 'build-ship' ? 'Montagem da nave iniciada.' : action === 'travel' ? 'Frota despachada.' : 'Rota calculada.' }); return result; } catch (error) { const message = error instanceof Error ? error.message : 'Falha de comunicação.'; setFeedback({ kind: 'error', message }); throw error; }
+    try { const result = await mutation.mutateAsync({ action, body }); setFeedback({ kind: 'success', message: action === 'campaign/order' ? 'Ordem de campanha executada.' : action === 'build' ? 'Construção iniciada.' : action === 'demolish' ? 'Nível demolido.' : action === 'research' ? 'Programa de pesquisa iniciado.' : action === 'build-ship' ? 'Montagem da nave iniciada.' : action === 'travel' ? 'Frota despachada.' : 'Rota calculada.' }); return result; } catch (error) { const message = error instanceof Error ? error.message : 'Falha de comunicação.'; setFeedback({ kind: 'error', message }); throw error; }
   };
   if (queryError && (!isPlanet || !catalog || !state)) return <div className="fatal"><b>Centro de comando indisponível</b><p>{queryError.message}</p><button onClick={() => { void catalogQuery.refetch(); void stateQuery.refetch(); }}>Tentar novamente</button></div>;
-  if (!catalog || !state) return <div className="boot"><div className="brand"><span>STAR</span><b>Z</b></div><div className="boot-orbit" /><p>Sincronizando centro de comando…</p></div>;
+  if (!catalog || !state) return <BootScreen message="Sincronizando centro de comando…"/>;
   const context: ShellContext = { catalog, state, activePlanetId: activePlanetId ?? state.active_planet?.id ?? undefined, snapshotReady, setActivePlanetId: id => { setActivePlanetId(id); navigate(state.persistent?'/universe':'/planet'); }, execute, busy: mutation.isPending, feedback, setFeedback };
   const blocked = (isPlanet || state.persistent) && !snapshotReady;
   if (state.persistent) return <div className="app-root pixel-command pixel-game" aria-busy={mutation.isPending || blocked}>

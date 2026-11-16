@@ -66,3 +66,12 @@ População tem recrutamento pago e limite influenciado por `civil_district` e `
 - [Recursos](../../game_data/resources/resources.yaml), [combustíveis](../../game_data/fuels/fuels.yaml), [instalações](../../persistent_data/districts/economy.yaml).
 - [Produção](../../starz/economy.py), [capacidades e reparos](../../starz/simulation.py), [custos](../../starz/progression.py).
 - [Mercado e transporte](../../starz/persistent/service.py), [recrutamento](../../starz/persistent/routes.py).
+
+## Demolição de instalações
+
+`APPROVED` pelo responsável e `IMPLEMENTED` em 15/11/2026 (`Engine.demolish`, `POST /api/demolish`). Ainda não `BALANCED`.
+
+- Cada demolição remove **um nível**, é **imediata** e **não devolve recursos**. Não ocupa equipe de construção.
+- É recusada quando: a instalação não existe; há obra em andamento nela; é o último nível do Distrito civil; as equipes de construção ou as vagas de estaleiro que ela fornece estão em uso; a habitação restante não comportaria a população atual.
+- Baterias defensivas continuam sendo geridas em Defesas no modo persistente.
+- Energia e trabalhadores não bloqueiam: a perda de cobertura segue as regras normais de produção e pesquisa.

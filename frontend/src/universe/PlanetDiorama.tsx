@@ -1,5 +1,5 @@
 import {createColonyBuilding} from './ColonyBuilding';
-import {useEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useMemo, useRef} from 'react';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {derivePlanetFamily} from '../visual-state/planetVisualMapping';
@@ -253,10 +253,12 @@ function createScene(host:HTMLDivElement, planetId:string, planet:Planet, genera
   return {update,reset,dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.removeEventListener('change',change);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);clear();clearInfrastructure();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());terrainGeometry.dispose();terrainMaterial.dispose();pipeline.dispose();motion.removeEventListener('change',wake);document.removeEventListener('visibilitychange',wake);light.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();}};
 }
 
-export function PlanetDiorama({planetId,planet,generation=null,levels,onFallback}:{planetId:string;planet:Planet;generation?:PlanetGenerationSettings|null;levels:Record<string,number>;onFallback:()=>void}) {
-  const host=useRef<HTMLDivElement>(null);const scene=useRef<Scene|null>(null);const [selected,setSelected]=useState<string|null>(null);const [error,setError]=useState(false);
+export function PlanetDiorama({planetId,planet,generation=null,levels,selected,onSelect,onFallback}:{planetId:string;planet:Planet;generation?:PlanetGenerationSettings|null;levels:Record<string,number>;selected:string|null;onSelect:(id:string)=>void;onFallback:()=>void}) {
+  const host=useRef<HTMLDivElement>(null);const scene=useRef<Scene|null>(null);
+  const select=useRef(onSelect);select.current=onSelect;const fallback=useRef(onFallback);fallback.current=onFallback;
   const list=useMemo(()=>dioramaBuildings(planetId,levels),[planetId,levels]);
-  useEffect(()=>{setSelected(null);setError(false);if(!host.current)return;try{scene.current=createScene(host.current,planetId,planet,generation,setSelected,()=>setError(true));}catch{setError(true);return;}return()=>{scene.current?.dispose();scene.current=null;};},[planetId,generation?.seed,generation?.family]);
-  useEffect(()=>{scene.current?.update(list,selected);if(selected&&!list.some(item=>item.id===selected))setSelected(null);},[list,selected]);
-  return <section className="planet-diorama" aria-label="Superfície planetária"><div ref={host} className="planet-diorama-canvas"/>{error?<div role="alert">Não foi possível iniciar o WebGL. <button onClick={onFallback}>Voltar às instalações</button></div>:<div className="planet-diorama-controls"><button onClick={()=>scene.current?.reset()}>Restaurar visão</button><span>Arraste para mover · roda ou pinça para aproximar</span>{list.length>4?<select aria-label="Selecionar construção" value={selected??''} onChange={e=>setSelected(e.target.value||null)}><option value="">Selecionar construção…</option>{list.map(b=><option key={b.id} value={b.id}>{b.name} · Nv {b.level}</option>)}</select>:<div aria-label="Selecionar construção">{list.map(b=><button key={b.id} aria-pressed={selected===b.id} onClick={()=>setSelected(b.id)}>{b.name} · Nv {b.level}</button>)}</div>}{!list.length&&<span>Nenhuma das instalações representadas foi construída neste planeta.</span>}</div>}</section>;
+  // Without WebGL the caller falls back to the installation grid.
+  useEffect(()=>{if(!host.current)return;try{scene.current=createScene(host.current,planetId,planet,generation,id=>select.current(id),()=>fallback.current());}catch{fallback.current();return;}return()=>{scene.current?.dispose();scene.current=null;};},[planetId,generation?.seed,generation?.family]);
+  useEffect(()=>{scene.current?.update(list,selected);},[list,selected]);
+  return <section className="planet-diorama" aria-label="Superfície planetária"><div ref={host} className="planet-diorama-canvas"/><div className="planet-diorama-controls"><button onClick={()=>scene.current?.reset()}>Restaurar visão</button><span>Arraste para mover · roda ou pinça para aproximar · clique em uma construção</span>{!list.length&&<span>Nenhuma instalação construída neste planeta ainda.</span>}</div></section>;
 }

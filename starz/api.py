@@ -254,6 +254,11 @@ def build(request: BuildRequest):
     return action(lambda engine: engine.build(request.id, now=engine.state.last_updated), planet_id=request.planet_id, mutating=True)
 
 
+@app.post("/api/demolish")
+def demolish(request: BuildRequest):
+    return action(lambda engine: engine.demolish(request.id, now=engine.state.last_updated), planet_id=request.planet_id, mutating=True)
+
+
 @app.post("/api/research")
 def research(request: ResearchRequest):
     return action(lambda engine: engine.research(request.id, now=engine.state.last_updated), planet_id=request.planet_id, mutating=True)

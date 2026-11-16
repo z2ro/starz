@@ -210,7 +210,7 @@ select { width: 100%; min-height: 39px; margin-top: 6px; padding: 0 34px 0 11px;
 .toast { position: fixed; z-index: 50; right: 24px; bottom: 24px; display: grid; grid-template-columns: 28px minmax(220px, 360px) 24px; align-items: center; gap: 10px; padding: 13px; border: 1px solid #365b4a; border-radius: 6px; background: #10221b; box-shadow: 0 18px 50px #0009; }
 .toast.error { border-color: #6c3c3a; background: #291716; }.toast i { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; color: var(--good); background: #1c3c2f; font-style: normal; }.toast.error i { color: #efaaa5; background: #4b2624; }.toast button { border: 0; color: var(--muted); background: transparent; cursor: pointer; font-size: 18px; }
 .loading-line { position: fixed; z-index: 60; top: 71px; left: 0; width: 35%; height: 2px; background: var(--accent); animation: loading 1.2s ease-in-out infinite; }
-.boot, .fatal { display: grid; min-height: 100vh; place-items: center; align-content: center; text-align: center; }.boot .brand { padding: 0; }.boot-orbit { width: 90px; height: 28px; margin: 25px 0; border: 1px solid var(--line-strong); border-radius: 50%; animation: orbit 1.8s linear infinite; }.fatal b { font-size: 22px; }.fatal button { padding: 9px 16px; border: 1px solid var(--line-strong); color: white; background: var(--surface-2); }
+.boot, .fatal { display: grid; min-height: 100vh; place-items: center; align-content: center; text-align: center; }.fatal b { font-size: 22px; }.fatal button { padding: 9px 16px; border: 1px solid var(--line-strong); color: white; background: var(--surface-2); }
 
 @keyframes drift { to { transform: translateX(16%) rotate(3deg); } }
 @keyframes orbit { to { transform: rotate(360deg); } }
@@ -296,3 +296,16 @@ select { width: 100%; min-height: 39px; margin-top: 6px; padding: 0 34px 0 11px;
 .hotspot-icon { width: 15px; height: 15px; vertical-align: -3px; color: var(--accent-strong); }
 .fleet-hotspot-icon { width: 20px; height: 20px; }
 .orbit-glyph { width: 20px; height: 20px; color: var(--accent-strong); }
+/* Loading screen: pixel planet with an orbiting moon, logo and a stepped scan bar over a starfield. */
+.boot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:100vh;overflow:hidden;color:#b5ccd2;font:14px/1.4 system-ui,sans-serif;background-color:#04101c;background-image:radial-gradient(circle at 50% 40%,#17394b66 0,transparent 36%),radial-gradient(#83e5e5 1px,transparent 1.6px),radial-gradient(#f1f1df99 1px,transparent 1.6px),radial-gradient(#6497a8 1px,transparent 1.6px);background-size:auto,233px 197px,149px 263px,311px 173px;background-position:0 0,20px 30px,70px 120px,160px 15px}
+.boot-planet{position:relative;width:128px;height:128px}
+.boot-planet::before{content:'';position:absolute;inset:26px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#6f8b4a 0 18%,transparent 19%),radial-gradient(circle at 64% 60%,#3e7150 0 22%,transparent 23%),radial-gradient(circle at 30% 72%,#9b874f 0 10%,transparent 11%),linear-gradient(#14728a,#0b4a63);box-shadow:inset -14px -10px 0 #020711b3,0 0 0 2px #305363,0 0 28px #33899a66}
+.boot-planet::after{content:'';position:absolute;inset:4px;border:1px dashed #305363;border-radius:50%}
+.boot-planet>i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;background:#ffc465;box-shadow:0 0 8px #ffc465;animation:boot-orbit 3.2s steps(32) infinite}
+.boot-logo{font:400 34px/1 Silkscreen,monospace;letter-spacing:.34em;margin-right:-.34em;color:#83e5e5;text-shadow:3px 3px 0 #020912}.boot-logo>b{font-weight:400;color:#ffc465}
+.boot-bar{width:220px;height:10px;box-sizing:border-box;overflow:hidden;border:2px solid #305363;background:#081a27}
+.boot-bar>i{display:block;width:30%;height:100%;background:repeating-linear-gradient(90deg,#83e5e5 0 8px,transparent 8px 12px);animation:boot-scan 1.4s steps(14) infinite}
+.boot>p{margin:0;letter-spacing:.04em}
+@keyframes boot-orbit{from{transform:rotate(0) translateX(60px)}to{transform:rotate(360deg) translateX(60px)}}
+@keyframes boot-scan{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
+@media(prefers-reduced-motion:reduce){.boot-planet>i,.boot-bar>i{animation:none}.boot-bar>i{width:100%}}
