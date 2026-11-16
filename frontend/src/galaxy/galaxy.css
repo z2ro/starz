@@ -123,3 +123,30 @@
 .galaxy-dust{opacity:1}
 
 .stellar-symbol.stellar-m{fill:#b56847}
+/* Star chart dressing: nebula backdrop, tinted and twinkling dust, class-coloured stars with a glow, home beacon and fleet routes. */
+.galaxy-nebula{image-rendering:pixelated;pointer-events:none}
+.galaxy-dust rect:nth-child(7n){fill:#8bb8c7}.galaxy-dust rect:nth-child(11n){fill:#e0cd9a}
+.galaxy-dust rect:nth-child(13n){animation:galaxy-twinkle 3.6s steps(4) infinite}.galaxy-dust rect:nth-child(26n){animation-delay:-1.8s}
+.galaxy-space :is(.stellar-o,.stellar-b,.stellar-a,.stellar-f,.stellar-g,.stellar-k,.stellar-m){color:#ffd98a}
+.galaxy-space .stellar-o{color:#8fb9ff}.galaxy-space .stellar-b{color:#a9d2f5}.galaxy-space .stellar-a{color:#e3f1f7}.galaxy-space .stellar-f{color:#f6ecd0}.galaxy-space .stellar-k{color:#f2a65a}.galaxy-space .stellar-m{color:#e07a5f}
+.galaxy-space .stellar-symbol{fill:currentColor}
+.stellar-glow{fill:currentColor;opacity:.12;pointer-events:none}
+.system-home-ring{fill:none;stroke:#83e5e5;stroke-width:1.5;pointer-events:none;animation:galaxy-home 2.4s steps(6) infinite}
+.galaxy-route{stroke:#83e5e5;stroke-width:2;stroke-dasharray:6 6;vector-effect:non-scaling-stroke;opacity:.75;pointer-events:none;animation:galaxy-route 1.2s linear infinite}
+@keyframes galaxy-twinkle{50%{opacity:.1}}
+@keyframes galaxy-home{from{opacity:.9;transform:scale(.8)}to{opacity:0;transform:scale(1.25)}}
+@keyframes galaxy-route{to{stroke-dashoffset:-12}}
+@media(prefers-reduced-motion:reduce){.galaxy-dust rect,.system-home-ring,.galaxy-route{animation:none}}
+/* System inspector in the shared detail style: stat tiles, planet rows with a generated thumbnail, action pinned to the bottom. */
+.planet-thumb{flex:none;image-rendering:pixelated;border-radius:50%;box-shadow:0 0 0 1px #305363,0 0 10px #33899a55}
+.master-ui .galaxy-spatial-detail{padding:14px;gap:10px}
+.master-ui .galaxy-spatial-detail>header{padding-bottom:10px;border-bottom:1px solid #305363}
+.master-ui .galaxy-spatial-detail .px-stellar-data{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0}
+.master-ui .galaxy-spatial-detail .px-stellar-data span,.master-ui .galaxy-spatial-detail .galaxy-planet-facts span{padding:6px 8px;border:1px solid #305363;background:#0b1622;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#b5ccd2}
+.master-ui .galaxy-spatial-detail .px-stellar-data b,.master-ui .galaxy-spatial-detail .galaxy-planet-facts b{display:block;margin-top:2px;font:700 16px system-ui;letter-spacing:0;text-transform:none;color:#ffc465}
+.master-ui .galaxy-spatial-detail .galaxy-planet-facts{gap:6px}
+.master-ui .galaxy-spatial-detail .galaxy-planet{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:2px 10px;min-height:60px;padding:8px 10px;margin:0 0 6px;border:1px solid #305363;background:#0b1622;box-shadow:none}
+.master-ui .galaxy-spatial-detail .galaxy-planet:hover,.master-ui .galaxy-spatial-detail .galaxy-planet:focus-visible{border-color:#83e5e5;background:#12303a}
+.master-ui .galaxy-spatial-detail .galaxy-planet>.planet-thumb{grid-row:1/4}.master-ui .galaxy-spatial-detail .galaxy-planet>:not(.planet-thumb){grid-column:2}
+.master-ui .galaxy-spatial-detail .selected-planet-heading{border-left:0;padding-left:0;gap:6px 12px}
+.master-ui .galaxy-spatial-detail>.travel-planner{margin-top:auto}.master-ui .galaxy-spatial-detail>.travel-planner .button{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;box-sizing:border-box}

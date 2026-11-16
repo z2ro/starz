@@ -14,6 +14,21 @@ export function decorativeStars(seed:string,count=420){
  return stars;
 }
 
+/** Decorative backdrop only: a banded low-resolution nebula in the approved palette; null where canvas is unavailable. */
+export function nebulaImage(seed:string,width=180,height=150){
+ if(typeof document==='undefined')return null;
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ let ctx:CanvasRenderingContext2D|null=null;try{ctx=canvas.getContext('2d');}catch{return null;}
+ if(!ctx)return null;
+ const image=ctx.createImageData(width,height),tones=[[24,63,85],[33,97,120],[78,56,117],[20,114,138]];
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const cloud=fbmNoise2D(seed,x/38,y/38,4,'nebula-cloud'),hue=fbmNoise2D(seed,x/70+9,y/70-4,2,'nebula-hue');
+  const level=Math.min(4,Math.floor(Math.max(0,cloud-.36)*16)),tone=tones[hue>.58?2:hue<.42?3:level>2?1:0],offset=(y*width+x)*4;
+  image.data[offset]=tone[0];image.data[offset+1]=tone[1];image.data[offset+2]=tone[2];image.data[offset+3]=level*46;
+ }
+ ctx.putImageData(image,0,0);return canvas.toDataURL();
+}
+
 // Display radii only: class is not a measured physical size. Typical planet radius is .634.
 export const STELLAR_VISUAL_RADII={O:1.58,B:1.55,A:1.5,F:1.47,G:1.44,K:1.42,M:1.3} as const;
 export function stellarAppearance(stellarClass:string){

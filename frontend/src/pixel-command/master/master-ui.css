@@ -100,3 +100,10 @@
  .master-ui .strategy-world-identity>span:last-child{grid-column:1/-1}
  .master-ui .strategy-world-scene{inset:42px 0 48px}
 }
+/* The persistent-universe badge yields to the navigation on short windows instead of overlapping it. */
+@media(max-height:960px){.master-ui .px-nav-foot .universe-status{display:none}}
+/* One tab style for every workspace: equal-width tabs, cyan underline on the selected one. */
+.master-ui .tabs[role=tablist]{display:flex;gap:4px;flex:none}
+.master-ui .tabs[role=tablist]>button{flex:1 1 0;min-width:0;min-height:40px;margin:0;padding:4px 10px;border:1px solid var(--master-line-dim);border-radius:0;background:var(--master-surface);color:var(--master-muted);font:13px/1.3 var(--master-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.master-ui .tabs[role=tablist]>button[aria-selected=true]{border-color:var(--master-cyan);background:var(--master-raised);color:var(--master-text);box-shadow:inset 0 -2px var(--master-cyan)}
+@media(max-width:700px){.master-ui .tabs[role=tablist]>button{min-height:44px;padding:4px}}
