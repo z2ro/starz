@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { OverviewView } from '../frontend/src/views/OverviewView';
+import { TopHud } from '../frontend/src/components/shell/TopHud';
 import type { ShellContext } from '../frontend/src/components/shell/AppShell';
 import type { Catalog, State } from '../frontend/src/types/game';
 
@@ -16,6 +17,12 @@ function renderOverview(nextState: State = state) {
   const context: ShellContext = { catalog, state: nextState, activePlanetId: nextState.active_planet?.id ?? undefined, setActivePlanetId, execute: vi.fn(), busy: false, setFeedback: vi.fn() };
   render(<MemoryRouter initialEntries={['/overview']}><Routes><Route element={<Outlet context={context} />}><Route path="/overview" element={<OverviewView />} /><Route path="/research" element={<span>Pesquisa aberta</span>} /><Route path="/fleets" element={<span>Frotas abertas</span>} /><Route path="/planet" element={<span>Planeta aberto</span>} /><Route path="/shipyard" element={<span>Estaleiro aberto</span>} /></Route></Routes></MemoryRouter>);
   return { setActivePlanetId };
+}
+
+function renderTopHud(arrived: number) {
+  const fleet = state.fleets[0];
+  const fleets = Array.from({ length: arrived }, (_, index) => ({ ...fleet, id: `arrived-${index}` }));
+  render(<TopHud catalog={catalog} state={{ ...state, fleets }} noticeOpen={false} settingsOpen={false} onNotice={vi.fn()} onSettings={vi.fn()} />);
 }
 
 afterEach(cleanup);
@@ -51,5 +58,16 @@ describe('Imperial Command Overview', () => {
     expect(screen.getByText('Movimento em andamento')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Pesquisa inativa/ }));
     expect(screen.getByText('Pesquisa aberta')).toBeInTheDocument();
+  });
+});
+
+describe('TopHud fleet pluralization', () => {
+  it('uses singular and plural fleet wording', () => {
+    renderTopHud(1);
+    expect(screen.getByText('1 estacionada')).toBeInTheDocument();
+    expect(screen.queryByText('1 estacionada(s)')).not.toBeInTheDocument();
+    cleanup();
+    renderTopHud(2);
+    expect(screen.getByText('2 estacionadas')).toBeInTheDocument();
   });
 });

@@ -5,7 +5,7 @@ export const duration = (seconds: number) => seconds < 60 ? `${Math.max(0, Math.
 export const remaining = (stamp: number | null) => stamp === null ? 'Pausada' : duration(stamp - Date.now() / 1000);
 export const percent = (value: number) => Math.max(0, Math.min(100, value));
 export const term = (id: string) => ({ corvette: 'Corveta', exploration: 'Exploração', MOVE: 'Movimento', SURVEY: 'Levantamento', COLONIZE: 'Colonização', ARRIVED: 'Estacionada', TRANSIT: 'Em trânsito', VIABLE: 'Viável', HOSTILE: 'Hostil', UNINHABITABLE: 'Inabitável' } as Record<string, string>)[id] ?? id.replaceAll('_', ' ');
-export const label = (catalog: Catalog, id: string) => [...catalog.resources, ...catalog.fuels, ...catalog.districts, ...catalog.technologies, ...catalog.ships, ...catalog.propulsion, ...catalog.travel_modes].find(item => item.id === id)?.name ?? id.replaceAll('_', ' ');
+export const label = (catalog: Catalog, id: string, fallback = id.replaceAll('_', ' ')) => [...catalog.resources, ...catalog.fuels, ...catalog.districts, ...catalog.technologies, ...catalog.ships, ...catalog.propulsion, ...catalog.travel_modes].find(item => item.id === id)?.name ?? fallback;
 export const hullRole = (hull: Hull) => `${term(hull.classification)} · ${term(hull.role)}`;
 export const cost = (catalog: Catalog, values: Record<string, number>) => Object.keys(values).length ? Object.entries(values).map(([id, amount]) => `${label(catalog, id)} ${fmt(amount, 1)}`).join(' · ') : 'Sem custo';
 export function strategicResources(catalog: Catalog, state: State): Content[] {

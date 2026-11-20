@@ -9,6 +9,16 @@ const files = [
   ['orbital_shipyard.glb', [2, 1, 1]],
 ];
 
+const shipArt = ['horizon', 'wayfarer', 'vanguard', 'sentinel', 'odyssey', 'aegis', 'spearhead', 'leviathan', 'atlas', 'dominion', 'stargrave-class'];
+
+test('the eleven approved naval concept sheets remain preserved in design documentation', () => {
+  for (const id of shipArt) {
+    const path = `docs/design/imperial-command-v2/frotas/assets/${id}-concept.png`;
+    const bytes = fs.statSync(path).size;
+    assert.ok(bytes > 100_000, `${id} concept sheet is unexpectedly small`);
+  }
+});
+
 test('authored StarZ GLBs exist, are non-empty and parse through GLTFLoader', async () => {
   for (const [name, minimumSize] of files) {
     const path = `frontend/assets/models/${name}`;
@@ -26,3 +36,4 @@ test('authored StarZ GLBs exist, are non-empty and parse through GLTFLoader', as
     assert.ok(size.x >= minimumSize[0] && size.y >= minimumSize[1] && size.z >= minimumSize[2], `${name} has invalid scale`);
   }
 });
+
